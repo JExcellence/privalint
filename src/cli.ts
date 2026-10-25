@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { writeFile } from 'node:fs/promises';
+import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
 import { VERSION } from './meta.js';
 import { FORMATS, type Format, format, formatText } from './reporters/index.js';
@@ -24,7 +25,8 @@ Usage
 Options
   -p, --max-pages <n>     Crawl up to n pages on the same host (default 1)
   -f, --format <format>   ${FORMATS.join(' | ')} (default text)
-  -o, --output <file>     Write the report to a file instead of stdout
+  -o, --output <file>     Write the report to a file instead of stdout. Repeatable;
+                          .sarif, .json and .md pick their format automatically
       --fail-on <level>   error | warning | never (default error)
       --disable <rules>   Comma-separated rule ids to skip
       --settle <ms>       Wait this long after load for late tags (default 2000)
@@ -40,7 +42,11 @@ Exit codes
   2  invalid arguments or the scan failed
 `;
 
-class UsageError extends Error {}
+const FORMAT_BY_EXTENSION: Record<string, Format> = {
+  '.sarif': 'sarif',
+  '.json': 'json',
+  '.md': 'markdown',
+};
 
 async function main(argv: string[]): Promise<number> {
   const { values, positionals } = parseArgs({
@@ -49,7 +55,7 @@ async function main(argv: string[]): Promise<number> {
     options: {
       'max-pages': { type: 'string', short: 'p' },
       format: { type: 'string', short: 'f', default: 'text' },
-      output: { type: 'string', short: 'o' },
+      output: { type: 'string', short: 'o', multiple: true },
       'fail-on': { type: 'string', default: 'error' },
       disable: { type: 'string' },
       settle: { type: 'string' },
@@ -90,10 +96,15 @@ async function main(argv: string[]): Promise<number> {
     onPage: (page) => process.stderr.write(`scanned ${page.finalUrl}\n`),
   });
 
-  if (values.output) {
-    await writeFile(values.output, format(result, reportFormat));
+  const outputs = values.output ?? [];
+  for (const file of outputs) {
+    const kind = FORMAT_BY_EXTENSION[extname(file).toLowerCase()] ?? reportFormat;
+    await writeFile(file, format(result, kind));
+  }
+
+  if (outputs.length > 0) {
     process.stdout.write(`${formatText(result, process.stdout.isTTY)}\n`);
-    process.stdout.write(`\nReport written to ${values.output}\n`);
+    process.stdout.write(`\nReport written to ${outputs.join(', ')}\n`);
   } else {
     process.stdout.write(format(result, reportFormat, { color: process.stdout.isTTY }));
     if (reportFormat === 'text') {
@@ -107,13 +118,13 @@ async function main(argv: string[]): Promise<number> {
 function parseTarget(positionals: string[]): URL {
   const [raw, ...rest] = positionals;
   if (raw === undefined || rest.length > 0) {
-    throw new UsageError('Expected exactly one URL. Run privalint --help for usage.');
+    throw new Error('Expected exactly one URL. Run privalint --help for usage.');
   }
   const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   try {
     return new URL(withScheme);
   } catch {
-    throw new UsageError(`Not a valid URL: ${raw}`);
+    throw new Error(`Not a valid URL: ${raw}`);
   }
 }
 
@@ -125,7 +136,7 @@ function oneOf<T extends string>(
   if (value !== undefined && (allowed as readonly string[]).includes(value)) {
     return value as T;
   }
-  throw new UsageError(`${flag} must be one of: ${allowed.join(', ')}`);
+  throw new Error(`${flag} must be one of: ${allowed.join(', ')}`);
 }
 
 function positiveInt(value: string | undefined, flag: string): number | undefined {
@@ -134,7 +145,7 @@ function positiveInt(value: string | undefined, flag: string): number | undefine
   }
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new UsageError(`${flag} must be a non-negative whole number`);
+    throw new Error(`${flag} must be a non-negative whole number`);
   }
   return parsed;
 }
@@ -148,7 +159,7 @@ function selectRules(disable: string | undefined): Rule[] {
   );
   const unknown = [...disabled].filter((id) => !defaultRules.some((rule) => rule.id === id));
   if (unknown.length > 0) {
-    throw new UsageError(`Unknown rule: ${unknown.join(', ')}. See privalint --list-rules.`);
+    throw new Error(`Unknown rule: ${unknown.join(', ')}. See privalint --list-rules.`);
   }
   return defaultRules.filter((rule) => !disabled.has(rule.id));
 }
