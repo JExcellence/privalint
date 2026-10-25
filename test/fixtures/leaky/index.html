@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Leaky site</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter&display=swap" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TEST"></script>
+    <script>
+      // What gtag.js would do once it runs; the test server answers it with an empty body.
+      document.cookie = '_ga=GA1.1.123.456; path=/';
+    </script>
+  </head>
+  <body>
+    <h1>Hallo</h1>
+    <script>
+      setTimeout(() => {
+        const pixel = new Image();
+        pixel.src = 'https://www.facebook.com/tr?id=1&ev=PageView';
+      }, 300);
+    </script>
+  </body>
+</html>
