@@ -13,10 +13,16 @@ export interface Tracker {
   category: TrackerCategory;
   /** Hostnames; subdomains match too. */
   domains: string[];
-  /** If set, only requests whose path starts with one of these count. */
+  /**
+   * If set, only these paths count. A path ending in `/` matches everything below it,
+   * otherwise it must match exactly or be followed by `/`.
+   */
   paths?: string[];
-  /** Cookie name prefixes the vendor's script sets, including on the first-party domain. */
-  cookies?: string[];
+  /**
+   * Cookies the vendor's script sets, including on the first-party domain.
+   * Strings are name prefixes; use a RegExp where a prefix would be too broad.
+   */
+  cookies?: Array<string | RegExp>;
 }
 
 /**
@@ -131,7 +137,7 @@ export const trackers: readonly Tracker[] = [
     vendor: 'Mixpanel',
     category: 'analytics',
     domains: ['cdn.mxpnl.com', 'api-js.mixpanel.com'],
-    cookies: ['mp_'],
+    cookies: [/^mp_\w+_mixpanel$/],
   },
   {
     vendor: 'Amplitude',
@@ -158,10 +164,21 @@ export function findTrackerByUrl(url: string): Tracker | undefined {
     (tracker) =>
       tracker.domains.some((domain) => hostMatches(parsed.hostname, domain)) &&
       (tracker.paths === undefined ||
-        tracker.paths.some((path) => parsed.pathname.startsWith(path))),
+        tracker.paths.some((path) => pathMatches(parsed.pathname, path))),
   );
 }
 
 export function findTrackerByCookie(name: string): Tracker | undefined {
-  return trackers.find((tracker) => tracker.cookies?.some((prefix) => name.startsWith(prefix)));
+  return trackers.find((tracker) =>
+    tracker.cookies?.some((pattern) =>
+      typeof pattern === 'string' ? name.startsWith(pattern) : pattern.test(name),
+    ),
+  );
+}
+
+function pathMatches(pathname: string, path: string): boolean {
+  if (path.endsWith('/')) {
+    return pathname.startsWith(path);
+  }
+  return pathname === path || pathname.startsWith(`${path}/`);
 }

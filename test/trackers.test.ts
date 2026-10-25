@@ -22,6 +22,8 @@ describe('findTrackerByUrl', () => {
       'Meta Pixel',
     );
     expect(findTrackerByUrl('https://www.facebook.com/plugins/page.php')).toBeUndefined();
+    expect(findTrackerByUrl('https://www.facebook.com/translations/')).toBeUndefined();
+    expect(findTrackerByUrl('https://www.facebook.com/tr/')?.vendor).toBe('Meta Pixel');
   });
 
   it('does not match lookalike hosts', () => {
@@ -37,6 +39,11 @@ describe('findTrackerByCookie', () => {
   it('matches by prefix', () => {
     expect(findTrackerByCookie('_ga_ABC123')?.vendor).toBe('Google Analytics');
     expect(findTrackerByCookie('_hjSessionUser_42')?.vendor).toBe('Hotjar');
+  });
+
+  it('uses patterns where a prefix would be too broad', () => {
+    expect(findTrackerByCookie('mp_0123abcd_mixpanel')?.vendor).toBe('Mixpanel');
+    expect(findTrackerByCookie('mp_session')).toBeUndefined();
   });
 
   it('leaves unrelated cookies alone', () => {

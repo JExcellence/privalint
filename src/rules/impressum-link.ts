@@ -4,7 +4,7 @@ const ID = 'impressum-link';
 
 /**
  * Link texts and URL slugs used for a legal notice across the EU.
- * Matched against both the visible text and the href, so `/impressum`
+ * Matched against the visible text and the URL path, so `/impressum`
  * behind an icon-only link is still found.
  */
 const LEGAL_NOTICE =
@@ -12,8 +12,17 @@ const LEGAL_NOTICE =
 
 const CONTACT = /kontakt|contact/i;
 
+// Only the path counts, so a domain like impressum-example.de doesn't satisfy every page.
 const matches = (pattern: RegExp) => (link: PageLink) =>
-  pattern.test(link.text) || pattern.test(link.href);
+  pattern.test(link.text) || pattern.test(pathOf(link.href));
+
+const pathOf = (href: string) => {
+  try {
+    return decodeURIComponent(new URL(href).pathname);
+  } catch {
+    return '';
+  }
+};
 
 export const impressumLink: Rule = {
   id: ID,
@@ -34,11 +43,10 @@ export const impressumLink: Rule = {
         {
           ruleId: ID,
           severity: 'info',
-          message:
-            'No direct Impressum link, only a contact link. Two clicks via "Kontakt" can be enough if the Impressum is linked clearly from there, but a direct link is safer.',
+          message: 'No direct Impressum link, only a contact link.',
           pageUrl: page.finalUrl,
           evidence: [`contact link: ${contact.href}`],
-          fix: 'Add a link labelled "Impressum" next to the contact link.',
+          fix: 'Two clicks via "Kontakt" can be enough if the Impressum is clearly linked from there (BGH I ZR 228/03), but a direct "Impressum" link next to it is safer.',
         },
       ];
     }

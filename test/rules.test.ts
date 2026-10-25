@@ -95,6 +95,13 @@ describe('impressum-link', () => {
     expect(findings[0]?.severity).toBe('warning');
   });
 
+  it('does not count a domain name that happens to contain the word', () => {
+    const page = snapshot({
+      links: [{ text: 'Start', href: 'https://impressum-agentur.de/' }],
+    });
+    expect(run(impressumLink, page)[0]?.severity).toBe('warning');
+  });
+
   it('only notes a contact link, which can be enough within two clicks', () => {
     const page = snapshot({
       links: [{ text: 'Kontakt', href: 'https://example.de/kontakt' }],

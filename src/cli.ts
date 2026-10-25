@@ -25,8 +25,9 @@ Usage
 Options
   -p, --max-pages <n>     Crawl up to n pages on the same host (default 1)
   -f, --format <format>   ${FORMATS.join(' | ')} (default text)
-  -o, --output <file>     Write the report to a file instead of stdout. Repeatable;
-                          .sarif, .json and .md pick their format automatically
+  -o, --output <file>     Write the report to a file and print a text summary.
+                          Repeatable; .sarif, .json and .md pick their format,
+                          other extensions use --format
       --fail-on <level>   error | warning | never (default error)
       --disable <rules>   Comma-separated rule ids to skip
       --settle <ms>       Wait this long after load for late tags (default 2000)
@@ -89,11 +90,16 @@ async function main(argv: string[]): Promise<number> {
 
   const result = await scan(target.href, {
     rules,
-    maxPages: positiveInt(values['max-pages'], '--max-pages'),
-    settleMs: positiveInt(values.settle, '--settle'),
-    timeoutMs: positiveInt(values.timeout, '--timeout'),
+    maxPages: wholeNumber(values['max-pages'], '--max-pages', 1),
+    settleMs: wholeNumber(values.settle, '--settle', 0),
+    timeoutMs: wholeNumber(values.timeout, '--timeout', 1),
     locale: values.locale,
-    onPage: (page) => process.stderr.write(`scanned ${page.finalUrl}\n`),
+    onPage: (page) =>
+      process.stderr.write(
+        page.error === undefined
+          ? `scanned ${page.finalUrl}\n`
+          : `skipped ${page.url}: ${page.error}\n`,
+      ),
   });
 
   const outputs = values.output ?? [];
@@ -139,13 +145,13 @@ function oneOf<T extends string>(
   throw new Error(`${flag} must be one of: ${allowed.join(', ')}`);
 }
 
-function positiveInt(value: string | undefined, flag: string): number | undefined {
+function wholeNumber(value: string | undefined, flag: string, min: number): number | undefined {
   if (value === undefined) {
     return undefined;
   }
   const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new Error(`${flag} must be a non-negative whole number`);
+  if (!Number.isInteger(parsed) || parsed < min) {
+    throw new Error(`${flag} must be a whole number of at least ${min}`);
   }
   return parsed;
 }
