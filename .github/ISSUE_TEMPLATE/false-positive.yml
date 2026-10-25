@@ -1,0 +1,32 @@
+name: Wrong finding
+description: privalint flagged something that is fine, or missed something it should catch.
+labels: [accuracy]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - False positive (flagged, but fine)
+        - False negative (missed a real problem)
+    validations:
+      required: true
+  - type: input
+    id: rule
+    attributes:
+      label: Rule
+      placeholder: pre-consent-trackers
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Page URL
+      description: A public URL, or leave this empty and attach a minimal HTML page below.
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: The finding (or the request or cookie that was missed) and why you think it's wrong.
+    validations:
+      required: true

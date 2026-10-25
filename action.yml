@@ -11,19 +11,19 @@ inputs:
     required: true
   max-pages:
     description: How many pages on the same host to crawl.
-    default: '1'
+    default: "1"
   fail-on:
     description: Fail the step on findings at this level or above. One of error, warning, never.
     default: error
   disable:
     description: Comma-separated rule ids to skip.
-    default: ''
+    default: ""
   sarif-file:
     description: Where to write the SARIF report, relative to the workspace. Empty to skip.
     default: privalint.sarif
   job-summary:
     description: Add a Markdown report to the job summary.
-    default: 'true'
+    default: "true"
 
 outputs:
   sarif-file:

@@ -1,0 +1,31 @@
+name: New rule or tracker
+description: Suggest a check privalint should run, or a vendor it should know.
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Tracker / vendor
+        - Rule
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What should be detected
+      description: For a tracker, list its script and collection domains and the cookies it sets.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Legal basis
+      description: The law, ruling or regulator guidance this is based on, with a link if possible.
+  - type: checkboxes
+    id: pr
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to open a PR for this myself.
