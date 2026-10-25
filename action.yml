@@ -1,0 +1,76 @@
+name: privalint
+description: Scan a website for GDPR problems such as trackers before consent, Google Fonts and a missing Impressum.
+author: JExcellence
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  url:
+    description: Page to scan, usually your production URL or a preview deployment.
+    required: true
+  max-pages:
+    description: How many pages on the same host to crawl.
+    default: '1'
+  fail-on:
+    description: Fail the step on findings at this level or above. One of error, warning, never.
+    default: error
+  disable:
+    description: Comma-separated rule ids to skip.
+    default: ''
+  sarif-file:
+    description: Where to write the SARIF report, relative to the workspace. Empty to skip.
+    default: privalint.sarif
+  job-summary:
+    description: Add a Markdown report to the job summary.
+    default: 'true'
+
+outputs:
+  sarif-file:
+    description: Path of the SARIF report, if one was written.
+    value: ${{ inputs.sarif-file }}
+  exit-code:
+    description: 0 for no findings at the fail-on level, 1 for findings, 2 for a failed scan.
+    value: ${{ steps.scan.outputs.exit-code }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Install privalint
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        npm ci --no-audit --no-fund
+        npm run build
+        npx playwright install --with-deps --only-shell chromium
+
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        URL: ${{ inputs.url }}
+        MAX_PAGES: ${{ inputs.max-pages }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        DISABLE: ${{ inputs.disable }}
+        SARIF_FILE: ${{ inputs.sarif-file }}
+        JOB_SUMMARY: ${{ inputs.job-summary }}
+      run: |
+        summary="$RUNNER_TEMP/privalint.md"
+        args=("$URL" --max-pages "$MAX_PAGES" --fail-on "$FAIL_ON" --output "$summary")
+        if [[ -n "$DISABLE" ]]; then args+=(--disable "$DISABLE"); fi
+        if [[ -n "$SARIF_FILE" ]]; then args+=(--output "$SARIF_FILE"); fi
+
+        set +e
+        node "$GITHUB_ACTION_PATH/dist/cli.js" "${args[@]}"
+        code=$?
+        set -e
+
+        if [[ "$JOB_SUMMARY" == "true" && -f "$summary" ]]; then
+          cat "$summary" >> "$GITHUB_STEP_SUMMARY"
+        fi
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        exit "$code"
