@@ -5,12 +5,12 @@ import { crawlTarget, isFirstParty } from './url.js';
 
 export interface ScanOptions {
   /** Maximum number of same-host pages to visit, starting with the given URL. */
-  maxPages?: number;
+  maxPages?: number | undefined;
   /** Extra time to wait after the network is idle, to catch delayed tags. */
-  settleMs?: number;
+  settleMs?: number | undefined;
   /** Navigation timeout per page. */
-  timeoutMs?: number;
-  locale?: string;
+  timeoutMs?: number | undefined;
+  locale?: string | undefined;
   rules?: readonly Rule[];
   /**
    * Answer every third-party request with an empty response instead of fetching it.
