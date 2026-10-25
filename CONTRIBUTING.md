@@ -100,9 +100,10 @@ Guidelines for findings:
 
 ## Releases
 
-Maintainers tag `vX.Y.Z` on `main`. The release workflow runs the tests and publishes to npm with
-provenance. The floating `v0` tag is then moved to the new release so `uses: …/privalint@v0`
-picks it up.
+Maintainers bump the version in `package.json` and move the "Unreleased" changelog entries
+under the new version, then tag `vX.Y.Z` on `main`. The release workflow checks that the tag
+matches `package.json`, runs lint, typecheck and tests, publishes to npm with provenance and
+moves the major tag (`v0`, `v1`, …) so `uses: jexcellence/privalint@v0` picks up the release.
 
 ## Conduct
 

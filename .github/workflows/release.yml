@@ -2,11 +2,11 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["v*.*.*"]
 
 permissions:
-  contents: read
-  id-token: write
+  contents: write # to move the major version tag
+  id-token: write # for npm provenance
 
 jobs:
   publish:
@@ -18,9 +18,21 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
           cache: npm
+
+      - name: Check that the tag matches package.json
+        run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+
       - run: npm ci
       - run: npx playwright install --with-deps --only-shell chromium
+      - run: npm run lint
+      - run: npm run typecheck
       - run: npm test
       - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Move the major version tag
+        run: |
+          major="${GITHUB_REF_NAME%%.*}"
+          git tag --force "$major"
+          git push --force origin "refs/tags/$major"

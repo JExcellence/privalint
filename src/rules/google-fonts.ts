@@ -23,8 +23,7 @@ export const googleFonts: Rule = {
   title: 'Google Fonts loaded from Google servers',
   description:
     "Loading fonts from Google's CDN sends every visitor's IP address to Google without " +
-    'consent. A German court awarded damages for this in 2022, which set off a wave of ' +
-    'warning letters.',
+    'consent. LG München I awarded a visitor damages for this in 2022.',
   references: ['Art. 6(1) GDPR', 'LG München I, 20.01.2022, Az. 3 O 17493/20'],
   check({ page }) {
     const requests = page.requests.filter((request) => isGoogleFontUrl(request.url));

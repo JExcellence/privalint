@@ -4,14 +4,15 @@ Reports fonts loaded from Google's servers, and leftover connections to them.
 
 ## What it checks
 
-| Situation                                                                           | Severity     |
-| ----------------------------------------------------------------------------------- | ------------ |
-| A request to `fonts.googleapis.com` or `fonts.gstatic.com`                          | error        |
-| No request, but a `<link rel="preconnect">`, `preload` or `prefetch` pointing there | warning      |
-| `<link rel="dns-prefetch">` only                                                    | not reported |
+| Situation                                                                                          | Severity     |
+| -------------------------------------------------------------------------------------------------- | ------------ |
+| A request to `fonts.googleapis.com` or `fonts.gstatic.com`                                         | error        |
+| No request, but a `<link>` with `preconnect`, `preload`, `prefetch` or `stylesheet` pointing there | warning      |
+| `<link rel="dns-prefetch">` only                                                                   | not reported |
 
-`dns-prefetch` only asks your DNS resolver for the address, so Google never sees the visitor.
-`preconnect` opens a real connection, and the IP address goes with it.
+`dns-prefetch` only resolves the hostname through the visitor's DNS resolver and opens no
+connection to Google's font servers, so privalint leaves it alone. `preconnect` opens a real
+connection, and the IP address goes with it.
 
 ## Why
 

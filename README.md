@@ -7,26 +7,35 @@
 Lint your website for the GDPR mistakes that get people warning letters: trackers that fire before
 consent, Google Fonts loaded from Google, a missing Impressum.
 
-privalint opens your site in a real Chromium browser, the way a first-time visitor sees it, and
-reports what happened before anyone clicked "Accept". Run it from your terminal or as a GitHub
+privalint opens your site in a real Chromium browser with no cookies or storage, like a first
+visit, and reports what happened before anyone clicked "Accept". Run it from your terminal or as a GitHub
 Action on every pull request.
 
 ```bash
 npx privalint https://your-site.de
 ```
 
+This is the unedited output for [`test/fixtures/leaky`](test/fixtures/leaky/index.html), a test
+page that makes the usual mistakes:
+
 ```
-https://your-site.de/
+http://127.0.0.1:4173/leaky/
   ✖ Google Analytics (analytics) runs before the visitor has given consent. pre-consent-trackers
       request https://www.googletagmanager.com/gtag/js?id=G-TEST
-      cookie _ga (your-site.de)
-      fix: Only load Google Analytics after opt-in, for example by letting your consent manager inject it …
+      cookie _ga (127.0.0.1)
+      fix: Only load Google Analytics after opt-in, for example by letting your consent manager inject it or by using it in a consent mode that sends no requests until consent is given.
+  ✖ Meta Pixel (advertising) runs before the visitor has given consent. pre-consent-trackers
+      request https://www.facebook.com/tr?id=1&ev=PageView
+      fix: Only load Meta Pixel after opt-in, for example by letting your consent manager inject it or by using it in a consent mode that sends no requests until consent is given.
   ✖ Fonts are loaded from Google (1 request). google-fonts
       https://fonts.googleapis.com/css2?family=Inter&display=swap
-      fix: Self-host the font files. In Next.js, next/font/google downloads fonts at build time …
+      fix: Self-host the font files. In Next.js, next/font/google downloads fonts at build time and serves them from your own domain. Elsewhere, install the family from @fontsource or download it via google-webfonts-helper, then remove every reference to fonts.googleapis.com and fonts.gstatic.com.
   ▲ No link to an Impressum or legal notice was found on this page. impressum-link
+      0 links checked
+      fix: Add a link labelled "Impressum" to a part of the layout that appears on every page, usually the footer.
 
 3 errors, 1 warning on 1 page (1.5s).
+Automated checks only. A clean result is not proof of GDPR compliance.
 ```
 
 > [!IMPORTANT]
@@ -82,13 +91,16 @@ preview URL from your hosting provider's deployment event or action output as `u
 | Input         | Default           |                                             |
 | ------------- | ----------------- | ------------------------------------------- |
 | `url`         |                   | Page to scan. Required.                     |
-| `max-pages`   | `1`               | How many pages on the same host to crawl.   |
+| `max-pages`   | `1`               | How many pages of the same site to crawl.   |
 | `fail-on`     | `error`           | `error`, `warning` or `never`.              |
 | `disable`     |                   | Comma-separated rule ids to skip.           |
 | `sarif-file`  | `privalint.sarif` | Where to write SARIF. Empty to skip.        |
 | `job-summary` | `true`            | Add the Markdown report to the job summary. |
 
-Outputs: `exit-code` and `sarif-file`.
+Outputs: `exit-code`, and `sarif-file` when a report was written.
+
+The action uses the runner's Node.js (20.12 or newer) and leaves your job's Node version alone.
+On self-hosted runners without it, add `actions/setup-node` before this step.
 
 > [!NOTE]
 > Code scanning expects each finding to point at a file in your repository, which a live page
@@ -100,10 +112,11 @@ Outputs: `exit-code` and `sarif-file`.
 ```
 privalint <url> [options]
 
-  -p, --max-pages <n>     Crawl up to n pages on the same host (default 1)
+  -p, --max-pages <n>     Crawl up to n pages of the same site (default 1)
   -f, --format <format>   text | json | markdown | sarif (default text)
-  -o, --output <file>     Write the report to a file. Repeatable; .sarif, .json and .md
-                          pick their format automatically
+  -o, --output <file>     Write the report to a file and print a text summary.
+                          Repeatable; .sarif, .json and .md pick their format,
+                          other extensions use --format
       --fail-on <level>   error | warning | never (default error)
       --disable <rules>   Comma-separated rule ids to skip
       --settle <ms>       Wait this long after load for late tags (default 2000)
@@ -139,7 +152,9 @@ for (const finding of result.findings) {
    late are caught too.
 3. It records every request, the final cookie jar, all links and `<link>` resource hints.
 4. Each rule looks at that snapshot and reports findings with evidence and a suggested fix.
-5. With `--max-pages`, links on the same host are followed breadth-first.
+5. With `--max-pages`, links to the same site are followed breadth-first. Query strings are
+   dropped, pages are deduplicated after redirects, and pages that fail to load (downloads,
+   timeouts) are listed but don't stop the crawl.
 
 It never clicks your consent banner, so everything it reports happened **before consent**.
 
@@ -151,6 +166,12 @@ It never clicks your consent banner, so everything it reports happened **before 
 - First-party detection compares hostnames and ignores the public suffix list, so sibling
   subdomains on shared hosts like `*.github.io` count as first party.
 - Server-side tracking can't be seen from the browser.
+- Many consent managers decide by IP address whether to show a banner. GitHub-hosted runners
+  have US addresses, so some sites load trackers there that EU visitors never get, and the
+  result differs from what an EU visitor sees. Use a runner or proxy in the EU for results you
+  want to rely on.
+- Chromium is launched with Playwright's defaults, which turn off the Chromium sandbox. Don't
+  scan sites you don't trust on a machine that holds secrets.
 
 ## Roadmap
 

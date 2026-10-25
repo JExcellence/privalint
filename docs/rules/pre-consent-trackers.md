@@ -24,9 +24,14 @@ fires that matches the list is reported separately as an error.
 
 ## Why
 
-Storing or reading information on the visitor's device needs consent unless it is strictly
-necessary for the service the visitor asked for. Analytics and advertising are not strictly
-necessary.
+Two things need consent here, and a tracker usually does both:
+
+- **Cookies and similar storage.** Storing or reading information on the visitor's device needs
+  consent unless it is strictly necessary for the service the visitor asked for. Analytics and
+  advertising are not.
+- **The request itself.** Loading a third-party script or pixel sends the visitor's IP address
+  and usually identifiers to that vendor. For tracking purposes this needs a legal basis, which
+  in practice is consent. That's why cookieless requests are reported too.
 
 - § 25 Abs. 1 TDDDG (Germany), implementing Art. 5(3) of the ePrivacy Directive
 - Art. 6(1)(a) GDPR for the processing that follows
@@ -38,7 +43,8 @@ necessary.
   template. Most CMPs support blocked script tags such as
   `<script type="text/plain" data-category="analytics">`.
 - With Google tags, Consent Mode "basic" sends nothing before consent. "Advanced" mode still
-  sends cookieless pings, which privalint reports.
+  sends cookieless pings, which privalint reports. Whether those pings are allowed without
+  consent is disputed. privalint takes the cautious view.
 - If you switch to an analytics tool that works without cookies, check its documentation and your
   local regulator's view before relying on an exemption.
 
