@@ -1,4 +1,4 @@
-import type { Rule } from '../types.js';
+import type { PageLink, Rule } from '../types.js';
 
 const ID = 'impressum-link';
 
@@ -10,6 +10,11 @@ const ID = 'impressum-link';
 const LEGAL_NOTICE =
   /impressum|imprint|legal[\s_-]?notice|site[\s_-]?notice|anbieterkennzeichnung|mentions[\s_-]?l[eé]gales|aviso[\s_-]?legal|note[\s_-]?legali|colofon|informacje[\s_-]?prawne/i;
 
+const CONTACT = /kontakt|contact/i;
+
+const matches = (pattern: RegExp) => (link: PageLink) =>
+  pattern.test(link.text) || pattern.test(link.href);
+
 export const impressumLink: Rule = {
   id: ID,
   title: 'No link to an Impressum',
@@ -19,12 +24,25 @@ export const impressumLink: Rule = {
     'Disable this rule for purely private sites or sites outside its scope.',
   references: ['§ 5 DDG', 'BGH, 20.07.2006, Az. I ZR 228/03'],
   check({ page }) {
-    const found = page.links.some(
-      (link) => LEGAL_NOTICE.test(link.text) || LEGAL_NOTICE.test(link.href),
-    );
-    if (found) {
+    if (page.links.some(matches(LEGAL_NOTICE))) {
       return [];
     }
+
+    const contact = page.links.find(matches(CONTACT));
+    if (contact !== undefined) {
+      return [
+        {
+          ruleId: ID,
+          severity: 'info',
+          message:
+            'No direct Impressum link, only a contact link. Two clicks via "Kontakt" can be enough if the Impressum is linked clearly from there, but a direct link is safer.',
+          pageUrl: page.finalUrl,
+          evidence: [`contact link: ${contact.href}`],
+          fix: 'Add a link labelled "Impressum" next to the contact link.',
+        },
+      ];
+    }
+
     return [
       {
         ruleId: ID,

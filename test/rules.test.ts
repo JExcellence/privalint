@@ -94,4 +94,11 @@ describe('impressum-link', () => {
     expect(findings).toHaveLength(1);
     expect(findings[0]?.severity).toBe('warning');
   });
+
+  it('only notes a contact link, which can be enough within two clicks', () => {
+    const page = snapshot({
+      links: [{ text: 'Kontakt', href: 'https://example.de/kontakt' }],
+    });
+    expect(run(impressumLink, page)[0]?.severity).toBe('info');
+  });
 });
