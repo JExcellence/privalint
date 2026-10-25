@@ -51,9 +51,10 @@ export const preConsentTrackers: Rule = {
         ruleId: ID,
         severity: isTagManager ? 'warning' : 'error',
         message: isTagManager
-          ? `${tracker.vendor} loads before consent. The container itself sends the visitor's IP address to a third party, and any tag it fires without a consent check is a violation.`
+          ? `${tracker.vendor} loads before consent and sends the visitor's IP address to a third party.`
           : `${tracker.vendor} (${tracker.category}) runs before the visitor has given consent.`,
         pageUrl: page.finalUrl,
+        subject: tracker.vendor,
         evidence: [...evidence].slice(0, MAX_EVIDENCE),
         fix: `Only load ${tracker.vendor} after opt-in, for example by letting your consent manager inject it or by using it in a consent mode that sends no requests until consent is given.`,
       };

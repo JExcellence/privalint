@@ -68,7 +68,7 @@ function toResult(finding: Finding) {
     ],
     partialFingerprints: {
       primaryLocationLineHash: createHash('sha256')
-        .update(`${finding.ruleId}\n${finding.pageUrl}\n${finding.message}`)
+        .update(`${finding.ruleId}\n${finding.pageUrl}\n${finding.subject ?? ''}`)
         .digest('hex')
         .slice(0, 32),
     },

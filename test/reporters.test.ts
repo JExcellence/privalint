@@ -50,6 +50,12 @@ describe('markdown', () => {
     const output = formatMarkdown(result([finding({ message: 'a | b' })]));
     expect(output).toContain('a \\| b');
   });
+
+  it('keeps Markdown in page URLs from rendering', () => {
+    const pageUrl = 'https://example.de/x?![pwn](https://evil.example/p.png)';
+    const output = formatMarkdown(result([finding({ pageUrl })]));
+    expect(output).toContain(`#### \`${pageUrl}\``);
+  });
 });
 
 describe('sarif', () => {
@@ -71,5 +77,12 @@ describe('sarif', () => {
       'privalint/example.de/index',
     );
     expect(run.results[0].partialFingerprints.primaryLocationLineHash).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  it('keeps fingerprints stable when only the message wording changes', () => {
+    const fingerprint = (message: string) =>
+      JSON.parse(formatSarif(result([finding({ message })]))).runs[0].results[0].partialFingerprints
+        .primaryLocationLineHash;
+    expect(fingerprint('1 request')).toBe(fingerprint('2 requests'));
   });
 });

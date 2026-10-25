@@ -47,6 +47,8 @@ export interface Finding {
   pageUrl: string;
   evidence: string[];
   fix?: string;
+  /** What the finding is about, e.g. a vendor. Keeps fingerprints stable across runs. */
+  subject?: string;
 }
 
 export interface RuleContext {

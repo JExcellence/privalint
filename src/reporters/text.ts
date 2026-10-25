@@ -21,6 +21,14 @@ export function formatText(result: ScanResult, color = false): string {
     }
   }
 
+  const failed = result.pages.filter((page) => page.error !== undefined);
+  if (failed.length > 0) {
+    lines.push('', paint('yellow', `Could not scan ${plural(failed.length, 'page')}:`));
+    for (const page of failed) {
+      lines.push(`  ${page.url} ${paint('dim', page.error ?? '')}`);
+    }
+  }
+
   const counts = countBySeverity(result.findings);
   const pages = plural(result.pages.length, 'page');
   const seconds = (result.durationMs / 1000).toFixed(1);
