@@ -1,0 +1,55 @@
+{
+  "name": "privalint",
+  "version": "0.1.0",
+  "description": "Lint your website for GDPR problems: trackers before consent, Google Fonts, missing Impressum. Real browser, CLI and GitHub Action.",
+  "type": "module",
+  "bin": {
+    "privalint": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "keywords": [
+    "gdpr",
+    "dsgvo",
+    "privacy",
+    "cookies",
+    "consent",
+    "tracker",
+    "google-fonts",
+    "impressum",
+    "lint",
+    "playwright",
+    "github-action"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.64.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.3",
+    "@types/node": "^20.19.43",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
