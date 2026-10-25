@@ -27,7 +27,16 @@ export function safeHost(url: string): string | undefined {
   }
 }
 
-/** Returns a normalized URL to visit next, or `undefined` if the link should not be crawled. */
+export function withoutHash(url: string): string {
+  const parsed = new URL(url);
+  parsed.hash = '';
+  return parsed.href;
+}
+
+/**
+ * Returns a normalized URL to visit next, or `undefined` if the link should not be crawled.
+ * Query strings are dropped so calendars and filter pages don't eat the page budget.
+ */
 export function crawlTarget(href: string, siteUrl: URL): string | undefined {
   let url: URL;
   try {
@@ -38,9 +47,10 @@ export function crawlTarget(href: string, siteUrl: URL): string | undefined {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     return undefined;
   }
-  if (url.hostname !== siteUrl.hostname || SKIPPED_EXTENSIONS.test(url.pathname)) {
+  if (!isFirstParty(url.href, siteUrl) || SKIPPED_EXTENSIONS.test(url.pathname)) {
     return undefined;
   }
   url.hash = '';
+  url.search = '';
   return url.href;
 }

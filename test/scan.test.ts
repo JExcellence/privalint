@@ -15,6 +15,18 @@ let origin: string;
 beforeAll(async () => {
   server = createServer(async (req, res) => {
     const path = new URL(req.url ?? '/', 'http://localhost').pathname;
+    if (path === '/old-about') {
+      res.writeHead(301, { location: '/clean/about.html' }).end();
+      return;
+    }
+    if (path === '/download') {
+      res.writeHead(200, {
+        'content-type': 'application/octet-stream',
+        'content-disposition': 'attachment; filename="preise.bin"',
+      });
+      res.end('binary');
+      return;
+    }
     const file = normalize(join(FIXTURES, path.endsWith('/') ? `${path}index.html` : path));
     try {
       const body = await readFile(file);
@@ -48,6 +60,21 @@ describe('scan', () => {
     expect(result.findings).toEqual([
       expect.objectContaining({ ruleId: 'impressum-link', pageUrl: `${origin}/clean/about.html` }),
     ]);
+  });
+
+  it('keeps crawling past downloads and lints redirect targets once', async () => {
+    const result = await scan(`${origin}/messy/`, { ...options, maxPages: 10 });
+    const download = result.pages.find((page) => page.url.endsWith('/download'));
+    expect(download?.error).toBeDefined();
+
+    const about = result.pages.filter((page) => page.finalUrl.endsWith('/clean/about.html'));
+    expect(about).toHaveLength(1);
+    const aboutFindings = result.findings.filter((f) => f.pageUrl.endsWith('/clean/about.html'));
+    expect(aboutFindings).toHaveLength(1);
+  });
+
+  it('fails when the start page cannot be loaded', async () => {
+    await expect(scan(`${origin}/download`, options)).rejects.toThrow(/Could not load/);
   });
 
   it('catches fonts, trackers, cookies and delayed pixels on a leaky page', async () => {

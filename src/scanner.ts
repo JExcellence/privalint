@@ -1,10 +1,10 @@
 import { type Browser, chromium } from 'playwright';
 import { defaultRules } from './rules/index.js';
 import type { Finding, PageSnapshot, Rule, ScanResult } from './types.js';
-import { crawlTarget, isFirstParty } from './url.js';
+import { crawlTarget, isFirstParty, withoutHash } from './url.js';
 
 export interface ScanOptions {
-  /** Maximum number of same-host pages to visit, starting with the given URL. */
+  /** Maximum number of pages on the same site to visit, starting with the given URL. */
   maxPages?: number | undefined;
   /** Extra time to wait after the network is idle, to catch delayed tags. */
   settleMs?: number | undefined;
@@ -38,30 +38,45 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     const snapshots: PageSnapshot[] = [];
     const queue = [siteUrl.href];
     const seen = new Set(queue);
+    const captured = new Set<string>();
 
     let url = queue.shift();
     while (url !== undefined && snapshots.length < maxPages) {
       const snapshot = await capturePage(browser, url, siteUrl, options);
       if (snapshots.length === 0) {
+        if (snapshot.error !== undefined) {
+          throw new Error(`Could not load ${url}: ${snapshot.error}`);
+        }
         // Follow redirects like http -> https or apex -> www for the rest of the crawl.
         siteUrl = new URL(snapshot.finalUrl);
       }
-      snapshots.push(snapshot);
-      options.onPage?.(snapshot);
 
-      for (const link of snapshot.links) {
-        const next = crawlTarget(link.href, siteUrl);
-        if (next !== undefined && !seen.has(next)) {
-          seen.add(next);
-          queue.push(next);
+      // Several links can redirect to the same page; only lint it once.
+      const finalUrl = withoutHash(snapshot.finalUrl);
+      if (!captured.has(finalUrl)) {
+        captured.add(finalUrl);
+        seen.add(finalUrl);
+        snapshots.push(snapshot);
+        options.onPage?.(snapshot);
+        for (const link of snapshot.links) {
+          const next = crawlTarget(link.href, siteUrl);
+          if (next !== undefined && !seen.has(next)) {
+            seen.add(next);
+            queue.push(next);
+          }
         }
       }
       url = queue.shift();
     }
 
-    // Error pages are listed in the result but not linted.
+    // Pages that failed, returned an error status or redirected off-site are listed but not linted.
     const findings: Finding[] = snapshots
-      .filter((page) => page.status === null || page.status < 400)
+      .filter(
+        (page) =>
+          page.error === undefined &&
+          (page.status === null || page.status < 400) &&
+          isFirstParty(page.finalUrl, siteUrl),
+      )
       .flatMap((page) => rules.flatMap((rule) => rule.check({ siteUrl, page })));
 
     return {
@@ -74,6 +89,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         status: page.status,
         requestCount: page.requests.length,
         cookieCount: page.cookies.length,
+        ...(page.error === undefined ? {} : { error: page.error }),
       })),
       findings,
       rules: rules.map(({ check: _check, ...meta }) => meta),
@@ -92,6 +108,7 @@ async function capturePage(
   // A fresh context per page means no cookies or storage carry over:
   // every page is seen the way a first-time visitor sees it.
   const context = await browser.newContext({ locale: options.locale ?? DEFAULTS.locale });
+  const requests: PageSnapshot['requests'] = [];
   try {
     if (options.offline) {
       await context.route('**/*', (route) =>
@@ -102,7 +119,6 @@ async function capturePage(
     }
 
     const page = await context.newPage();
-    const requests: PageSnapshot['requests'] = [];
     page.on('request', (request) => {
       requests.push({ url: request.url(), resourceType: request.resourceType() });
     });
@@ -150,6 +166,19 @@ async function capturePage(
       cookies,
       links,
       resourceHints,
+    };
+  } catch (error) {
+    // Downloads, timeouts and crashed pages should not end the whole crawl.
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      url,
+      finalUrl: url,
+      status: null,
+      requests,
+      cookies: [],
+      links: [],
+      resourceHints: [],
+      error: message.split('\n')[0] ?? message,
     };
   } finally {
     await context.close();

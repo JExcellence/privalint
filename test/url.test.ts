@@ -15,8 +15,12 @@ describe('isFirstParty', () => {
 });
 
 describe('crawlTarget', () => {
-  it('resolves relative links and drops the hash', () => {
-    expect(crawlTarget('/about#team', SITE)).toBe('https://example.de/about');
+  it('resolves relative links and drops hash and query', () => {
+    expect(crawlTarget('/about?ref=nav#team', SITE)).toBe('https://example.de/about');
+  });
+
+  it('follows links to other hosts of the same site', () => {
+    expect(crawlTarget('https://www.example.de/blog', SITE)).toBe('https://www.example.de/blog');
   });
 
   it.each([

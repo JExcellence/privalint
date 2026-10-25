@@ -36,6 +36,8 @@ export interface PageSnapshot {
   cookies: RecordedCookie[];
   links: PageLink[];
   resourceHints: ResourceHint[];
+  /** Set when the page could not be loaded, e.g. a download or a timeout. */
+  error?: string;
 }
 
 export interface Finding {
@@ -67,6 +69,7 @@ export interface PageSummary {
   status: number | null;
   requestCount: number;
   cookieCount: number;
+  error?: string;
 }
 
 export interface ScanResult {
