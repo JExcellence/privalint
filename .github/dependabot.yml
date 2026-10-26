@@ -7,6 +7,13 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # Typings follow the oldest supported Node version, see engines in package.json.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # vitest 5 needs Node 22.12+. Revisit once Node 20 support is dropped.
+      - dependency-name: vitest
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
