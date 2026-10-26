@@ -80,6 +80,11 @@ findings. It never touches the browser. That keeps rules fast and easy to test.
    `test/scan.test.ts`.
 5. Document it in `docs/rules/<rule-id>.md`: what it checks, why, how to fix it, and
    references.
+6. Add the legal basis for every region to the table in [`src/legal.ts`](src/legal.ts). A test
+   fails if a built-in rule is missing a region. If the rule should be more or less strict in a
+   country, say so in the PR so it can be added to `severityFor`.
+7. Write the rule's `message` and `fix` in every language (`{ en, de }`). TypeScript reports any
+   missing translation.
 
 Guidelines for findings:
 

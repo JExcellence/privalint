@@ -6,6 +6,14 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- `--lang de` writes findings, fixes and reports in German
+- `--region de|at|ch|eu` cites the law of the chosen country with every finding; Swiss sites get
+  softer severities where Swiss law uses opt-out
+- `lang` and `region` inputs for the GitHub Action
+- German README
+
 ### Changed
 
 - Releases publish to npm through trusted publishing instead of a stored token
