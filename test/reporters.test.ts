@@ -87,3 +87,24 @@ describe('sarif', () => {
     expect(fingerprint('1 request')).toBe(fingerprint('2 requests'));
   });
 });
+
+describe('German reports', () => {
+  const german = (findings: Finding[]): ScanResult => ({ ...result(findings), lang: 'de' });
+
+  it('writes the text summary in German', () => {
+    const output = formatText(german([finding(), finding({ severity: 'warning' })]));
+    expect(output).toContain('1 Fehler, 1 Warnung auf 1 Seite (1,2 s).');
+    expect(output).toContain('Lösung: Self-host the font files.');
+    expect(output).toContain('kein Nachweis der DSGVO-Konformität');
+  });
+
+  it('confirms a clean scan in German', () => {
+    expect(formatText(german([]))).toContain('Keine Probleme auf 1 Seite gefunden (1,2 s).');
+  });
+
+  it('translates the Markdown headings', () => {
+    const output = formatMarkdown(german([finding()]));
+    expect(output).toContain('| | Regel | Befund |');
+    expect(output).toContain('<summary>So beheben Sie es</summary>');
+  });
+});

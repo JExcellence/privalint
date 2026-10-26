@@ -1,4 +1,4 @@
-import type { ConsentSummary, Finding, Severity } from '../types.js';
+import type { Finding, Severity } from '../types.js';
 
 export function groupByPage(findings: readonly Finding[]): Map<string, Finding[]> {
   const pages = new Map<string, Finding[]>();
@@ -17,22 +17,3 @@ export function countBySeverity(findings: readonly Finding[]): Record<Severity, 
   }
   return counts;
 }
-
-export function describeConsent(consent: ConsentSummary | undefined): string | undefined {
-  if (consent === undefined) {
-    return undefined;
-  }
-  if (!consent.bannerFound) {
-    return 'Consent banner: none found';
-  }
-  const vendor = consent.cmp === undefined ? '' : ` (${consent.cmp})`;
-  if (consent.error !== undefined) {
-    return `Consent banner${vendor}: found, but rejecting failed: ${consent.error}`;
-  }
-  if (consent.rejected) {
-    return `Consent banner${vendor}: clicked "${consent.rejectLabel}" and reloaded`;
-  }
-  return `Consent banner${vendor}: found, no reject button`;
-}
-
-export const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;

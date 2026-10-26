@@ -1,6 +1,7 @@
 import { styleText } from 'node:util';
 import type { Finding, ScanResult, Severity } from '../types.js';
-import { countBySeverity, describeConsent, groupByPage, plural } from './shared.js';
+import { messagesFor, type ReportMessages } from './messages.js';
+import { countBySeverity, groupByPage } from './shared.js';
 
 type Style = Parameters<typeof styleText>[0];
 
@@ -12,54 +13,56 @@ const MARKS: Record<Severity, [string, Style]> = {
 
 export function formatText(result: ScanResult, color = false): string {
   const paint = (style: Style, text: string) => (color ? styleText(style, text) : text);
+  const m = messagesFor(result.lang);
   const lines: string[] = [];
 
   for (const [pageUrl, findings] of groupByPage(result.findings)) {
     lines.push('', paint('underline', pageUrl));
     for (const finding of findings) {
-      lines.push(...formatFinding(finding, paint));
+      lines.push(...formatFinding(finding, paint, m));
     }
   }
 
   const failed = result.pages.filter((page) => page.error !== undefined);
   if (failed.length > 0) {
-    lines.push('', paint('yellow', `Could not scan ${plural(failed.length, 'page')}:`));
+    lines.push('', paint('yellow', m.couldNotScan(failed.length)));
     for (const page of failed) {
       lines.push(`  ${page.url} ${paint('dim', page.error ?? '')}`);
     }
   }
 
   const counts = countBySeverity(result.findings);
-  const pages = plural(result.pages.length, 'page');
-  const seconds = (result.durationMs / 1000).toFixed(1);
+  const pages = m.pages(result.pages.length);
+  const duration = m.duration(result.durationMs);
 
   lines.push('');
-  const consent = describeConsent(result.consent);
-  if (consent !== undefined) {
-    lines.push(paint('dim', consent));
+  if (result.consent !== undefined) {
+    lines.push(paint('dim', m.consent(result.consent)));
   }
   if (result.findings.length === 0) {
-    lines.push(paint('green', `✔ No problems found on ${pages} (${seconds}s).`));
+    lines.push(paint('green', `✔ ${m.noProblems(pages, duration)}`));
   } else {
     lines.push(
-      `${paint('red', plural(counts.error, 'error'))}, ${paint('yellow', plural(counts.warning, 'warning'))} on ${pages} (${seconds}s).`,
+      `${paint('red', m.errors(counts.error))}, ${paint('yellow', m.warnings(counts.warning))} ${m.on} ${pages} (${duration}).`,
     );
   }
-  lines.push(
-    paint('dim', 'Automated checks only. A clean result is not proof of GDPR compliance.'),
-  );
+  lines.push(paint('dim', m.disclaimer));
 
   return lines.join('\n');
 }
 
-function formatFinding(finding: Finding, paint: (style: Style, text: string) => string): string[] {
+function formatFinding(
+  finding: Finding,
+  paint: (style: Style, text: string) => string,
+  m: ReportMessages,
+): string[] {
   const [mark, style] = MARKS[finding.severity];
   const lines = [`  ${paint(style, mark)} ${finding.message} ${paint('dim', finding.ruleId)}`];
   for (const item of finding.evidence) {
     lines.push(paint('dim', `      ${item}`));
   }
   if (finding.fix) {
-    lines.push(`      ${paint('cyan', 'fix:')} ${finding.fix}`);
+    lines.push(`      ${paint('cyan', m.fix)} ${finding.fix}`);
   }
   return lines;
 }
