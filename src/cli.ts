@@ -16,14 +16,14 @@ const EXIT_FINDINGS = 1;
 const EXIT_ERROR = 2;
 
 const HELP = `privalint ${VERSION}
-Find GDPR problems on a live website: trackers before consent, Google Fonts,
-missing Impressum. Runs the site in a real browser.
+Find GDPR problems on a live website: trackers before consent or after
+"reject", Google Fonts, missing Impressum. Runs the site in a real browser.
 
 Usage
   privalint <url> [options]
 
 Options
-  -p, --max-pages <n>     Crawl up to n pages on the same host (default 1)
+  -p, --max-pages <n>     Crawl up to n pages of the same site (default 1)
   -f, --format <format>   ${FORMATS.join(' | ')} (default text)
   -o, --output <file>     Write the report to a file and print a text summary.
                           Repeatable; .sarif, .json and .md pick their format,
@@ -33,6 +33,7 @@ Options
       --settle <ms>       Wait this long after load for late tags (default 2000)
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
+      --skip-consent      Don't click "reject" on the consent banner
       --list-rules        Print the available rules and exit
   -h, --help              Show this help
   -v, --version           Show the version
@@ -62,6 +63,7 @@ async function main(argv: string[]): Promise<number> {
       settle: { type: 'string' },
       timeout: { type: 'string' },
       locale: { type: 'string' },
+      'skip-consent': { type: 'boolean' },
       'list-rules': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
       version: { type: 'boolean', short: 'v' },
@@ -94,6 +96,7 @@ async function main(argv: string[]): Promise<number> {
     settleMs: wholeNumber(values.settle, '--settle', 0),
     timeoutMs: wholeNumber(values.timeout, '--timeout', 1),
     locale: values.locale,
+    consentCheck: values['skip-consent'] !== true,
     onPage: (page) =>
       process.stderr.write(
         page.error === undefined

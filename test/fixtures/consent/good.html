@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Respects reject</title>
+  </head>
+  <body>
+    <h1>Respects reject</h1>
+    <footer><a href="/clean/impressum.html">Impressum</a></footer>
+    <div id="banner" role="dialog" aria-label="Cookie-Einstellungen">
+      <p>Wir verwenden Cookies, um die Nutzung der Website zu analysieren.</p>
+      <button id="accept">Alle akzeptieren</button>
+      <button id="reject">Alle ablehnen</button>
+    </div>
+    <script>
+      const banner = document.getElementById('banner');
+      const choice = localStorage.getItem('consent');
+      if (choice === 'accepted') {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.googletagmanager.com/gtag/js?id=G-CONSENT';
+        document.head.append(tag);
+      }
+      if (choice) {
+        banner.remove();
+      }
+      document.getElementById('accept').onclick = () => {
+        localStorage.setItem('consent', 'accepted');
+        location.reload();
+      };
+      document.getElementById('reject')?.addEventListener('click', () => {
+        localStorage.setItem('consent', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>

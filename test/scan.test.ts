@@ -96,3 +96,55 @@ describe('scan', () => {
     expect(vendors.some((message) => message.startsWith('Meta Pixel'))).toBe(true);
   });
 });
+
+describe('consent check', () => {
+  const ruleIds = (findings: { ruleId: string }[]) => findings.map((f) => f.ruleId);
+
+  it('passes a banner whose reject button is respected', async () => {
+    const result = await scan(`${origin}/consent/good.html`, options);
+    expect(result.consent).toMatchObject({
+      bannerFound: true,
+      rejected: true,
+      acceptLabel: 'Alle akzeptieren',
+      rejectLabel: 'Alle ablehnen',
+    });
+    expect(result.findings).toEqual([]);
+  });
+
+  it('catches trackers that load after reject', async () => {
+    const result = await scan(`${origin}/consent/broken.html`, options);
+    expect(ruleIds(result.findings)).toEqual(['trackers-after-reject']);
+    expect(result.findings[0]?.message).toContain('Alle ablehnen');
+    expect(result.findings[0]?.evidence[0]).toContain('G-CONSENT');
+  });
+
+  it('warns when the banner has no reject button', async () => {
+    const result = await scan(`${origin}/consent/accept-only.html`, options);
+    expect(result.consent).toMatchObject({ bannerFound: true, rejected: false });
+    expect(ruleIds(result.findings)).toEqual(['reject-option']);
+  });
+
+  it('reports pay-or-OK banners as info, not as a missing reject button', async () => {
+    const result = await scan(`${origin}/consent/pay-or-ok.html`, options);
+    expect(result.consent).toMatchObject({ bannerFound: true, payOrOk: true });
+    expect(result.findings.map(({ ruleId, severity }) => `${ruleId}:${severity}`)).toEqual([
+      'reject-option:info',
+    ]);
+  });
+
+  it('ignores subscription links outside the banner', async () => {
+    const result = await scan(`${origin}/consent/accept-only.html`, options);
+    expect(result.consent?.payOrOk).toBeUndefined();
+  });
+
+  it('can be skipped', async () => {
+    const result = await scan(`${origin}/consent/broken.html`, { ...options, consentCheck: false });
+    expect(result.consent).toBeUndefined();
+    expect(result.findings).toEqual([]);
+  });
+
+  it('reports no banner on a page without one', async () => {
+    const result = await scan(`${origin}/clean/`, options);
+    expect(result.consent).toEqual({ bannerFound: false, rejected: false });
+  });
+});

@@ -1,6 +1,6 @@
 import { styleText } from 'node:util';
 import type { Finding, ScanResult, Severity } from '../types.js';
-import { countBySeverity, groupByPage, plural } from './shared.js';
+import { countBySeverity, describeConsent, groupByPage, plural } from './shared.js';
 
 type Style = Parameters<typeof styleText>[0];
 
@@ -34,6 +34,10 @@ export function formatText(result: ScanResult, color = false): string {
   const seconds = (result.durationMs / 1000).toFixed(1);
 
   lines.push('');
+  const consent = describeConsent(result.consent);
+  if (consent !== undefined) {
+    lines.push(paint('dim', consent));
+  }
   if (result.findings.length === 0) {
     lines.push(paint('green', `✔ No problems found on ${pages} (${seconds}s).`));
   } else {

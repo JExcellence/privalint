@@ -1,5 +1,5 @@
 import type { ScanResult, Severity } from '../types.js';
-import { countBySeverity, groupByPage, plural } from './shared.js';
+import { countBySeverity, describeConsent, groupByPage, plural } from './shared.js';
 
 const ICONS: Record<Severity, string> = { error: '🔴', warning: '🟡', info: '🔵' };
 
@@ -17,6 +17,10 @@ export function formatMarkdown(result: ScanResult): string {
     '',
     `${plural(counts.error, 'error')} · ${plural(counts.warning, 'warning')} · ${plural(result.pages.length, 'page')} scanned`,
   ];
+  const consent = describeConsent(result.consent);
+  if (consent !== undefined) {
+    lines.push('', escapeText(consent));
+  }
 
   for (const [pageUrl, findings] of groupByPage(result.findings)) {
     lines.push('', `#### ${code(pageUrl)}`, '', '| | Rule | Finding |', '|---|---|---|');

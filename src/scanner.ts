@@ -1,4 +1,5 @@
 import { type Browser, chromium } from 'playwright';
+import { observeConsent } from './consent.js';
 import { defaultRules } from './rules/index.js';
 import type { Finding, PageSnapshot, Rule, ScanResult } from './types.js';
 import { crawlTarget, isFirstParty, withoutHash } from './url.js';
@@ -17,6 +18,11 @@ export interface ScanOptions {
    * Requests are still recorded. Used by the test suite to stay off the network.
    */
   offline?: boolean;
+  /**
+   * Click "reject" on the start page's consent banner and record what still loads.
+   * On by default.
+   */
+  consentCheck?: boolean | undefined;
   onPage?: (snapshot: PageSnapshot) => void;
 }
 
@@ -42,8 +48,9 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
 
     let url = queue.shift();
     while (url !== undefined && snapshots.length < maxPages) {
-      const snapshot = await capturePage(browser, url, siteUrl, options);
-      if (snapshots.length === 0) {
+      const isStart = snapshots.length === 0;
+      const snapshot = await capturePage(browser, url, siteUrl, options, isStart);
+      if (isStart) {
         if (snapshot.error !== undefined) {
           throw new Error(`Could not load ${url}: ${snapshot.error}`);
         }
@@ -91,6 +98,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         cookieCount: page.cookies.length,
         ...(page.error === undefined ? {} : { error: page.error }),
       })),
+      ...consentSummary(snapshots[0]),
       findings,
       rules: rules.map(({ check: _check, ...meta }) => meta),
     };
@@ -99,11 +107,20 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
   }
 }
 
+function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'consent'> {
+  if (start?.consent === undefined) {
+    return {};
+  }
+  const { afterReject: _afterReject, ...summary } = start.consent;
+  return { consent: summary };
+}
+
 async function capturePage(
   browser: Browser,
   url: string,
   siteUrl: URL,
   options: ScanOptions,
+  checkConsent: boolean,
 ): Promise<PageSnapshot> {
   // A fresh context per page means no cookies or storage carry over:
   // every page is seen the way a first-time visitor sees it.
@@ -158,15 +175,23 @@ async function capturePage(
       expires,
     }));
 
-    return {
+    const snapshot: PageSnapshot = {
       url,
       finalUrl: page.url(),
       status: response?.status() ?? null,
-      requests,
+      // Copy: the listener keeps writing to `requests` during the consent check.
+      requests: [...requests],
       cookies,
       links,
       resourceHints,
     };
+    if (checkConsent && options.consentCheck !== false) {
+      snapshot.consent = await observeConsent(page, context, requests, {
+        settleMs: options.settleMs ?? DEFAULTS.settleMs,
+        timeoutMs: options.timeoutMs ?? DEFAULTS.timeoutMs,
+      });
+    }
+    return snapshot;
   } catch (error) {
     // Downloads, timeouts and crashed pages should not end the whole crawl.
     const message = error instanceof Error ? error.message : String(error);
