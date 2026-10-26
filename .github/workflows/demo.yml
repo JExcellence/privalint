@@ -1,0 +1,38 @@
+name: Demo scan
+
+# Scans the demo page from the test fixtures with the published action and
+# uploads the result to code scanning. Doubles as an end-to-end test of the
+# SARIF integration and as a live example under Security → Code scanning.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Serve the demo page
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 --directory test/fixtures &
+          for _ in $(seq 1 20); do curl -fs http://127.0.0.1:8080/demo/ > /dev/null && exit 0; sleep 0.5; done
+          echo "::error::demo server did not start"
+          exit 1
+
+      - id: privalint
+        uses: ./
+        with:
+          url: http://127.0.0.1:8080/demo/
+          fail-on: never
+
+      - uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.privalint.outputs.sarif-file }}
+          category: privalint-demo
