@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.1.1 - 2026-10-26
+
 ### Added
 
 - `--headed` opens a visible browser window, for sites that hide their consent banner from
