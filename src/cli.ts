@@ -2,6 +2,7 @@
 import { writeFile } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
+import { LANGS } from './i18n.js';
 import { VERSION } from './meta.js';
 import { FORMATS, type Format, format, formatText } from './reporters/index.js';
 import { defaultRules } from './rules/index.js';
@@ -34,6 +35,7 @@ Options
       --settle <ms>       Wait this long after load for late tags (default 2000)
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
+      --lang <lang>       Language of the report: en | de (default en)
       --skip-consent      Don't click "reject" on the consent banner
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
@@ -66,6 +68,7 @@ async function main(argv: string[]): Promise<number> {
       settle: { type: 'string' },
       timeout: { type: 'string' },
       locale: { type: 'string' },
+      lang: { type: 'string', default: 'en' },
       'skip-consent': { type: 'boolean' },
       headed: { type: 'boolean' },
       channel: { type: 'string' },
@@ -101,6 +104,7 @@ async function main(argv: string[]): Promise<number> {
     settleMs: wholeNumber(values.settle, '--settle', 0),
     timeoutMs: wholeNumber(values.timeout, '--timeout', 1),
     locale: values.locale,
+    lang: oneOf(values.lang, LANGS, '--lang'),
     consentCheck: values['skip-consent'] !== true,
     headed: values.headed === true,
     channel:

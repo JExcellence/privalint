@@ -18,6 +18,9 @@ inputs:
   disable:
     description: Comma-separated rule ids to skip.
     default: ""
+  lang:
+    description: Language of the report and the job summary. One of en, de.
+    default: en
   sarif-file:
     description: Where to write the SARIF report, relative to the workspace. Empty to skip.
     default: privalint.sarif
@@ -59,6 +62,7 @@ runs:
         MAX_PAGES: ${{ inputs.max-pages }}
         FAIL_ON: ${{ inputs.fail-on }}
         DISABLE: ${{ inputs.disable }}
+        REPORT_LANG: ${{ inputs.lang }}
         SARIF_FILE: ${{ inputs.sarif-file }}
         JOB_SUMMARY: ${{ inputs.job-summary }}
       run: |
@@ -68,7 +72,7 @@ runs:
         fi
 
         summary="$RUNNER_TEMP/privalint.md"
-        args=("$URL" --max-pages "$MAX_PAGES" --fail-on "$FAIL_ON" --output "$summary")
+        args=("$URL" --max-pages "$MAX_PAGES" --fail-on "$FAIL_ON" --lang "$REPORT_LANG" --output "$summary")
         if [[ -n "$DISABLE" ]]; then args+=(--disable "$DISABLE"); fi
         if [[ -n "$SARIF_FILE" ]]; then args+=(--output "$SARIF_FILE"); fi
 
