@@ -155,3 +155,15 @@ describe('consent check', () => {
     expect(result.consent).toEqual({ bannerFound: false, rejected: false });
   });
 });
+
+describe('demo page', () => {
+  // docs/demo.svg is rendered from this page. If this test fails, run `npm run demo`.
+  it('produces the findings shown in the README image', async () => {
+    const result = await scan(`${origin}/demo/`, options);
+    expect(result.findings.map(({ ruleId, severity }) => `${ruleId}:${severity}`)).toEqual([
+      'trackers-after-reject:error',
+      'google-fonts:error',
+      'third-party-embeds:warning',
+    ]);
+  });
+});

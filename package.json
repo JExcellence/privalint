@@ -1,7 +1,7 @@
 {
   "name": "privalint",
   "version": "0.1.0",
-  "description": "Lint your website for GDPR problems: trackers before consent, Google Fonts, missing Impressum. Real browser, CLI and GitHub Action.",
+  "description": "Lint your website for GDPR problems: trackers before consent and after reject, Google Fonts, embeds, missing Impressum. Real browser, CLI and GitHub Action.",
   "type": "module",
   "bin": {
     "privalint": "dist/cli.js"
@@ -27,7 +27,8 @@
     "test:watch": "vitest",
     "prepublishOnly": "npm run build",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write .",
+    "demo": "npm run build && node scripts/render-demo.mjs"
   },
   "keywords": [
     "gdpr",
