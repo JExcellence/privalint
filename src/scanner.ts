@@ -23,6 +23,16 @@ export interface ScanOptions {
    * On by default.
    */
   consentCheck?: boolean | undefined;
+  /**
+   * Open a visible browser window instead of running headless. Some sites only show their
+   * consent banner to regular browsers. Needs a display, so it doesn't work on CI runners.
+   */
+  headed?: boolean | undefined;
+  /**
+   * Use an installed browser instead of Playwright's bundled Chromium,
+   * e.g. `chrome` or `msedge`.
+   */
+  channel?: string | undefined;
   onPage?: (snapshot: PageSnapshot) => void;
 }
 
@@ -39,7 +49,10 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
   const maxPages = Math.max(1, options.maxPages ?? DEFAULTS.maxPages);
   let siteUrl = new URL(target);
 
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({
+    headless: options.headed !== true,
+    ...(options.channel === undefined ? {} : { channel: options.channel }),
+  });
   try {
     const snapshots: PageSnapshot[] = [];
     const queue = [siteUrl.href];

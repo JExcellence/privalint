@@ -114,6 +114,8 @@ privalint <url> [options]
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
       --skip-consent      Don't click "reject" on the consent banner
+      --headed            Open a visible browser window instead of running headless
+      --channel <name>    Use an installed browser: chrome or msedge
       --list-rules        Print the available rules and exit
 ```
 
@@ -154,7 +156,11 @@ for (const finding of result.findings) {
 ### Limitations
 
 - Some sites don't show their consent banner to headless browsers. privalint then reports
-  "no banner found" and skips the reject check. It does not disguise itself as a regular browser.
+  "no banner found" and skips the reject check. Run it locally with `--headed` to scan in a
+  visible window; with `--channel msedge` or `--channel chrome` it uses your installed browser
+  instead of the bundled one. privalint never disguises itself as a different browser.
+- Some sites block automated browsers completely and serve a block page instead. privalint scans
+  what it gets, so check the scanned URL and the page count in the report.
 - Only "reject" is tested. Whether "accept" works, and whether rejecting is as easy as accepting
   beyond the presence of a button, is not judged.
 - Tracker detection uses a hand-maintained list ([`src/data/trackers.ts`](src/data/trackers.ts)).

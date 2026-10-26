@@ -9,6 +9,7 @@ import { scan } from './scanner.js';
 import type { Finding, Rule } from './types.js';
 
 const FAIL_LEVELS = ['error', 'warning', 'never'] as const;
+const CHANNELS = ['chrome', 'msedge'] as const;
 type FailLevel = (typeof FAIL_LEVELS)[number];
 
 const EXIT_OK = 0;
@@ -34,6 +35,8 @@ Options
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
       --skip-consent      Don't click "reject" on the consent banner
+      --headed            Open a visible browser window instead of running headless
+      --channel <name>    Use an installed browser: chrome or msedge
       --list-rules        Print the available rules and exit
   -h, --help              Show this help
   -v, --version           Show the version
@@ -64,6 +67,8 @@ async function main(argv: string[]): Promise<number> {
       timeout: { type: 'string' },
       locale: { type: 'string' },
       'skip-consent': { type: 'boolean' },
+      headed: { type: 'boolean' },
+      channel: { type: 'string' },
       'list-rules': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
       version: { type: 'boolean', short: 'v' },
@@ -97,6 +102,9 @@ async function main(argv: string[]): Promise<number> {
     timeoutMs: wholeNumber(values.timeout, '--timeout', 1),
     locale: values.locale,
     consentCheck: values['skip-consent'] !== true,
+    headed: values.headed === true,
+    channel:
+      values.channel === undefined ? undefined : oneOf(values.channel, CHANNELS, '--channel'),
     onPage: (page) =>
       process.stderr.write(
         page.error === undefined

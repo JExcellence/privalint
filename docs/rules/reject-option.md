@@ -37,7 +37,7 @@ stricter for large online platforms. privalint can't judge either, so it only no
 ## Limitations
 
 - Some sites don't show their banner to headless browsers. privalint reports "no banner" for them
-  and this rule stays silent.
+  and this rule stays silent. Scan them locally with `--headed`, see the README.
 - A reject option that is a plain text link rather than a button is still found if its label
   matches. Whether a link is "as prominent" as the accept button is not judged.
 

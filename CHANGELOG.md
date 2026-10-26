@@ -6,6 +6,12 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- `--headed` opens a visible browser window, for sites that hide their consent banner from
+  headless browsers. Local use only; CI runners have no display.
+- `--channel chrome|msedge` scans with an installed browser instead of Playwright's Chromium
+
 ## 0.1.0 - 2026-10-26
 
 ### Added

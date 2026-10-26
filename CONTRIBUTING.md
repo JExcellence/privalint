@@ -36,6 +36,9 @@ Useful scripts:
 | `npm run build`          | Compile to `dist/`                                        |
 | `node dist/cli.js <url>` | Run your local build                                      |
 
+The headed-mode test is skipped by default. Run it with `PRIVALINT_TEST_HEADED=1 npm test`, and add
+`PRIVALINT_TEST_CHANNEL=msedge` (or `chrome`) if your system blocks Playwright's bundled browser.
+
 The test suite never touches the network. Fixture pages live in `test/fixtures`, and
 third-party requests are answered with an empty response but still recorded.
 

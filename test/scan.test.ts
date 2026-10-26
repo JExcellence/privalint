@@ -167,3 +167,19 @@ describe('demo page', () => {
     ]);
   });
 });
+
+describe('headed mode', () => {
+  // Opt-in: needs a display, and some machines block the bundled Chromium.
+  // PRIVALINT_TEST_HEADED=1 runs it; PRIVALINT_TEST_CHANNEL=msedge picks an installed browser.
+  it.runIf(process.env.PRIVALINT_TEST_HEADED)(
+    'runs the same checks in a visible window',
+    async () => {
+      const result = await scan(`${origin}/consent/broken.html`, {
+        ...options,
+        headed: true,
+        channel: process.env.PRIVALINT_TEST_CHANNEL,
+      });
+      expect(result.findings.map((f) => f.ruleId)).toEqual(['trackers-after-reject']);
+    },
+  );
+});
