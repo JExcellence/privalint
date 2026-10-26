@@ -1,13 +1,7 @@
-import { findTrackerByCookie, findTrackerByUrl, type Tracker } from '../data/trackers.js';
 import type { Finding, Rule } from '../types.js';
+import { findTrackerHits } from './tracker-hits.js';
 
 const ID = 'pre-consent-trackers';
-const MAX_EVIDENCE = 5;
-
-interface Hit {
-  tracker: Tracker;
-  evidence: Set<string>;
-}
 
 export const preConsentTrackers: Rule = {
   id: ID,
@@ -23,29 +17,7 @@ export const preConsentTrackers: Rule = {
     'CJEU C-673/17 (Planet49)',
   ],
   check({ page }) {
-    const hits = new Map<string, Hit>();
-    const record = (tracker: Tracker, evidence: string) => {
-      const hit = hits.get(tracker.vendor) ?? { tracker, evidence: new Set<string>() };
-      hit.evidence.add(evidence);
-      hits.set(tracker.vendor, hit);
-    };
-
-    for (const request of page.requests) {
-      const tracker = findTrackerByUrl(request.url);
-      if (tracker !== undefined) {
-        record(tracker, `request ${request.url}`);
-      }
-    }
-    for (const cookie of page.cookies) {
-      const tracker =
-        findTrackerByCookie(cookie.name) ??
-        findTrackerByUrl(`https://${cookie.domain.replace(/^\./, '')}/`);
-      if (tracker !== undefined) {
-        record(tracker, `cookie ${cookie.name} (${cookie.domain})`);
-      }
-    }
-
-    return [...hits.values()].map(({ tracker, evidence }): Finding => {
+    return findTrackerHits(page.requests, page.cookies).map(({ tracker, evidence }): Finding => {
       const isTagManager = tracker.category === 'tag-manager';
       return {
         ruleId: ID,
@@ -55,7 +27,7 @@ export const preConsentTrackers: Rule = {
           : `${tracker.vendor} (${tracker.category}) runs before the visitor has given consent.`,
         pageUrl: page.finalUrl,
         subject: tracker.vendor,
-        evidence: [...evidence].slice(0, MAX_EVIDENCE),
+        evidence,
         fix: `Only load ${tracker.vendor} after opt-in, for example by letting your consent manager inject it or by using it in a consent mode that sends no requests until consent is given.`,
       };
     });
