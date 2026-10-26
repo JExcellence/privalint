@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.1.0 - 2026-10-26
+
 ### Added
 
 - Browser-based scanner that loads every page in a fresh context and crawls same-host links
@@ -14,4 +16,5 @@ All notable changes are listed here. The format follows
 - Rules: `pre-consent-trackers`, `trackers-after-reject`, `reject-option`, `google-fonts`,
   `third-party-embeds`, `third-party-cdns`, `impressum-link`, `privacy-policy-link`
 - CLI with text, JSON, Markdown and SARIF output
-- GitHub Action with job summary and SARIF file
+- GitHub Action with job summary and SARIF file, tested against code scanning by a weekly demo
+  scan
