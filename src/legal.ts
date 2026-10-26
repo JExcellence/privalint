@@ -87,6 +87,22 @@ export function applyRegion(findings: readonly Finding[], region: Region): Findi
   });
 }
 
-function severityFor(finding: Finding, _region: Region): Severity {
+/**
+ * Switzerland uses an opt-out model for cookies and tracking (Art. 45c FMG) and
+ * requires an imprint only for offers in electronic commerce, so those findings
+ * drop one level there. Ignoring an explicit refusal stays as serious as anywhere.
+ */
+const SOFTER_IN_SWITZERLAND = new Set([
+  'pre-consent-trackers',
+  'third-party-embeds',
+  'impressum-link',
+]);
+
+function severityFor(finding: Finding, region: Region): Severity {
+  if (region === 'ch' && SOFTER_IN_SWITZERLAND.has(finding.ruleId)) {
+    return lower(finding.severity);
+  }
   return finding.severity;
 }
+
+const lower = (severity: Severity): Severity => (severity === 'error' ? 'warning' : 'info');

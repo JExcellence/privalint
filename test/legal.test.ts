@@ -35,3 +35,26 @@ describe('legal references', () => {
     expect(result).toEqual(finding('my-rule', 'warning'));
   });
 });
+
+describe('severity per country', () => {
+  const severity = (ruleId: string, region: (typeof REGIONS)[number], start: Finding['severity']) =>
+    applyRegion([finding(ruleId, start)], region)[0]?.severity;
+
+  it('keeps the rule defaults in Germany, Austria and the EU', () => {
+    for (const region of ['de', 'at', 'eu'] as const) {
+      expect(severity('pre-consent-trackers', region, 'error')).toBe('error');
+    }
+  });
+
+  it('softens opt-in findings and the imprint in Switzerland', () => {
+    expect(severity('pre-consent-trackers', 'ch', 'error')).toBe('warning');
+    expect(severity('pre-consent-trackers', 'ch', 'warning')).toBe('info');
+    expect(severity('third-party-embeds', 'ch', 'warning')).toBe('info');
+    expect(severity('impressum-link', 'ch', 'warning')).toBe('info');
+  });
+
+  it('never goes below info and keeps an ignored refusal serious', () => {
+    expect(severity('impressum-link', 'ch', 'info')).toBe('info');
+    expect(severity('trackers-after-reject', 'ch', 'error')).toBe('error');
+  });
+});
