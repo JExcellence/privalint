@@ -5,38 +5,23 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Lint your website for the GDPR mistakes that get people warning letters: trackers that fire before
-consent, Google Fonts loaded from Google, a missing Impressum.
+consent or keep running after "reject", Google Fonts loaded from Google, embeds and a missing
+Impressum.
 
 privalint opens your site in a real Chromium browser with no cookies or storage, like a first
-visit, and reports what happened before anyone clicked "Accept". Run it from your terminal or as a GitHub
-Action on every pull request.
+visit. It records what loads before anyone touches the consent banner, then clicks "reject" and
+checks what still loads. Run it from your terminal or as a GitHub Action on every pull request.
 
 ```bash
 npx privalint https://your-site.de
 ```
 
-This is the unedited output for [`test/fixtures/leaky`](test/fixtures/leaky/index.html), a test
-page that makes the usual mistakes:
+<p align="center">
+  <img src="docs/demo.svg" alt="privalint output: Google Analytics still runs after clicking reject, Google Fonts are loaded from Google, a YouTube embed loads before consent" width="820">
+</p>
 
-```
-http://127.0.0.1:4173/leaky/
-  ✖ Google Analytics (analytics) runs before the visitor has given consent. pre-consent-trackers
-      request https://www.googletagmanager.com/gtag/js?id=G-TEST
-      cookie _ga (127.0.0.1)
-      fix: Only load Google Analytics after opt-in, for example by letting your consent manager inject it or by using it in a consent mode that sends no requests until consent is given.
-  ✖ Meta Pixel (advertising) runs before the visitor has given consent. pre-consent-trackers
-      request https://www.facebook.com/tr?id=1&ev=PageView
-      fix: Only load Meta Pixel after opt-in, for example by letting your consent manager inject it or by using it in a consent mode that sends no requests until consent is given.
-  ✖ Fonts are loaded from Google (1 request). google-fonts
-      https://fonts.googleapis.com/css2?family=Inter&display=swap
-      fix: Self-host the font files. In Next.js, next/font/google downloads fonts at build time and serves them from your own domain. Elsewhere, install the family from @fontsource or download it via google-webfonts-helper, then remove every reference to fonts.googleapis.com and fonts.gstatic.com.
-  ▲ No link to an Impressum or legal notice was found on this page. impressum-link
-      0 links checked
-      fix: Add a link labelled "Impressum" to a part of the layout that appears on every page, usually the footer.
-
-3 errors, 1 warning on 1 page (1.5s).
-Automated checks only. A clean result is not proof of GDPR compliance.
-```
+<sub>Output for the demo page in <a href="test/fixtures/demo/index.html"><code>test/fixtures/demo</code></a>, long lines
+shortened. Regenerate it with <code>npm run demo</code>.</sub>
 
 > [!IMPORTANT]
 > privalint runs automated checks. A clean result means it found none of the problems it looks
@@ -44,11 +29,16 @@ Automated checks only. A clean result is not proof of GDPR compliance.
 
 ## What it checks
 
-| Rule                                                         | Severity | What it finds                                                                                                              |
-| ------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.md) | error    | Analytics, ads and session-replay tools that send requests or set cookies before consent. A bare tag manager is a warning. |
-| [`google-fonts`](docs/rules/google-fonts.md)                 | error    | Fonts fetched from `fonts.googleapis.com` / `fonts.gstatic.com`. Leftover preconnects are a warning.                       |
-| [`impressum-link`](docs/rules/impressum-link.md)             | warning  | Pages without a link to an Impressum or legal notice. A contact link alone is only noted as info.                          |
+| Rule                                                           | Severity | What it finds                                                                                                              |
+| -------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.md)   | error    | Analytics, ads and session-replay tools that send requests or set cookies before consent. A bare tag manager is a warning. |
+| [`trackers-after-reject`](docs/rules/trackers-after-reject.md) | error    | Trackers that still load after clicking "reject" on the consent banner and reloading.                                      |
+| [`reject-option`](docs/rules/reject-option.md)                 | warning  | A banner with "accept" but no "reject" on its first layer. Pay-or-OK banners are noted as info.                            |
+| [`google-fonts`](docs/rules/google-fonts.md)                   | error    | Fonts fetched from `fonts.googleapis.com` / `fonts.gstatic.com`. Leftover preconnects are a warning.                       |
+| [`third-party-embeds`](docs/rules/third-party-embeds.md)       | warning  | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar and social embeds loading before consent.                                 |
+| [`third-party-cdns`](docs/rules/third-party-cdns.md)           | info     | Scripts and styles from jsDelivr, unpkg, cdnjs and other public CDNs.                                                      |
+| [`impressum-link`](docs/rules/impressum-link.md)               | warning  | Pages without a link to an Impressum. A contact link alone is noted as info.                                               |
+| [`privacy-policy-link`](docs/rules/privacy-policy-link.md)     | warning  | Pages without a link to a privacy policy.                                                                                  |
 
 More rules are on the [roadmap](#roadmap). Each one is a small file with tests, see
 [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -75,7 +65,7 @@ jobs:
           url: https://your-site.de
           max-pages: 20
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: privalint.sarif
@@ -122,6 +112,7 @@ privalint <url> [options]
       --settle <ms>       Wait this long after load for late tags (default 2000)
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
+      --skip-consent      Don't click "reject" on the consent banner
       --list-rules        Print the available rules and exit
 ```
 
@@ -151,16 +142,20 @@ for (const finding of result.findings) {
 2. privalint waits for the network to go idle plus a settle delay (`--settle`), so tags that load
    late are caught too.
 3. It records every request, the final cookie jar, all links and `<link>` resource hints.
-4. Each rule looks at that snapshot and reports findings with evidence and a suggested fix.
-5. With `--max-pages`, links to the same site are followed breadth-first. Query strings are
+4. On the start page it looks for the consent banner, either by the selectors of common consent
+   managers (OneTrust, Cookiebot, Usercentrics, Borlabs, Complianz and others) or by button labels
+   in six languages. It clicks "reject", reloads and records what still loads.
+5. Each rule looks at those snapshots and reports findings with evidence and a suggested fix.
+6. With `--max-pages`, links to the same site are followed breadth-first. Query strings are
    dropped, pages are deduplicated after redirects, and pages that fail to load (downloads,
    timeouts) are listed but don't stop the crawl.
 
-It never clicks your consent banner, so everything it reports happened **before consent**.
-
 ### Limitations
 
-- It doesn't yet test what happens after "Reject" or "Accept". That's next on the roadmap.
+- Some sites don't show their consent banner to headless browsers. privalint then reports
+  "no banner found" and skips the reject check. It does not disguise itself as a regular browser.
+- Only "reject" is tested. Whether "accept" works, and whether rejecting is as easy as accepting
+  beyond the presence of a button, is not judged.
 - Tracker detection uses a hand-maintained list ([`src/data/trackers.ts`](src/data/trackers.ts)).
   A vendor missing from the list goes unnoticed. Additions are very welcome.
 - First-party detection compares hostnames and ignores the public suffix list, so sibling
@@ -175,12 +170,11 @@ It never clicks your consent banner, so everything it reports happened **before 
 
 ## Roadmap
 
-- Consent flows: click "Reject" and "Accept" and check what changes
-- Rules for YouTube embeds without `youtube-nocookie.com`, Google Maps, reCAPTCHA, Gravatar,
-  unpkg/jsDelivr and other third-party CDNs
-- A privacy policy link check
 - PR comments from the Action
 - Config file (`privalint.config.ts`) for allowlists and per-rule severity
+- Check the settings layer of banners and the "accept" path
+- More trackers, embeds and consent managers (see the
+  [`good first issue`](https://github.com/jexcellence/privalint/labels/good%20first%20issue) label)
 - Larger tracker list built from the Apache-licensed
   [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database)
 

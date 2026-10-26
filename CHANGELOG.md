@@ -9,6 +9,9 @@ All notable changes are listed here. The format follows
 ### Added
 
 - Browser-based scanner that loads every page in a fresh context and crawls same-host links
-- Rules: `pre-consent-trackers`, `google-fonts`, `impressum-link`
+- Consent check: finds the banner on the start page, clicks "reject", reloads and records what
+  still loads (`--skip-consent` to turn it off)
+- Rules: `pre-consent-trackers`, `trackers-after-reject`, `reject-option`, `google-fonts`,
+  `third-party-embeds`, `third-party-cdns`, `impressum-link`, `privacy-policy-link`
 - CLI with text, JSON, Markdown and SARIF output
 - GitHub Action with job summary and SARIF file
