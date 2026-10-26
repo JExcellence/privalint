@@ -4,3 +4,4 @@ coverage/
 *.sarif
 privalint-report.*
 .DS_Store
+.claude/settings.local.json
