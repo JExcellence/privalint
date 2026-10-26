@@ -60,8 +60,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jexcellence/privalint.git"
+    "url": "git+https://github.com/JExcellence/privalint.git"
   },
-  "homepage": "https://github.com/jexcellence/privalint#readme",
-  "bugs": "https://github.com/jexcellence/privalint/issues"
+  "homepage": "https://github.com/JExcellence/privalint#readme",
+  "bugs": "https://github.com/JExcellence/privalint/issues"
 }
