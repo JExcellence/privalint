@@ -1,4 +1,4 @@
-import { hostMatches } from '../url.js';
+import { findByUrl, type HostPattern } from '../url.js';
 
 export type TrackerCategory =
   | 'analytics'
@@ -8,16 +8,9 @@ export type TrackerCategory =
   | 'marketing-automation'
   | 'tag-manager';
 
-export interface Tracker {
+export interface Tracker extends HostPattern {
   vendor: string;
   category: TrackerCategory;
-  /** Hostnames; subdomains match too. */
-  domains: string[];
-  /**
-   * If set, only these paths count. A path ending in `/` matches everything below it,
-   * otherwise it must match exactly or be followed by `/`.
-   */
-  paths?: string[];
   /**
    * Cookies the vendor's script sets, including on the first-party domain.
    * Strings are name prefixes; use a RegExp where a prefix would be too broad.
@@ -154,18 +147,7 @@ export const trackers: readonly Tracker[] = [
 ];
 
 export function findTrackerByUrl(url: string): Tracker | undefined {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return undefined;
-  }
-  return trackers.find(
-    (tracker) =>
-      tracker.domains.some((domain) => hostMatches(parsed.hostname, domain)) &&
-      (tracker.paths === undefined ||
-        tracker.paths.some((path) => pathMatches(parsed.pathname, path))),
-  );
+  return findByUrl(trackers, url);
 }
 
 export function findTrackerByCookie(name: string): Tracker | undefined {
@@ -174,11 +156,4 @@ export function findTrackerByCookie(name: string): Tracker | undefined {
       typeof pattern === 'string' ? name.startsWith(pattern) : pattern.test(name),
     ),
   );
-}
-
-function pathMatches(pathname: string, path: string): boolean {
-  if (path.endsWith('/')) {
-    return pathname.startsWith(path);
-  }
-  return pathname === path || pathname.startsWith(`${path}/`);
 }

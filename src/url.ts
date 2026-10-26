@@ -19,6 +19,42 @@ export function isFirstParty(url: string, siteUrl: URL): boolean {
   return hostMatches(host, siteHost) || hostMatches(siteHost, host);
 }
 
+/** Anything listed by host, optionally narrowed to some paths. */
+export interface HostPattern {
+  /** Hostnames; subdomains match too. */
+  domains: string[];
+  /**
+   * If set, only these paths count. A path ending in `/` matches everything below it,
+   * otherwise it must match exactly or be followed by `/`.
+   */
+  paths?: string[];
+}
+
+/** Returns the first entry whose hosts and paths match the URL. */
+export function findByUrl<T extends HostPattern>(
+  entries: readonly T[],
+  url: string,
+): T | undefined {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return undefined;
+  }
+  return entries.find(
+    (entry) =>
+      entry.domains.some((domain) => hostMatches(parsed.hostname, domain)) &&
+      (entry.paths === undefined || entry.paths.some((path) => pathMatches(parsed.pathname, path))),
+  );
+}
+
+function pathMatches(pathname: string, path: string): boolean {
+  if (path.endsWith('/')) {
+    return pathname.startsWith(path);
+  }
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
 export function safeHost(url: string): string | undefined {
   try {
     return new URL(url).hostname;
