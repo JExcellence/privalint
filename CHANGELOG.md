@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.2.0 - 2026-10-26
+
 ### Added
 
 - `--lang de` writes findings, fixes and reports in German
