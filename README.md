@@ -94,8 +94,9 @@ On self-hosted runners without it, add `actions/setup-node` before this step.
 
 > [!NOTE]
 > Code scanning expects each finding to point at a file in your repository, which a live page
-> doesn't have. privalint maps every page to a stable path such as
-> `privalint/your-site.de/kontakt`. Treat the SARIF integration as experimental for now.
+> doesn't have. privalint maps every page to a stable path such as `privalint/your-site.de/kontakt`.
+> Alerts show up with message, evidence and fix, but there is no source file to jump to. The
+> [demo scan](.github/workflows/demo.yml) runs this setup every week.
 
 ## CLI
 
