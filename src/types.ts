@@ -1,3 +1,5 @@
+import type { Lang } from './i18n.js';
+
 export type Severity = 'error' | 'warning' | 'info';
 
 export interface RecordedRequest {
@@ -72,6 +74,8 @@ export interface Finding {
 export interface RuleContext {
   siteUrl: URL;
   page: PageSnapshot;
+  /** Language for messages and fixes. */
+  lang: Lang;
 }
 
 export interface Rule {
@@ -96,6 +100,7 @@ export type ConsentSummary = Omit<ConsentObservation, 'afterReject'>;
 
 export interface ScanResult {
   siteUrl: string;
+  lang: Lang;
   scannedAt: string;
   durationMs: number;
   pages: PageSummary[];

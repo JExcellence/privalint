@@ -1,5 +1,6 @@
+import { say } from '../i18n.js';
 import type { Finding, Rule } from '../types.js';
-import { findTrackerHits } from './tracker-hits.js';
+import { categoryLabel, findTrackerHits } from './tracker-hits.js';
 
 const ID = 'pre-consent-trackers';
 
@@ -16,19 +17,31 @@ export const preConsentTrackers: Rule = {
     'Art. 6(1)(a) GDPR',
     'CJEU C-673/17 (Planet49)',
   ],
-  check({ page }) {
-    return findTrackerHits(page.requests, page.cookies).map(({ tracker, evidence }): Finding => {
+  check({ page, lang }) {
+    const hits = findTrackerHits(page.requests, page.cookies, lang);
+    return hits.map(({ tracker, evidence }): Finding => {
+      const { vendor } = tracker;
       const isTagManager = tracker.category === 'tag-manager';
+      const category = categoryLabel(tracker.category, lang);
       return {
         ruleId: ID,
         severity: isTagManager ? 'warning' : 'error',
         message: isTagManager
-          ? `${tracker.vendor} loads before consent and sends the visitor's IP address to a third party.`
-          : `${tracker.vendor} (${tracker.category}) runs before the visitor has given consent.`,
+          ? say(lang, {
+              en: `${vendor} loads before consent and sends the visitor's IP address to a third party.`,
+              de: `${vendor} wird vor der Einwilligung geladen und überträgt die IP-Adresse an einen Dritten.`,
+            })
+          : say(lang, {
+              en: `${vendor} (${category}) runs before the visitor has given consent.`,
+              de: `${vendor} (${category}) läuft, bevor eine Einwilligung vorliegt.`,
+            }),
         pageUrl: page.finalUrl,
-        subject: tracker.vendor,
+        subject: vendor,
         evidence,
-        fix: `Only load ${tracker.vendor} after opt-in, for example by letting your consent manager inject it or by using it in a consent mode that sends no requests until consent is given.`,
+        fix: say(lang, {
+          en: `Only load ${vendor} after opt-in, for example by letting your consent manager inject it or by using it in a consent mode that sends no requests until consent is given.`,
+          de: `${vendor} erst nach der Einwilligung laden, zum Beispiel über das Consent-Tool, oder einen Consent-Modus nutzen, der vorher keine Anfragen sendet.`,
+        }),
       };
     });
   },

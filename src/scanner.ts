@@ -1,5 +1,6 @@
 import { type Browser, chromium } from 'playwright';
 import { observeConsent } from './consent.js';
+import type { Lang } from './i18n.js';
 import { defaultRules } from './rules/index.js';
 import type { Finding, PageSnapshot, Rule, ScanResult } from './types.js';
 import { crawlTarget, isFirstParty, withoutHash } from './url.js';
@@ -12,6 +13,8 @@ export interface ScanOptions {
   /** Navigation timeout per page. */
   timeoutMs?: number | undefined;
   locale?: string | undefined;
+  /** Language of messages and fixes in the findings. */
+  lang?: Lang | undefined;
   rules?: readonly Rule[];
   /**
    * Answer every third-party request with an empty response instead of fetching it.
@@ -41,12 +44,14 @@ const DEFAULTS = {
   settleMs: 2_000,
   timeoutMs: 30_000,
   locale: 'de-DE',
+  lang: 'en',
 } satisfies ScanOptions;
 
 export async function scan(target: string, options: ScanOptions = {}): Promise<ScanResult> {
   const startedAt = Date.now();
   const rules = options.rules ?? defaultRules;
   const maxPages = Math.max(1, options.maxPages ?? DEFAULTS.maxPages);
+  const lang = options.lang ?? DEFAULTS.lang;
   let siteUrl = new URL(target);
 
   const browser = await chromium.launch({
@@ -97,10 +102,11 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           (page.status === null || page.status < 400) &&
           isFirstParty(page.finalUrl, siteUrl),
       )
-      .flatMap((page) => rules.flatMap((rule) => rule.check({ siteUrl, page })));
+      .flatMap((page) => rules.flatMap((rule) => rule.check({ siteUrl, page, lang })));
 
     return {
       siteUrl: siteUrl.href,
+      lang,
       scannedAt: new Date(startedAt).toISOString(),
       durationMs: Date.now() - startedAt,
       pages: snapshots.map((page) => ({

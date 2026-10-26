@@ -1,3 +1,4 @@
+import { type Lang, say } from '../i18n.js';
 import type { PageLink } from '../types.js';
 
 /**
@@ -6,6 +7,9 @@ import type { PageLink } from '../types.js';
  */
 export const linkMatches = (pattern: RegExp) => (link: PageLink) =>
   pattern.test(link.text) || pattern.test(pathOf(link.href));
+
+export const linksChecked = (count: number, lang: Lang) =>
+  say(lang, { en: `${count} links checked`, de: `${count} Links geprüft` });
 
 function pathOf(href: string): string {
   try {
