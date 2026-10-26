@@ -12,6 +12,11 @@ All notable changes are listed here. The format follows
   headless browsers. Local use only; CI runners have no display.
 - `--channel chrome|msedge` scans with an installed browser instead of Playwright's Chromium
 
+### Fixed
+
+- The release workflow builds before `npm publish`, so the `privalint` command is part of the
+  published package
+
 ## 0.1.0 - 2026-10-26
 
 ### Added

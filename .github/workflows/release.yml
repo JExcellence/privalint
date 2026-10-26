@@ -30,6 +30,9 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # Build before publishing: npm validates the bin entry before running prepublishOnly,
+      # and warns that dist/cli.js is missing otherwise.
+      - run: npm run build
 
       - name: Publish to npm
         if: env.HAS_NPM_TOKEN == 'true'
