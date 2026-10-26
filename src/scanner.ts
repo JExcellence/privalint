@@ -1,6 +1,7 @@
 import { type Browser, chromium } from 'playwright';
 import { observeConsent } from './consent.js';
 import type { Lang } from './i18n.js';
+import { applyRegion, type Region } from './legal.js';
 import { defaultRules } from './rules/index.js';
 import type { Finding, PageSnapshot, Rule, ScanResult } from './types.js';
 import { crawlTarget, isFirstParty, withoutHash } from './url.js';
@@ -15,6 +16,8 @@ export interface ScanOptions {
   locale?: string | undefined;
   /** Language of messages and fixes in the findings. */
   lang?: Lang | undefined;
+  /** Country whose law the findings are judged by. */
+  region?: Region | undefined;
   rules?: readonly Rule[];
   /**
    * Answer every third-party request with an empty response instead of fetching it.
@@ -45,6 +48,7 @@ const DEFAULTS = {
   timeoutMs: 30_000,
   locale: 'de-DE',
   lang: 'en',
+  region: 'de',
 } satisfies ScanOptions;
 
 export async function scan(target: string, options: ScanOptions = {}): Promise<ScanResult> {
@@ -52,6 +56,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
   const rules = options.rules ?? defaultRules;
   const maxPages = Math.max(1, options.maxPages ?? DEFAULTS.maxPages);
   const lang = options.lang ?? DEFAULTS.lang;
+  const region = options.region ?? DEFAULTS.region;
   let siteUrl = new URL(target);
 
   const browser = await chromium.launch({
@@ -95,7 +100,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     }
 
     // Pages that failed, returned an error status or redirected off-site are listed but not linted.
-    const findings: Finding[] = snapshots
+    const observed: Finding[] = snapshots
       .filter(
         (page) =>
           page.error === undefined &&
@@ -103,10 +108,12 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           isFirstParty(page.finalUrl, siteUrl),
       )
       .flatMap((page) => rules.flatMap((rule) => rule.check({ siteUrl, page, lang })));
+    const findings = applyRegion(observed, region);
 
     return {
       siteUrl: siteUrl.href,
       lang,
+      region,
       scannedAt: new Date(startedAt).toISOString(),
       durationMs: Date.now() - startedAt,
       pages: snapshots.map((page) => ({

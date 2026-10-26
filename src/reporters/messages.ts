@@ -12,6 +12,7 @@ export interface ReportMessages {
   scanned(pages: string): string;
   couldNotScan(count: number): string;
   fix: string;
+  legalBasis: string;
   rule: string;
   finding: string;
   howToFix: string;
@@ -31,6 +32,7 @@ const en: ReportMessages = {
   scanned: (pages) => `${pages} scanned`,
   couldNotScan: (n) => `Could not scan ${count(n, 'page', 'pages')}:`,
   fix: 'fix:',
+  legalBasis: 'legal basis:',
   rule: 'Rule',
   finding: 'Finding',
   howToFix: 'How to fix',
@@ -61,6 +63,7 @@ const de: ReportMessages = {
   couldNotScan: (n) =>
     `${count(n, 'Seite', 'Seiten')} ${n === 1 ? 'konnte' : 'konnten'} nicht geprüft werden:`,
   fix: 'Lösung:',
+  legalBasis: 'Rechtsgrundlage:',
   rule: 'Regel',
   finding: 'Befund',
   howToFix: 'So beheben Sie es',

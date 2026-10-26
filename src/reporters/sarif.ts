@@ -54,7 +54,13 @@ function toResult(finding: Finding) {
     ruleId: finding.ruleId,
     level: LEVELS[finding.severity],
     message: {
-      text: [finding.message, `Page: ${finding.pageUrl}`, evidence, finding.fix]
+      text: [
+        finding.message,
+        `Page: ${finding.pageUrl}`,
+        evidence,
+        finding.fix,
+        finding.references?.join('; '),
+      ]
         .filter(Boolean)
         .join('\n\n'),
     },

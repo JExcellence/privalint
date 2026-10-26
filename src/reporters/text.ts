@@ -64,5 +64,8 @@ function formatFinding(
   if (finding.fix) {
     lines.push(`      ${paint('cyan', m.fix)} ${finding.fix}`);
   }
+  if (finding.references !== undefined && finding.references.length > 0) {
+    lines.push(paint('dim', `      ${m.legalBasis} ${finding.references.join('; ')}`));
+  }
   return lines;
 }

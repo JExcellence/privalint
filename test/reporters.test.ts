@@ -16,6 +16,7 @@ const finding = (overrides: Partial<Finding> = {}): Finding => ({
 const result = (findings: Finding[]): ScanResult => ({
   siteUrl: 'https://example.de/',
   lang: 'en',
+  region: 'de',
   scannedAt: '2026-01-01T00:00:00.000Z',
   durationMs: 1234,
   pages: [

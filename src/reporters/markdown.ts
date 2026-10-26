@@ -41,12 +41,13 @@ export function formatMarkdown(result: ScanResult): string {
   }
 
   const fixes = new Map(
-    result.findings.filter((f) => f.fix !== undefined).map((f) => [f.ruleId, f.fix ?? '']),
+    result.findings.filter((f) => f.fix !== undefined).map((f) => [f.ruleId, f]),
   );
   if (fixes.size > 0) {
     lines.push('', `<details><summary>${m.howToFix}</summary>`, '');
-    for (const [ruleId, fix] of fixes) {
-      lines.push(`- **${ruleId}**: ${escapeText(fix)}`);
+    for (const [ruleId, { fix, references }] of fixes) {
+      const legal = references?.length ? ` (${m.legalBasis} ${references.join('; ')})` : '';
+      lines.push(`- **${ruleId}**: ${escapeText(`${fix ?? ''}${legal}`)}`);
     }
     lines.push('', '</details>');
   }

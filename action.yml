@@ -21,6 +21,9 @@ inputs:
   lang:
     description: Language of the report and the job summary. One of en, de.
     default: en
+  region:
+    description: Country whose law the findings cite and are judged by. One of de, at, ch, eu.
+    default: de
   sarif-file:
     description: Where to write the SARIF report, relative to the workspace. Empty to skip.
     default: privalint.sarif
@@ -63,6 +66,7 @@ runs:
         FAIL_ON: ${{ inputs.fail-on }}
         DISABLE: ${{ inputs.disable }}
         REPORT_LANG: ${{ inputs.lang }}
+        REGION: ${{ inputs.region }}
         SARIF_FILE: ${{ inputs.sarif-file }}
         JOB_SUMMARY: ${{ inputs.job-summary }}
       run: |
@@ -72,7 +76,7 @@ runs:
         fi
 
         summary="$RUNNER_TEMP/privalint.md"
-        args=("$URL" --max-pages "$MAX_PAGES" --fail-on "$FAIL_ON" --lang "$REPORT_LANG" --output "$summary")
+        args=("$URL" --max-pages "$MAX_PAGES" --fail-on "$FAIL_ON" --lang "$REPORT_LANG" --region "$REGION" --output "$summary")
         if [[ -n "$DISABLE" ]]; then args+=(--disable "$DISABLE"); fi
         if [[ -n "$SARIF_FILE" ]]; then args+=(--output "$SARIF_FILE"); fi
 
