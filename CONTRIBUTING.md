@@ -107,6 +107,15 @@ with a warning while the `NPM_TOKEN` secret is missing), creates the GitHub rele
 changelog section and moves the major tag (`v0`, `v1`, …) so `uses: jexcellence/privalint@v0`
 picks up the release.
 
+The workflow creates the GitHub release as `github-actions[bot]`. To publish it under your own
+account instead, create it yourself, which also pushes the tag and starts the workflow:
+
+```bash
+gh release create v0.2.0 --target main --title v0.2.0 --notes-file notes.md
+```
+
+The workflow then sees the existing release and leaves it alone.
+
 ## Conduct
 
 Be kind and assume good intent. Harassment or personal attacks get you removed from the project.
