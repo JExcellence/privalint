@@ -1,4 +1,5 @@
-import type { PageLink, Rule } from '../types.js';
+import type { Rule } from '../types.js';
+import { linkMatches } from './links.js';
 
 const ID = 'impressum-link';
 
@@ -12,18 +13,6 @@ const LEGAL_NOTICE =
 
 const CONTACT = /kontakt|contact/i;
 
-// Only the path counts, so a domain like impressum-example.de doesn't satisfy every page.
-const matches = (pattern: RegExp) => (link: PageLink) =>
-  pattern.test(link.text) || pattern.test(pathOf(link.href));
-
-const pathOf = (href: string) => {
-  try {
-    return decodeURIComponent(new URL(href).pathname);
-  } catch {
-    return '';
-  }
-};
-
 export const impressumLink: Rule = {
   id: ID,
   title: 'No link to an Impressum',
@@ -33,11 +22,11 @@ export const impressumLink: Rule = {
     'Disable this rule for purely private sites or sites outside its scope.',
   references: ['§ 5 DDG', 'BGH, 20.07.2006, Az. I ZR 228/03'],
   check({ page }) {
-    if (page.links.some(matches(LEGAL_NOTICE))) {
+    if (page.links.some(linkMatches(LEGAL_NOTICE))) {
       return [];
     }
 
-    const contact = page.links.find(matches(CONTACT));
+    const contact = page.links.find(linkMatches(CONTACT));
     if (contact !== undefined) {
       return [
         {

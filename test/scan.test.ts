@@ -59,6 +59,10 @@ describe('scan', () => {
     expect(visited).not.toContain('/clean/broschuere.pdf');
     expect(result.findings).toEqual([
       expect.objectContaining({ ruleId: 'impressum-link', pageUrl: `${origin}/clean/about.html` }),
+      expect.objectContaining({
+        ruleId: 'privacy-policy-link',
+        pageUrl: `${origin}/clean/about.html`,
+      }),
     ]);
   });
 
@@ -70,7 +74,7 @@ describe('scan', () => {
     const about = result.pages.filter((page) => page.finalUrl.endsWith('/clean/about.html'));
     expect(about).toHaveLength(1);
     const aboutFindings = result.findings.filter((f) => f.pageUrl.endsWith('/clean/about.html'));
-    expect(aboutFindings).toHaveLength(1);
+    expect(aboutFindings.map((f) => f.ruleId)).toEqual(['impressum-link', 'privacy-policy-link']);
   });
 
   it('fails when the start page cannot be loaded', async () => {
@@ -85,7 +89,10 @@ describe('scan', () => {
       expect.arrayContaining([
         'google-fonts:error',
         'pre-consent-trackers:error',
+        'third-party-embeds:warning',
+        'third-party-cdns:info',
         'impressum-link:warning',
+        'privacy-policy-link:warning',
       ]),
     );
 

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { googleFonts, impressumLink, preConsentTrackers } from '../src/rules/index.js';
+import {
+  googleFonts,
+  impressumLink,
+  preConsentTrackers,
+  privacyPolicyLink,
+  thirdPartyCdns,
+  thirdPartyEmbeds,
+} from '../src/rules/index.js';
 import type { Rule } from '../src/types.js';
 import { cookie, request, SITE, snapshot } from './helpers.js';
 
@@ -107,5 +114,52 @@ describe('impressum-link', () => {
       links: [{ text: 'Kontakt', href: 'https://example.de/kontakt' }],
     });
     expect(run(impressumLink, page)[0]?.severity).toBe('info');
+  });
+});
+
+describe('third-party-embeds', () => {
+  it('groups embed requests by vendor', () => {
+    const page = snapshot({
+      requests: [
+        request('https://www.youtube-nocookie.com/embed/abc', 'document'),
+        request('https://i.ytimg.com/vi/abc/hqdefault.jpg', 'image'),
+        request('https://www.google.com/recaptcha/api.js'),
+      ],
+    });
+    const findings = run(thirdPartyEmbeds, page);
+    expect(findings.map((f) => f.subject)).toEqual(['YouTube', 'Google reCAPTCHA']);
+    expect(findings[0]?.evidence).toHaveLength(2);
+  });
+
+  it('does not flag google.com search or the Meta pixel', () => {
+    const page = snapshot({
+      requests: [
+        request('https://www.google.com/search?q=x'),
+        request('https://www.facebook.com/tr?id=1'),
+      ],
+    });
+    expect(run(thirdPartyEmbeds, page)).toEqual([]);
+  });
+});
+
+describe('third-party-cdns', () => {
+  it('notes public CDNs as info', () => {
+    const page = snapshot({ requests: [request('https://cdn.jsdelivr.net/npm/alpinejs@3')] });
+    expect(run(thirdPartyCdns, page)[0]).toMatchObject({ severity: 'info', subject: 'jsDelivr' });
+  });
+});
+
+describe('privacy-policy-link', () => {
+  it.each([
+    ['Datenschutz', 'https://example.de/ds'],
+    ['Privacy Policy', 'https://example.com/legal'],
+    ['', 'https://example.de/datenschutzerklaerung/'],
+  ])('accepts a link labelled %j pointing to %s', (text, href) => {
+    expect(run(privacyPolicyLink, snapshot({ links: [{ text, href }] }))).toEqual([]);
+  });
+
+  it('warns when there is none', () => {
+    const page = snapshot({ links: [{ text: 'Impressum', href: 'https://example.de/impressum' }] });
+    expect(run(privacyPolicyLink, page)[0]?.severity).toBe('warning');
   });
 });
