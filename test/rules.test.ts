@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Lang } from '../src/i18n.js';
 import {
   googleFonts,
   impressumLink,
@@ -10,7 +11,8 @@ import {
 import type { Rule } from '../src/types.js';
 import { cookie, request, SITE, snapshot } from './helpers.js';
 
-const run = (rule: Rule, page = snapshot()) => rule.check({ siteUrl: SITE, page });
+const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
+  rule.check({ siteUrl: SITE, page, lang });
 
 describe('pre-consent-trackers', () => {
   it('passes a clean page', () => {
@@ -161,5 +163,32 @@ describe('privacy-policy-link', () => {
   it('warns when there is none', () => {
     const page = snapshot({ links: [{ text: 'Impressum', href: 'https://example.de/impressum' }] });
     expect(run(privacyPolicyLink, page)[0]?.severity).toBe('warning');
+  });
+});
+
+describe('German messages', () => {
+  it('translates message, fix and evidence', () => {
+    const page = snapshot({
+      requests: [request('https://fonts.googleapis.com/css2?family=Inter', 'stylesheet')],
+    });
+    const [finding] = run(googleFonts, page, 'de');
+    expect(finding?.message).toBe('Schriften werden von Google geladen (1 Anfrage).');
+    expect(finding?.fix).toContain('selbst hosten');
+  });
+
+  it('labels tracker categories and evidence in German', () => {
+    const page = snapshot({
+      requests: [request('https://www.googletagmanager.com/gtag/js?id=G-1')],
+    });
+    const [finding] = run(preConsentTrackers, page, 'de');
+    expect(finding?.message).toBe(
+      'Google Analytics (Analyse) läuft, bevor eine Einwilligung vorliegt.',
+    );
+    expect(finding?.evidence[0]).toMatch(/^Anfrage https:/);
+  });
+
+  it('keeps English as the default wording', () => {
+    const [finding] = run(privacyPolicyLink, snapshot());
+    expect(finding?.message).toBe('No link to a privacy policy was found on this page.');
   });
 });

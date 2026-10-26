@@ -4,6 +4,8 @@
 [![npm](https://img.shields.io/npm/v/privalint)](https://www.npmjs.com/package/privalint)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
+**Deutsch:** [README.de.md](README.de.md)
+
 Lint your website for the GDPR mistakes that get people warning letters: trackers that fire before
 consent or keep running after "reject", Google Fonts loaded from Google, embeds and a missing
 Impressum.
@@ -84,6 +86,8 @@ preview URL from your hosting provider's deployment event or action output as `u
 | `max-pages`   | `1`               | How many pages of the same site to crawl.   |
 | `fail-on`     | `error`           | `error`, `warning` or `never`.              |
 | `disable`     |                   | Comma-separated rule ids to skip.           |
+| `lang`        | `en`              | Language of the report: `en` or `de`.       |
+| `region`      | `de`              | Whose law to cite: `de`, `at`, `ch`, `eu`.  |
 | `sarif-file`  | `privalint.sarif` | Where to write SARIF. Empty to skip.        |
 | `job-summary` | `true`            | Add the Markdown report to the job summary. |
 
@@ -113,6 +117,8 @@ privalint <url> [options]
       --settle <ms>       Wait this long after load for late tags (default 2000)
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
+      --lang <lang>       Language of the report: en | de (default en)
+      --region <region>   Whose law to cite: de | at | ch | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
@@ -127,12 +133,34 @@ The first run needs a browser. If Playwright hasn't installed one yet:
 npx playwright install chromium
 ```
 
+## Countries and languages
+
+The same finding can be a clear violation in one country and a hint in another. `--region` picks
+whose law privalint cites and how strictly it judges:
+
+| Region         | Cookies and tracking                 | Imprint                               | Changes                                                                          |
+| -------------- | ------------------------------------ | ------------------------------------- | -------------------------------------------------------------------------------- |
+| `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                               | none                                                                             |
+| `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                 | none                                                                             |
+| `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce) | `pre-consent-trackers`, `third-party-embeds` and `impressum-link` drop one level |
+| `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC           | none                                                                             |
+
+Every finding lists its legal basis for the chosen country. Trackers that run after an explicit
+"reject" stay an error everywhere, Switzerland included (Art. 30 Abs. 2 lit. b DSG). If a Swiss
+site also targets visitors in the EU, scan it with `--region eu` as well.
+
+`--lang de` writes findings, fixes and the report in German:
+
+```bash
+npx privalint https://ihre-seite.ch --region ch --lang de
+```
+
 ## Use it from code
 
 ```ts
 import { scan } from 'privalint';
 
-const result = await scan('https://your-site.de', { maxPages: 10 });
+const result = await scan('https://your-site.de', { maxPages: 10, region: 'at', lang: 'de' });
 for (const finding of result.findings) {
   console.log(finding.severity, finding.ruleId, finding.pageUrl);
 }

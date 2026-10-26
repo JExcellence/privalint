@@ -1,3 +1,6 @@
+import type { Lang } from './i18n.js';
+import type { Region } from './legal.js';
+
 export type Severity = 'error' | 'warning' | 'info';
 
 export interface RecordedRequest {
@@ -67,11 +70,15 @@ export interface Finding {
   fix?: string;
   /** What the finding is about, e.g. a vendor. Keeps fingerprints stable across runs. */
   subject?: string;
+  /** Legal basis in the country the scan was run for. */
+  references?: string[];
 }
 
 export interface RuleContext {
   siteUrl: URL;
   page: PageSnapshot;
+  /** Language for messages and fixes. */
+  lang: Lang;
 }
 
 export interface Rule {
@@ -96,6 +103,8 @@ export type ConsentSummary = Omit<ConsentObservation, 'afterReject'>;
 
 export interface ScanResult {
   siteUrl: string;
+  lang: Lang;
+  region: Region;
   scannedAt: string;
   durationMs: number;
   pages: PageSummary[];

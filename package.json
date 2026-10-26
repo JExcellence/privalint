@@ -15,7 +15,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.de.md"
   ],
   "engines": {
     "node": ">=20.12"
@@ -41,7 +42,11 @@
     "impressum",
     "lint",
     "playwright",
-    "github-action"
+    "github-action",
+    "tdddg",
+    "dsg",
+    "oesterreich",
+    "schweiz"
   ],
   "license": "MIT",
   "dependencies": {

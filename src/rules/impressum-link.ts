@@ -1,5 +1,6 @@
+import { say } from '../i18n.js';
 import type { Rule } from '../types.js';
-import { linkMatches } from './links.js';
+import { linkMatches, linksChecked } from './links.js';
 
 const ID = 'impressum-link';
 
@@ -21,7 +22,7 @@ export const impressumLink: Rule = {
     'directly reachable and always available, which in practice means a link on every page. ' +
     'Disable this rule for purely private sites or sites outside its scope.',
   references: ['§ 5 DDG', 'BGH, 20.07.2006, Az. I ZR 228/03'],
-  check({ page }) {
+  check({ page, lang }) {
     if (page.links.some(linkMatches(LEGAL_NOTICE))) {
       return [];
     }
@@ -32,10 +33,16 @@ export const impressumLink: Rule = {
         {
           ruleId: ID,
           severity: 'info',
-          message: 'No direct Impressum link, only a contact link.',
+          message: say(lang, {
+            en: 'No direct Impressum link, only a contact link.',
+            de: 'Kein direkter Impressum-Link, nur ein Kontakt-Link.',
+          }),
           pageUrl: page.finalUrl,
-          evidence: [`contact link: ${contact.href}`],
-          fix: 'Two clicks via "Kontakt" can be enough if the Impressum is clearly linked from there (BGH I ZR 228/03), but a direct "Impressum" link next to it is safer.',
+          evidence: [say(lang, { en: 'contact link: ', de: 'Kontakt-Link: ' }) + contact.href],
+          fix: say(lang, {
+            en: 'Two clicks via "Kontakt" can be enough if the Impressum is clearly linked from there (BGH I ZR 228/03), but a direct "Impressum" link next to it is safer.',
+            de: 'Zwei Klicks über „Kontakt“ können reichen, wenn das Impressum dort klar verlinkt ist (BGH I ZR 228/03). Sicherer ist ein direkter Link „Impressum“ daneben.',
+          }),
         },
       ];
     }
@@ -44,10 +51,16 @@ export const impressumLink: Rule = {
       {
         ruleId: ID,
         severity: 'warning',
-        message: 'No link to an Impressum or legal notice was found on this page.',
+        message: say(lang, {
+          en: 'No link to an Impressum or legal notice was found on this page.',
+          de: 'Auf dieser Seite wurde kein Link zu einem Impressum gefunden.',
+        }),
         pageUrl: page.finalUrl,
-        evidence: [`${page.links.length} links checked`],
-        fix: 'Add a link labelled "Impressum" to a part of the layout that appears on every page, usually the footer.',
+        evidence: [linksChecked(page.links.length, lang)],
+        fix: say(lang, {
+          en: 'Add a link labelled "Impressum" to a part of the layout that appears on every page, usually the footer.',
+          de: 'Einen Link „Impressum“ in einen Bereich einbauen, der auf jeder Seite erscheint, meist den Footer.',
+        }),
       },
     ];
   },

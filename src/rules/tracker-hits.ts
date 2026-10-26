@@ -1,4 +1,10 @@
-import { findTrackerByCookie, findTrackerByUrl, type Tracker } from '../data/trackers.js';
+import {
+  findTrackerByCookie,
+  findTrackerByUrl,
+  type Tracker,
+  type TrackerCategory,
+} from '../data/trackers.js';
+import { type Lang, say, type Text } from '../i18n.js';
 import type { RecordedCookie, RecordedRequest } from '../types.js';
 
 const MAX_EVIDENCE = 5;
@@ -13,7 +19,9 @@ export interface TrackerHit {
 export function findTrackerHits(
   requests: readonly RecordedRequest[],
   cookies: readonly RecordedCookie[],
+  lang: Lang,
 ): TrackerHit[] {
+  const requestLabel = say(lang, { en: 'request', de: 'Anfrage' });
   const hits = new Map<string, { tracker: Tracker; evidence: Set<string> }>();
   const record = (tracker: Tracker, evidence: string) => {
     const hit = hits.get(tracker.vendor) ?? { tracker, evidence: new Set<string>() };
@@ -24,7 +32,7 @@ export function findTrackerHits(
   for (const request of requests) {
     const tracker = findTrackerByUrl(request.url);
     if (tracker !== undefined) {
-      record(tracker, `request ${request.url}`);
+      record(tracker, `${requestLabel} ${request.url}`);
     }
   }
   for (const cookie of cookies) {
@@ -41,3 +49,15 @@ export function findTrackerHits(
     evidence: [...evidence].slice(0, MAX_EVIDENCE),
   }));
 }
+
+const CATEGORY_LABELS: Record<TrackerCategory, Text> = {
+  analytics: { en: 'analytics', de: 'Analyse' },
+  advertising: { en: 'advertising', de: 'Werbung' },
+  'session-replay': { en: 'session-replay', de: 'Session-Replay' },
+  social: { en: 'social', de: 'Social Media' },
+  'marketing-automation': { en: 'marketing-automation', de: 'Marketing-Automatisierung' },
+  'tag-manager': { en: 'tag-manager', de: 'Tag-Manager' },
+};
+
+export const categoryLabel = (category: TrackerCategory, lang: Lang) =>
+  say(lang, CATEGORY_LABELS[category]);
