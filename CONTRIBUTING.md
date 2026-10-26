@@ -105,8 +105,8 @@ Guidelines for findings:
 
 Maintainers bump the version in `package.json` and move the "Unreleased" changelog entries
 under the new version, then tag `vX.Y.Z` on `main`. The release workflow checks that the tag
-matches `package.json`, runs lint, typecheck and tests, publishes to npm with provenance (skipped
-with a warning while the `NPM_TOKEN` secret is missing), creates the GitHub release from the
+matches `package.json`, runs lint, typecheck and tests, publishes to npm through npm's trusted
+publishing (no token, provenance included), creates the GitHub release from the
 changelog section and moves the major tag (`v0`, `v1`, …) so `uses: jexcellence/privalint@v0`
 picks up the release.
 

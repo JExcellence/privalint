@@ -6,6 +6,10 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- Releases publish to npm through trusted publishing instead of a stored token
+
 ## 0.1.1 - 2026-10-26
 
 ### Added

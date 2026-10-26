@@ -6,21 +6,20 @@ on:
 
 permissions:
   contents: write # to move the major version tag
-  id-token: write # for npm provenance
+  id-token: write # npm trusted publishing (OIDC) and provenance
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          # Trusted publishing needs npm 11.5.1+, which ships with Node 24.
+          node-version: 24
           registry-url: https://registry.npmjs.org
-          cache: npm
+          package-manager-cache: false # no caches in release builds
 
       - name: Check that the tag matches package.json
         run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
@@ -34,15 +33,9 @@ jobs:
       # and warns that dist/cli.js is missing otherwise.
       - run: npm run build
 
-      - name: Publish to npm
-        if: env.HAS_NPM_TOKEN == 'true'
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Explain the skipped npm publish
-        if: env.HAS_NPM_TOKEN != 'true'
-        run: echo "::warning::NPM_TOKEN is not set, so this release was not published to npm. The GitHub Action release still works."
+      # Authenticates through the trusted publisher configured on npmjs.com, no token needed.
+      # Provenance is added automatically.
+      - run: npm publish --access public
 
       - name: Create the GitHub release from the changelog
         env:
