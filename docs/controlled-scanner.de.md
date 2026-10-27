@@ -102,9 +102,11 @@ HTTP-Status bzw. betroffenes Limit.
 - `responses`: empfangene HTTP-Antworten einschließlich Fehlerantworten und Redirects. Eine
   Anfrage kann nach Empfang einer Antwort noch fehlschlagen.
 - `finished`: Browser-`requestfinished`-Ereignisse, gegebenenfalls einschließlich HTTP-Fehlern.
-- `failed`: `requestfailed` plus bei Erfassungsende noch offene Anfragen, jede genau einmal.
+- `failed` (alter Sammelwert): `requestfailed` plus bei Erfassungsende noch offene Anfragen, jede genau einmal.
   Nach Abschluss gilt `requests = finished + failed`.
 - `blocked`: Teilmenge von `failed`, explizit durch die Sicherheits-Policy abgelehnt.
+- Neue Konsumenten verwenden getrennt `skippedRequests`, `failedRequests` und `securityBlockedRequests`.
+  Ein ausgelassener Beacon ist kein Ladefehler. Siehe [Berichtsvertrag](configuration.de.md).
 - `httpErrors`: Teilmenge von `responses`, Status >= 400. Kein Datenschutzbefund.
 - `bytes`: konsumierte Adapter-Body-Bytes, einschließlich des überschreitenden Chunks.
 - `issueCount`: sämtliche technischen Probleme. Eine Anfrage kann HTTP-Fehler und anschließenden
@@ -142,6 +144,8 @@ für fehlende Dokumentinhalte laufen erst bei vollständig beobachtetem initiale
 Regeln können `requires` angeben; ohne Angabe benötigen sie ein vollständiges Dokument.
 
 Consent ergänzt die vorhandenen Felder um `state`:
+
+Zusätzlich gibt es ein ausdrückliches `outcome`-/`reason`-Paar; siehe [Berichtsintegration](configuration.de.md).
 
 | Wert                 | Bedeutung                                                                 |
 | -------------------- | ------------------------------------------------------------------------- |

@@ -54,6 +54,28 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
     accept: '#cc-main [data-role="all"]',
     reject: '#cc-main [data-role="necessary"]',
   },
+  {
+    name: 'CookieFirst',
+    accept:
+      '[data-cookiefirst-action="accept"], :is(#cookiefirst-root, .cookiefirst-root) [data-testid="actionButton-accept"]',
+    reject:
+      '[data-cookiefirst-action="reject"], :is(#cookiefirst-root, .cookiefirst-root) [data-testid="actionButton-reject"]',
+  },
+  {
+    name: 'Osano',
+    accept: '.osano-cm-accept-all',
+    reject: '.osano-cm-deny-all',
+  },
+  {
+    name: 'Termly',
+    accept: '[data-tid="banner-accept"], [class*="termly-styles-module-acceptButton-"]',
+    reject: '[data-tid="banner-decline"]',
+  },
+  {
+    name: 'Sourcepoint',
+    accept: 'button.sp_choice_type_11',
+    reject: 'button.sp_choice_type_13',
+  },
 ];
 
 // Unanchored on purpose: "Alle Cookies akzeptieren" and "Accept all cookies" must both match.
@@ -94,19 +116,28 @@ export async function observeConsent(
   if (options.signal?.aborted) throw new DOMException('Consent check aborted', 'AbortError');
   const banner = await findBanner(page);
   if (banner === undefined) {
-    return { bannerFound: false, rejected: false, state: 'not-detected' };
+    return {
+      bannerFound: false,
+      rejected: false,
+      state: 'not-detected',
+      outcome: 'no-banner-detected',
+      reason: 'no-supported-banner',
+    };
   }
 
   const observation: ConsentObservation = {
     bannerFound: true,
     rejected: false,
     state: 'reject-unavailable',
+    outcome: 'unsupported-banner',
+    reason: 'no-supported-reject-control',
     ...(banner.cmp === undefined ? {} : { cmp: banner.cmp }),
     ...(banner.acceptLabel === undefined ? {} : { acceptLabel: banner.acceptLabel }),
     ...(banner.rejectLabel === undefined ? {} : { rejectLabel: banner.rejectLabel }),
     ...(banner.payOrOk ? { payOrOk: true } : {}),
   };
   if (banner.reject === undefined) {
+    if (banner.acceptLabel === undefined) observation.reason = 'unsupported-banner-markup';
     return observation;
   }
 
@@ -129,10 +160,18 @@ export async function observeConsent(
       ...observation,
       rejected: true,
       state: 'reject-tested',
+      outcome: 'reject-succeeded',
+      reason: 'reject-clicked-and-reloaded',
       afterReject: { requests: requests.slice(firstRequest), cookies },
     };
   } catch (error) {
-    return { ...observation, state: 'interaction-failed', error: classifyLoadError(error) };
+    return {
+      ...observation,
+      state: 'interaction-failed',
+      outcome: 'interaction-failed',
+      reason: 'browser-interaction-failed',
+      error: classifyLoadError(error),
+    };
   }
 }
 
@@ -145,11 +184,13 @@ interface Banner {
 }
 
 async function findBanner(page: Page): Promise<Banner | undefined> {
-  for (const cmp of KNOWN_CMPS) {
-    const accept = await firstVisible(page.locator(cmp.accept));
-    if (accept !== undefined) {
-      const reject = await firstVisible(page.locator(cmp.reject));
-      return describe(accept, reject, cmp.name);
+  for (const frame of page.frames()) {
+    for (const cmp of KNOWN_CMPS) {
+      const accept = await firstVisible(frame.locator(cmp.accept));
+      if (accept !== undefined) {
+        const reject = await firstVisible(frame.locator(cmp.reject));
+        return describe(accept, reject, cmp.name);
+      }
     }
   }
 
@@ -168,7 +209,38 @@ async function findBanner(page: Page): Promise<Banner | undefined> {
     );
     if (accept !== undefined) {
       const reject = await firstVisible(clickable.filter({ hasText: REJECT_LABEL }));
-      return describe(accept, reject);
+      const realCookieBanner = await frame
+        .locator('script')
+        .evaluateAll((elements) =>
+          elements.some((element) =>
+            /real-cookie-banner|devowl-wp-react-cookie-banner/i.test(
+              (element.getAttribute('src') ?? '') + (element.textContent ?? ''),
+            ),
+          ),
+        )
+        .catch(() => false);
+      const cmp = realCookieBanner ? 'Real Cookie Banner' : undefined;
+      return describe(accept, reject, cmp);
+    }
+  }
+  // Recognizable consent UI with unsupported controls is different from no banner detected.
+  for (const frame of page.frames()) {
+    const candidates = frame.locator(
+      '[role="dialog"], [aria-modal="true"], [id*="cookie-banner"], [class*="cookie-banner"]',
+    );
+    const count = Math.min(await candidates.count().catch(() => 0), 10);
+    for (let index = 0; index < count; index++) {
+      const candidate = candidates.nth(index);
+      if (!(await candidate.isVisible().catch(() => false))) continue;
+      const text = await candidate.innerText({ timeout: 500 }).catch(() => '');
+      if (
+        CONSENT_CONTEXT.test(text) &&
+        (await candidate
+          .locator(CLICKABLE)
+          .count()
+          .catch(() => 0)) > 0
+      )
+        return {};
     }
   }
   return undefined;

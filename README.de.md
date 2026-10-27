@@ -69,6 +69,37 @@ Details, Hintergründe und Lösungen stehen auf Englisch in [`docs/rules`](docs/
 Der Bericht erscheint auf Deutsch in der Zusammenfassung des Workflow-Laufs. Alle Eingaben und
 die Anbindung an GitHub Code Scanning beschreibt die [englische README](README.md#github-action).
 
+Mit `pr-comment: true` wird ein vorhandener Bot-Kommentar aktualisiert oder einmalig erstellt.
+Dafür benötigt der Job `pull-requests: write`. Bei Fork-PRs oder einem schreibgeschützten Token
+wird der Kommentar ohne Scanfehler ausgelassen. Befunde mit einem fehlgeschlagenen Scan-Schritt
+verhindern den Kommentar nicht.
+
+## Konfiguration, Berichtsversion und Fortschritt
+
+Die CLI liest eine vorhandene `privalint.config.json`, alternativ `--config <datei>`.
+CLI-Argumente haben Vorrang. JSON kann URL, Seitenlimit, Sprache, Länderprofil, Ladeoptionen,
+Regel-Schweregrade und eine Anbieter-Freigabeliste enthalten. API-Aufrufer setzen `ruleSettings`
+und `allow` ausdrücklich; `scan()` liest keine Konfigurationsdateien automatisch.
+
+```json
+{
+  "url": "https://example.org",
+  "maxPages": 20,
+  "rules": { "third-party-cdns": "warning", "impressum-link": "off" },
+  "allow": { "vendors": ["Google Analytics"] }
+}
+```
+
+Freigegebene Anbieter bleiben als Hinweise mit Policy-Kennzeichnung sichtbar. Eine Freigabe ist
+kein Nachweis von Einwilligung oder rechtlicher Zulässigkeit. Details stehen in der
+[deutschen Anleitung](docs/configuration.de.md) und der [englischen Fassung](docs/configuration.md).
+
+Neue Berichte enthalten `schemaVersion`, `scannerVersion` und die wirksamen `options`.
+Ohne Schemaversion handelt es sich um einen alten Bericht. `ruleEvaluations[].outcome`
+unterscheidet „Geprüft, kein Befund“, „Befund erkannt“ und „Nicht prüfbar“ mit Begründung.
+`onProgress` liefert tatsächliche Phasen mit verstrichener Zeit und bereinigten Seiten-URLs,
+keinen geschätzten Prozentwert. Die Exit-Code-Policy von CLI/Action bleibt erhalten.
+
 ## Öffentliche Webscanner und kontrollierte Erfassung
 
 `scan()` unterstützt einen `networkAdapter` und ein `AbortSignal`. Jeder HTTP-Hop einschließlich

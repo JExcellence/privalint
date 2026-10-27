@@ -106,9 +106,11 @@ and limit name. They are technical observations, not findings.
 - `responses`: received HTTP responses, including redirects and errors. An HTTP response may
   subsequently fail, so this counter can overlap `failed`.
 - `finished`: browser `requestfinished` events, including HTTP errors if the browser finishes them.
-- `failed`: `requestfailed` events plus requests still pending at observation end. Each request
+- `failed` (legacy aggregate): `requestfailed` events plus requests still pending at observation end. Each request
   contributes once; `requests = finished + failed` in a finalized capture.
 - `blocked`: subset of failed requests explicitly denied as `security-blocked`.
+- New consumers use the disjoint `skippedRequests`, `failedRequests` and `securityBlockedRequests`
+  instead. An intentional beacon omission is a skip, not a load error. See [report contract](configuration.md).
 - `httpErrors`: subset of responses with status >= 400, not a privacy violation.
 - `bytes`: adapter response-body bytes consumed, including the chunk exceeding a limit.
 - `issueCount`: all technical issues, including non-request waits/protocol denials. One request
@@ -140,6 +142,8 @@ do not run against incomplete initial loading. Custom rules can declare `require
 complete document is required. Built-in rule IDs carry their observation requirements internally.
 
 Consent adds `state` without removing existing fields:
+
+It also supplies an explicit `outcome`/`reason` pair; see [configuration and report APIs](configuration.md).
 
 | State                | Meaning                                                                    |
 | -------------------- | -------------------------------------------------------------------------- |

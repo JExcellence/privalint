@@ -22,9 +22,10 @@ export function assessPage(
   lang: Lang,
   isStart: boolean,
   consentEnabled: boolean,
+  catalog: readonly Rule[] = rules,
 ): { findings: Finding[]; evaluations: RuleEvaluation[] } {
   const findings: Finding[] = [];
-  const allRules = new Map([...defaultRules, ...rules].map((rule) => [rule.id, rule]));
+  const allRules = new Map([...defaultRules, ...catalog].map((rule) => [rule.id, rule]));
   const selected = new Set(rules.map((rule) => rule.id));
   const complete =
     page.capture?.beforeConsentComplete ?? page.capture?.complete ?? page.error === undefined;
@@ -36,7 +37,8 @@ export function assessPage(
   const available: Record<ObservationKind, boolean> = {
     document: validPage && complete && (page.capture?.document ?? true),
     network: validPage,
-    consent: validPage && page.consent?.bannerFound === true,
+    consent:
+      validPage && page.consent?.bannerFound === true && page.consent.acceptLabel !== undefined,
     'after-reject': validPage && page.consent?.rejected === true,
   };
   const input: PageSnapshot = {
@@ -60,7 +62,15 @@ export function assessPage(
     const requirements = rule.requires ?? REQUIREMENTS[rule.id] ?? ['document'];
     const consentRule = requirements.some((kind) => kind === 'consent' || kind === 'after-reject');
     if (!selected.has(rule.id)) {
-      return { ruleId: rule.id, status: 'skipped', reason: 'disabled', partial: false };
+      return {
+        ruleId: rule.id,
+        status: 'skipped',
+        reason: 'disabled',
+        partial: false,
+        outcome: 'not-evaluable',
+        explanation: 'disabled',
+        findingCount: 0,
+      };
     }
     if (consentRule && (!isStart || !consentEnabled)) {
       return {
@@ -68,6 +78,9 @@ export function assessPage(
         status: 'skipped',
         reason: !isStart ? 'not-start-page' : 'consent-disabled',
         partial: false,
+        outcome: 'not-evaluable',
+        explanation: !isStart ? 'not-start-page' : 'consent-disabled',
+        findingCount: 0,
       };
     }
     if (!requirements.every((kind) => available[kind])) {
@@ -76,15 +89,33 @@ export function assessPage(
         status: 'not-evaluable',
         reason: 'missing-observation',
         partial: true,
+        outcome: 'not-evaluable',
+        explanation: requirements.includes('after-reject')
+          ? (page.consent?.reason ?? 'missing-reject-observation')
+          : requirements.includes('consent')
+            ? (page.consent?.reason ?? 'missing-consent-observation')
+            : 'incomplete-document',
+        findingCount: 0,
       };
     }
-    findings.push(...rule.check({ page: input, siteUrl, lang }));
+    const detected = rule.check({ page: input, siteUrl, lang });
+    findings.push(...detected);
+    const partial = requirements.includes('after-reject')
+      ? page.consent?.afterRejectComplete === false
+      : !complete;
     return {
       ruleId: rule.id,
       status: 'executed',
-      partial: requirements.includes('after-reject')
-        ? page.consent?.afterRejectComplete === false
-        : !complete,
+      partial,
+      outcome:
+        detected.length > 0 ? 'finding-detected' : partial ? 'not-evaluable' : 'checked-no-finding',
+      explanation:
+        detected.length > 0
+          ? 'positive-evidence'
+          : partial
+            ? 'incomplete-observation'
+            : 'required-observations-available',
+      findingCount: detected.length,
     };
   });
   return { findings, evaluations };

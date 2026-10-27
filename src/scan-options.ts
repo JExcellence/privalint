@@ -1,7 +1,7 @@
 import type { Lang } from './i18n.js';
 import type { Region } from './legal.js';
 import type { NetworkAdapter, NetworkLimits } from './network.js';
-import type { PageSnapshot, Rule } from './types.js';
+import type { PageSnapshot, Rule, RuleSettings, ScanProgressEvent } from './types.js';
 export interface ScanOptions {
   maxPages?: number | undefined;
   settleMs?: number | undefined;
@@ -12,6 +12,10 @@ export interface ScanOptions {
   /** Tool classification profile; does not determine which law applies. */
   region?: Region | undefined;
   rules?: readonly Rule[];
+  ruleSettings?: RuleSettings;
+  allow?: { vendors: readonly string[] };
+  /** Synchronous notification; exceptions propagate after resource cleanup. */
+  onProgress?: (event: ScanProgressEvent) => void;
   /** Legacy test helper: third-party requests receive synthetic empty responses. */
   offline?: boolean;
   consentCheck?: boolean | undefined;

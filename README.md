@@ -77,19 +77,25 @@ jobs:
 The report shows up in the job summary. With the SARIF upload, findings also appear under
 **Security → Code scanning**.
 
+To create/update a PR comment, set `pr-comment: true` and grant the job `pull-requests: write`.
+The action updates its own marked bot comment. Fork PRs and read-only tokens skip commenting
+without failing the scan. Reports are posted even when findings make the scan step fail.
+See [configuration and report APIs](docs/configuration.md) ([Deutsch](docs/configuration.de.md)).
+
 Scanning a preview deployment instead of production catches problems before they ship. Pass the
 preview URL from your hosting provider's deployment event or action output as `url`.
 
-| Input         | Default           |                                             |
-| ------------- | ----------------- | ------------------------------------------- |
-| `url`         |                   | Page to scan. Required.                     |
-| `max-pages`   | `1`               | How many pages of the same site to crawl.   |
-| `fail-on`     | `error`           | `error`, `warning` or `never`.              |
-| `disable`     |                   | Comma-separated rule ids to skip.           |
-| `lang`        | `en`              | Language of the report: `en` or `de`.       |
-| `region`      | `de`              | Whose law to cite: `de`, `at`, `ch`, `eu`.  |
-| `sarif-file`  | `privalint.sarif` | Where to write SARIF. Empty to skip.        |
-| `job-summary` | `true`            | Add the Markdown report to the job summary. |
+| Input         | Default           |                                                    |
+| ------------- | ----------------- | -------------------------------------------------- |
+| `url`         |                   | Page to scan. Required.                            |
+| `max-pages`   | `1`               | How many pages of the same site to crawl.          |
+| `fail-on`     | `error`           | `error`, `warning` or `never`.                     |
+| `disable`     |                   | Comma-separated rule ids to skip.                  |
+| `lang`        | `en`              | Language of the report: `en` or `de`.              |
+| `region`      | `de`              | Whose law to cite: `de`, `at`, `ch`, `eu`.         |
+| `sarif-file`  | `privalint.sarif` | Where to write SARIF. Empty to skip.               |
+| `job-summary` | `true`            | Add the Markdown report to the job summary.        |
+| `pr-comment`  | `false`           | Create/update a same-repository PR report comment. |
 
 Outputs: `exit-code`, and `sarif-file` when a report was written.
 
@@ -157,6 +163,20 @@ npx privalint https://ihre-seite.ch --region ch --lang de
 
 ## Use it from code
 
+CLI configuration is loaded from `privalint.config.json` when present, or `--config <file>`.
+CLI flags override JSON settings. API callers pass `ruleSettings` and `allow` explicitly;
+the API never loads a config file implicitly. Allowed vendors remain visible as info with a policy
+annotation; allowlisting does not establish consent or legal approval.
+
+```json
+{
+  "url": "https://example.org",
+  "maxPages": 20,
+  "rules": { "third-party-cdns": "warning", "impressum-link": "off" },
+  "allow": { "vendors": ["Google Analytics"] }
+}
+```
+
 ```ts
 import { scan } from 'privalint';
 
@@ -165,6 +185,13 @@ for (const finding of result.findings) {
   console.log(finding.severity, finding.ruleId, finding.pageUrl);
 }
 ```
+
+New reports carry `schemaVersion`, `scannerVersion` and normalized `options`. An absent
+schema version means a legacy report, not version 1. `ruleEvaluations[].outcome` explicitly
+distinguishes `checked-no-finding`, `finding-detected` and `not-evaluable`, always with a fixed
+`explanation` code. `onProgress` emits real stages (`starting`, `loading-page`, `checking-consent`,
+`evaluating-rules`, `completed`) with elapsed time and redacted page URLs; it does not invent a
+percentage. The CLI and Action keep their existing finding-threshold exit policy.
 
 ### Public web scanners and controlled capture
 
@@ -232,7 +259,7 @@ No report claims legal compliance.
 ## Roadmap
 
 - PR comments from the Action
-- Config file (`privalint.config.ts`) for allowlists and per-rule severity
+- Config migration helpers and report comparison (JSON config is available now)
 - Check the settings layer of banners and the "accept" path
 - More trackers, embeds and consent managers (see the
   [`good first issue`](https://github.com/jexcellence/privalint/labels/good%20first%20issue) label)

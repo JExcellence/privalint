@@ -1,6 +1,6 @@
 import type { Browser } from 'playwright';
 import { observeConsent } from './consent.js';
-import { classifyLoadError, Diagnostics } from './diagnostics.js';
+import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
 import { ControlledNetwork, networkLimits } from './network.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import type { PageSnapshot } from './types.js';
@@ -113,6 +113,11 @@ export async function capturePage(
     document = true;
     beforeComplete = diagnostics.data.issueCount === 0 && snapshot.error === undefined;
     if (checkConsent && options.consentCheck !== false) {
+      options.onProgress?.({
+        stage: 'checking-consent',
+        elapsedMs: 0,
+        pageUrl: diagnosticUrl(url),
+      });
       snapshot.consent = await observeConsent(page, context, requests, {
         settleMs: options.settleMs ?? DEFAULTS.settleMs,
         timeoutMs: options.timeoutMs ?? DEFAULTS.timeoutMs,
@@ -147,6 +152,8 @@ export async function capturePage(
         bannerFound: snapshot.consent?.bannerFound ?? false,
         rejected: false,
         state: 'interaction-failed',
+        outcome: 'interaction-failed',
+        reason: 'browser-interaction-failed',
         error: kind,
       };
     }

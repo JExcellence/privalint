@@ -26,8 +26,8 @@ export const thirdPartyEmbeds: Rule = {
         subject: vendor,
         evidence,
         fix: say(lang, {
-          en: `Show a placeholder and load ${vendor} only after a click or consent. youtube-nocookie.com alone is not enough, it still contacts Google on load.`,
-          de: `Einen Platzhalter zeigen und ${vendor} erst nach Klick oder Einwilligung laden. youtube-nocookie.com allein reicht nicht, es kontaktiert Google trotzdem beim Laden.`,
+          en: `Review the purpose and legal basis for ${vendor}. Where consent is required, use a click-to-load placeholder or block the resource until consent. Security widgets may need a separate necessity assessment.`,
+          de: `Zweck und Rechtsgrundlage für ${vendor} prüfen. Soweit Einwilligung erforderlich ist, einen Platzhalter verwenden oder bis zur Einwilligung blockieren. Sicherheits-Widgets benötigen gegebenenfalls eine gesonderte Erforderlichkeitsprüfung.`,
         }),
       }),
     );

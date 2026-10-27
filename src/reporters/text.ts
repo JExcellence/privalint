@@ -37,6 +37,8 @@ export function formatText(result: ScanResult, color = false): string {
   const duration = m.duration(result.durationMs);
 
   lines.push('');
+  if (result.scannerVersion)
+    lines.push(`privalint ${result.scannerVersion} · schema ${result.schemaVersion}`);
   lines.push(...captureLines(result));
   if (isPartial(result)) lines.push(paint('yellow', coverageMessage(result)));
   if (result.consent !== undefined) {
@@ -61,6 +63,10 @@ function formatFinding(
 ): string[] {
   const [mark, style] = MARKS[finding.severity];
   const lines = [`  ${paint(style, mark)} ${finding.message} ${paint('dim', finding.ruleId)}`];
+  if (finding.policy)
+    lines.push(
+      paint('dim', `      ${m.policy(finding.policy.allowed, finding.policy.originalSeverity)}`),
+    );
   for (const item of finding.evidence) {
     lines.push(paint('dim', `      ${item}`));
   }

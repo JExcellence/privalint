@@ -20,6 +20,8 @@ export function formatMarkdown(result: ScanResult): string {
     '',
     `${m.errors(counts.error)} · ${m.warnings(counts.warning)} · ${m.scanned(m.pages(result.pages.length))}`,
   ];
+  if (result.scannerVersion)
+    lines.push('', `privalint ${result.scannerVersion} · schema ${result.schemaVersion}`);
   if (result.consent !== undefined) {
     lines.push('', escapeText(m.consent(result.consent)));
   }
@@ -32,8 +34,11 @@ export function formatMarkdown(result: ScanResult): string {
   for (const [pageUrl, findings] of groupByPage(result.findings)) {
     lines.push('', `#### ${code(pageUrl)}`, '', `| | ${m.rule} | ${m.finding} |`, '|---|---|---|');
     for (const finding of findings) {
+      const policy = finding.policy
+        ? ` [${m.policy(finding.policy.allowed, finding.policy.originalSeverity)}]`
+        : '';
       lines.push(
-        `| ${ICONS[finding.severity]} | \`${finding.ruleId}\` | ${escapeText(finding.message)} |`,
+        `| ${ICONS[finding.severity]} | \`${finding.ruleId}\` | ${escapeText(finding.message + policy)} |`,
       );
     }
   }

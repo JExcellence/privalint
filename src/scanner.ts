@@ -3,10 +3,12 @@ import { assessPage } from './assessment.js';
 import { capturePage } from './capture.js';
 import { diagnosticUrl } from './diagnostics.js';
 import { applyRegion } from './legal.js';
+import { VERSION } from './meta.js';
 import { networkLimits } from './network.js';
+import { applyPolicy, validateRuleSettings } from './policy.js';
 import { defaultRules } from './rules/index.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
-import type { PageSnapshot, ScanResult } from './types.js';
+import type { PageSnapshot, ScanProgressEvent, ScanResult } from './types.js';
 import { crawlTarget, withoutHash } from './url.js';
 
 export type { ScanOptions } from './scan-options.js';
@@ -24,7 +26,19 @@ export function throwIfAborted(signal?: AbortSignal): void {
 export async function scan(target: string, options: ScanOptions = {}): Promise<ScanResult> {
   throwIfAborted(options.signal);
   const startedAt = Date.now();
-  const rules = options.rules ?? defaultRules;
+  const emit = (event: ScanProgressEvent) =>
+    options.onProgress?.({ ...event, elapsedMs: Date.now() - startedAt });
+  emit({ stage: 'starting', elapsedMs: 0 });
+  const configuredRules = options.rules ?? defaultRules;
+  validateRuleSettings(options.ruleSettings ?? {}, [...defaultRules, ...configuredRules]);
+  if (
+    options.allow &&
+    (!Array.isArray(options.allow.vendors) ||
+      !options.allow.vendors.every((vendor) => typeof vendor === 'string' && vendor.length > 0))
+  ) {
+    throw new TypeError('allow.vendors must contain non-empty vendor names');
+  }
+  const rules = configuredRules.filter((rule) => options.ruleSettings?.[rule.id] !== 'off');
   const maxPages = options.maxPages ?? DEFAULTS.maxPages;
   integer(maxPages, 'maxPages', 1);
   integer(options.settleMs ?? DEFAULTS.settleMs, 'settleMs', 0);
@@ -57,7 +71,27 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     while (url !== undefined && snapshots.length < maxPages) {
       throwIfAborted(options.signal);
       const isStart = snapshots.length === 0;
-      const snapshot = await capturePage(browser, url, siteUrl, options, isStart);
+      const pageIndex = snapshots.length;
+      emit({ stage: 'loading-page', elapsedMs: 0, pageUrl: diagnosticUrl(url), pageIndex });
+      let progressFailure: { error: unknown } | undefined;
+      const snapshot = await capturePage(
+        browser,
+        url,
+        siteUrl,
+        {
+          ...options,
+          onProgress: (event) => {
+            try {
+              emit({ ...event, pageIndex });
+            } catch (error) {
+              progressFailure = { error };
+              throw error;
+            }
+          },
+        },
+        isStart,
+      );
+      if (progressFailure) throw progressFailure.error;
       if (isStart) {
         const failureMode = options.failureMode ?? (options.networkAdapter ? 'report' : 'throw');
         if (snapshot.error !== undefined && failureMode === 'throw') {
@@ -82,8 +116,17 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       url = queue.shift();
     }
     throwIfAborted(options.signal);
+    emit({ stage: 'evaluating-rules', elapsedMs: 0 });
     const assessments = snapshots.map((page, index) =>
-      assessPage(page, rules, siteUrl, lang, index === 0, options.consentCheck !== false),
+      assessPage(
+        page,
+        rules,
+        siteUrl,
+        lang,
+        index === 0,
+        options.consentCheck !== false,
+        configuredRules,
+      ),
     );
     const partial =
       assessments.some((assessment) =>
@@ -92,6 +135,31 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ),
       ) || snapshots.some((page) => !page.capture?.complete);
     const result: ScanResult = {
+      schemaVersion: '1.0.0',
+      scannerVersion: VERSION,
+      options: {
+        maxPages,
+        settleMs: options.settleMs ?? DEFAULTS.settleMs,
+        timeoutMs: options.timeoutMs ?? DEFAULTS.timeoutMs,
+        locale: options.locale ?? DEFAULTS.locale,
+        lang,
+        region,
+        consentCheck: options.consentCheck !== false,
+        headed: options.headed === true,
+        channel: options.channel ?? 'chromium',
+        captureTimeoutMs: options.captureTimeoutMs ?? (options.networkAdapter ? 60_000 : null),
+        maxDiagnostics: options.maxDiagnostics ?? 100,
+        failureMode: options.failureMode ?? (options.networkAdapter ? 'report' : 'throw'),
+        captureMode: options.networkAdapter
+          ? 'adapter'
+          : options.offline
+            ? 'offline-fixture'
+            : 'native',
+        networkLimits: options.networkAdapter ? networkLimits(options.networkLimits) : null,
+        selectedRules: rules.map((rule) => rule.id),
+        ruleSettings: { ...options.ruleSettings },
+        allowedVendors: [...(options.allow?.vendors ?? [])],
+      },
       siteUrl: siteUrl.href,
       lang,
       region,
@@ -108,13 +176,18 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ruleEvaluations: assessments[index]?.evaluations ?? [],
       })),
       ...consentSummary(snapshots[0]),
-      findings: applyRegion(
-        assessments.flatMap((assessment) => assessment.findings),
-        region,
+      findings: applyPolicy(
+        applyRegion(
+          assessments.flatMap((assessment) => assessment.findings),
+          region,
+        ),
+        options.ruleSettings,
+        options.allow?.vendors,
       ),
       rules: rules.map(({ check: _check, ...meta }) => meta),
       coverage: partial ? 'partial' : 'complete',
     };
+    emit({ stage: 'completed', elapsedMs: 0 });
     return options.networkAdapter ? redactReport(result) : result;
   } finally {
     await browser.close();

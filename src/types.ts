@@ -22,9 +22,11 @@ export type LoadIssueKind =
   | 'resource-limit'
   | 'http-error'
   | 'browser-failure'
+  | 'skipped'
   | 'aborted';
 
 export type CapturePhase = 'before-consent' | 'after-reject';
+export type SkipReason = 'beacon' | 'unsupported-method' | 'unsupported-protocol' | 'policy';
 
 export interface LoadDiagnostic {
   kind: LoadIssueKind;
@@ -33,9 +35,14 @@ export interface LoadDiagnostic {
   url: string;
   status?: number;
   limit?: 'requests' | 'response-bytes' | 'total-bytes' | 'redirects';
+  skippedReason?: SkipReason;
 }
 
 export interface LoadDiagnostics {
+  /** Disjoint terminal outcomes; finished + these three equals requests. */
+  skippedRequests?: number;
+  failedRequests?: number;
+  securityBlockedRequests?: number;
   /** HTTP(S) browser requests, including documents and every redirect hop, across both phases. */
   requests: number;
   /** Requests counted but omitted from bounded in-memory rule evidence. */
@@ -44,7 +51,7 @@ export interface LoadDiagnostics {
   responses: number;
   /** Browser requestfinished events (including HTTP errors). */
   finished: number;
-  /** Failed or unfinished requests at capture end; disjoint from finished. */
+  /** @deprecated Aggregate of skippedRequests + failedRequests + securityBlockedRequests. */
   failed: number;
   /** Subset of failed: explicitly denied by the adapter's security policy. */
   blocked: number;
@@ -66,7 +73,26 @@ export interface RuleEvaluation {
   reason?: 'disabled' | 'consent-disabled' | 'not-start-page' | 'missing-observation';
   /** Executed against available positive evidence, without ruling out additional findings. */
   partial: boolean;
+  outcome?: 'checked-no-finding' | 'finding-detected' | 'not-evaluable';
+  explanation?: RuleExplanation;
+  findingCount?: number;
 }
+
+export type RuleExplanation =
+  | 'disabled'
+  | 'not-start-page'
+  | 'consent-disabled'
+  | 'missing-reject-observation'
+  | 'missing-consent-observation'
+  | 'incomplete-document'
+  | 'positive-evidence'
+  | 'incomplete-observation'
+  | 'required-observations-available'
+  | 'no-supported-banner'
+  | 'no-supported-reject-control'
+  | 'unsupported-banner-markup'
+  | 'browser-interaction-failed'
+  | 'reject-clicked-and-reloaded';
 
 export interface CaptureObservation {
   complete: boolean;
@@ -97,6 +123,13 @@ export interface ResourceHint {
 
 /** What happened when privalint looked for a consent banner and clicked "reject". */
 export interface ConsentObservation {
+  outcome?: 'no-banner-detected' | 'unsupported-banner' | 'interaction-failed' | 'reject-succeeded';
+  reason?:
+    | 'no-supported-banner'
+    | 'no-supported-reject-control'
+    | 'unsupported-banner-markup'
+    | 'browser-interaction-failed'
+    | 'reject-clicked-and-reloaded';
   state?: 'not-detected' | 'reject-unavailable' | 'interaction-failed' | 'reject-tested';
   bannerFound: boolean;
   /** Name of the consent manager, if it was recognised. */
@@ -136,6 +169,8 @@ export interface PageSnapshot {
 }
 
 export interface Finding {
+  /** Explicit local policy, not evidence of consent or legal approval. */
+  policy?: { allowed: boolean; originalSeverity: Severity };
   ruleId: string;
   severity: Severity;
   message: string;
@@ -180,6 +215,10 @@ export interface PageSummary {
 export type ConsentSummary = Omit<ConsentObservation, 'afterReject'>;
 
 export interface ScanResult {
+  /** Absent on reports created before schema versioning. */
+  schemaVersion?: string;
+  scannerVersion?: string;
+  options?: ReportOptions;
   siteUrl: string;
   lang: Lang;
   region: Region;
@@ -192,4 +231,33 @@ export interface ScanResult {
   rules: Array<Omit<Rule, 'check'>>;
   /** Observation coverage, not a legal compliance judgement. */
   coverage?: 'complete' | 'partial';
+}
+
+export type RuleSettings = Record<string, Severity | 'off'>;
+export interface ScanProgressEvent {
+  stage: 'starting' | 'loading-page' | 'checking-consent' | 'evaluating-rules' | 'completed';
+  elapsedMs: number;
+  /** Origin-only, no target path, credentials, query or fragment. */
+  pageUrl?: string;
+  pageIndex?: number;
+}
+
+export interface ReportOptions {
+  maxPages: number;
+  settleMs: number;
+  timeoutMs: number;
+  locale: string;
+  lang: Lang;
+  region: Region;
+  consentCheck: boolean;
+  headed: boolean;
+  channel: string;
+  captureTimeoutMs: number | null;
+  maxDiagnostics: number;
+  failureMode: 'throw' | 'report';
+  captureMode: 'native' | 'adapter' | 'offline-fixture';
+  networkLimits: Record<string, number> | null;
+  selectedRules: string[];
+  ruleSettings: RuleSettings;
+  allowedVendors: string[];
 }

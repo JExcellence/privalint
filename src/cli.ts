@@ -2,6 +2,7 @@
 import { writeFile } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
+import { loadConfig } from './config.js';
 import { diagnosticUrl } from './diagnostics.js';
 import { LANGS } from './i18n.js';
 import { REGIONS } from './legal.js';
@@ -34,12 +35,14 @@ Options
                           other extensions use --format
       --fail-on <level>   error | warning | never (default error)
       --disable <rules>   Comma-separated rule ids to skip
+      --config <file>     JSON config (default: ./privalint.config.json when present)
       --settle <ms>       Wait this long after load for late tags (default 2000)
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
       --lang <lang>       Language of the report: en | de (default en)
       --region <region>   Whose law to cite: de | at | ch | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
+      --consent           Enable consent checking even if the JSON config disables it
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
       --list-rules        Print the available rules and exit
@@ -68,12 +71,14 @@ async function main(argv: string[]): Promise<number> {
       output: { type: 'string', short: 'o', multiple: true },
       'fail-on': { type: 'string', default: 'error' },
       disable: { type: 'string' },
+      config: { type: 'string' },
       settle: { type: 'string' },
       timeout: { type: 'string' },
       locale: { type: 'string' },
-      lang: { type: 'string', default: 'en' },
-      region: { type: 'string', default: 'de' },
+      lang: { type: 'string' },
+      region: { type: 'string' },
       'skip-consent': { type: 'boolean' },
+      consent: { type: 'boolean' },
       headed: { type: 'boolean' },
       channel: { type: 'string' },
       'list-rules': { type: 'boolean' },
@@ -97,20 +102,31 @@ async function main(argv: string[]): Promise<number> {
     return EXIT_OK;
   }
 
-  const target = parseTarget(positionals);
+  const config = await loadConfig(values.config);
+  const target = parseTarget(positionals.length === 0 && config.url ? [config.url] : positionals);
   const reportFormat = oneOf(values.format, FORMATS, '--format');
   const failOn = oneOf(values['fail-on'], FAIL_LEVELS, '--fail-on');
   const rules = selectRules(values.disable);
+  if (values.consent && values['skip-consent']) {
+    throw new Error('Use either --consent or --skip-consent, not both.');
+  }
 
   const result = await scan(target.href, {
     rules,
-    maxPages: wholeNumber(values['max-pages'], '--max-pages', 1),
-    settleMs: wholeNumber(values.settle, '--settle', 0),
-    timeoutMs: wholeNumber(values.timeout, '--timeout', 1),
-    locale: values.locale,
-    lang: oneOf(values.lang, LANGS, '--lang'),
-    region: oneOf(values.region, REGIONS, '--region'),
-    consentCheck: values['skip-consent'] !== true,
+    ...(config.rules === undefined ? {} : { ruleSettings: config.rules }),
+    ...(config.allow === undefined ? {} : { allow: config.allow }),
+    maxPages: wholeNumber(values['max-pages'], '--max-pages', 1) ?? config.maxPages,
+    settleMs: wholeNumber(values.settle, '--settle', 0) ?? config.settleMs,
+    timeoutMs: wholeNumber(values.timeout, '--timeout', 1) ?? config.timeoutMs,
+    locale: values.locale ?? config.locale,
+    lang: oneOf(values.lang ?? config.lang ?? 'en', LANGS, '--lang'),
+    region: oneOf(values.region ?? config.region ?? 'de', REGIONS, '--region'),
+    consentCheck:
+      values.consent === true
+        ? true
+        : values['skip-consent'] === true
+          ? false
+          : (config.consentCheck ?? true),
     headed: values.headed === true,
     channel:
       values.channel === undefined ? undefined : oneOf(values.channel, CHANNELS, '--channel'),

@@ -10,6 +10,10 @@ managers (OneTrust, Cookiebot, Usercentrics, Borlabs Cookie, Complianz, CookieYe
 consentmanager, iubenda, Klaro, CookieConsent) or by button labels in German, English, French,
 Spanish, Italian and Dutch.
 
+CookieFirst, Osano, Termly and Sourcepoint have additional frame-aware selectors. Real Cookie
+Banner is named through its vendor marker plus the existing label heuristic. See the
+[CMP support and verification notes](../consent-managers.md) ([Deutsch](../consent-managers.de.md)).
+
 | Situation                                                        | Severity |
 | ---------------------------------------------------------------- | -------- |
 | Accept and reject buttons on the first layer                     | passes   |
