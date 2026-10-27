@@ -110,6 +110,14 @@ describe('consent check', () => {
     expect(result.consent).toMatchObject({ cmp: 'CookieFirst', outcome: 'reject-succeeded' });
     expect(result.findings).toEqual([]);
   });
+  it('finds the Osano reject button by its camelCase class', async () => {
+    const result = await scan(`${origin}/consent/osano.html`, options);
+    expect(result.consent).toMatchObject({
+      cmp: 'Osano',
+      outcome: 'reject-succeeded',
+      rejectLabel: 'Nicht wesentliche Cookies ablehnen',
+    });
+  });
   const ruleIds = (findings: { ruleId: string }[]) => findings.map((f) => f.ruleId);
 
   it('passes a banner whose reject button is respected', async () => {

@@ -9,7 +9,7 @@ mehrsprachigen Beschriftungs-Heuristiken stehen in `scan()` und `observeConsent(
 | CMP                | Erkennung                                                                            |
 | ------------------ | ------------------------------------------------------------------------------------ |
 | CookieFirst        | `data-cookiefirst-action=accept/reject`, v3 `data-testid=actionButton-accept/reject` |
-| Osano              | `.osano-cm-accept-all`, `.osano-cm-deny-all`                                         |
+| Osano              | `.osano-cm-accept-all`, `.osano-cm-denyAll` (ältere Variante `.osano-cm-deny-all`)   |
 | Termly             | `data-tid=banner-accept/banner-decline`, CSS-Modul-Präfix des Zustimmen-Buttons      |
 | Sourcepoint        | `button.sp_choice_type_11`, `button.sp_choice_type_13`, auch in Iframes              |
 | Real Cookie Banner | Vorhandene Heuristik für sichtbare Beschriftungen plus Script-/Konfigurationsmarker  |
@@ -20,13 +20,26 @@ Einstellungsebene geöffnet. Ein erkanntes Banner ohne unterstütztes Ablehnen a
 liefert `unsupported-banner`. Fehlende Banner-Erkennung allein erzeugt keinen Datenschutzbefund.
 Ein erfolgreicher Klick mit Neuladen verifiziert den gespeicherten CMP-Zustand nicht unabhängig.
 
-Am 27.10.2026 wurden öffentliches HTML und offizielle Scripts von CookieFirst, devowl, Osano,
-Termly und Sourcepoint per HTTP untersucht. Die [englische Fassung](consent-managers.md) nennt
-Quellen und tatsächlich gefundene Attribute. Das ist eine Quellprüfung, keine interaktive
-Verifikation jedes öffentlichen Banners. Die lokale Browser-Steuerung ist deaktiviert.
+## Prüfung auf öffentlichen Websites
 
-Deterministische lokale Chromium-Fixtures prüfen alle fünf Pfade, beide CookieFirst-Varianten
-und Sourcepoint in einem Iframe. Regionale Auslieferung und CMP-Konfigurationen können davon
-abweichen. Issue #9 bleibt daher für die geforderte öffentliche Interaktionsprüfung offen,
-insbesondere für Sourcepoint und weitere Termly-Ablehnen-Varianten. Die dortigen
-Browser-Abnahmekriterien sind noch nicht vollständig verifiziert.
+Am 27.10.2026 lief privalint mit einem Headless-Chromium aus Deutschland gegen diese Websites:
+
+| CMP                | Website             | Ergebnis                                                                  |
+| ------------------ | ------------------- | ------------------------------------------------------------------------- |
+| CookieFirst        | cookiefirst.com     | erkannt, „Deny“ geklickt und neu geladen                                  |
+| Osano              | osano.com           | erkannt, „Nicht wesentliche Cookies ablehnen“ geklickt und neu geladen    |
+| Termly             | termly.io           | erkannt, „Ablehnen“ geklickt und neu geladen                              |
+| Sourcepoint        | spiegel.de, welt.de | im Iframe erkannt, korrekt als Pur-Abo-Modell ohne Ablehnen eingestuft    |
+| Real Cookie Banner | devowl.io           | Marker erkannt, Banner aber nicht gerendert (leeres, verstecktes Overlay) |
+
+Bei Osano stand der Ablehnen-Selektor zuvor auf `.osano-cm-deny-all`. osano.com liefert jedoch
+`.osano-cm-denyAll`; der Selektor ist korrigiert und durch ein Fixture abgesichert.
+
+Real Cookie Banner rendert sein Banner auf devowl.io nicht für einen automatisierten Browser.
+privalint meldet dort korrekt eine nicht klassifizierbare Banner-Struktur statt eines Erfolgs. Die
+Zuordnung über Beschriftungen bleibt deshalb bewusst bestehen; geratene Selektoren für die
+generierten Klassen werden nicht hinzugefügt.
+
+Deterministische lokale Fixtures prüfen alle Pfade, beide CookieFirst-Varianten, die
+Osano-Klassen und Sourcepoint in einem Iframe. Regionale Auslieferung und CMP-Konfigurationen
+können sich ändern.

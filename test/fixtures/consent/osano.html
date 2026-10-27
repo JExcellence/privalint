@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="de">
+  <head><meta charset="utf-8" /><title>Osano selector fixture</title></head>
+  <body>
+    <a href="/clean/impressum.html">Impressum</a>
+    <a href="/clean/datenschutz.html">Datenschutz</a>
+    <!-- Class names as served by cmp.osano.com on osano.com, checked 2026-10-27. -->
+    <div class="osano-cm-window osano-cm-dialog" role="dialog" aria-label="Cookie-Einstellungen">
+      <p>Diese Website verwendet Cookies.</p>
+      <button class="osano-cm-save osano-cm-buttons__button osano-cm-button">Speichern</button>
+      <button class="osano-cm-accept-all osano-cm-buttons__button osano-cm-button">Alle akzeptieren</button>
+      <button class="osano-cm-denyAll osano-cm-buttons__button osano-cm-button">Nicht wesentliche Cookies ablehnen</button>
+    </div>
+    <script>
+      const banner = document.querySelector('.osano-cm-window');
+      if (localStorage.getItem('choice')) banner.remove();
+      banner.querySelector('.osano-cm-denyAll').addEventListener('click', () => {
+        localStorage.setItem('choice', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>
