@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.4.1 - 2026-10-27
+
 ### Fixed
 
 - A beacon that the network adapter deliberately did not send no longer marks the page capture as
