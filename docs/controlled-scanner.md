@@ -123,7 +123,8 @@ the counters continue counting attempts.
 
 Diagnostic URLs always omit credentials, complete paths, queries and fragments. Adapter-mode
 report page URLs and URL evidence are also origin-only. Different pages of an origin therefore
-have the same displayed URL; retain array position or use your own opaque scan/page IDs. The
+have the same displayed URL; use the report's random `scanId`/`pageId` values to correlate them.
+See [report identity and schemas](report-contract.md). The
 trusted `onPage` hook receives raw snapshots for in-process use. It is not a safe public response
 or logging interface. Custom rules and application-written logs remain the caller's responsibility.
 Native-mode finding URLs retain legacy formatting; never publish those raw reports as public data.
@@ -160,5 +161,6 @@ headless detection, unsupported markup or a failed CMP resource.
 
 The legacy default still throws on a start-page navigation failure; adapter mode defaults to
 `failureMode: 'report'`. Explicit `failureMode` overrides either default. External abort always
-rejects. Existing CLI/Action exit-code policy is unchanged: exit 0 means no findings above the
-threshold, not complete observation. Check coverage/diagnostics in report consumers.
+rejects. The default CLI/Action exit policy is unchanged: exit 0 means no findings above the
+threshold, not complete observation. Opt into `--fail-on-incomplete` (Action: `fail-on-incomplete`)
+to enforce required coverage separately with exit 3. Check coverage/diagnostics in report consumers.

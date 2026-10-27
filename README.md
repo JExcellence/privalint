@@ -85,17 +85,18 @@ See [configuration and report APIs](docs/configuration.md) ([Deutsch](docs/confi
 Scanning a preview deployment instead of production catches problems before they ship. Pass the
 preview URL from your hosting provider's deployment event or action output as `url`.
 
-| Input         | Default           |                                                    |
-| ------------- | ----------------- | -------------------------------------------------- |
-| `url`         |                   | Page to scan. Required.                            |
-| `max-pages`   | `1`               | How many pages of the same site to crawl.          |
-| `fail-on`     | `error`           | `error`, `warning` or `never`.                     |
-| `disable`     |                   | Comma-separated rule ids to skip.                  |
-| `lang`        | `en`              | Language of the report: `en` or `de`.              |
-| `region`      | `de`              | Whose law to cite: `de`, `at`, `ch`, `eu`.         |
-| `sarif-file`  | `privalint.sarif` | Where to write SARIF. Empty to skip.               |
-| `job-summary` | `true`            | Add the Markdown report to the job summary.        |
-| `pr-comment`  | `false`           | Create/update a same-repository PR report comment. |
+| Input                | Default           |                                                       |
+| -------------------- | ----------------- | ----------------------------------------------------- |
+| `url`                |                   | Page to scan. Required.                               |
+| `max-pages`          | `1`               | How many pages of the same site to crawl.             |
+| `fail-on`            | `error`           | `error`, `warning` or `never`.                        |
+| `fail-on-incomplete` | `false`           | Fail separately for incomplete required observations. |
+| `disable`            |                   | Comma-separated rule ids to skip.                     |
+| `lang`               | `en`              | Language of the report: `en` or `de`.                 |
+| `region`             | `de`              | Whose law to cite: `de`, `at`, `ch`, `eu`.            |
+| `sarif-file`         | `privalint.sarif` | Where to write SARIF. Empty to skip.                  |
+| `job-summary`        | `true`            | Add the Markdown report to the job summary.           |
+| `pr-comment`         | `false`           | Create/update a same-repository PR report comment.    |
 
 Outputs: `exit-code`, and `sarif-file` when a report was written.
 
@@ -119,6 +120,9 @@ privalint <url> [options]
                           Repeatable; .sarif, .json and .md pick their format,
                           other extensions use --format
       --fail-on <level>   error | warning | never (default error)
+      --fail-on-incomplete  Exit 3 for incomplete required observations (opt-in)
+      --allow-incomplete    Override failOnIncomplete from JSON config
+      --config <file>     Select a JSON configuration file
       --disable <rules>   Comma-separated rule ids to skip
       --settle <ms>       Wait this long after load for late tags (default 2000)
       --timeout <ms>      Navigation timeout per page (default 30000)
@@ -132,6 +136,8 @@ privalint <url> [options]
 ```
 
 Exit codes: `0` nothing at or above `--fail-on`, `1` findings, `2` bad arguments or a failed scan.
+With `--fail-on-incomplete`, exit `3` means incomplete required observation. Findings exit `1`
+takes precedence; intentional disabled-rule/consent exclusions are ignored by this gate.
 
 The first run needs a browser. If Playwright hasn't installed one yet:
 
@@ -192,6 +198,11 @@ distinguishes `checked-no-finding`, `finding-detected` and `not-evaluable`, alwa
 `explanation` code. `onProgress` emits real stages (`starting`, `loading-page`, `checking-consent`,
 `evaluating-rules`, `completed`) with elapsed time and redacted page URLs; it does not invent a
 percentage. The CLI and Action keep their existing finding-threshold exit policy.
+
+Schema 1.1.0 adds random scan/page IDs and explicit capture-to-page progress resolution, so redacted
+pages remain distinguishable. Standalone schemas and complete/partial/skip/policy fixtures are
+included. The [report contract and optional CI gate](docs/report-contract.md)
+([Deutsch](docs/report-contract.de.md)) explain validation and identity/exit-code semantics.
 
 ### Public web scanners and controlled capture
 

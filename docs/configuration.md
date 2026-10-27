@@ -11,7 +11,7 @@ Files are limited to 64 KiB. Do not store credentials in config; URL credentials
 
 Supported fields: `url` (absolute HTTP(S)), `maxPages` (positive integer), `settleMs` (nonnegative),
 `timeoutMs` (positive), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`eu`),
-`consentCheck` (boolean), `rules` (known IDs to `off`/`error`/`warning`/`info`) and
+`consentCheck` and `failOnIncomplete` (booleans), `rules` (known IDs to `off`/`error`/`warning`/`info`) and
 `allow: { vendors: string[] }` (exact, case-sensitive finding `subject` names).
 
 ```json
@@ -47,7 +47,9 @@ can contain several resources, so a partial host match must not suppress unrelat
 
 ## Report version and outcomes
 
-`schemaVersion: '1.0.0'` identifies this additive report contract. `scannerVersion` is the actual
+`schemaVersion: '1.1.0'` identifies the current additive report contract; schema 1.0.0 remains
+available. See [standalone schemas, page identity and coverage gates](report-contract.md).
+`scannerVersion` is the actual
 package version used to generate it. Reports from 0.3.0 or earlier lack schemaVersion: treat them
 as legacy rather than inferring missing counters/outcomes as zero or success. Versioning the
 report contract is independent from releasing the npm package.
@@ -108,9 +110,11 @@ it is not proof that the site lacks a reject path. Successful rejection confirms
 not the CMP's stored consent state. Check `afterRejectComplete` and rule outcomes separately.
 
 `onProgress(event)` is a synchronous callback for `starting`, `loading-page`, `checking-consent`,
-`evaluating-rules` and `completed`. Events include `elapsedMs`; page stages include a zero-based
+`page-captured`, `evaluating-rules` and `completed`. Events include `elapsedMs`; page stages include a zero-based
 `pageIndex` and origin-only `pageUrl`. No raw URLs, arbitrary exception reasons or estimated
 percentages are emitted. Abort/failure does not emit `completed`; the promise communicates failure.
+Loading/consent events have a random `captureId`; `page-captured` resolves it to a canonical
+scan-local `pageId`. All events carry `scanId`; evaluation events also carry `pageId`.
 Callback exceptions propagate after browser/context cleanup.
 
 ```ts

@@ -68,6 +68,7 @@ export interface LoadDiagnostics {
 export type ObservationKind = 'document' | 'network' | 'consent' | 'after-reject';
 
 export interface RuleEvaluation {
+  pageId?: string;
   ruleId: string;
   status: 'executed' | 'skipped' | 'not-evaluable';
   reason?: 'disabled' | 'consent-disabled' | 'not-start-page' | 'missing-observation';
@@ -152,6 +153,7 @@ export interface ConsentObservation {
  * without touching any consent banner.
  */
 export interface PageSnapshot {
+  pageId?: string;
   url: string;
   finalUrl: string;
   status: number | null;
@@ -169,6 +171,7 @@ export interface PageSnapshot {
 }
 
 export interface Finding {
+  pageId?: string;
   /** Explicit local policy, not evidence of consent or legal approval. */
   policy?: { allowed: boolean; originalSeverity: Severity };
   ruleId: string;
@@ -202,6 +205,7 @@ export interface Rule {
 }
 
 export interface PageSummary {
+  pageId?: string;
   url: string;
   finalUrl: string;
   status: number | null;
@@ -215,6 +219,7 @@ export interface PageSummary {
 export type ConsentSummary = Omit<ConsentObservation, 'afterReject'>;
 
 export interface ScanResult {
+  scanId?: string;
   /** Absent on reports created before schema versioning. */
   schemaVersion?: string;
   scannerVersion?: string;
@@ -235,7 +240,17 @@ export interface ScanResult {
 
 export type RuleSettings = Record<string, Severity | 'off'>;
 export interface ScanProgressEvent {
-  stage: 'starting' | 'loading-page' | 'checking-consent' | 'evaluating-rules' | 'completed';
+  stage:
+    | 'starting'
+    | 'loading-page'
+    | 'checking-consent'
+    | 'page-captured'
+    | 'evaluating-rules'
+    | 'completed';
+  /** Random attempt ID; multiple redirecting attempts may resolve to the same pageId. */
+  captureId?: string;
+  pageId?: string;
+  scanId?: string;
   elapsedMs: number;
   /** Origin-only, no target path, credentials, query or fragment. */
   pageUrl?: string;

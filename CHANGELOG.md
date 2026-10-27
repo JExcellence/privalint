@@ -8,6 +8,13 @@ All notable changes are listed here. The format follows
 
 ### Added
 
+- Random scan/page identities with explicit capture-attempt resolution after redirects; redacted
+  pages remain distinct in text, Markdown and SARIF without claiming cross-scan stability
+- Standalone report and SARIF-property JSON Schemas for versions 1.0.0/1.1.0, shipped in npm,
+  with conformance fixtures, live validation and drift checks
+- Opt-in CLI/Action coverage gate (exit 3), API coverage assessment and conservative legacy/schema
+  identification; severity exits retain precedence and default behaviour is unchanged
+
 - Report schema/scanner versions, effective scan options, explicit per-rule outcomes/reasons,
   consent outcomes and redacted progress events
 - Disjoint skipped/failed/security-blocked request counters; intentional beacon omissions stay
@@ -18,6 +25,12 @@ All notable changes are listed here. The format follows
 - Frame-aware CookieFirst, Osano, Termly and Sourcepoint recognition, plus Real Cookie Banner
   vendor identification through existing label heuristics; public-site interactive verification pending
 - English/German configuration, report-contract, CMP and embed documentation
+
+### Fixed
+
+- Config size limits now apply while reading, rather than after unbounded buffering
+- Inherited object properties cannot become rule severity overrides
+- Coverage assessment rejects inconsistent request-counter equations and incomplete required checks
 
 ## 0.3.0 - 2026-10-27
 

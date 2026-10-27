@@ -26,7 +26,7 @@ export function captureLines(result: ScanResult): string[] {
     const data = page.capture?.diagnostics;
     if (data !== undefined) {
       lines.push(
-        `${german ? 'Erfassung' : 'Capture'} ${page.url}: ` +
+        `${german ? 'Erfassung' : 'Capture'} ${page.url}${page.pageId ? ` [${page.pageId}]` : ''}: ` +
           `${data.requests} ${german ? 'Anfragen' : 'requests'}, ${data.responses} ${german ? 'Antworten' : 'responses'}, ` +
           `${data.failedRequests ?? data.failed} ${german ? 'Ladefehler' : 'load failures'}, ` +
           `${data.skippedRequests ?? 0} ${german ? 'ausgelassen' : 'skipped'}, ` +

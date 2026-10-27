@@ -88,6 +88,17 @@ describe('JSON configuration', () => {
     );
     expect(applyPolicy([finding], { 'pre-consent-trackers': 'off' })).toEqual([]);
   });
+  it('does not read inherited object properties as severity policy', () => {
+    const finding: Finding = {
+      ruleId: 'constructor',
+      severity: 'error',
+      message: 'Custom rule',
+      pageUrl: 'https://example.org',
+      evidence: [],
+    };
+    expect(applyPolicy([finding])[0]?.severity).toBe('error');
+    expect(applyPolicy([finding], Object.create({ constructor: 'off' }))).toHaveLength(1);
+  });
   it('applies policy in scan and exposes disabled rules explicitly', async () => {
     const result = await scan('https://config.invalid', {
       settleMs: 0,
@@ -163,6 +174,67 @@ describe('JSON configuration', () => {
       await expect(
         promisify(execFile)(process.execPath, [cli, '--max-pages', '0'], { cwd }),
       ).rejects.toMatchObject({ stderr: expect.stringContaining('--max-pages') });
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+  it('keeps opt-in coverage exits separate from findings, including config overrides', async () => {
+    const cwd = await directory();
+    const server = createServer((request, response) => {
+      if (request.url?.startsWith('/missing')) {
+        response.writeHead(503).end();
+        return;
+      }
+      const body =
+        '<a href="/impressum">Impressum</a><a href="/privacy">Privacy policy</a>' +
+        (request.url?.startsWith('/partial') ? '<script src="/missing"></script>' : '') +
+        (request.url?.startsWith('/findings')
+          ? '<script src="/missing"></script><div>Cookies <button>Accept all</button></div>'
+          : '');
+      response.writeHead(200, { 'content-type': 'text/html' }).end(body);
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    const configPath = join(cwd, 'privalint.config.json');
+    const cli = resolve('dist/cli.js');
+    async function run(path: string, ...args: string[]) {
+      try {
+        const output = await promisify(execFile)(
+          process.execPath,
+          [cli, `${origin}${path}`, '--settle', '0', '--format', 'json', ...args],
+          { cwd },
+        );
+        return { code: 0, ...output };
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          typeof error.code === 'number' &&
+          'stdout' in error
+        ) {
+          return { code: error.code, stdout: String(error.stdout) };
+        }
+        throw error;
+      }
+    }
+    try {
+      expect((await run('/partial', '--skip-consent')).code).toBe(0);
+      const partial = await run('/partial', '--skip-consent', '--fail-on-incomplete');
+      expect(partial.code).toBe(3);
+      expect(JSON.parse(partial.stdout).findings).toEqual([]);
+      expect((await run('/', '--skip-consent', '--fail-on-incomplete')).code).toBe(0);
+      // No banner means the enabled reject-path checks were not evaluable.
+      expect((await run('/', '--fail-on-incomplete')).code).toBe(3);
+      await writeFile(configPath, JSON.stringify({ failOnIncomplete: true, consentCheck: false }));
+      expect((await run('/partial')).code).toBe(3);
+      expect((await run('/partial', '--allow-incomplete')).code).toBe(0);
+      await writeFile(
+        configPath,
+        JSON.stringify({ failOnIncomplete: true, rules: { 'reject-option': 'error' } }),
+      );
+      expect((await run('/findings')).code).toBe(1);
+      expect((await run('/findings', '--fail-on', 'never')).code).toBe(3);
+      expect((await run('/partial', '--fail-on-incomplete', '--allow-incomplete')).code).toBe(2);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }

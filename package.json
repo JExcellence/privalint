@@ -9,12 +9,14 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
+    "./schemas/*": "./schemas/*",
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },
   "files": [
+    "schemas",
     "dist",
     "README.de.md"
   ],
@@ -24,6 +26,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
+    "schemas:build": "node scripts/build-report-schemas.mjs",
+    "schemas:check": "node scripts/build-report-schemas.mjs --check",
+    "fixtures:reports": "npm run build && node scripts/build-report-fixtures.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build",
@@ -55,6 +60,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.6.3",
     "@types/node": "^20.19.43",
+    "ajv": "^8.20.0",
     "typescript": "^7.0.2",
     "vitest": "^4.1.12"
   },

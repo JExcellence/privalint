@@ -12,7 +12,7 @@ werden abgelehnt.
 
 Unterstützt sind `url` (absolute HTTP(S)-URL), `maxPages` (positive Ganzzahl), `settleMs` (ab 0),
 `timeoutMs` (positiv), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`eu`),
-`consentCheck` (Boolean), `rules` (bekannte IDs mit `off`/`error`/`warning`/`info`) und
+`consentCheck` und `failOnIncomplete` (Boolean), `rules` (bekannte IDs mit `off`/`error`/`warning`/`info`) und
 `allow: { vendors: string[] }` (exakte, groß-/kleinschreibungsabhängige `subject`-Anbieternamen).
 
 ```json
@@ -47,7 +47,8 @@ oder URL-Teilstrings freigegeben: Ein Befund kann mehrere Ressourcen enthalten.
 
 ## Berichtsversion und Regelergebnis
 
-`schemaVersion: '1.0.0'` bezeichnet den additiv erweiterten Berichtsvertrag. `scannerVersion`
+`schemaVersion: '1.1.0'` bezeichnet den aktuellen additiven Berichtsvertrag; Schema 1.0.0 bleibt
+verfügbar. Siehe [Schemas, Seitenidentität und CI-Schranke](report-contract.de.md). `scannerVersion`
 enthält die tatsächlich eingesetzte Paketversion. Berichte von 0.3.0 oder älter haben keine
 Schemaversion; fehlende Zähler oder Ergebnisse dürfen nicht als null bzw. Erfolg interpretiert
 werden. Schema- und npm-Paketversion werden unabhängig voneinander geführt.
@@ -110,10 +111,12 @@ Neuladen, nicht den gespeicherten CMP-Zustand. `afterRejectComplete` und Regeler
 gesondert zu prüfen.
 
 `onProgress(event)` meldet synchron die tatsächlichen Phasen `starting`, `loading-page`,
-`checking-consent`, `evaluating-rules`, `completed`. Enthalten sind `elapsedMs`, für Seitenphasen
+`checking-consent`, `page-captured`, `evaluating-rules`, `completed`. Enthalten sind `elapsedMs`, für Seitenphasen
 ein nullbasierter `pageIndex` und eine Origin-only `pageUrl`. Es gibt keine rohen URLs,
 beliebigen Fehlertexte oder erfundenen Prozentwerte. Bei Abbruch/Fehler bleibt `completed` aus;
 das Promise meldet den Fehler. Callback-Fehler werden nach Browser-/Context-Cleanup weitergegeben.
+Laden/Consent tragen eine zufällige `captureId`; `page-captured` ordnet diese einer scanlokalen
+`pageId` zu. Alle Ereignisse tragen `scanId`, Regelauswertungsereignisse zusätzlich `pageId`.
 
 ```ts
 await scan(url, {

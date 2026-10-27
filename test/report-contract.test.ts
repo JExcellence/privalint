@@ -54,6 +54,7 @@ describe('versioned report contract', () => {
       'starting',
       'loading-page',
       'checking-consent',
+      'page-captured',
       'evaluating-rules',
       'completed',
     ]);
@@ -62,7 +63,7 @@ describe('versioned report contract', () => {
     ).toBe(true);
     expect(JSON.stringify(events)).not.toContain('SECRET');
     expect(result).toMatchObject({
-      schemaVersion: '1.0.0',
+      schemaVersion: '1.1.0',
       scannerVersion: VERSION,
       options: {
         maxPages: 1,

@@ -120,7 +120,8 @@ Phasen. Gespeicherte Anfrage-Evidenz ist im Adapter-Modus durch das Anfragebudge
 Diagnose-URLs enthalten ausschließlich die Origin. Zugangsdaten, komplette Pfade, Queries und
 Fragmente werden entfernt. Im Adapter-Modus gilt das auch für Seiten-URLs und URL-Evidenz im
 fertigen Bericht. Mehrere Seiten derselben Origin tragen deshalb dieselbe Anzeige-URL; für die
-Zuordnung eigene opake IDs bzw. die Array-Position verwenden. `onPage` erhält absichtlich rohe
+Zuordnung die zufälligen `scanId`-/`pageId`-Werte des Berichts verwenden; siehe
+[Berichtsvertrag](report-contract.de.md). `onPage` erhält absichtlich rohe
 Snapshots für vertrauenswürdige interne Verarbeitung. Nicht ungefiltert veröffentlichen oder loggen.
 Eigene Regeln/Logs bleiben in der Verantwortung des Aufrufers. Native Finding-URLs behalten
 ihr bisheriges Format und sind kein sicherer öffentlicher API-Output.
@@ -161,6 +162,7 @@ Ablehnen wird nur auf der Startseite getestet; weitere Seiten starten mit frisch
 
 Ladefehler der Startseite werfen ohne Adapter weiterhin einen Fehler. `failureMode: 'report'`
 liefert einen Bericht und ist im Adapter-Modus die Vorgabe; eine explizite Einstellung hat Vorrang.
-Externer Abbruch wirft immer. Die Exit-Code-Policy von CLI/Action bleibt erhalten: Exit 0 bedeutet
+Externer Abbruch wirft immer. Die standardmäßige Exit-Code-Policy bleibt erhalten: Exit 0 bedeutet
 keine Findings über der Schwelle, nicht vollständige Beobachtung. Berichtskonsumenten müssen
-`coverage` und Diagnosen prüfen.
+`coverage` und Diagnosen prüfen. Mit `--fail-on-incomplete` bzw. dem gleichnamigen Action-Input
+`fail-on-incomplete` kann nötige Coverage zusätzlich mit Exit 3 durchgesetzt werden.

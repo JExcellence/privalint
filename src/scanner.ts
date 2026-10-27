@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { chromium } from 'playwright';
 import { assessPage } from './assessment.js';
 import { capturePage } from './capture.js';
@@ -5,7 +6,8 @@ import { diagnosticUrl } from './diagnostics.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
 import { networkLimits } from './network.js';
-import { applyPolicy, validateRuleSettings } from './policy.js';
+import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
+import { REPORT_SCHEMA_VERSION } from './report-contract.js';
 import { defaultRules } from './rules/index.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import type { PageSnapshot, ScanProgressEvent, ScanResult } from './types.js';
@@ -26,8 +28,9 @@ export function throwIfAborted(signal?: AbortSignal): void {
 export async function scan(target: string, options: ScanOptions = {}): Promise<ScanResult> {
   throwIfAborted(options.signal);
   const startedAt = Date.now();
+  const scanId = randomUUID();
   const emit = (event: ScanProgressEvent) =>
-    options.onProgress?.({ ...event, elapsedMs: Date.now() - startedAt });
+    options.onProgress?.({ ...event, scanId, elapsedMs: Date.now() - startedAt });
   emit({ stage: 'starting', elapsedMs: 0 });
   const configuredRules = options.rules ?? defaultRules;
   validateRuleSettings(options.ruleSettings ?? {}, [...defaultRules, ...configuredRules]);
@@ -38,7 +41,9 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
   ) {
     throw new TypeError('allow.vendors must contain non-empty vendor names');
   }
-  const rules = configuredRules.filter((rule) => options.ruleSettings?.[rule.id] !== 'off');
+  const rules = configuredRules.filter(
+    (rule) => ruleSetting(options.ruleSettings, rule.id) !== 'off',
+  );
   const maxPages = options.maxPages ?? DEFAULTS.maxPages;
   integer(maxPages, 'maxPages', 1);
   integer(options.settleMs ?? DEFAULTS.settleMs, 'settleMs', 0);
@@ -66,13 +71,20 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     const snapshots: PageSnapshot[] = [];
     const queue = [siteUrl.href];
     const seen = new Set(queue);
-    const captured = new Set<string>();
+    const pageIds = new Map<string, { pageId: string; pageIndex: number }>();
     let url = queue.shift();
     while (url !== undefined && snapshots.length < maxPages) {
       throwIfAborted(options.signal);
       const isStart = snapshots.length === 0;
       const pageIndex = snapshots.length;
-      emit({ stage: 'loading-page', elapsedMs: 0, pageUrl: diagnosticUrl(url), pageIndex });
+      const captureId = randomUUID();
+      emit({
+        stage: 'loading-page',
+        elapsedMs: 0,
+        pageUrl: diagnosticUrl(url),
+        pageIndex,
+        captureId,
+      });
       let progressFailure: { error: unknown } | undefined;
       const snapshot = await capturePage(
         browser,
@@ -82,7 +94,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           ...options,
           onProgress: (event) => {
             try {
-              emit({ ...event, pageIndex });
+              emit({ ...event, pageIndex, captureId });
             } catch (error) {
               progressFailure = { error };
               throw error;
@@ -100,8 +112,22 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         siteUrl = new URL(snapshot.finalUrl);
       }
       const finalUrl = withoutHash(snapshot.finalUrl);
-      if (!captured.has(finalUrl)) {
-        captured.add(finalUrl);
+      const existingPage = pageIds.get(finalUrl);
+      const { pageId, pageIndex: resolvedIndex } = existingPage ?? {
+        pageId: randomUUID(),
+        pageIndex,
+      };
+      pageIds.set(finalUrl, { pageId, pageIndex: resolvedIndex });
+      snapshot.pageId = pageId;
+      emit({
+        stage: 'page-captured',
+        elapsedMs: 0,
+        pageUrl: diagnosticUrl(snapshot.finalUrl),
+        captureId,
+        pageId,
+        pageIndex: resolvedIndex,
+      });
+      if (existingPage === undefined) {
         seen.add(finalUrl);
         snapshots.push(snapshot);
         options.onPage?.(snapshot);
@@ -116,9 +142,15 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       url = queue.shift();
     }
     throwIfAborted(options.signal);
-    emit({ stage: 'evaluating-rules', elapsedMs: 0 });
-    const assessments = snapshots.map((page, index) =>
-      assessPage(
+    const assessments = snapshots.map((page, index) => {
+      emit({
+        stage: 'evaluating-rules',
+        elapsedMs: 0,
+        pageIndex: index,
+        ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
+        pageUrl: diagnosticUrl(page.finalUrl),
+      });
+      return assessPage(
         page,
         rules,
         siteUrl,
@@ -126,8 +158,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         index === 0,
         options.consentCheck !== false,
         configuredRules,
-      ),
-    );
+      );
+    });
     const partial =
       assessments.some((assessment) =>
         assessment.evaluations.some(
@@ -135,7 +167,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ),
       ) || snapshots.some((page) => !page.capture?.complete);
     const result: ScanResult = {
-      schemaVersion: '1.0.0',
+      scanId,
+      schemaVersion: REPORT_SCHEMA_VERSION,
       scannerVersion: VERSION,
       options: {
         maxPages,
@@ -166,6 +199,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       scannedAt: new Date(startedAt).toISOString(),
       durationMs: Date.now() - startedAt,
       pages: snapshots.map((page, index) => ({
+        ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
         url: page.url,
         finalUrl: page.finalUrl,
         status: page.status,

@@ -1,6 +1,9 @@
 import type { Finding, Rule, RuleSettings } from './types.js';
 
 export function validateRuleSettings(settings: RuleSettings, rules: readonly Rule[]): void {
+  if (typeof settings !== 'object' || settings === null || Array.isArray(settings)) {
+    throw new TypeError('Rule settings must be an object.');
+  }
   for (const [id, value] of Object.entries(settings)) {
     if (
       !rules.some((rule) => rule.id === id) ||
@@ -11,6 +14,14 @@ export function validateRuleSettings(settings: RuleSettings, rules: readonly Rul
   }
 }
 
+/** Inherited properties such as constructor must never become severity overrides. */
+export function ruleSetting(
+  settings: RuleSettings | undefined,
+  ruleId: string,
+): RuleSettings[string] | undefined {
+  return settings !== undefined && Object.hasOwn(settings, ruleId) ? settings[ruleId] : undefined;
+}
+
 /** Apply local policy after region classification. Allowed vendors stay visible as info. */
 export function applyPolicy(
   findings: readonly Finding[],
@@ -18,9 +29,9 @@ export function applyPolicy(
   allowedVendors: readonly string[] = [],
 ): Finding[] {
   return findings
-    .filter((finding) => settings[finding.ruleId] !== 'off')
+    .filter((finding) => ruleSetting(settings, finding.ruleId) !== 'off')
     .map((finding) => {
-      const setting = settings[finding.ruleId];
+      const setting = ruleSetting(settings, finding.ruleId);
       const allowed = finding.subject !== undefined && allowedVendors.includes(finding.subject);
       const severity = allowed
         ? 'info'

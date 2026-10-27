@@ -1,0 +1,224 @@
+{
+  "scanId": "00000000-0000-4000-8000-000000000000",
+  "schemaVersion": "1.1.0",
+  "scannerVersion": "0.3.0",
+  "options": {
+    "maxPages": 1,
+    "settleMs": 0,
+    "timeoutMs": 30000,
+    "locale": "de-DE",
+    "lang": "en",
+    "region": "de",
+    "consentCheck": true,
+    "headed": false,
+    "channel": "chromium",
+    "captureTimeoutMs": 60000,
+    "maxDiagnostics": 100,
+    "failureMode": "report",
+    "captureMode": "adapter",
+    "networkLimits": {
+      "concurrency": 6,
+      "maxRequests": 500,
+      "maxResponseBytes": 5242880,
+      "maxTotalBytes": 20971520,
+      "maxRedirects": 10,
+      "requestTimeoutMs": 10000
+    },
+    "selectedRules": [
+      "pre-consent-trackers",
+      "trackers-after-reject",
+      "reject-option",
+      "google-fonts",
+      "third-party-embeds",
+      "third-party-cdns",
+      "impressum-link",
+      "privacy-policy-link"
+    ],
+    "ruleSettings": {},
+    "allowedVendors": []
+  },
+  "siteUrl": "https://fixtures.invalid/[redacted]",
+  "lang": "en",
+  "region": "de",
+  "scannedAt": "2026-10-27T00:00:00.000Z",
+  "durationMs": 0,
+  "pages": [
+    {
+      "pageId": "00000000-0000-4000-8000-000000000001",
+      "url": "https://fixtures.invalid/[redacted]",
+      "finalUrl": "https://fixtures.invalid/[redacted]",
+      "status": 200,
+      "requestCount": 1,
+      "cookieCount": 0,
+      "capture": {
+        "complete": true,
+        "beforeConsentComplete": true,
+        "document": true,
+        "diagnostics": {
+          "requests": 2,
+          "skippedRequests": 0,
+          "failedRequests": 0,
+          "securityBlockedRequests": 0,
+          "omittedRequests": 0,
+          "responses": 2,
+          "finished": 2,
+          "failed": 0,
+          "blocked": 0,
+          "httpErrors": 0,
+          "bytes": 316,
+          "issueCount": 0,
+          "dropped": 0,
+          "issues": []
+        }
+      },
+      "ruleEvaluations": [
+        {
+          "ruleId": "pre-consent-trackers",
+          "status": "executed",
+          "partial": false,
+          "outcome": "checked-no-finding",
+          "explanation": "required-observations-available",
+          "findingCount": 0,
+          "pageId": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "ruleId": "trackers-after-reject",
+          "status": "executed",
+          "partial": false,
+          "outcome": "checked-no-finding",
+          "explanation": "required-observations-available",
+          "findingCount": 0,
+          "pageId": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "ruleId": "reject-option",
+          "status": "executed",
+          "partial": false,
+          "outcome": "checked-no-finding",
+          "explanation": "required-observations-available",
+          "findingCount": 0,
+          "pageId": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "ruleId": "google-fonts",
+          "status": "executed",
+          "partial": false,
+          "outcome": "checked-no-finding",
+          "explanation": "required-observations-available",
+          "findingCount": 0,
+          "pageId": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "ruleId": "third-party-embeds",
+          "status": "executed",
+          "partial": false,
+          "outcome": "checked-no-finding",
+          "explanation": "required-observations-available",
+          "findingCount": 0,
+          "pageId": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "ruleId": "third-party-cdns",
+          "status": "executed",
+          "partial": false,
+          "outcome": "checked-no-finding",
+          "explanation": "required-observations-available",
+          "findingCount": 0,
+          "pageId": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "ruleId": "impressum-link",
+          "status": "executed",
+          "partial": false,
+          "outcome": "checked-no-finding",
+          "explanation": "required-observations-available",
+          "findingCount": 0,
+          "pageId": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "ruleId": "privacy-policy-link",
+          "status": "executed",
+          "partial": false,
+          "outcome": "checked-no-finding",
+          "explanation": "required-observations-available",
+          "findingCount": 0,
+          "pageId": "00000000-0000-4000-8000-000000000001"
+        }
+      ]
+    }
+  ],
+  "consent": {
+    "bannerFound": true,
+    "rejected": true,
+    "state": "reject-tested",
+    "outcome": "reject-succeeded",
+    "reason": "reject-clicked-and-reloaded",
+    "acceptLabel": "Accept all",
+    "rejectLabel": "Reject all",
+    "afterRejectComplete": true
+  },
+  "findings": [],
+  "rules": [
+    {
+      "id": "pre-consent-trackers",
+      "title": "Trackers run before consent",
+      "description": "Analytics, advertising and session-replay tools must not load or set cookies until the visitor has opted in. The page is loaded without interacting with any consent banner, so everything reported here happened before consent.",
+      "references": [
+        "§ 25 Abs. 1 TDDDG",
+        "Art. 5(3) ePrivacy Directive",
+        "Art. 6(1)(a) GDPR",
+        "CJEU C-673/17 (Planet49)"
+      ]
+    },
+    {
+      "id": "trackers-after-reject",
+      "title": "Trackers run after the visitor rejected them",
+      "description": "privalint clicks the reject button of the consent banner on the start page, reloads the page and records what still loads. Anything on the tracker list that loads or sets new cookies after that ignores the visitor’s explicit refusal.",
+      "references": ["§ 25 Abs. 1 TDDDG", "Art. 6(1)(a) GDPR", "Art. 7(3) GDPR"]
+    },
+    {
+      "id": "reject-option",
+      "title": "No supported reject control detected on the first layer of the banner",
+      "description": "Rejecting cookies must be as easy as accepting them. Most European regulators treat a banner that offers \"accept\" on its first layer, but hides \"reject\" in the settings or behind a link, as invalid consent.",
+      "references": [
+        "EDPB Cookie Banner Taskforce report, 17.01.2023",
+        "DSK-Beschluss, 22.03.2023: Bewertung von Pur-Abo-Modellen auf Websites",
+        "EDPB Opinion 08/2024 on consent or pay models",
+        "Art. 4(11) GDPR",
+        "Art. 7(3) GDPR",
+        "§ 25 Abs. 1 TDDDG"
+      ]
+    },
+    {
+      "id": "google-fonts",
+      "title": "Google Fonts loaded from Google servers",
+      "description": "Loading fonts from Google's CDN sends every visitor's IP address to Google without consent. LG München I awarded a visitor damages for this in 2022.",
+      "references": ["Art. 6(1) GDPR", "LG München I, 20.01.2022, Az. 3 O 17493/20"]
+    },
+    {
+      "id": "third-party-embeds",
+      "title": "Embedded content loads before consent",
+      "description": "Videos, maps, captchas and social embeds contact their provider as soon as the page loads, which sends the visitor's IP address and often sets cookies. Load them only after the visitor has agreed, typically with a click-to-load placeholder.",
+      "references": ["Art. 6(1) GDPR", "§ 25 Abs. 1 TDDDG"]
+    },
+    {
+      "id": "third-party-cdns",
+      "title": "Scripts or styles loaded from a public CDN",
+      "description": "Every request to a public CDN sends the visitor's IP address to its operator. The same reasoning that made Google Fonts a problem applies, but there is no court ruling on CDNs specifically, so this is only a hint.",
+      "references": ["Art. 6(1) GDPR", "LG München I, 20.01.2022, Az. 3 O 17493/20 (by analogy)"]
+    },
+    {
+      "id": "impressum-link",
+      "title": "No link to an Impressum",
+      "description": "Commercial websites in Germany must provide a legal notice that is easy to recognise, directly reachable and always available, which in practice means a link on every page. Disable this rule for purely private sites or sites outside its scope.",
+      "references": ["§ 5 DDG", "BGH, 20.07.2006, Az. I ZR 228/03"]
+    },
+    {
+      "id": "privacy-policy-link",
+      "title": "No link to a privacy policy",
+      "description": "Visitors must be told how their data is processed at the time it is collected. Since every page view already involves server logs, the privacy policy has to be reachable from every page.",
+      "references": ["Art. 12 GDPR", "Art. 13 GDPR"]
+    }
+  ],
+  "coverage": "complete"
+}

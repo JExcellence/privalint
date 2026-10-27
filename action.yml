@@ -15,6 +15,9 @@ inputs:
   fail-on:
     description: Fail the step on findings at this level or above. One of error, warning, never.
     default: error
+  fail-on-incomplete:
+    description: Fail with exit code 3 if required observations are incomplete, independently of finding severity.
+    default: "false"
   disable:
     description: Comma-separated rule ids to skip.
     default: ""
@@ -39,7 +42,7 @@ outputs:
     description: Path of the SARIF report. Empty if none was written.
     value: ${{ steps.scan.outputs.sarif-file }}
   exit-code:
-    description: 0 for no findings at the fail-on level, 1 for findings, 2 for a failed scan.
+    description: 0 for success, 1 for findings, 2 for scan/argument errors, 3 for incomplete coverage when enabled.
     value: ${{ steps.scan.outputs.exit-code }}
 
 runs:
@@ -67,12 +70,17 @@ runs:
         URL: ${{ inputs.url }}
         MAX_PAGES: ${{ inputs.max-pages }}
         FAIL_ON: ${{ inputs.fail-on }}
+        FAIL_ON_INCOMPLETE: ${{ inputs.fail-on-incomplete }}
         DISABLE: ${{ inputs.disable }}
         REPORT_LANG: ${{ inputs.lang }}
         REGION: ${{ inputs.region }}
         SARIF_FILE: ${{ inputs.sarif-file }}
         JOB_SUMMARY: ${{ inputs.job-summary }}
       run: |
+        if [[ "$FAIL_ON_INCOMPLETE" != "true" && "$FAIL_ON_INCOMPLETE" != "false" ]]; then
+          echo "::error::fail-on-incomplete must be true or false"
+          exit 2
+        fi
         if [[ -n "$SARIF_FILE" && "$SARIF_FILE" != *.sarif ]]; then
           echo "::error::sarif-file must end in .sarif, got '$SARIF_FILE'"
           exit 2
@@ -82,6 +90,11 @@ runs:
         # A failed scan must not post a report left by a previous action invocation.
         node -e 'require("node:fs").rmSync(process.argv[1], {force: true})' "$summary"
         args=("$URL" --max-pages "$MAX_PAGES" --fail-on "$FAIL_ON" --lang "$REPORT_LANG" --region "$REGION" --output "$summary")
+        if [[ "$FAIL_ON_INCOMPLETE" == "true" ]]; then
+          args+=(--fail-on-incomplete)
+        else
+          args+=(--allow-incomplete)
+        fi
         if [[ -n "$DISABLE" ]]; then args+=(--disable "$DISABLE"); fi
         if [[ -n "$SARIF_FILE" ]]; then args+=(--output "$SARIF_FILE"); fi
 

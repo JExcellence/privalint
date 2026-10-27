@@ -3,9 +3,11 @@ import type { Finding, Severity } from '../types.js';
 export function groupByPage(findings: readonly Finding[]): Map<string, Finding[]> {
   const pages = new Map<string, Finding[]>();
   for (const finding of findings) {
-    const list = pages.get(finding.pageUrl) ?? [];
+    const key =
+      finding.pageId === undefined ? finding.pageUrl : `${finding.pageUrl} [${finding.pageId}]`;
+    const list = pages.get(key) ?? [];
     list.push(finding);
-    pages.set(finding.pageUrl, list);
+    pages.set(key, list);
   }
   return pages;
 }

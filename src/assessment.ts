@@ -99,7 +99,12 @@ export function assessPage(
       };
     }
     const detected = rule.check({ page: input, siteUrl, lang });
-    findings.push(...detected);
+    findings.push(
+      ...detected.map((finding) => ({
+        ...finding,
+        ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
+      })),
+    );
     const partial = requirements.includes('after-reject')
       ? page.consent?.afterRejectComplete === false
       : !complete;
@@ -118,5 +123,11 @@ export function assessPage(
       findingCount: detected.length,
     };
   });
-  return { findings, evaluations };
+  return {
+    findings,
+    evaluations: evaluations.map((evaluation) => ({
+      ...evaluation,
+      ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
+    })),
+  };
 }
