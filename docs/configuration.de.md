@@ -10,7 +10,8 @@ Ungültiges JSON, unbekannte Felder, unbekannte Regeln und ungültige Werte werd
 Dateien sind auf 64 KiB beschränkt. Zugangsdaten gehören nicht in die Konfiguration; URL-Zugangsdaten
 werden abgelehnt.
 
-Unterstützt sind `url` (absolute HTTP(S)-URL), `maxPages` (positive Ganzzahl), `settleMs` (ab 0),
+Unterstützt sind `url` (absolute HTTP(S)-URL), `maxPages` (positive Ganzzahl), `concurrency`
+(positive Ganzzahl, gleichzeitig geladene Seiten), `settleMs` (ab 0),
 `timeoutMs` (positiv), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`eu`),
 `consentCheck` und `failOnIncomplete` (Boolean), `rules` (bekannte IDs mit `off`/`error`/`warning`/`info`) und
 `allow: { vendors: string[] }` (exakte, groß-/kleinschreibungsabhängige `subject`-Anbieternamen).

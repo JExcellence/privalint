@@ -48,6 +48,7 @@ describe('JSON configuration', () => {
     [],
     { unknown: true },
     { maxPages: 0 },
+    { concurrency: 0 },
     { settleMs: -1 },
     { timeoutMs: 1.5 },
     { region: 'xx' },

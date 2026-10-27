@@ -9,6 +9,7 @@ import type { RuleSettings } from './types.js';
 export interface PrivalintConfig {
   url?: string;
   maxPages?: number;
+  concurrency?: number;
   settleMs?: number;
   timeoutMs?: number;
   locale?: string;
@@ -23,6 +24,7 @@ export interface PrivalintConfig {
 const KEYS = [
   'url',
   'maxPages',
+  'concurrency',
   'settleMs',
   'timeoutMs',
   'locale',
@@ -58,7 +60,7 @@ export function parseConfig(value: unknown): PrivalintConfig {
     }
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) invalid();
   }
-  for (const key of ['maxPages', 'settleMs', 'timeoutMs']) {
+  for (const key of ['maxPages', 'concurrency', 'settleMs', 'timeoutMs']) {
     const number = value[key];
     if (
       number !== undefined &&

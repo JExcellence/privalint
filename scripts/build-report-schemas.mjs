@@ -246,7 +246,7 @@ function definitions(version) {
       {
         ...reportOptions,
         // Added within 1.1.0; optional so reports from earlier 1.1.0 scanners stay valid.
-        ...(identified ? { sandbox: boolean } : {}),
+        ...(identified ? { sandbox: boolean, concurrency: positive } : {}),
       },
       Object.keys(reportOptions),
     ),
