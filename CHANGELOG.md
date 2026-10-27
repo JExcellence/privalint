@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.3.0 - 2026-10-27
+
 ### Added
 
 - Controlled Chromium capture through a per-hop network adapter, with FIFO resource scheduling,
