@@ -20,6 +20,7 @@ export {
 } from './report-contract.js';
 export {
   adobeFonts,
+  consentSettingsLink,
   defaultRules,
   googleFonts,
   impressumLink,

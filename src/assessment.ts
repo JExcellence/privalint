@@ -14,6 +14,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'privacy-policy-link': ['document'],
   'reject-option': ['consent'],
   'trackers-after-reject': ['after-reject'],
+  'consent-settings-link': ['after-reject'],
 };
 
 export function assessPage(

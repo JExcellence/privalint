@@ -36,6 +36,12 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     ch: ['Art. 45c FMG', 'EDÖB, Leitfaden zu Cookies (2025)'],
     eu: ['Art. 4(11) GDPR', 'Art. 7(3) GDPR', 'EDPB Cookie Banner Taskforce report, 17.01.2023'],
   },
+  'consent-settings-link': {
+    de: ['Art. 7 Abs. 3 DSGVO', '§ 25 Abs. 1 TDDDG'],
+    at: ['Art. 7 Abs. 3 DSGVO', '§ 165 Abs. 3 TKG 2021'],
+    ch: ['Art. 45c FMG'],
+    eu: ['Art. 7(3) GDPR', 'Art. 5(3) ePrivacy Directive'],
+  },
   'google-fonts': {
     de: ['Art. 6 Abs. 1 DSGVO', 'LG München I, 20.01.2022, Az. 3 O 17493/20'],
     at: ['Art. 6 Abs. 1 DSGVO'],
@@ -100,6 +106,7 @@ export function applyRegion(findings: readonly Finding[], region: Region): Findi
  */
 const SOFTER_IN_SWITZERLAND = new Set([
   'pre-consent-trackers',
+  'consent-settings-link',
   'third-party-embeds',
   'impressum-link',
 ]);
