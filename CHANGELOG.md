@@ -13,6 +13,9 @@ All notable changes are listed here. The format follows
   a separate licence to be self-hosted
 - Criteo, Taboola, Outbrain, Adform and Quantcast in the tracker list, based on requests observed
   on public news sites
+- `--sandbox` (API: `sandbox: true`) runs Chromium with its sandbox. It stays off by default.
+  When the sandbox can't start, the error says why and links to Chromium's notes on Ubuntu's
+  user-namespace restrictions. Reports record the setting as `options.sandbox`
 
 ### Fixed
 

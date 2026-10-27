@@ -21,6 +21,11 @@ export interface ScanOptions {
   consentCheck?: boolean | undefined;
   headed?: boolean | undefined;
   channel?: string | undefined;
+  /**
+   * Run Chromium with its sandbox. Off by default like Playwright, because the sandbox
+   * often cannot start in containers or on hosts that restrict user namespaces.
+   */
+  sandbox?: boolean | undefined;
   /** Trusted hook receiving RAW observations. Do not log/expose without redaction. */
   onPage?: (snapshot: PageSnapshot) => void;
   /** Caller-owned transport; scan owns browser, fresh per-page contexts and request signals. */

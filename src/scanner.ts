@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { chromium } from 'playwright';
+import { type Browser, chromium } from 'playwright';
 import { assessPage } from './assessment.js';
 import { capturePage } from './capture.js';
 import { diagnosticUrl } from './diagnostics.js';
@@ -18,6 +18,27 @@ export type { ScanOptions } from './scan-options.js';
 function integer(value: number, name: string, minimum: number): void {
   if (!Number.isSafeInteger(value) || value < minimum) {
     throw new RangeError(`${name} must be a safe integer of at least ${minimum}`);
+  }
+}
+
+async function launchBrowser(options: ScanOptions): Promise<Browser> {
+  const sandbox = options.sandbox === true;
+  try {
+    return await chromium.launch({
+      headless: options.headed !== true,
+      chromiumSandbox: sandbox,
+      ...(options.channel === undefined ? {} : { channel: options.channel }),
+    });
+  } catch (error) {
+    if (!sandbox) throw error;
+    // Chromium's own message ("No usable sandbox!") does not say what to change.
+    throw new Error(
+      'Chromium could not start with its sandbox. On Linux this usually means unprivileged user ' +
+        'namespaces are restricted (Ubuntu 23.10 and later, many containers). Allow them for ' +
+        'Chromium or run without --sandbox; see ' +
+        'https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md',
+      { cause: error },
+    );
   }
 }
 
@@ -62,10 +83,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
   const region = options.region ?? 'de';
   let siteUrl = new URL(target);
   if (!/^https?:$/.test(siteUrl.protocol)) throw new TypeError('Expected an HTTP(S) target');
-  const browser = await chromium.launch({
-    headless: options.headed !== true,
-    ...(options.channel === undefined ? {} : { channel: options.channel }),
-  });
+  const browser = await launchBrowser(options);
   try {
     throwIfAborted(options.signal);
     const snapshots: PageSnapshot[] = [];
@@ -180,6 +198,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         consentCheck: options.consentCheck !== false,
         headed: options.headed === true,
         channel: options.channel ?? 'chromium',
+        sandbox: options.sandbox === true,
         captureTimeoutMs: options.captureTimeoutMs ?? (options.networkAdapter ? 60_000 : null),
         maxDiagnostics: options.maxDiagnostics ?? 100,
         failureMode: options.failureMode ?? (options.networkAdapter ? 'report' : 'throw'),
