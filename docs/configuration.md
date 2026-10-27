@@ -97,8 +97,10 @@ if (request.resourceType === 'ping') {
 ```
 
 The scanner does not omit beacons by default. Skips are diagnostic observations (`kind: 'skipped'`,
-`skippedReason: 'beacon'`), not privacy findings or transport failures. They still restrict what
-the scanner observed; a missing resource can affect downstream behaviour.
+`skippedReason: 'beacon'`), not privacy findings or transport failures. An omitted beacon does not
+make the capture incomplete: its URL is still recorded and matched by the tracker rules, and the
+page never reads a beacon's response. Every other skip still restricts what the scanner observed,
+because a missing resource can affect downstream behaviour.
 
 ## Consent and progress
 

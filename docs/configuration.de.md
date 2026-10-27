@@ -97,8 +97,11 @@ if (request.resourceType === 'ping') {
 ```
 
 Standardmäßig werden Beacons nicht ausgelassen. `kind: 'skipped'` und `skippedReason: 'beacon'`
-sind technische Diagnosen, keine Datenschutzbefunde oder Transportfehler. Die Beobachtung bleibt
-eingeschränkt, weil ausgelassene Ressourcen nachfolgendes Verhalten beeinflussen können.
+sind technische Diagnosen, keine Datenschutzbefunde oder Transportfehler. Ein ausgelassener Beacon
+macht die Erfassung nicht unvollständig: Seine URL wird weiterhin erfasst und von den
+Tracker-Regeln geprüft, und die Seite liest die Antwort eines Beacons nie aus. Alle anderen
+ausgelassenen Anfragen schränken die Beobachtung weiterhin ein, weil fehlende Ressourcen
+nachfolgendes Verhalten beeinflussen können.
 
 ## Consent und Fortschritt
 

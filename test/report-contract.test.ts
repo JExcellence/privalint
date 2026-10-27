@@ -43,6 +43,47 @@ describe('versioned report contract', () => {
       result.pages[0]?.ruleEvaluations?.find((item) => item.ruleId === 'pre-consent-trackers'),
     ).toMatchObject({ outcome: 'not-evaluable', explanation: 'incomplete-observation' });
   });
+  it('treats an omitted first-party beacon as complete observation', async () => {
+    const result = await scan(origin, {
+      settleMs: 0,
+      networkAdapter: async ({ url }) => {
+        if (url.endsWith('/beacon')) throw new NetworkError('skipped', undefined, 'beacon');
+        return html('<script>navigator.sendBeacon("/beacon","hello")</script>');
+      },
+    });
+    const page = result.pages[0];
+    expect(page?.capture).toMatchObject({ complete: true, beforeConsentComplete: true });
+    expect(page?.capture?.diagnostics.issues).toContainEqual(
+      expect.objectContaining({ kind: 'skipped', skippedReason: 'beacon' }),
+    );
+    for (const ruleId of ['pre-consent-trackers', 'impressum-link', 'privacy-policy-link']) {
+      expect(
+        page?.ruleEvaluations?.find((item) => item.ruleId === ruleId),
+        ruleId,
+      ).toMatchObject({
+        outcome: 'checked-no-finding',
+        partial: false,
+      });
+    }
+  });
+
+  it('still reports a tracker whose beacon was not sent', async () => {
+    const result = await scan(origin, {
+      settleMs: 0,
+      consentCheck: false,
+      networkAdapter: async ({ url }) => {
+        if (url.includes('google-analytics.com'))
+          throw new NetworkError('skipped', undefined, 'beacon');
+        return html(
+          '<script>navigator.sendBeacon("https://region1.google-analytics.com/g/collect","x")</script>',
+        );
+      },
+    });
+    expect(result.findings).toContainEqual(
+      expect.objectContaining({ ruleId: 'pre-consent-trackers', subject: 'Google Analytics' }),
+    );
+  });
+
   it('reports real progress in order with safe URLs, elapsed time and reproducible options', async () => {
     const events: ScanProgressEvent[] = [];
     const result = await scan(`${origin}/SECRET?token=SECRET`, {
