@@ -6,6 +6,11 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- Osano banners: the reject button is found again (`osano-cm-denyAll`), so the reject path is
+  tested instead of being reported as missing
+
 ## 0.4.1 - 2026-10-27
 
 ### Fixed

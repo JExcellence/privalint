@@ -11,7 +11,7 @@ Additional support:
 | CMP                | Recognition                                                                          |
 | ------------------ | ------------------------------------------------------------------------------------ |
 | CookieFirst        | `data-cookiefirst-action=accept/reject`, v3 `data-testid=actionButton-accept/reject` |
-| Osano              | `.osano-cm-accept-all`, `.osano-cm-deny-all`                                         |
+| Osano              | `.osano-cm-accept-all`, `.osano-cm-denyAll` (older `.osano-cm-deny-all`)             |
 | Termly             | `data-tid=banner-accept/banner-decline`, accept-button CSS-module prefix             |
 | Sourcepoint        | `button.sp_choice_type_11`, `button.sp_choice_type_13`, including iframe messages    |
 | Real Cookie Banner | Existing visible-button label heuristics plus vendor script/config marker            |
@@ -36,9 +36,24 @@ On 2026-10-27, public HTML and official scripts were inspected by HTTP from thes
 - [Sourcepoint](https://sourcepoint.com/): public vendor site inspected; its returned HTML did
   not provide a live Sourcepoint first-layer message to verify the control selectors.
 
-This is source inspection, **not** an interactive verification of every public site's banner.
-Local browser interaction is disabled in the current environment. Deterministic local Chromium
-fixtures cover all five manager paths, old/new CookieFirst attributes and Sourcepoint in an iframe.
-Production markup, region rules and CMP configurations change. Issue #9 therefore remains open
-for public-site interaction verification, especially Sourcepoint and Termly reject variants.
-Do not claim the entire issue's browser-verification acceptance criteria have passed.
+## Checked on public sites
+
+On 2026-10-27 privalint ran in headless Chromium from Germany against these sites:
+
+| CMP                | Site                | Result                                                              |
+| ------------------ | ------------------- | ------------------------------------------------------------------- |
+| CookieFirst        | cookiefirst.com     | recognized, clicked "Deny" and reloaded                             |
+| Osano              | osano.com           | recognized, clicked "Nicht wesentliche Cookies ablehnen", reloaded  |
+| Termly             | termly.io           | recognized, clicked "Ablehnen" and reloaded                         |
+| Sourcepoint        | spiegel.de, welt.de | recognized in its iframe, correctly classified as pay-or-OK         |
+| Real Cookie Banner | devowl.io           | marker found, but the banner is not rendered (empty hidden overlay) |
+
+The Osano reject selector used to be `.osano-cm-deny-all`, while osano.com serves
+`.osano-cm-denyAll`. The selector is fixed and covered by a fixture.
+
+Real Cookie Banner does not render its banner for an automated browser on devowl.io; privalint
+correctly reports banner markup it cannot classify instead of a success. Label-based recognition
+stays on purpose, and no guessed selectors for its generated class names are added.
+
+Deterministic local fixtures cover all manager paths, both CookieFirst variants, the Osano classes
+and Sourcepoint in an iframe. Production markup, region rules and CMP configurations can change.

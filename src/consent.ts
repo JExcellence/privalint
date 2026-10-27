@@ -64,7 +64,8 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
   {
     name: 'Osano',
     accept: '.osano-cm-accept-all',
-    reject: '.osano-cm-deny-all',
+    // osano.com serves `osano-cm-denyAll`; the dashed form is kept for older loader versions.
+    reject: '.osano-cm-denyAll, .osano-cm-deny-all',
   },
   {
     name: 'Termly',
