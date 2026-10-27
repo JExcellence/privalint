@@ -95,6 +95,37 @@ const CONSENT_CONTEXT = /cookie|consent|einwillig|tracking|datenschutz|privacy/i
 
 const CLICKABLE = 'button, [role="button"], a, input[type="button"], input[type="submit"]';
 
+/** JavaScript calls that consent managers document for reopening their settings. */
+const REOPEN_CALLS = [
+  'Cookiebot.renew',
+  'UC_UI.showSecondLayer',
+  'Didomi.preferences.show',
+  'klaro.show',
+  'displayPreferenceModal',
+  'loadPrivacyManagerModal',
+];
+
+/**
+ * Floating buttons and footer links that reopen the settings after a choice was made. Best
+ * effort like KNOWN_CMPS; the label heuristic below catches self-built links.
+ */
+const REOPEN_CONTROLS = [
+  ...REOPEN_CALLS.flatMap((call) => [`a[href*="${call}"]`, `[onclick*="${call}"]`]),
+  '#CookiebotWidget',
+  '.ot-sdk-show-settings, #ot-sdk-btn-floating',
+  '[data-testid="uc-privacy-button"]',
+  '.cmplz-manage-consent',
+  '.cky-btn-revisit',
+  '.iubenda-cs-preferences-link',
+  '[data-cc="show-preferencesModal"], [data-cc="c-settings"]',
+  '.osano-cm-widget',
+  '.termly-display-preferences',
+].join(', ');
+
+// Word boundaries keep nav links like "Consent management platform" from matching.
+const SETTINGS_LABEL =
+  /(cookie|consent|datenschutz|privatsphäre|privacy|tracking)[-\s]?(einstellungen|settings|preferences|präferenzen|optionen|options)\b|(einwilligung|zustimmung|consent)(en)?\s+(widerrufen|ändern|verwalten|anpassen|bearbeiten|withdraw|manage|change)\b|cookies?\s+(verwalten|anpassen|ändern|manage)\b|manage\s+(cookies|consent|privacy)\b|withdraw\s+(my\s+)?consent\b|paramètres des cookies|gérer (les )?cookies/i;
+
 export interface ConsentCheckOptions {
   settleMs: number;
   timeoutMs: number;
@@ -156,6 +187,7 @@ export async function observeConsent(
     const cookies: RecordedCookie[] = (await context.cookies())
       .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
       .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    const settingsLabel = await findSettingsControl(page);
 
     return {
       ...observation,
@@ -164,6 +196,8 @@ export async function observeConsent(
       outcome: 'reject-succeeded',
       reason: 'reject-clicked-and-reloaded',
       afterReject: { requests: requests.slice(firstRequest), cookies },
+      settingsControl:
+        settingsLabel === undefined ? { found: false } : { found: true, label: settingsLabel },
     };
   } catch (error) {
     return {
@@ -243,6 +277,40 @@ async function findBanner(page: Page): Promise<Banner | undefined> {
       )
         return {};
     }
+  }
+  return undefined;
+}
+
+/**
+ * Looks for a visible way back into the consent settings once the banner is gone. Returns the
+ * control's label, or undefined if there is none. Icon buttons count by aria-label or title.
+ */
+async function findSettingsControl(page: Page): Promise<string | undefined> {
+  for (const frame of page.frames()) {
+    const widget = await firstVisible(frame.locator(REOPEN_CONTROLS));
+    if (widget !== undefined) {
+      return (await label(widget)) || ((await widget.getAttribute('aria-label')) ?? 'widget');
+    }
+  }
+  for (const frame of page.frames()) {
+    const match = await frame
+      .locator(CLICKABLE)
+      .evaluateAll((elements, source) => {
+        const pattern = new RegExp(source, 'i');
+        const shown = (element: HTMLElement) =>
+          element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
+        for (const element of elements as HTMLElement[]) {
+          const name = [
+            element.innerText,
+            element.getAttribute('aria-label'),
+            element.getAttribute('title'),
+          ].find((text) => text && pattern.test(text));
+          if (name && shown(element)) return name.replace(/\s+/g, ' ').trim().slice(0, 80);
+        }
+        return undefined;
+      }, SETTINGS_LABEL.source)
+      .catch(() => undefined);
+    if (match !== undefined) return match;
   }
   return undefined;
 }

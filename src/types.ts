@@ -147,6 +147,11 @@ export interface ConsentObservation {
   afterReject?: { requests: RecordedRequest[]; cookies: RecordedCookie[] };
   /** True only if the reject observation window completed without load issues. */
   afterRejectComplete?: boolean;
+  /**
+   * After rejecting and reloading: whether a link or button to reopen the consent settings was
+   * visible, and its label. Absent if the reject path was not tested, and in reports before 0.5.0.
+   */
+  settingsControl?: { found: boolean; label?: string };
   error?: string;
 }
 

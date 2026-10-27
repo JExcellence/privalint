@@ -590,6 +590,20 @@
         "afterRejectComplete": {
           "type": "boolean"
         },
+        "settingsControl": {
+          "type": "object",
+          "properties": {
+            "found": {
+              "type": "boolean"
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "found"
+          ]
+        },
         "error": {
           "type": "string"
         }
