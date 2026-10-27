@@ -19,6 +19,7 @@ export {
   SUPPORTED_REPORT_SCHEMAS,
 } from './report-contract.js';
 export {
+  adobeFonts,
   defaultRules,
   googleFonts,
   impressumLink,

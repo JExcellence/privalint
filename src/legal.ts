@@ -42,6 +42,12 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     ch: ['Art. 6 DSG'],
     eu: ['Art. 6(1) GDPR'],
   },
+  'adobe-fonts': {
+    de: ['Art. 6 Abs. 1 DSGVO', 'LG München I, 20.01.2022, Az. 3 O 17493/20 (entsprechend)'],
+    at: ['Art. 6 Abs. 1 DSGVO'],
+    ch: ['Art. 6 DSG'],
+    eu: ['Art. 6(1) GDPR'],
+  },
   'third-party-embeds': {
     de: ['Art. 6 Abs. 1 DSGVO', '§ 25 Abs. 1 TDDDG'],
     at: ['Art. 6 Abs. 1 DSGVO', '§ 165 Abs. 3 TKG 2021'],

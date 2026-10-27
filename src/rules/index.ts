@@ -1,4 +1,5 @@
 import type { Rule } from '../types.js';
+import { adobeFonts } from './adobe-fonts.js';
 import { googleFonts } from './google-fonts.js';
 import { impressumLink } from './impressum-link.js';
 import { preConsentTrackers } from './pre-consent-trackers.js';
@@ -13,6 +14,7 @@ export const defaultRules: readonly Rule[] = [
   trackersAfterReject,
   rejectOption,
   googleFonts,
+  adobeFonts,
   thirdPartyEmbeds,
   thirdPartyCdns,
   impressumLink,
@@ -20,6 +22,7 @@ export const defaultRules: readonly Rule[] = [
 ];
 
 export {
+  adobeFonts,
   googleFonts,
   impressumLink,
   preConsentTrackers,
