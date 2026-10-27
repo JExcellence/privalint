@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.5.0 - 2026-10-27
+
 ### Added
 
 - `adobe-fonts` rule: reports fonts loaded from Adobe Fonts (`use.typekit.net`, `p.typekit.net`)
