@@ -38,17 +38,20 @@ const en: ReportMessages = {
   howToFix: 'How to fix',
   disclaimer: 'Automated checks only. A clean result is not proof of GDPR compliance.',
   consent(consent) {
+    if (consent.state === 'interaction-failed') {
+      return `Consent check: interaction failed (${consent.error ?? 'browser-failure'}); reject path untested`;
+    }
     if (!consent.bannerFound) {
-      return 'Consent banner: none found';
+      return 'Consent banner: none detected; reject path untested (not a privacy finding)';
     }
     const vendor = consent.cmp === undefined ? '' : ` (${consent.cmp})`;
     if (consent.error !== undefined) {
       return `Consent banner${vendor}: found, but rejecting failed: ${consent.error}`;
     }
     if (consent.rejected) {
-      return `Consent banner${vendor}: clicked "${consent.rejectLabel}" and reloaded`;
+      return `Consent banner${vendor}: clicked "${consent.rejectLabel}" and reloaded${consent.afterRejectComplete === false ? '; observation incomplete' : ''}`;
     }
-    return `Consent banner${vendor}: found, no reject button`;
+    return `Consent banner${vendor}: found, no supported reject option; reject path untested`;
   },
 };
 
@@ -70,17 +73,20 @@ const de: ReportMessages = {
   disclaimer:
     'Nur automatisierte Prüfungen. Ein sauberes Ergebnis ist kein Nachweis der DSGVO-Konformität.',
   consent(consent) {
+    if (consent.state === 'interaction-failed') {
+      return `Consent-Prüfung: Interaktion fehlgeschlagen (${consent.error ?? 'browser-failure'}); Ablehnen-Pfad ungeprüft`;
+    }
     if (!consent.bannerFound) {
-      return 'Cookie-Banner: keines gefunden';
+      return 'Cookie-Banner: keines erkannt; Ablehnen-Pfad ungeprüft (kein Datenschutzbefund)';
     }
     const vendor = consent.cmp === undefined ? '' : ` (${consent.cmp})`;
     if (consent.error !== undefined) {
       return `Cookie-Banner${vendor}: gefunden, aber Ablehnen ist fehlgeschlagen: ${consent.error}`;
     }
     if (consent.rejected) {
-      return `Cookie-Banner${vendor}: „${consent.rejectLabel}“ geklickt und neu geladen`;
+      return `Cookie-Banner${vendor}: „${consent.rejectLabel}“ geklickt und neu geladen${consent.afterRejectComplete === false ? '; Erfassung unvollständig' : ''}`;
     }
-    return `Cookie-Banner${vendor}: gefunden, kein Ablehnen-Button`;
+    return `Cookie-Banner${vendor}: gefunden, keine unterstützte Ablehnen-Möglichkeit; Ablehnen-Pfad ungeprüft`;
   },
 };
 

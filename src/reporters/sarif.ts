@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { REPOSITORY_URL, ruleDocsUrl, VERSION } from '../meta.js';
 import type { Finding, ScanResult, Severity } from '../types.js';
+import { coverageMessage, isPartial } from './capture.js';
 
 const LEVELS: Record<Severity, 'error' | 'warning' | 'note'> = {
   error: 'error',
@@ -42,6 +43,29 @@ export function formatSarif(result: ScanResult): string {
           },
         },
         results: result.findings.map(toResult),
+        invocations: [
+          {
+            executionSuccessful: !isPartial(result),
+            toolExecutionNotifications: isPartial(result)
+              ? [
+                  {
+                    descriptor: { id: 'incomplete-observation' },
+                    level: 'warning',
+                    message: { text: coverageMessage(result) },
+                  },
+                ]
+              : [],
+          },
+        ],
+        properties: {
+          coverage: result.coverage,
+          observations: result.pages.map(({ url, capture, ruleEvaluations }) => ({
+            url,
+            capture,
+            ruleEvaluations,
+          })),
+          consent: result.consent,
+        },
       },
     ],
   };

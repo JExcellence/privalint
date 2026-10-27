@@ -2,6 +2,7 @@
 import { writeFile } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
+import { diagnosticUrl } from './diagnostics.js';
 import { LANGS } from './i18n.js';
 import { REGIONS } from './legal.js';
 import { VERSION } from './meta.js';
@@ -116,8 +117,8 @@ async function main(argv: string[]): Promise<number> {
     onPage: (page) =>
       process.stderr.write(
         page.error === undefined
-          ? `scanned ${page.finalUrl}\n`
-          : `skipped ${page.url}: ${page.error}\n`,
+          ? `scanned ${diagnosticUrl(page.finalUrl)}\n`
+          : `skipped ${diagnosticUrl(page.url)}: ${page.error}\n`,
       ),
   });
 
@@ -149,7 +150,7 @@ function parseTarget(positionals: string[]): URL {
   try {
     return new URL(withScheme);
   } catch {
-    throw new Error(`Not a valid URL: ${raw}`);
+    throw new Error('Not a valid HTTP(S) URL.');
   }
 }
 

@@ -15,6 +15,19 @@ const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
   rule.check({ siteUrl: SITE, page, lang });
 
 describe('pre-consent-trackers', () => {
+  it('does not turn failed requests into evidence in direct rule API calls', () => {
+    const page = snapshot({
+      requests: [
+        { ...request('https://fonts.googleapis.com/css2'), outcome: 'failed' },
+        { ...request('https://www.google-analytics.com/g/collect'), outcome: 'failed' },
+        { ...request('https://cdn.jsdelivr.net/npm/x'), outcome: 'response', status: 503 },
+        { ...request('https://www.youtube.com/embed/x'), outcome: 'pending' },
+      ],
+    });
+    for (const rule of [preConsentTrackers, googleFonts, thirdPartyCdns, thirdPartyEmbeds]) {
+      expect(run(rule, page)).toEqual([]);
+    }
+  });
   it('passes a clean page', () => {
     const page = snapshot({ requests: [request('https://example.de/app.js')] });
     expect(run(preConsentTrackers, page)).toEqual([]);

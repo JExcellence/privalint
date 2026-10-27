@@ -22,8 +22,8 @@ npx privalint https://ihre-seite.de --lang de
 
 ## Deutschland, Österreich, Schweiz
 
-Mit `--region` wählen Sie, nach welchem Recht privalint die Befunde einordnet. Jeder Befund nennt
-die Rechtsgrundlage des gewählten Landes.
+Mit `--region` wählen Sie das Referenz- und Einstufungsprofil des Tools. Das Profil bestimmt
+nicht, welches Recht für eine Website anwendbar ist. Befunde sind keine rechtliche Beurteilung.
 
 | Region          | Cookies und Tracking                      | Impressum                                       | Besonderheit                                          |
 | --------------- | ----------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
@@ -68,6 +68,34 @@ Details, Hintergründe und Lösungen stehen auf Englisch in [`docs/rules`](docs/
 
 Der Bericht erscheint auf Deutsch in der Zusammenfassung des Workflow-Laufs. Alle Eingaben und
 die Anbindung an GitHub Code Scanning beschreibt die [englische README](README.md#github-action).
+
+## Öffentliche Webscanner und kontrollierte Erfassung
+
+`scan()` unterstützt einen `networkAdapter` und ein `AbortSignal`. Jeder HTTP-Hop einschließlich
+Redirects durchläuft den Adapter. Er gibt eine Antwort zurück oder lehnt mit einem typisierten
+`NetworkError` ab. Eine Warteschlange puffert Lastspitzen; Parallelität, Anfragemenge,
+Antwortgrößen und Zeitlimits sind getrennt. Im Adapter-Modus gibt es keinen Browser-HTTP-Fallback.
+
+PrivaLint erstellt und schließt Browser sowie frische Contexts selbst, auch bei Abbruch. Der
+Aufrufer verwaltet gemeinsam genutzte Transport-Clients. Die bestehende Egress-Policy muss bei
+jedem Hop DNS-Auflösung und tatsächliche Socket-Ziele kontrollieren und das Request-Signal beachten.
+Die [Anleitung](docs/controlled-scanner.de.md) beschreibt den Vertrag und die Zähler. Ein
+[typgeprüftes Beispiel](examples/controlled-scanner.ts) nutzt ausschließlich vom Betreiber
+freigegebene Origins und festgelegte IP-Adressen.
+
+`findings` enthält ausschließlich Regelbefunde. Technische Einschränkungen stehen getrennt unter
+`pages[].capture.diagnostics`. Bei 48 Anfragen mit 21 blockierten oder fehlgeschlagenen Ressourcen
+bleibt die Erfassung unvollständig, auch wenn keine Findings vorliegen. `ruleEvaluations` zeigt
+pro Seite und Regel `executed`, `skipped` oder `not-evaluable`; `partial: true` kennzeichnet die
+Auswertung verfügbarer positiver Evidenz bei eingeschränkter Beobachtung.
+
+Consent-Zustände unterscheiden „kein Banner erkannt“, „keine unterstützte Ablehnen-Möglichkeit“,
+„Interaktion fehlgeschlagen“ und „Ablehnen getestet“. Fehlende Erkennung allein ist kein
+Datenschutzverstoß. Ein getesteter Klick sagt noch nichts über vollständige Ressourcen-Erfassung aus.
+
+Bestehende CLI-, API- und Action-Aufrufe bleiben gültig. Startseiten-Ladefehler werfen weiterhin
+einen Fehler; `failureMode: 'report'` liefert stattdessen einen strukturierten Bericht und ist im
+Adapter-Modus die Vorgabe. Es werden keine Zusagen rechtlicher Konformität gemacht.
 
 ## Grenzen
 

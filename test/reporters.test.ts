@@ -109,3 +109,76 @@ describe('German reports', () => {
     expect(output).toContain('<summary>So beheben Sie es</summary>');
   });
 });
+
+describe('incomplete observations', () => {
+  const incomplete: ScanResult = {
+    ...result([]),
+    coverage: 'partial',
+    pages: [
+      {
+        ...result([]).pages[0]!,
+        capture: {
+          complete: false,
+          document: true,
+          diagnostics: {
+            requests: 48,
+            omittedRequests: 0,
+            responses: 27,
+            finished: 27,
+            failed: 21,
+            blocked: 21,
+            httpErrors: 0,
+            bytes: 0,
+            issueCount: 21,
+            dropped: 20,
+            issues: [
+              {
+                kind: 'security-blocked',
+                phase: 'before-consent',
+                url: 'https://assets.example/[redacted]',
+              },
+            ],
+          },
+        },
+        ruleEvaluations: [
+          {
+            ruleId: 'trackers-after-reject',
+            status: 'not-evaluable',
+            partial: true,
+            reason: 'missing-observation',
+          },
+        ],
+      },
+    ],
+    consent: { bannerFound: false, rejected: false, state: 'not-detected' },
+  };
+
+  it('does not print a green clean-scan conclusion for an incomplete scan', () => {
+    const text = formatText(incomplete);
+    expect(text).toContain('Observation incomplete');
+    expect(text).toContain('48 requests');
+    expect(text).toContain('21 failed (21 security blocks)');
+    expect(text).toContain('trackers-after-reject: not-evaluable');
+    expect(text).toContain('reject path untested');
+    expect(text).not.toContain('No problems found');
+    expect(text).not.toContain('✔');
+    expect(formatMarkdown(incomplete)).toContain('Observation incomplete');
+  });
+
+  it('reports technical coverage in German without asserting a privacy violation', () => {
+    const text = formatText({ ...incomplete, lang: 'de' });
+    expect(text).toContain('Erfassung unvollständig');
+    expect(text).toContain('Ablehnen-Pfad ungeprüft');
+    expect(text).not.toContain('Keine Probleme auf');
+  });
+
+  it('keeps loading failures out of SARIF privacy alerts', () => {
+    const run = JSON.parse(formatSarif(incomplete)).runs[0];
+    expect(run.results).toEqual([]);
+    expect(run.invocations[0].executionSuccessful).toBe(false);
+    expect(run.invocations[0].toolExecutionNotifications[0].descriptor.id).toBe(
+      'incomplete-observation',
+    );
+    expect(run.properties.observations[0].capture.diagnostics.failed).toBe(21);
+  });
+});

@@ -1,4 +1,5 @@
 import type { ThirdParty } from '../data/third-parties.js';
+import { observedRequests } from '../observations.js';
 import type { RecordedRequest } from '../types.js';
 
 const MAX_EVIDENCE = 5;
@@ -9,7 +10,7 @@ export function groupRequestsByVendor(
   find: (url: string) => ThirdParty | undefined,
 ): Map<string, string[]> {
   const byVendor = new Map<string, Set<string>>();
-  for (const request of requests) {
+  for (const request of observedRequests(requests)) {
     const vendor = find(request.url)?.vendor;
     if (vendor !== undefined) {
       byVendor.set(vendor, (byVendor.get(vendor) ?? new Set()).add(request.url));

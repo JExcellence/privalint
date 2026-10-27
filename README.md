@@ -135,8 +135,8 @@ npx playwright install chromium
 
 ## Countries and languages
 
-The same finding can be a clear violation in one country and a hint in another. `--region` picks
-whose law privalint cites and how strictly it judges:
+`--region` selects the references and severity profile used by the tool. It does not determine
+which law applies to a website, and findings are not legal determinations:
 
 | Region         | Cookies and tracking                 | Imprint                               | Changes                                                                          |
 | -------------- | ------------------------------------ | ------------------------------------- | -------------------------------------------------------------------------------- |
@@ -165,6 +165,32 @@ for (const finding of result.findings) {
   console.log(finding.severity, finding.ruleId, finding.pageUrl);
 }
 ```
+
+### Public web scanners and controlled capture
+
+`scan()` accepts a `networkAdapter` and `AbortSignal`. The adapter receives each HTTP hop,
+including redirects, and returns a response or throws a typed `NetworkError`. Requests wait
+in a FIFO queue; concurrency, request count, response bytes and timeouts are independent limits.
+There is no browser HTTP fallback in adapter mode.
+
+The scanner owns its browser and fresh contexts and closes them on completion or cancellation.
+The caller owns the adapter's shared clients. Keep your existing egress policy: validate and pin
+DNS/socket destinations for **every** hop, and honour the provided per-request abort signal.
+
+See the [controlled scanner guide](docs/controlled-scanner.md) and the type-checked
+[pinned-transport example](examples/controlled-scanner.ts). The example denies origins absent
+from a trusted deployment allowlist and pins socket addresses; the allowlist must not come from
+the person submitting the scan.
+
+Reports separate `findings` from `pages[].capture.diagnostics`. A page with 48 requests and 21
+blocked/failed requests is marked incomplete even if no findings were produced. Per-page
+`ruleEvaluations` distinguish `executed`, `skipped` and `not-evaluable`; positive evidence may
+still be evaluated with `partial: true`. No banner detected is not itself a privacy finding,
+and does not mean that the reject path was tested.
+
+Existing CLI, API and GitHub Action calls still work. Start-page navigation failures retain the
+legacy throw behaviour unless `failureMode: 'report'` is selected (the default with an adapter).
+No report claims legal compliance.
 
 ## How it works
 
