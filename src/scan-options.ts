@@ -4,6 +4,8 @@ import type { NetworkAdapter, NetworkLimits } from './network.js';
 import type { PageSnapshot, Rule, RuleSettings, ScanProgressEvent } from './types.js';
 export interface ScanOptions {
   maxPages?: number | undefined;
+  /** Pages captured at the same time. Results are identical to a sequential crawl. Default 1. */
+  concurrency?: number | undefined;
   settleMs?: number | undefined;
   /** Navigation/network-idle timeout, distinct from transport and capture deadlines. */
   timeoutMs?: number | undefined;
@@ -41,4 +43,10 @@ export interface ScanOptions {
   failureMode?: 'throw' | 'report';
 }
 
-export const DEFAULTS = { maxPages: 1, settleMs: 2_000, timeoutMs: 30_000, locale: 'de-DE' };
+export const DEFAULTS = {
+  maxPages: 1,
+  concurrency: 1,
+  settleMs: 2_000,
+  timeoutMs: 30_000,
+  locale: 'de-DE',
+};

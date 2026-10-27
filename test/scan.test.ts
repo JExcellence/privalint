@@ -77,6 +77,35 @@ describe('scan', () => {
     expect(aboutFindings.map((f) => f.ruleId)).toEqual(['impressum-link', 'privacy-policy-link']);
   });
 
+  describe('with concurrency', () => {
+    const summary = (result: Awaited<ReturnType<typeof scan>>) => ({
+      pages: result.pages.map((page) => page.finalUrl),
+      findings: result.findings.map((f) => `${f.ruleId} ${f.pageUrl}`),
+    });
+
+    it.each(['clean', 'messy'])(
+      'crawls the %s fixture exactly like a sequential scan',
+      async (fixture) => {
+        const crawl = { ...options, maxPages: 10 };
+        const sequential = await scan(`${origin}/${fixture}/`, crawl);
+        const parallel = await scan(`${origin}/${fixture}/`, { ...crawl, concurrency: 3 });
+        expect(summary(parallel)).toEqual(summary(sequential));
+        expect(parallel.options?.concurrency).toBe(3);
+      },
+    );
+
+    it('still stops at maxPages', async () => {
+      const result = await scan(`${origin}/clean/`, { ...options, maxPages: 2, concurrency: 5 });
+      expect(result.pages).toHaveLength(2);
+    });
+
+    it('rejects a concurrency below 1', async () => {
+      await expect(scan(`${origin}/clean/`, { ...options, concurrency: 0 })).rejects.toThrow(
+        /concurrency/,
+      );
+    });
+  });
+
   it('fails when the start page cannot be loaded', async () => {
     await expect(scan(`${origin}/download`, options)).rejects.toThrow(/Could not load/);
   });

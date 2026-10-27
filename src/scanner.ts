@@ -15,6 +15,14 @@ import { crawlTarget, withoutHash } from './url.js';
 
 export type { ScanOptions } from './scan-options.js';
 
+interface Capture {
+  url: string;
+  snapshot: PageSnapshot;
+  isStart: boolean;
+  pageIndex: number;
+  captureId: string;
+}
+
 function integer(value: number, name: string, minimum: number): void {
   if (!Number.isSafeInteger(value) || value < minimum) {
     throw new RangeError(`${name} must be a safe integer of at least ${minimum}`);
@@ -67,6 +75,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
   );
   const maxPages = options.maxPages ?? DEFAULTS.maxPages;
   integer(maxPages, 'maxPages', 1);
+  const concurrency = options.concurrency ?? DEFAULTS.concurrency;
+  integer(concurrency, 'concurrency', 1);
   integer(options.settleMs ?? DEFAULTS.settleMs, 'settleMs', 0);
   integer(options.timeoutMs ?? DEFAULTS.timeoutMs, 'timeoutMs', 1);
   integer(options.maxDiagnostics ?? 100, 'maxDiagnostics', 0);
@@ -90,11 +100,15 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     const queue = [siteUrl.href];
     const seen = new Set(queue);
     const pageIds = new Map<string, { pageId: string; pageIndex: number }>();
-    let url = queue.shift();
-    while (url !== undefined && snapshots.length < maxPages) {
-      throwIfAborted(options.signal);
-      const isStart = snapshots.length === 0;
-      const pageIndex = snapshots.length;
+    // Captures run ahead of the queue head, but their results are committed strictly in queue
+    // order. Pages, their order and the queue therefore match a sequential crawl exactly.
+    const pending = new Map<number, Promise<Capture>>();
+    let head = 0;
+    let launched = 0;
+    const launch = (index: number): Promise<Capture> => {
+      const url = queue[index] as string;
+      const isStart = index === 0;
+      const pageIndex = snapshots.length + (index - head);
       const captureId = randomUUID();
       emit({
         stage: 'loading-page',
@@ -104,7 +118,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         captureId,
       });
       let progressFailure: { error: unknown } | undefined;
-      const snapshot = await capturePage(
+      const task = capturePage(
         browser,
         url,
         siteUrl,
@@ -120,8 +134,32 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           },
         },
         isStart,
-      );
-      if (progressFailure) throw progressFailure.error;
+      ).then((snapshot) => {
+        if (progressFailure) throw progressFailure.error;
+        return { url, snapshot, isStart, pageIndex, captureId };
+      });
+      // Awaited in queue order below; this only keeps a page that fails while an earlier one is
+      // still loading from becoming an unhandled rejection.
+      task.catch(() => undefined);
+      return task;
+    };
+    // The start page decides the site URL that later links are resolved against, so it runs alone.
+    const canLaunch = () =>
+      launched < queue.length &&
+      (launched === 0 || head > 0) &&
+      launched - head < concurrency &&
+      snapshots.length + (launched - head) < maxPages;
+    while (head < queue.length && snapshots.length < maxPages) {
+      throwIfAborted(options.signal);
+      while (canLaunch()) {
+        pending.set(launched, launch(launched));
+        launched += 1;
+      }
+      const { url, snapshot, isStart, pageIndex, captureId } = await (pending.get(
+        head,
+      ) as Promise<Capture>);
+      pending.delete(head);
+      head += 1;
       if (isStart) {
         const failureMode = options.failureMode ?? (options.networkAdapter ? 'report' : 'throw');
         if (snapshot.error !== undefined && failureMode === 'throw') {
@@ -157,7 +195,6 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           }
         }
       }
-      url = queue.shift();
     }
     throwIfAborted(options.signal);
     const assessments = snapshots.map((page, index) => {
@@ -190,6 +227,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       scannerVersion: VERSION,
       options: {
         maxPages,
+        concurrency,
         settleMs: options.settleMs ?? DEFAULTS.settleMs,
         timeoutMs: options.timeoutMs ?? DEFAULTS.timeoutMs,
         locale: options.locale ?? DEFAULTS.locale,

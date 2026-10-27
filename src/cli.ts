@@ -31,6 +31,8 @@ Usage
 
 Options
   -p, --max-pages <n>     Crawl up to n pages of the same site (default 1)
+      --concurrency <n>   Load up to n pages at the same time (default 1).
+                          The report is the same as with 1
   -f, --format <format>   ${FORMATS.join(' | ')} (default text)
   -o, --output <file>     Write the report to a file and print a text summary.
                           Repeatable; .sarif, .json and .md pick their format,
@@ -74,6 +76,7 @@ async function main(argv: string[]): Promise<number> {
     allowPositionals: true,
     options: {
       'max-pages': { type: 'string', short: 'p' },
+      concurrency: { type: 'string' },
       format: { type: 'string', short: 'f', default: 'text' },
       output: { type: 'string', short: 'o', multiple: true },
       'fail-on': { type: 'string', default: 'error' },
@@ -132,6 +135,7 @@ async function main(argv: string[]): Promise<number> {
     ...(config.rules === undefined ? {} : { ruleSettings: config.rules }),
     ...(config.allow === undefined ? {} : { allow: config.allow }),
     maxPages: wholeNumber(values['max-pages'], '--max-pages', 1) ?? config.maxPages,
+    concurrency: wholeNumber(values.concurrency, '--concurrency', 1) ?? config.concurrency,
     settleMs: wholeNumber(values.settle, '--settle', 0) ?? config.settleMs,
     timeoutMs: wholeNumber(values.timeout, '--timeout', 1) ?? config.timeoutMs,
     locale: values.locale ?? config.locale,

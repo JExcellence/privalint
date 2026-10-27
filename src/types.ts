@@ -261,6 +261,8 @@ export interface ScanProgressEvent {
 
 export interface ReportOptions {
   maxPages: number;
+  /** Absent in reports from scanners before 0.5.0. */
+  concurrency?: number;
   settleMs: number;
   timeoutMs: number;
   locale: string;
