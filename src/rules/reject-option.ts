@@ -20,7 +20,11 @@ export const rejectOption: Rule = {
   ],
   check({ page, lang }) {
     const consent = page.consent;
-    if (consent?.bannerFound !== true || consent.rejectLabel !== undefined) {
+    if (
+      consent?.bannerFound !== true ||
+      consent.acceptLabel === undefined ||
+      consent.rejectLabel !== undefined
+    ) {
       return [];
     }
     const vendor = consent.cmp === undefined ? '' : ` (${consent.cmp})`;

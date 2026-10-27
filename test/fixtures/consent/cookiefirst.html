@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>CookieFirst selector fixture</title></head>
+  <body>
+    <a href="/clean/impressum.html">Impressum</a>
+    <a href="/clean/datenschutz.html">Privacy policy</a>
+    <div id="cookiefirst-root" role="dialog" aria-label="Cookie preferences">
+      <p>Cookie preferences</p>
+      <button data-cookiefirst-action="accept">Yes</button>
+      <button data-cookiefirst-action="reject">No</button>
+    </div>
+    <script>
+      const banner = document.getElementById('cookiefirst-root');
+      if (localStorage.getItem('choice')) banner.remove();
+      banner.querySelector('[data-cookiefirst-action="reject"]')?.addEventListener('click', () => {
+        localStorage.setItem('choice', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>

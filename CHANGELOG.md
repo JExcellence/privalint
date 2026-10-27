@@ -6,6 +6,19 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- Report schema/scanner versions, effective scan options, explicit per-rule outcomes/reasons,
+  consent outcomes and redacted progress events
+- Disjoint skipped/failed/security-blocked request counters; intentional beacon omissions stay
+  distinct from transport failures while legacy aggregates remain available
+- Strict JSON CLI configuration, API severity policy and visible vendor allowlist annotations
+- Optional create/update PR report comments, skipping forks and read-only tokens safely
+- hCaptcha, Turnstile, OpenStreetMap tiles, TikTok and Calendly embed detection
+- Frame-aware CookieFirst, Osano, Termly and Sourcepoint recognition, plus Real Cookie Banner
+  vendor identification through existing label heuristics; public-site interactive verification pending
+- English/German configuration, report-contract, CMP and embed documentation
+
 ## 0.3.0 - 2026-10-27
 
 ### Added

@@ -1,6 +1,6 @@
 import type { BrowserContext, CDPSession, Page } from 'playwright';
 import { classifyLoadError, type Diagnostics } from './diagnostics.js';
-import type { LoadDiagnostic, LoadIssueKind } from './types.js';
+import type { LoadDiagnostic, LoadIssueKind, SkipReason } from './types.js';
 
 export interface NetworkRequest {
   url: string;
@@ -45,6 +45,7 @@ export class NetworkError extends Error {
   constructor(
     readonly kind: Exclude<LoadIssueKind, 'http-error'>,
     readonly limit?: LoadDiagnostic['limit'],
+    readonly skippedReason?: SkipReason,
   ) {
     super(kind);
     this.name = 'NetworkError';
@@ -219,7 +220,12 @@ export class ControlledNetwork {
       });
     } catch (error) {
       const kind = failureKind(error, this.signal, timeout);
-      await this.abort(intercepted, kind, error instanceof NetworkError ? error.limit : undefined);
+      await this.abort(
+        intercepted,
+        kind,
+        error instanceof NetworkError ? error.limit : undefined,
+        error instanceof NetworkError ? error.skippedReason : undefined,
+      );
     } finally {
       controller.abort();
     }
@@ -259,8 +265,9 @@ export class ControlledNetwork {
     request: InterceptedRequest,
     kind: LoadIssueKind,
     limit?: LoadDiagnostic['limit'],
+    skippedReason?: SkipReason,
   ): Promise<void> {
-    this.diagnostics.failUrl(request.event.request.url, kind, limit);
+    this.diagnostics.failUrl(request.event.request.url, kind, limit, skippedReason);
     await request.session
       .send('Fetch.failRequest', {
         requestId: request.event.requestId,

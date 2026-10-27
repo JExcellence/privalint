@@ -17,6 +17,7 @@ export interface ReportMessages {
   finding: string;
   howToFix: string;
   disclaimer: string;
+  policy(allowed: boolean, originalSeverity: string): string;
   consent(consent: ConsentSummary): string;
 }
 
@@ -37,6 +38,10 @@ const en: ReportMessages = {
   finding: 'Finding',
   howToFix: 'How to fix',
   disclaimer: 'Automated checks only. A clean result is not proof of GDPR compliance.',
+  policy: (allowed, severity) =>
+    allowed
+      ? 'Local policy: vendor allowed; retained as info. Not legal approval.'
+      : `Local policy: severity override (original: ${severity}).`,
   consent(consent) {
     if (consent.state === 'interaction-failed') {
       return `Consent check: interaction failed (${consent.error ?? 'browser-failure'}); reject path untested`;
@@ -72,6 +77,10 @@ const de: ReportMessages = {
   howToFix: 'So beheben Sie es',
   disclaimer:
     'Nur automatisierte Prüfungen. Ein sauberes Ergebnis ist kein Nachweis der DSGVO-Konformität.',
+  policy: (allowed, severity) =>
+    allowed
+      ? 'Lokale Policy: Anbieter freigegeben; als Hinweis beibehalten. Keine rechtliche Freigabe.'
+      : `Lokale Policy: Schweregrad angepasst (ursprünglich: ${severity}).`,
   consent(consent) {
     if (consent.state === 'interaction-failed') {
       return `Consent-Prüfung: Interaktion fehlgeschlagen (${consent.error ?? 'browser-failure'}); Ablehnen-Pfad ungeprüft`;

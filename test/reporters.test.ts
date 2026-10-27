@@ -111,6 +111,19 @@ describe('German reports', () => {
 });
 
 describe('incomplete observations', () => {
+  it('keeps policy-adjusted findings visible in both report languages', () => {
+    const adjusted = result([
+      finding({ severity: 'info', policy: { allowed: true, originalSeverity: 'error' } }),
+    ]);
+    expect(formatText(adjusted)).toContain('Local policy: vendor allowed');
+    expect(formatMarkdown(adjusted)).toContain('Local policy: vendor allowed');
+    expect(formatText({ ...adjusted, lang: 'de' })).toContain(
+      'Lokale Policy: Anbieter freigegeben',
+    );
+    expect(formatMarkdown({ ...adjusted, lang: 'de' })).toContain(
+      'Lokale Policy: Anbieter freigegeben',
+    );
+  });
   const incomplete: ScanResult = {
     ...result([]),
     coverage: 'partial',
@@ -157,7 +170,7 @@ describe('incomplete observations', () => {
     const text = formatText(incomplete);
     expect(text).toContain('Observation incomplete');
     expect(text).toContain('48 requests');
-    expect(text).toContain('21 failed (21 security blocks)');
+    expect(text).toContain('21 security blocks');
     expect(text).toContain('trackers-after-reject: not-evaluable');
     expect(text).toContain('reject path untested');
     expect(text).not.toContain('No problems found');

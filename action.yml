@@ -22,7 +22,7 @@ inputs:
     description: Language of the report and the job summary. One of en, de.
     default: en
   region:
-    description: Country whose law the findings cite and are judged by. One of de, at, ch, eu.
+    description: Tool reference and severity profile, not a determination of applicable law. One of de, at, ch, eu.
     default: de
   sarif-file:
     description: Where to write the SARIF report, relative to the workspace. Empty to skip.
@@ -30,6 +30,9 @@ inputs:
   job-summary:
     description: Add a Markdown report to the job summary.
     default: "true"
+  pr-comment:
+    description: Create or update a report comment on same-repository pull requests. Requires pull-requests write permission.
+    default: "false"
 
 outputs:
   sarif-file:
@@ -76,6 +79,8 @@ runs:
         fi
 
         summary="$RUNNER_TEMP/privalint.md"
+        # A failed scan must not post a report left by a previous action invocation.
+        node -e 'require("node:fs").rmSync(process.argv[1], {force: true})' "$summary"
         args=("$URL" --max-pages "$MAX_PAGES" --fail-on "$FAIL_ON" --lang "$REPORT_LANG" --region "$REGION" --output "$summary")
         if [[ -n "$DISABLE" ]]; then args+=(--disable "$DISABLE"); fi
         if [[ -n "$SARIF_FILE" ]]; then args+=(--output "$SARIF_FILE"); fi
@@ -93,3 +98,11 @@ runs:
         fi
         echo "exit-code=$code" >> "$GITHUB_OUTPUT"
         exit "$code"
+
+    - name: Comment on pull request
+      if: ${{ always() && inputs.pr-comment == 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && steps.scan.outputs.exit-code != '' }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PRIVALINT_REPORT: ${{ runner.temp }}/privalint.md
+      run: node "$GITHUB_ACTION_PATH/scripts/pr-comment.mjs"

@@ -58,6 +58,9 @@ export function formatSarif(result: ScanResult): string {
           },
         ],
         properties: {
+          schemaVersion: result.schemaVersion,
+          scannerVersion: result.scannerVersion,
+          options: result.options,
           coverage: result.coverage,
           observations: result.pages.map(({ url, capture, ruleEvaluations }) => ({
             url,

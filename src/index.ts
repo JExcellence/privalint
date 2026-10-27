@@ -1,3 +1,4 @@
+export { loadConfig, type PrivalintConfig, parseConfig } from './config.js';
 export { type ConsentCheckOptions, observeConsent } from './consent.js';
 export { type Tracker, type TrackerCategory, trackers } from './data/trackers.js';
 export { diagnosticUrl } from './diagnostics.js';

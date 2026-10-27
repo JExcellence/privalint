@@ -105,6 +105,11 @@ describe('scan', () => {
 });
 
 describe('consent check', () => {
+  it('names CookieFirst using vendor attributes rather than translated labels', async () => {
+    const result = await scan(`${origin}/consent/cookiefirst.html`, options);
+    expect(result.consent).toMatchObject({ cmp: 'CookieFirst', outcome: 'reject-succeeded' });
+    expect(result.findings).toEqual([]);
+  });
   const ruleIds = (findings: { ruleId: string }[]) => findings.map((f) => f.ruleId);
 
   it('passes a banner whose reject button is respected', async () => {
@@ -152,7 +157,13 @@ describe('consent check', () => {
 
   it('reports no banner on a page without one', async () => {
     const result = await scan(`${origin}/clean/`, options);
-    expect(result.consent).toEqual({ bannerFound: false, rejected: false, state: 'not-detected' });
+    expect(result.consent).toMatchObject({
+      bannerFound: false,
+      rejected: false,
+      state: 'not-detected',
+      outcome: 'no-banner-detected',
+      reason: 'no-supported-banner',
+    });
   });
 });
 

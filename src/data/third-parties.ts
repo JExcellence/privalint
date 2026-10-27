@@ -24,6 +24,15 @@ export const embeds: readonly ThirdParty[] = [
   { vendor: 'Facebook plugin', domains: ['facebook.com'], paths: ['/plugins/'] },
   { vendor: 'Spotify embed', domains: ['open.spotify.com'], paths: ['/embed/'] },
   { vendor: 'Disqus', domains: ['disqus.com', 'disquscdn.com'] },
+  { vendor: 'hCaptcha', domains: ['hcaptcha.com'] },
+  {
+    vendor: 'Cloudflare Turnstile',
+    domains: ['challenges.cloudflare.com'],
+    paths: ['/turnstile/'],
+  },
+  { vendor: 'OpenStreetMap tiles', domains: ['tile.openstreetmap.org'] },
+  { vendor: 'TikTok embed', domains: ['tiktok.com'], paths: ['/embed', '/embed.js', '/player/'] },
+  { vendor: 'Calendly', domains: ['calendly.com'] },
 ];
 
 /** Public CDNs for scripts, styles and icon fonts. */

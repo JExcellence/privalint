@@ -5,6 +5,7 @@ import type {
   LoadDiagnostics,
   LoadIssueKind,
   RecordedRequest,
+  SkipReason,
 } from './types.js';
 
 /** Safe for diagnostics and operational logs. Raw URLs remain internal rule input. */
@@ -44,6 +45,9 @@ interface PendingRequest {
 export class Diagnostics {
   readonly data: LoadDiagnostics = {
     requests: 0,
+    skippedRequests: 0,
+    failedRequests: 0,
+    securityBlockedRequests: 0,
     omittedRequests: 0,
     responses: 0,
     finished: 0,
@@ -108,7 +112,7 @@ export class Diagnostics {
         url: diagnosticUrl(request.url()),
         phase: entry.phase,
       };
-      if (issue.kind === 'security-blocked') this.data.blocked++;
+      this.terminalFailure(issue.kind);
       this.store(issue);
       this.data.failed++;
       this.pending.delete(request);
@@ -121,7 +125,12 @@ export class Diagnostics {
   }
 
   /** Defer storage until requestfailed to avoid counting adapter + browser errors twice. */
-  fail(request: Request, kind: LoadIssueKind, limit?: LoadDiagnostic['limit']): void {
+  fail(
+    request: Request,
+    kind: LoadIssueKind,
+    limit?: LoadDiagnostic['limit'],
+    skippedReason?: SkipReason,
+  ): void {
     const entry = this.pending.get(request);
     if (entry === undefined) return;
     entry.issue = {
@@ -129,14 +138,20 @@ export class Diagnostics {
       phase: entry.phase,
       url: diagnosticUrl(request.url()),
       ...(limit === undefined ? {} : { limit }),
+      ...(skippedReason === undefined ? {} : { skippedReason }),
     };
   }
 
-  failUrl(url: string, kind: LoadIssueKind, limit?: LoadDiagnostic['limit']): void {
+  failUrl(
+    url: string,
+    kind: LoadIssueKind,
+    limit?: LoadDiagnostic['limit'],
+    skippedReason?: SkipReason,
+  ): void {
     if (this.stopped) return;
     for (const [request, entry] of this.pending) {
       if (request.url() === url && entry.issue === undefined) {
-        this.fail(request, kind, limit);
+        this.fail(request, kind, limit, skippedReason);
         return;
       }
     }
@@ -147,6 +162,7 @@ export class Diagnostics {
       url: diagnosticUrl(url),
       phase: this.phase,
       ...(limit === undefined ? {} : { limit }),
+      ...(skippedReason === undefined ? {} : { skippedReason }),
     });
     this.earlyFailures.set(url, early);
   }
@@ -181,7 +197,7 @@ export class Diagnostics {
         phase: entry.phase,
         url: diagnosticUrl(request.url()),
       };
-      if (issue.kind === 'security-blocked') this.data.blocked++;
+      this.terminalFailure(issue.kind);
       this.store(issue);
       this.data.failed++;
     }
@@ -191,5 +207,16 @@ export class Diagnostics {
     }
     this.earlyFailures.clear();
     this.stopped = true;
+  }
+
+  private terminalFailure(kind: LoadIssueKind): void {
+    if (kind === 'security-blocked') {
+      this.data.blocked++;
+      this.data.securityBlockedRequests = (this.data.securityBlockedRequests ?? 0) + 1;
+    } else if (['skipped', 'unsupported-method', 'unsupported-protocol'].includes(kind)) {
+      this.data.skippedRequests = (this.data.skippedRequests ?? 0) + 1;
+    } else {
+      this.data.failedRequests = (this.data.failedRequests ?? 0) + 1;
+    }
   }
 }

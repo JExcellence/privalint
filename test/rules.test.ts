@@ -62,6 +62,32 @@ describe('pre-consent-trackers', () => {
   });
 });
 
+describe('additional third-party embeds', () => {
+  it.each([
+    ['hCaptcha', 'https://js.hcaptcha.com/1/api.js'],
+    ['Cloudflare Turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js'],
+    ['OpenStreetMap tiles', 'https://a.tile.openstreetmap.org/0/0/0.png'],
+    ['TikTok embed', 'https://www.tiktok.com/embed.js'],
+    ['TikTok embed', 'https://www.tiktok.com/player/v1/12345'],
+    ['Calendly', 'https://assets.calendly.com/assets/external/widget.js'],
+  ])('recognizes %s as an observed third-party resource', (vendor, url) => {
+    expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
+      { subject: vendor, ruleId: 'third-party-embeds' },
+    ]);
+  });
+  it.each([
+    'https://hcaptcha.com.evil.invalid/1/api.js',
+    'https://challenges.cloudflare.com/something-else',
+    'https://www.cloudflare.com/turnstile/v0/api.js',
+    'https://www.openstreetmap.org/about',
+    'https://www.tiktok.com/about',
+    'https://www.tiktok.com/embedding',
+    'https://calendly.com.evil.invalid/widget.js',
+  ])('does not match unrelated content or lookalike hosts: %s', (url) => {
+    expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toEqual([]);
+  });
+});
+
 describe('google-fonts', () => {
   it('flags font requests to Google', () => {
     const findings = run(
