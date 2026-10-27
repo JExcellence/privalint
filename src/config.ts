@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
 import { join } from 'node:path';
 import { LANGS, type Lang } from './i18n.js';
 import { REGIONS, type Region } from './legal.js';
@@ -15,6 +15,7 @@ export interface PrivalintConfig {
   lang?: Lang;
   region?: Region;
   consentCheck?: boolean;
+  failOnIncomplete?: boolean;
   rules?: RuleSettings;
   allow?: { vendors: string[] };
 }
@@ -28,6 +29,7 @@ const KEYS = [
   'lang',
   'region',
   'consentCheck',
+  'failOnIncomplete',
   'rules',
   'allow',
 ];
@@ -69,6 +71,8 @@ export function parseConfig(value: unknown): PrivalintConfig {
   if (value.lang !== undefined && !LANGS.includes(value.lang as Lang)) invalid();
   if (value.region !== undefined && !REGIONS.includes(value.region as Region)) invalid();
   if (value.consentCheck !== undefined && typeof value.consentCheck !== 'boolean') invalid();
+  if (value.failOnIncomplete !== undefined && typeof value.failOnIncomplete !== 'boolean')
+    invalid();
   if (value.rules !== undefined) {
     if (!record(value.rules)) invalid();
     validateRuleSettings(value.rules as RuleSettings, defaultRules);
@@ -91,13 +95,26 @@ export function parseConfig(value: unknown): PrivalintConfig {
 export async function loadConfig(file?: string, cwd = process.cwd()): Promise<PrivalintConfig> {
   let text: string;
   try {
-    text = await readFile(file ?? join(cwd, 'privalint.config.json'), 'utf8');
+    const handle = await open(file ?? join(cwd, 'privalint.config.json'), 'r');
+    try {
+      const buffer = Buffer.alloc(64 * 1024 + 1);
+      let size = 0;
+      while (size < buffer.length) {
+        const { bytesRead } = await handle.read(buffer, size, buffer.length - size, null);
+        if (bytesRead === 0) break;
+        size += bytesRead;
+      }
+      if (size === buffer.length) invalid();
+      text = buffer.toString('utf8', 0, size);
+    } finally {
+      await handle.close();
+    }
   } catch (error) {
+    if (error instanceof TypeError) throw error;
     if (file === undefined && error instanceof Error && 'code' in error && error.code === 'ENOENT')
       return {};
     throw new Error('Could not read privalint config file.');
   }
-  if (Buffer.byteLength(text) > 64 * 1024) invalid();
   let value: unknown;
   try {
     value = JSON.parse(text);

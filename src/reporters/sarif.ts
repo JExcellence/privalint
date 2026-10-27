@@ -26,7 +26,7 @@ export function formatSarif(result: ScanResult): string {
         tool: {
           driver: {
             name: 'privalint',
-            semanticVersion: VERSION,
+            semanticVersion: result.scannerVersion ?? VERSION,
             informationUri: REPOSITORY_URL,
             rules: result.rules.map((rule) => ({
               id: rule.id,
@@ -42,7 +42,9 @@ export function formatSarif(result: ScanResult): string {
             })),
           },
         },
-        results: result.findings.map(toResult),
+        results: result.findings.map((finding) =>
+          toResult(finding, result.options?.captureMode === 'adapter'),
+        ),
         invocations: [
           {
             executionSuccessful: !isPartial(result),
@@ -59,10 +61,12 @@ export function formatSarif(result: ScanResult): string {
         ],
         properties: {
           schemaVersion: result.schemaVersion,
+          scanId: result.scanId,
           scannerVersion: result.scannerVersion,
           options: result.options,
           coverage: result.coverage,
-          observations: result.pages.map(({ url, capture, ruleEvaluations }) => ({
+          observations: result.pages.map(({ pageId, url, capture, ruleEvaluations }) => ({
+            pageId,
             url,
             capture,
             ruleEvaluations,
@@ -75,10 +79,11 @@ export function formatSarif(result: ScanResult): string {
   return `${JSON.stringify(sarif, null, 2)}\n`;
 }
 
-function toResult(finding: Finding) {
+function toResult(finding: Finding, redacted: boolean) {
   const evidence = finding.evidence.map((item) => `- ${item}`).join('\n');
   return {
     ruleId: finding.ruleId,
+    properties: { pageId: finding.pageId, policy: finding.policy },
     level: LEVELS[finding.severity],
     message: {
       text: [
@@ -94,17 +99,26 @@ function toResult(finding: Finding) {
     locations: [
       {
         physicalLocation: {
-          artifactLocation: { uri: pseudoPath(finding.pageUrl) },
+          artifactLocation: {
+            uri:
+              redacted && finding.pageId
+                ? `privalint/${new URL(finding.pageUrl).host}/pages/${finding.pageId}`
+                : pseudoPath(finding.pageUrl),
+          },
           region: { startLine: 1 },
         },
       },
     ],
-    partialFingerprints: {
-      primaryLocationLineHash: createHash('sha256')
-        .update(`${finding.ruleId}\n${finding.pageUrl}\n${finding.subject ?? ''}`)
-        .digest('hex')
-        .slice(0, 32),
-    },
+    ...(redacted
+      ? {}
+      : {
+          partialFingerprints: {
+            primaryLocationLineHash: createHash('sha256')
+              .update(`${finding.ruleId}\n${finding.pageUrl}\n${finding.subject ?? ''}`)
+              .digest('hex')
+              .slice(0, 32),
+          },
+        }),
   };
 }
 

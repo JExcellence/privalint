@@ -100,6 +100,13 @@ unterscheidet „Geprüft, kein Befund“, „Befund erkannt“ und „Nicht pr�
 `onProgress` liefert tatsächliche Phasen mit verstrichener Zeit und bereinigten Seiten-URLs,
 keinen geschätzten Prozentwert. Die Exit-Code-Policy von CLI/Action bleibt erhalten.
 
+Schema 1.1.0 ergänzt zufällige Scan-/Seiten-IDs und die Zuordnung von Erfassungsversuchen nach
+Redirects. Eigenständige Schemas und Konformitätsbeispiele sind enthalten. Mit
+`--fail-on-incomplete` bzw. Action-Input `fail-on-incomplete: true` wird unvollständige nötige
+Beobachtung optional mit Exit 3 bewertet; Befunde mit Exit 1 haben Vorrang. Bewusst deaktivierte
+Regeln und Consent-Prüfungen sind ausgenommen. Details stehen im
+[Berichtsvertrag](docs/report-contract.de.md) und seiner [englischen Fassung](docs/report-contract.md).
+
 ## Öffentliche Webscanner und kontrollierte Erfassung
 
 `scan()` unterstützt einen `networkAdapter` und ein `AbortSignal`. Jeder HTTP-Hop einschließlich

@@ -28,6 +28,7 @@ jobs:
       - run: npx playwright install --with-deps --only-shell chromium
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run schemas:check
       - run: npm test
       # Build before publishing: npm validates the bin entry before running prepublishOnly,
       # and warns that dist/cli.js is missing otherwise.

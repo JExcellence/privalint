@@ -1,0 +1,18 @@
+{
+  "siteUrl": "https://fixtures.invalid/",
+  "lang": "en",
+  "region": "de",
+  "scannedAt": "2026-10-27T00:00:00.000Z",
+  "durationMs": 0,
+  "pages": [
+    {
+      "url": "https://fixtures.invalid/",
+      "finalUrl": "https://fixtures.invalid/",
+      "status": 200,
+      "requestCount": 1,
+      "cookieCount": 0
+    }
+  ],
+  "findings": [],
+  "rules": []
+}

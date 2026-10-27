@@ -5,5 +5,6 @@
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "always" } },
   "linter": { "rules": { "preset": "none" } },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } }
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "overrides": [{ "includes": ["schemas/**/*.json"], "formatter": { "enabled": false } }]
 }

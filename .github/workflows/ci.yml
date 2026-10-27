@@ -27,6 +27,7 @@ jobs:
       - run: npx playwright install --with-deps --only-shell chromium
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run schemas:check
       - run: npm test
       - run: npm run build
 
@@ -40,7 +41,9 @@ jobs:
         uses: ./
         with:
           url: https://example.com
-          disable: impressum-link
+          # IANA has no consent banner; reject-path checks are deliberate exclusions here.
+          disable: impressum-link,trackers-after-reject,reject-option
+          fail-on-incomplete: "true"
       - name: Check outputs
         env:
           EXIT_CODE: ${{ steps.privalint.outputs.exit-code }}

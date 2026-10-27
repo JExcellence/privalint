@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { parseArgs } from 'node:util';
 import { loadConfig } from './config.js';
+import { assessCoverage } from './coverage.js';
 import { diagnosticUrl } from './diagnostics.js';
 import { LANGS } from './i18n.js';
 import { REGIONS } from './legal.js';
@@ -19,6 +20,7 @@ type FailLevel = (typeof FAIL_LEVELS)[number];
 const EXIT_OK = 0;
 const EXIT_FINDINGS = 1;
 const EXIT_ERROR = 2;
+const EXIT_INCOMPLETE = 3;
 
 const HELP = `privalint ${VERSION}
 Find GDPR problems on a live website: trackers before consent or after
@@ -34,6 +36,8 @@ Options
                           Repeatable; .sarif, .json and .md pick their format,
                           other extensions use --format
       --fail-on <level>   error | warning | never (default error)
+      --fail-on-incomplete  Exit 3 if required observation coverage is incomplete
+      --allow-incomplete    Override failOnIncomplete from JSON config
       --disable <rules>   Comma-separated rule ids to skip
       --config <file>     JSON config (default: ./privalint.config.json when present)
       --settle <ms>       Wait this long after load for late tags (default 2000)
@@ -53,6 +57,7 @@ Exit codes
   0  no findings at or above --fail-on
   1  findings at or above --fail-on
   2  invalid arguments or the scan failed
+  3  incomplete coverage (opt-in; findings exit 1 takes precedence)
 `;
 
 const FORMAT_BY_EXTENSION: Record<string, Format> = {
@@ -70,6 +75,8 @@ async function main(argv: string[]): Promise<number> {
       format: { type: 'string', short: 'f', default: 'text' },
       output: { type: 'string', short: 'o', multiple: true },
       'fail-on': { type: 'string', default: 'error' },
+      'fail-on-incomplete': { type: 'boolean' },
+      'allow-incomplete': { type: 'boolean' },
       disable: { type: 'string' },
       config: { type: 'string' },
       settle: { type: 'string' },
@@ -107,6 +114,12 @@ async function main(argv: string[]): Promise<number> {
   const reportFormat = oneOf(values.format, FORMATS, '--format');
   const failOn = oneOf(values['fail-on'], FAIL_LEVELS, '--fail-on');
   const rules = selectRules(values.disable);
+  if (values['fail-on-incomplete'] && values['allow-incomplete']) {
+    throw new Error('Use either --fail-on-incomplete or --allow-incomplete, not both.');
+  }
+  const failOnIncomplete =
+    values['fail-on-incomplete'] === true ||
+    (values['allow-incomplete'] !== true && config.failOnIncomplete === true);
   if (values.consent && values['skip-consent']) {
     throw new Error('Use either --consent or --skip-consent, not both.');
   }
@@ -154,7 +167,12 @@ async function main(argv: string[]): Promise<number> {
     }
   }
 
-  return shouldFail(result.findings, failOn) ? EXIT_FINDINGS : EXIT_OK;
+  if (shouldFail(result.findings, failOn)) return EXIT_FINDINGS;
+  if (failOnIncomplete && !assessCoverage(result).complete) {
+    process.stderr.write('privalint: required observation coverage is incomplete (exit 3).\n');
+    return EXIT_INCOMPLETE;
+  }
+  return EXIT_OK;
 }
 
 function parseTarget(positionals: string[]): URL {
