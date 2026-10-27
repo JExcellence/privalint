@@ -116,6 +116,8 @@ On self-hosted runners without it, add `actions/setup-node` before this step.
 privalint <url> [options]
 
   -p, --max-pages <n>     Crawl up to n pages of the same site (default 1)
+      --concurrency <n>   Load up to n pages at the same time (default 1).
+                          The report is the same as with 1
   -f, --format <format>   text | json | markdown | sarif (default text)
   -o, --output <file>     Write the report to a file and print a text summary.
                           Repeatable; .sarif, .json and .md pick their format,

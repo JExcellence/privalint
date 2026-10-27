@@ -9,7 +9,8 @@ explicit file, whose absence is an error. No JavaScript/TypeScript configuration
 Invalid JSON, unknown fields, unknown rules and invalid values fail with a safe error message.
 Files are limited to 64 KiB. Do not store credentials in config; URL credentials are rejected.
 
-Supported fields: `url` (absolute HTTP(S)), `maxPages` (positive integer), `settleMs` (nonnegative),
+Supported fields: `url` (absolute HTTP(S)), `maxPages` (positive integer), `concurrency`
+(positive integer, pages loaded at the same time), `settleMs` (nonnegative),
 `timeoutMs` (positive), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`eu`),
 `consentCheck` and `failOnIncomplete` (booleans), `rules` (known IDs to `off`/`error`/`warning`/`info`) and
 `allow: { vendors: string[] }` (exact, case-sensitive finding `subject` names).
