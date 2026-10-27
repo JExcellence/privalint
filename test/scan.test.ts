@@ -187,6 +187,20 @@ describe('demo page', () => {
   });
 });
 
+describe('sandbox', () => {
+  // Opt-in: GitHub's Ubuntu runners restrict the user namespaces the sandbox needs.
+  it.runIf(process.env.PRIVALINT_TEST_SANDBOX)('scans with the Chromium sandbox on', async () => {
+    const result = await scan(`${origin}/consent/broken.html`, { ...options, sandbox: true });
+    expect(result.options?.sandbox).toBe(true);
+    expect(result.findings.map((f) => f.ruleId)).toEqual(['trackers-after-reject']);
+  });
+
+  it('records that the sandbox was off', async () => {
+    const result = await scan(`${origin}/clean/`, options);
+    expect(result.options?.sandbox).toBe(false);
+  });
+});
+
 describe('headed mode', () => {
   // Opt-in: needs a display, and some machines block the bundled Chromium.
   // PRIVALINT_TEST_HEADED=1 runs it; PRIVALINT_TEST_CHANNEL=msedge picks an installed browser.

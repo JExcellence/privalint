@@ -807,6 +807,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "sandbox": {
+          "type": "boolean"
         }
       },
       "required": [

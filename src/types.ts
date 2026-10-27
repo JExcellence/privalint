@@ -269,6 +269,8 @@ export interface ReportOptions {
   consentCheck: boolean;
   headed: boolean;
   channel: string;
+  /** Absent in reports from scanners before 0.5.0. */
+  sandbox?: boolean;
   captureTimeoutMs: number | null;
   maxDiagnostics: number;
   failureMode: 'throw' | 'report';

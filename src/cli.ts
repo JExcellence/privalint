@@ -49,6 +49,8 @@ Options
       --consent           Enable consent checking even if the JSON config disables it
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
+      --sandbox           Run Chromium with its sandbox (recommended for untrusted
+                          sites; may not start in containers)
       --list-rules        Print the available rules and exit
   -h, --help              Show this help
   -v, --version           Show the version
@@ -88,6 +90,7 @@ async function main(argv: string[]): Promise<number> {
       consent: { type: 'boolean' },
       headed: { type: 'boolean' },
       channel: { type: 'string' },
+      sandbox: { type: 'boolean' },
       'list-rules': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
       version: { type: 'boolean', short: 'v' },
@@ -143,6 +146,7 @@ async function main(argv: string[]): Promise<number> {
     headed: values.headed === true,
     channel:
       values.channel === undefined ? undefined : oneOf(values.channel, CHANNELS, '--channel'),
+    sandbox: values.sandbox === true,
     onPage: (page) =>
       process.stderr.write(
         page.error === undefined

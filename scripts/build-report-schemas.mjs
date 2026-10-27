@@ -242,27 +242,36 @@ function definitions(version) {
       maxRedirects: count,
       requestTimeoutMs: positive,
     }),
-    options: object({
-      maxPages: positive,
-      settleMs: count,
-      timeoutMs: positive,
-      locale: string,
-      lang: choices('en', 'de'),
-      region: choices('de', 'at', 'ch', 'eu'),
-      consentCheck: boolean,
-      headed: boolean,
-      channel: string,
-      captureTimeoutMs: nullable(positive),
-      maxDiagnostics: count,
-      failureMode: choices('throw', 'report'),
-      captureMode: choices('native', 'adapter', 'offline-fixture'),
-      networkLimits: nullable(ref('networkLimits')),
-      selectedRules: { ...array(string), uniqueItems: true },
-      ruleSettings,
-      allowedVendors: array(string),
-    }),
+    options: object(
+      {
+        ...reportOptions,
+        // Added within 1.1.0; optional so reports from earlier 1.1.0 scanners stay valid.
+        ...(identified ? { sandbox: boolean } : {}),
+      },
+      Object.keys(reportOptions),
+    ),
   };
 }
+
+const reportOptions = {
+  maxPages: positive,
+  settleMs: count,
+  timeoutMs: positive,
+  locale: string,
+  lang: choices('en', 'de'),
+  region: choices('de', 'at', 'ch', 'eu'),
+  consentCheck: boolean,
+  headed: boolean,
+  channel: string,
+  captureTimeoutMs: nullable(positive),
+  maxDiagnostics: count,
+  failureMode: choices('throw', 'report'),
+  captureMode: choices('native', 'adapter', 'offline-fixture'),
+  networkLimits: nullable(ref('networkLimits')),
+  selectedRules: { ...array(string), uniqueItems: true },
+  ruleSettings,
+  allowedVendors: array(string),
+};
 
 function reportSchema(version) {
   return {
