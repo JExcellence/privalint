@@ -11,6 +11,10 @@ All notable changes are listed here. The format follows
 - `adobe-fonts` rule: reports fonts loaded from Adobe Fonts (`use.typekit.net`, `p.typekit.net`)
   as an error and leftover preconnects as a warning. The fix text explains that these fonts need
   a separate licence to be self-hosted
+- `consent-settings-link` rule: after rejecting and reloading, warns when no visible link or
+  button reopens the cookie settings (Art. 7(3) GDPR). Known reopen widgets of the supported
+  consent managers count, and so do links and buttons labelled like "Cookie-Einstellungen".
+  Reports carry the result as `consent.settingsControl`
 - Criteo, Taboola, Outbrain, Adform and Quantcast in the tracker list, based on requests observed
   on public news sites
 - `--sandbox` (API: `sandbox: true`) runs Chromium with its sandbox. It stays off by default.
