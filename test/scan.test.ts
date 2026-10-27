@@ -149,6 +149,30 @@ describe('consent check', () => {
   });
   const ruleIds = (findings: { ruleId: string }[]) => findings.map((f) => f.ruleId);
 
+  it.each([
+    ['good.html', 'Cookie-Einstellungen'],
+    ['broken.html', 'Einstellungen'],
+    ['cookiefirst.html', 'Cookie settings'],
+  ])('finds the way back into the settings on %s', async (fixture, label) => {
+    const result = await scan(`${origin}/consent/${fixture}`, options);
+    expect(result.consent?.settingsControl).toEqual({ found: true, label });
+  });
+
+  it('warns when nothing reopens the settings after rejecting', async () => {
+    const result = await scan(`${origin}/consent/osano.html`, options);
+    expect(result.consent?.settingsControl).toEqual({ found: false });
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'consent-settings-link',
+        severity: 'warning',
+        evidence: [
+          'Checked after clicking "Nicht wesentliche Cookies ablehnen" and reloading',
+          'Consent manager: Osano',
+        ],
+      }),
+    ]);
+  });
+
   it('passes a banner whose reject button is respected', async () => {
     const result = await scan(`${origin}/consent/good.html`, options);
     expect(result.consent).toMatchObject({

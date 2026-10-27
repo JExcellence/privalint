@@ -220,6 +220,9 @@ function definitions(version) {
         rejectLabel: string,
         payOrOk: boolean,
         afterRejectComplete: boolean,
+        ...(identified
+          ? { settingsControl: object({ found: boolean, label: string }, ['found']) }
+          : {}),
         error: string,
       },
       ['bannerFound', 'rejected', 'state', 'outcome', 'reason'],

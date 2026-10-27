@@ -42,7 +42,7 @@ jobs:
         with:
           url: https://example.com
           # IANA has no consent banner; reject-path checks are deliberate exclusions here.
-          disable: impressum-link,trackers-after-reject,reject-option
+          disable: impressum-link,trackers-after-reject,reject-option,consent-settings-link
           fail-on-incomplete: "true"
       - name: Check outputs
         env:

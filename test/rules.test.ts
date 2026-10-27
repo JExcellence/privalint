@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Lang } from '../src/i18n.js';
 import {
   adobeFonts,
+  consentSettingsLink,
   googleFonts,
   impressumLink,
   preConsentTrackers,
@@ -165,6 +166,25 @@ describe('adobe-fonts', () => {
   it('explains in German that the font cannot simply be self-hosted', () => {
     const page = snapshot({ requests: [request('https://use.typekit.net/abc1234.css')] });
     expect(run(adobeFonts, page, 'de')[0]?.fix).toContain('nicht einfach selbst hosten');
+  });
+});
+
+describe('consent-settings-link', () => {
+  const rejected = { bannerFound: true, rejected: true, rejectLabel: 'Alle ablehnen' };
+
+  it('warns when no settings control was found after rejecting', () => {
+    const page = snapshot({ consent: { ...rejected, settingsControl: { found: false } } });
+    const [finding] = run(consentSettingsLink, page, 'de');
+    expect(finding?.severity).toBe('warning');
+    expect(finding?.evidence).toEqual(['Geprüft nach Klick auf „Alle ablehnen“ und Neuladen']);
+  });
+
+  it.each([
+    ['a control was found', { ...rejected, settingsControl: { found: true, label: 'Cookies' } }],
+    ['reject was not tested', { bannerFound: true, rejected: false }],
+    ['the check did not run', rejected],
+  ])('stays quiet when %s', (_, consent) => {
+    expect(run(consentSettingsLink, snapshot({ consent }))).toEqual([]);
   });
 });
 
