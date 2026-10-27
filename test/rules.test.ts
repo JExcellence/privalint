@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Lang } from '../src/i18n.js';
 import {
+  adobeFonts,
   googleFonts,
   impressumLink,
   preConsentTrackers,
@@ -121,6 +122,49 @@ describe('google-fonts', () => {
   it('passes self-hosted fonts', () => {
     const page = snapshot({ requests: [request('https://example.de/fonts/inter.woff2', 'font')] });
     expect(run(googleFonts, page)).toEqual([]);
+  });
+});
+
+describe('adobe-fonts', () => {
+  it('flags kit and page-view requests to Adobe', () => {
+    const findings = run(
+      adobeFonts,
+      snapshot({
+        requests: [
+          request('https://use.typekit.net/abc1234.css', 'stylesheet'),
+          request(
+            'https://use.typekit.net/af/0a1b2c/000000000000000000000000/27/l?primer=x',
+            'font',
+          ),
+          request('https://p.typekit.net/p.css?s=1&k=abc1234', 'stylesheet'),
+        ],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ ruleId: 'adobe-fonts', severity: 'error' });
+    expect(findings[0]?.evidence).toHaveLength(3);
+  });
+
+  it('warns about a leftover preconnect', () => {
+    const page = snapshot({
+      resourceHints: [{ rel: 'preconnect', href: 'https://use.typekit.net/' }],
+    });
+    expect(run(adobeFonts, page)[0]?.severity).toBe('warning');
+  });
+
+  it('passes self-hosted fonts and other Adobe hosts', () => {
+    const page = snapshot({
+      requests: [
+        request('https://example.de/fonts/source-sans.woff2', 'font'),
+        request('https://www.adobe.com/content/dam/logo.svg', 'image'),
+      ],
+    });
+    expect(run(adobeFonts, page)).toEqual([]);
+  });
+
+  it('explains in German that the font cannot simply be self-hosted', () => {
+    const page = snapshot({ requests: [request('https://use.typekit.net/abc1234.css')] });
+    expect(run(adobeFonts, page, 'de')[0]?.fix).toContain('nicht einfach selbst hosten');
   });
 });
 

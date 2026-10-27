@@ -7,6 +7,7 @@ import { isFirstParty } from './url.js';
 const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'pre-consent-trackers': ['network'],
   'google-fonts': ['network'],
+  'adobe-fonts': ['network'],
   'third-party-embeds': ['network'],
   'third-party-cdns': ['network'],
   'impressum-link': ['document'],
