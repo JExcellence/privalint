@@ -8,6 +8,9 @@ All notable changes are listed here. The format follows
 
 ### Added
 
+- `adobe-fonts` rule: reports fonts loaded from Adobe Fonts (`use.typekit.net`, `p.typekit.net`)
+  as an error and leftover preconnects as a warning. The fix text explains that these fonts need
+  a separate licence to be self-hosted
 - Criteo, Taboola, Outbrain, Adform and Quantcast in the tracker list, based on requests observed
   on public news sites
 
