@@ -6,6 +6,11 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- Criteo, Taboola, Outbrain, Adform and Quantcast in the tracker list, based on requests observed
+  on public news sites
+
 ### Fixed
 
 - Osano banners: the reject button is found again (`osano-cm-denyAll`), so the reject path is

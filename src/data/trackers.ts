@@ -144,6 +144,36 @@ export const trackers: readonly Tracker[] = [
     domains: ['matomo.cloud'],
     cookies: ['_pk_'],
   },
+  // Ad-tech vendors below were observed on welt.de, spiegel.de, focus.de, n-tv.de, bild.de,
+  // independent.co.uk and usatoday.com on 2026-10-27, after accepting their consent banners.
+  {
+    vendor: 'Criteo',
+    category: 'advertising',
+    domains: ['criteo.com', 'criteo.net'],
+    cookies: ['cto_'],
+  },
+  {
+    vendor: 'Taboola',
+    category: 'advertising',
+    domains: ['taboola.com'],
+  },
+  {
+    vendor: 'Outbrain',
+    category: 'advertising',
+    domains: ['outbrain.com', 'outbrainimg.com'],
+  },
+  {
+    vendor: 'Adform',
+    category: 'advertising',
+    domains: ['adform.net'],
+  },
+  {
+    // Measure and audience pixels only; cmp.quantcast.com is a consent manager, not a tracker.
+    vendor: 'Quantcast',
+    category: 'advertising',
+    domains: ['quantserve.com', 'quantcount.com'],
+    cookies: ['__qca'],
+  },
 ];
 
 export function findTrackerByUrl(url: string): Tracker | undefined {
