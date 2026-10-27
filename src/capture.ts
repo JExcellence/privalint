@@ -111,7 +111,7 @@ export async function capturePage(
     snapshot.requests = [...requests];
     snapshot.requestCount = diagnostics.data.requests;
     document = true;
-    beforeComplete = diagnostics.data.issueCount === 0 && snapshot.error === undefined;
+    beforeComplete = diagnostics.restrictingIssues === 0 && snapshot.error === undefined;
     if (checkConsent && options.consentCheck !== false) {
       options.onProgress?.({
         stage: 'checking-consent',
@@ -169,7 +169,7 @@ export async function capturePage(
     snapshot.consent.afterRejectComplete = !diagnostics.hasIssues('after-reject');
   }
   snapshot.capture = {
-    complete: beforeComplete && diagnostics.data.issueCount === 0,
+    complete: beforeComplete && diagnostics.restrictingIssues === 0,
     beforeConsentComplete: beforeComplete,
     document,
     diagnostics: diagnostics.data,

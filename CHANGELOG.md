@@ -6,6 +6,13 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- A beacon that the network adapter deliberately did not send no longer marks the page capture as
+  incomplete. Its URL is still checked by the tracker rules, so a skipped tracker beacon is still
+  reported. Before, a single first-party statistics ping made every rule on a clean site report
+  "not checkable".
+
 ## 0.4.0 - 2026-10-27
 
 ### Added

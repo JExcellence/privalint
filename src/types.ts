@@ -9,6 +9,8 @@ export interface RecordedRequest {
   /** Absent on legacy snapshots. Only received responses count as network evidence. */
   outcome?: 'pending' | 'response' | 'failed';
   status?: number;
+  /** Set when the network adapter deliberately did not send the request. */
+  skippedReason?: SkipReason;
 }
 
 export type LoadIssueKind =

@@ -64,6 +64,7 @@ export class Diagnostics {
   private readonly earlyFailures = new Map<string, LoadDiagnostic[]>();
   private stopped = false;
   private readonly phaseIssues = { 'before-consent': 0, 'after-reject': 0 };
+  private restricting = 0;
 
   constructor(
     private readonly maxIssues: number,
@@ -112,6 +113,7 @@ export class Diagnostics {
         url: diagnosticUrl(request.url()),
         phase: entry.phase,
       };
+      if (issue.skippedReason !== undefined) entry.record.skippedReason = issue.skippedReason;
       this.terminalFailure(issue.kind);
       this.store(issue);
       this.data.failed++;
@@ -177,14 +179,24 @@ export class Diagnostics {
   }
 
   private store(issue: LoadDiagnostic): void {
-    this.phaseIssues[issue.phase]++;
     this.data.issueCount++;
+    // A beacon's URL is recorded and the page never reads its response, so not sending it hides
+    // nothing from the rules. Every other issue limits what the scanner observed.
+    if (!isOmittedBeacon(issue)) {
+      this.phaseIssues[issue.phase]++;
+      this.restricting++;
+    }
     if (this.data.issues.length < this.maxIssues) this.data.issues.push(issue);
     else this.data.dropped++;
   }
 
   hasIssues(phase: CapturePhase): boolean {
     return this.phaseIssues[phase] > 0;
+  }
+
+  /** Issues that limit what the scanner observed: all except deliberately omitted beacons. */
+  get restrictingIssues(): number {
+    return this.restricting;
   }
 
   /** Freeze before closing the context: teardown errors are not resource failures. */
@@ -220,3 +232,6 @@ export class Diagnostics {
     }
   }
 }
+
+const isOmittedBeacon = (issue: LoadDiagnostic): boolean =>
+  issue.kind === 'skipped' && issue.skippedReason === 'beacon';
