@@ -277,7 +277,6 @@ No report claims legal compliance.
 
 ## Roadmap
 
-- PR comments from the Action
 - Config migration helpers and report comparison (JSON config is available now)
 - Check the settings layer of banners and the "accept" path
 - More trackers, embeds and consent managers (see the
