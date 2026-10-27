@@ -2,13 +2,15 @@
 
 [![CI](https://github.com/jexcellence/privalint/actions/workflows/ci.yml/badge.svg)](https://github.com/jexcellence/privalint/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/privalint)](https://www.npmjs.com/package/privalint)
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-privalint-blue?logo=github)](https://github.com/marketplace/actions/privalint)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![good first issues](https://img.shields.io/github/issues/jexcellence/privalint/good%20first%20issue?label=good%20first%20issues)](https://github.com/jexcellence/privalint/labels/good%20first%20issue)
 
 **Deutsch:** [README.de.md](README.de.md)
 
 Lint your website for the GDPR mistakes that get people warning letters: trackers that fire before
-consent or keep running after "reject", Google Fonts loaded from Google, embeds and a missing
-Impressum.
+consent or keep running after "reject", fonts loaded from Google or Adobe, embeds before consent,
+a banner you can't reopen, and a missing Impressum.
 
 privalint opens your site in a real Chromium browser with no cookies or storage, like a first
 visit. It records what loads before anyone touches the consent banner, then clicks "reject" and
@@ -44,8 +46,7 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 | [`impressum-link`](docs/rules/impressum-link.md)               | warning  | Pages without a link to an Impressum. A contact link alone is noted as info.                                               |
 | [`privacy-policy-link`](docs/rules/privacy-policy-link.md)     | warning  | Pages without a link to a privacy policy.                                                                                  |
 
-More rules are on the [roadmap](#roadmap). Each one is a small file with tests, see
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Each rule is a small file with tests. Missing a check? See [Contributing](#contributing).
 
 ## GitHub Action
 
@@ -198,43 +199,16 @@ for (const finding of result.findings) {
 }
 ```
 
-New reports carry `schemaVersion`, `scannerVersion` and normalized `options`. An absent
-schema version means a legacy report, not version 1. `ruleEvaluations[].outcome` explicitly
-distinguishes `checked-no-finding`, `finding-detected` and `not-evaluable`, always with a fixed
-`explanation` code. `onProgress` emits real stages (`starting`, `loading-page`, `checking-consent`,
-`evaluating-rules`, `completed`) with elapsed time and redacted page URLs; it does not invent a
-percentage. The CLI and Action keep their existing finding-threshold exit policy.
+Every report says for each rule and page whether it was checked with no finding, found something,
+or could not be checked, and why. That keeps "nothing found" apart from "not looked at".
 
-Schema 1.1.0 adds random scan/page IDs and explicit capture-to-page progress resolution, so redacted
-pages remain distinguishable. Standalone schemas and complete/partial/skip/policy fixtures are
-included. The [report contract and optional CI gate](docs/report-contract.md)
-([Deutsch](docs/report-contract.de.md)) explain validation and identity/exit-code semantics.
+Going further:
 
-### Public web scanners and controlled capture
-
-`scan()` accepts a `networkAdapter` and `AbortSignal`. The adapter receives each HTTP hop,
-including redirects, and returns a response or throws a typed `NetworkError`. Requests wait
-in a FIFO queue; concurrency, request count, response bytes and timeouts are independent limits.
-There is no browser HTTP fallback in adapter mode.
-
-The scanner owns its browser and fresh contexts and closes them on completion or cancellation.
-The caller owns the adapter's shared clients. Keep your existing egress policy: validate and pin
-DNS/socket destinations for **every** hop, and honour the provided per-request abort signal.
-
-See the [controlled scanner guide](docs/controlled-scanner.md) and the type-checked
-[pinned-transport example](examples/controlled-scanner.ts). The example denies origins absent
-from a trusted deployment allowlist and pins socket addresses; the allowlist must not come from
-the person submitting the scan.
-
-Reports separate `findings` from `pages[].capture.diagnostics`. A page with 48 requests and 21
-blocked/failed requests is marked incomplete even if no findings were produced. Per-page
-`ruleEvaluations` distinguish `executed`, `skipped` and `not-evaluable`; positive evidence may
-still be evaluated with `partial: true`. No banner detected is not itself a privacy finding,
-and does not mean that the reject path was tested.
-
-Existing CLI, API and GitHub Action calls still work. Start-page navigation failures retain the
-legacy throw behaviour unless `failureMode: 'report'` is selected (the default with an adapter).
-No report claims legal compliance.
+- [Report contract and the optional coverage gate](docs/report-contract.md): JSON schema,
+  versioning, exit codes
+- [Running privalint behind a public web form](docs/controlled-scanner.md): network adapter,
+  limits and cancellation, with a [type-checked example](examples/controlled-scanner.ts)
+- [Configuration reference](docs/configuration.md)
 
 ## How it works
 
@@ -245,7 +219,8 @@ No report claims legal compliance.
 3. It records every request, the final cookie jar, all links and `<link>` resource hints.
 4. On the start page it looks for the consent banner, either by the selectors of common consent
    managers (OneTrust, Cookiebot, Usercentrics, Borlabs, Complianz and others) or by button labels
-   in six languages. It clicks "reject", reloads and records what still loads.
+   in six languages. It clicks "reject", reloads, records what still loads and checks that the
+   settings can be reopened.
 5. Each rule looks at those snapshots and reports findings with evidence and a suggested fix.
 6. With `--max-pages`, links to the same site are followed breadth-first. Query strings are
    dropped, pages are deduplicated after redirects, and pages that fail to load (downloads,
@@ -277,17 +252,33 @@ No report claims legal compliance.
 
 ## Roadmap
 
-- Config migration helpers and report comparison (JSON config is available now)
-- Check the settings layer of banners and the "accept" path
-- More trackers, embeds and consent managers (see the
-  [`good first issue`](https://github.com/jexcellence/privalint/labels/good%20first%20issue) label)
-- Larger tracker list built from the Apache-licensed
-  [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database)
+- Test the settings layer of banners, not only "reject" ([#38](https://github.com/jexcellence/privalint/issues/38))
+- Don't count banner rules as incomplete when a site needs no banner ([#35](https://github.com/jexcellence/privalint/issues/35))
+- First-party detection with the public suffix list ([#36](https://github.com/jexcellence/privalint/issues/36))
+- Cookie trackers generated from the Apache-licensed
+  [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database) ([#39](https://github.com/jexcellence/privalint/issues/39))
+- Report comparison between two scans
 
 ## Contributing
 
-Bug reports, false positives, new trackers and new rules are all welcome. Start with
-[CONTRIBUTING.md](CONTRIBUTING.md).
+privalint gets better with every tracker, consent manager and false positive someone reports.
+Most contributions are a few lines of data plus a test, and you don't need to know the whole
+codebase. Good places to start:
+
+| Issue                                                                             | What it takes                                 |
+| --------------------------------------------------------------------------------- | --------------------------------------------- |
+| [#30](https://github.com/jexcellence/privalint/issues/30) Consent managers        | Find two button selectors on a real site      |
+| [#31](https://github.com/jexcellence/privalint/issues/31) Session-replay tools    | Add hosts from the vendor's docs, plus a test |
+| [#32](https://github.com/jexcellence/privalint/issues/32) Chat and review widgets | Same, for `third-party-embeds`                |
+| [#33](https://github.com/jexcellence/privalint/issues/33) German rule docs        | Translate one page                            |
+| [#34](https://github.com/jexcellence/privalint/issues/34) Action input            | One input in `action.yml`                     |
+| [#37](https://github.com/jexcellence/privalint/issues/37) Sandbox on Linux/macOS  | Run one command and report back               |
+
+Found a false positive or a tracker privalint missed? The
+[issue forms](https://github.com/jexcellence/privalint/issues/new/choose) ask for exactly what's
+needed. [CONTRIBUTING.md](CONTRIBUTING.md) covers setup, adding a tracker and writing a rule.
+
+If privalint saved you a warning letter or a review round, a star helps others find it.
 
 ## License
 

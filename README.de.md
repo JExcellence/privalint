@@ -3,8 +3,9 @@
 **English:** [README.md](README.md)
 
 privalint prüft Websites auf die Datenschutzfehler, für die es Abmahnungen gibt: Tracker, die vor
-der Einwilligung laden oder nach „Ablehnen“ weiterlaufen, Google Fonts vom Google-Server,
-eingebundene Inhalte wie YouTube oder Google Maps und ein fehlendes Impressum.
+der Einwilligung laden oder nach „Ablehnen“ weiterlaufen, Schriften von Google- oder
+Adobe-Servern, eingebundene Inhalte wie YouTube oder Google Maps, ein Cookie-Banner, das sich
+nicht wieder öffnen lässt, und ein fehlendes Impressum.
 
 privalint öffnet die Seite in einem echten Chromium-Browser ohne Cookies, wie beim ersten Besuch.
 Es zeichnet auf, was geladen wird, bevor jemand das Cookie-Banner bedient, klickt dann auf
@@ -76,7 +77,7 @@ Dafür benötigt der Job `pull-requests: write`. Bei Fork-PRs oder einem schreib
 wird der Kommentar ohne Scanfehler ausgelassen. Befunde mit einem fehlgeschlagenen Scan-Schritt
 verhindern den Kommentar nicht.
 
-## Konfiguration, Berichtsversion und Fortschritt
+## Konfiguration und Berichte
 
 Die CLI liest eine vorhandene `privalint.config.json`, alternativ `--config <datei>`.
 CLI-Argumente haben Vorrang. JSON kann URL, Seitenlimit, Sprache, Länderprofil, Ladeoptionen,
@@ -96,46 +97,16 @@ Freigegebene Anbieter bleiben als Hinweise mit Policy-Kennzeichnung sichtbar. Ei
 kein Nachweis von Einwilligung oder rechtlicher Zulässigkeit. Details stehen in der
 [deutschen Anleitung](docs/configuration.de.md) und der [englischen Fassung](docs/configuration.md).
 
-Neue Berichte enthalten `schemaVersion`, `scannerVersion` und die wirksamen `options`.
-Ohne Schemaversion handelt es sich um einen alten Bericht. `ruleEvaluations[].outcome`
-unterscheidet „Geprüft, kein Befund“, „Befund erkannt“ und „Nicht prüfbar“ mit Begründung.
-`onProgress` liefert tatsächliche Phasen mit verstrichener Zeit und bereinigten Seiten-URLs,
-keinen geschätzten Prozentwert. Die Exit-Code-Policy von CLI/Action bleibt erhalten.
+Jeder Bericht sagt pro Regel und Seite, ob geprüft wurde und nichts gefunden wurde, ob ein
+Befund vorliegt oder ob die Regel nicht prüfbar war, und warum. So bleibt „nichts gefunden“ von
+„nicht angesehen“ getrennt.
 
-Schema 1.1.0 ergänzt zufällige Scan-/Seiten-IDs und die Zuordnung von Erfassungsversuchen nach
-Redirects. Eigenständige Schemas und Konformitätsbeispiele sind enthalten. Mit
-`--fail-on-incomplete` bzw. Action-Input `fail-on-incomplete: true` wird unvollständige nötige
-Beobachtung optional mit Exit 3 bewertet; Befunde mit Exit 1 haben Vorrang. Bewusst deaktivierte
-Regeln und Consent-Prüfungen sind ausgenommen. Details stehen im
-[Berichtsvertrag](docs/report-contract.de.md) und seiner [englischen Fassung](docs/report-contract.md).
+Weiterführend:
 
-## Öffentliche Webscanner und kontrollierte Erfassung
-
-`scan()` unterstützt einen `networkAdapter` und ein `AbortSignal`. Jeder HTTP-Hop einschließlich
-Redirects durchläuft den Adapter. Er gibt eine Antwort zurück oder lehnt mit einem typisierten
-`NetworkError` ab. Eine Warteschlange puffert Lastspitzen; Parallelität, Anfragemenge,
-Antwortgrößen und Zeitlimits sind getrennt. Im Adapter-Modus gibt es keinen Browser-HTTP-Fallback.
-
-PrivaLint erstellt und schließt Browser sowie frische Contexts selbst, auch bei Abbruch. Der
-Aufrufer verwaltet gemeinsam genutzte Transport-Clients. Die bestehende Egress-Policy muss bei
-jedem Hop DNS-Auflösung und tatsächliche Socket-Ziele kontrollieren und das Request-Signal beachten.
-Die [Anleitung](docs/controlled-scanner.de.md) beschreibt den Vertrag und die Zähler. Ein
-[typgeprüftes Beispiel](examples/controlled-scanner.ts) nutzt ausschließlich vom Betreiber
-freigegebene Origins und festgelegte IP-Adressen.
-
-`findings` enthält ausschließlich Regelbefunde. Technische Einschränkungen stehen getrennt unter
-`pages[].capture.diagnostics`. Bei 48 Anfragen mit 21 blockierten oder fehlgeschlagenen Ressourcen
-bleibt die Erfassung unvollständig, auch wenn keine Findings vorliegen. `ruleEvaluations` zeigt
-pro Seite und Regel `executed`, `skipped` oder `not-evaluable`; `partial: true` kennzeichnet die
-Auswertung verfügbarer positiver Evidenz bei eingeschränkter Beobachtung.
-
-Consent-Zustände unterscheiden „kein Banner erkannt“, „keine unterstützte Ablehnen-Möglichkeit“,
-„Interaktion fehlgeschlagen“ und „Ablehnen getestet“. Fehlende Erkennung allein ist kein
-Datenschutzverstoß. Ein getesteter Klick sagt noch nichts über vollständige Ressourcen-Erfassung aus.
-
-Bestehende CLI-, API- und Action-Aufrufe bleiben gültig. Startseiten-Ladefehler werfen weiterhin
-einen Fehler; `failureMode: 'report'` liefert stattdessen einen strukturierten Bericht und ist im
-Adapter-Modus die Vorgabe. Es werden keine Zusagen rechtlicher Konformität gemacht.
+- [Berichtsvertrag und optionales Coverage-Gate](docs/report-contract.de.md): JSON-Schema,
+  Versionierung, Exit-Codes
+- [privalint hinter einem öffentlichen Webformular betreiben](docs/controlled-scanner.de.md):
+  Netzwerk-Adapter, Limits und Abbruch, mit [typgeprüftem Beispiel](examples/controlled-scanner.ts)
 
 ## Grenzen
 
@@ -149,10 +120,24 @@ Adapter-Modus die Vorgabe. Es werden keine Zusagen rechtlicher Konformität gema
 
 ## Mitmachen
 
-Fehlalarme, fehlende Tracker, Consent-Tools und neue Regeln sind sehr willkommen. Gerade
-Anbieter aus dem deutschsprachigen Raum fehlen noch. Der Einstieg steht in
-[CONTRIBUTING.md](CONTRIBUTING.md), passende Aufgaben tragen das Label
-[`good first issue`](https://github.com/jexcellence/privalint/labels/good%20first%20issue).
+privalint wird mit jedem Tracker, jedem Consent-Tool und jedem gemeldeten Fehlalarm besser. Die
+meisten Beiträge sind ein paar Zeilen Daten plus ein Test, ohne dass man den ganzen Code kennen
+muss. Gute Einstiege:
+
+| Issue                                                                                  | Aufwand                                              |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [#33](https://github.com/jexcellence/privalint/issues/33) Regel-Doku auf Deutsch       | Eine Seite übersetzen                                |
+| [#30](https://github.com/jexcellence/privalint/issues/30) Consent-Tools                | Zwei Button-Selektoren auf einer echten Seite finden |
+| [#31](https://github.com/jexcellence/privalint/issues/31) Session-Replay-Tools         | Hosts aus der Anbieter-Doku eintragen, plus Test     |
+| [#32](https://github.com/jexcellence/privalint/issues/32) Chat- und Bewertungs-Widgets | Dasselbe für `third-party-embeds`                    |
+| [#34](https://github.com/jexcellence/privalint/issues/34) Action-Input                 | Ein Input in `action.yml`                            |
+
+Gerade Anbieter aus dem deutschsprachigen Raum fehlen noch. Fehlalarme und fehlende Tracker
+lassen sich über die [Issue-Formulare](https://github.com/jexcellence/privalint/issues/new/choose)
+melden; Einrichtung und Ablauf stehen in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Wenn privalint Ihnen eine Abmahnung oder eine Korrekturschleife erspart hat, hilft ein Stern
+anderen, es zu finden.
 
 ## Lizenz
 
