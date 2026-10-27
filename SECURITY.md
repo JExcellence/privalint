@@ -8,6 +8,7 @@ privalint loads arbitrary websites in a headless browser. Reports about sandbox 
 crawler being steered to unintended hosts, or report output that can inject content into CI logs
 or job summaries are especially welcome.
 
-Note that Chromium runs with Playwright's default launch options, which disable the Chromium
-sandbox. Scanning untrusted sites on a machine with secrets is at your own risk until sandboxing
-is configurable.
+By default Chromium runs with Playwright's default launch options, which disable the Chromium
+sandbox, so that scans work in CI containers. When you scan sites you don't trust on a machine
+with secrets, pass `--sandbox` (or `sandbox: true` in the API). If the sandbox can't start,
+privalint stops with an error instead of falling back to running without it.

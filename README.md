@@ -133,6 +133,8 @@ privalint <url> [options]
       --skip-consent      Don't click "reject" on the consent banner
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
+      --sandbox           Run Chromium with its sandbox (recommended for untrusted
+                          sites; may not start in containers)
       --list-rules        Print the available rules and exit
 ```
 
@@ -265,8 +267,10 @@ No report claims legal compliance.
   have US addresses, so some sites load trackers there that EU visitors never get, and the
   result differs from what an EU visitor sees. Use a runner or proxy in the EU for results you
   want to rely on.
-- Chromium is launched with Playwright's defaults, which turn off the Chromium sandbox. Don't
-  scan sites you don't trust on a machine that holds secrets.
+- Chromium runs without its sandbox by default, like Playwright's own default, because the
+  sandbox often can't start in containers. Pass `--sandbox` when you scan sites you don't trust
+  on a machine that holds secrets. On Ubuntu 23.10 and later it needs unprivileged user
+  namespaces, which AppArmor restricts unless Chromium is allowed to use them.
 
 ## Roadmap
 
