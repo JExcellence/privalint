@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.4.0 - 2026-10-27
+
 ### Added
 
 - Random scan/page identities with explicit capture-attempt resolution after redirects; redacted
