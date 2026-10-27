@@ -47,7 +47,7 @@ npx privalint https://ihre-seite.at --region at --lang de --max-pages 20
 | `pre-consent-trackers`  | Analyse-, Werbe- und Session-Replay-Tools, die vor der Einwilligung Anfragen senden oder Cookies setzen |
 | `trackers-after-reject` | Tracker, die nach Klick auf „Ablehnen“ und Neuladen weiterlaufen                                        |
 | `reject-option`         | Cookie-Banner mit „Zustimmen“, aber ohne „Ablehnen“ auf der ersten Ebene; Pur-Abo-Modelle als Hinweis   |
-| `consent-settings-link` | Kein sichtbarer Link oder Button, um die Cookie-Einstellungen nach dem Ablehnen wieder zu öffnen         |
+| `consent-settings-link` | Kein sichtbarer Link oder Button, um die Cookie-Einstellungen nach dem Ablehnen wieder zu öffnen        |
 | `google-fonts`          | Schriften von `fonts.googleapis.com` / `fonts.gstatic.com`                                              |
 | `adobe-fonts`           | Schriften von Adobe Fonts (`use.typekit.net` / `p.typekit.net`)                                         |
 | `third-party-embeds`    | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar und Social-Media-Einbindungen vor der Einwilligung     |

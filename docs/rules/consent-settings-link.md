@@ -14,11 +14,11 @@ every frame for a visible control that reopens the settings:
 - any link or button whose text, `aria-label` or `title` reads like "Cookie-Einstellungen",
   "Datenschutz-Einstellungen", "Einwilligung widerrufen", "Cookie settings" or "Manage cookies".
 
-| Situation                                                | Severity       |
-| -------------------------------------------------------- | -------------- |
-| Reject tested, no such control visible                   | warning        |
-| A control was found                                      | not reported   |
-| No banner found, no reject button, or the click failed   | not evaluable  |
+| Situation                                              | Severity      |
+| ------------------------------------------------------ | ------------- |
+| Reject tested, no such control visible                 | warning       |
+| A control was found                                    | not reported  |
+| No banner found, no reject button, or the click failed | not evaluable |
 
 ## Why
 
