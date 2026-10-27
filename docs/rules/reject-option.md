@@ -1,6 +1,7 @@
 # reject-option
 
-Warns when the first layer of the consent banner offers "accept" but no way to reject.
+Warns when the first layer of a recognized consent banner offers "accept" but no supported
+reject control was detected. Verify the banner manually before treating this as a site defect.
 
 ## What it checks
 
@@ -18,6 +19,11 @@ Spanish, Italian and Dutch.
 
 A banner counts as pay-or-OK when a button or link inside the banner mentions a subscription
 ("Abo", "abonnieren", "subscribe", "werbefrei", …). Links in the site's own navigation don't count.
+
+Load failures and unsupported markup can prevent recognition. No banner detected is not itself
+a privacy finding. Consult `consent.state`, capture diagnostics and per-rule evaluation status;
+an untested reject path must not be interpreted as a successful test. Country profiles choose
+tool references/severities and do not determine which law applies.
 
 ## Why
 

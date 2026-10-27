@@ -1,4 +1,5 @@
 import { say, type Text } from '../i18n.js';
+import { observedRequests } from '../observations.js';
 import type { Finding, Rule } from '../types.js';
 import { hostMatches, safeHost } from '../url.js';
 
@@ -34,7 +35,9 @@ export const googleFonts: Rule = {
     'consent. LG München I awarded a visitor damages for this in 2022.',
   references: ['Art. 6(1) GDPR', 'LG München I, 20.01.2022, Az. 3 O 17493/20'],
   check({ page, lang }) {
-    const requests = page.requests.filter((request) => isGoogleFontUrl(request.url));
+    const requests = observedRequests(page.requests).filter((request) =>
+      isGoogleFontUrl(request.url),
+    );
     if (requests.length > 0) {
       const count = requests.length;
       return [

@@ -5,7 +5,7 @@ const ID = 'reject-option';
 
 export const rejectOption: Rule = {
   id: ID,
-  title: 'No way to reject on the first layer of the banner',
+  title: 'No supported reject control detected on the first layer of the banner',
   description:
     'Rejecting cookies must be as easy as accepting them. Most European regulators treat a banner ' +
     'that offers "accept" on its first layer, but hides "reject" in the settings or behind a ' +
@@ -54,8 +54,8 @@ export const rejectOption: Rule = {
         ruleId: ID,
         severity: 'warning',
         message: say(lang, {
-          en: `The consent banner${vendor} offers "${accept}" but no reject button next to it.`,
-          de: `Das Cookie-Banner${vendor} bietet „${accept}“, aber keinen Ablehnen-Button daneben.`,
+          en: `The consent banner${vendor} offers "${accept}"; no supported first-layer reject control was detected. Verify the banner manually.`,
+          de: `Das Cookie-Banner${vendor} bietet „${accept}“; eine unterstützte Ablehnen-Steuerung auf der ersten Ebene wurde nicht erkannt. Das Banner manuell prüfen.`,
         }),
         pageUrl: page.finalUrl,
         evidence,

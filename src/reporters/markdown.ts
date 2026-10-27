@@ -1,4 +1,5 @@
 import type { ScanResult, Severity } from '../types.js';
+import { captureLines, coverageMessage, isPartial } from './capture.js';
 import { messagesFor } from './messages.js';
 import { countBySeverity, groupByPage } from './shared.js';
 
@@ -21,6 +22,11 @@ export function formatMarkdown(result: ScanResult): string {
   ];
   if (result.consent !== undefined) {
     lines.push('', escapeText(m.consent(result.consent)));
+  }
+  if (isPartial(result)) lines.push('', escapeText(coverageMessage(result)));
+  const observations = captureLines(result);
+  if (observations.length > 0) {
+    lines.push('', ...observations.map((line) => `- ${escapeText(line)}`));
   }
 
   for (const [pageUrl, findings] of groupByPage(result.findings)) {

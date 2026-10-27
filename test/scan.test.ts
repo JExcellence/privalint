@@ -152,7 +152,7 @@ describe('consent check', () => {
 
   it('reports no banner on a page without one', async () => {
     const result = await scan(`${origin}/clean/`, options);
-    expect(result.consent).toEqual({ bannerFound: false, rejected: false });
+    expect(result.consent).toEqual({ bannerFound: false, rejected: false, state: 'not-detected' });
   });
 });
 

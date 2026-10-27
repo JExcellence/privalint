@@ -5,6 +5,7 @@ import {
   type TrackerCategory,
 } from '../data/trackers.js';
 import { type Lang, say, type Text } from '../i18n.js';
+import { observedRequests } from '../observations.js';
 import type { RecordedCookie, RecordedRequest } from '../types.js';
 
 const MAX_EVIDENCE = 5;
@@ -29,7 +30,7 @@ export function findTrackerHits(
     hits.set(tracker.vendor, hit);
   };
 
-  for (const request of requests) {
+  for (const request of observedRequests(requests)) {
     const tracker = findTrackerByUrl(request.url);
     if (tracker !== undefined) {
       record(tracker, `${requestLabel} ${request.url}`);

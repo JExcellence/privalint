@@ -1,4 +1,5 @@
 import type { BrowserContext, Locator, Page } from 'playwright';
+import { classifyLoadError } from './diagnostics.js';
 import type { ConsentObservation, RecordedCookie, RecordedRequest } from './types.js';
 
 interface CmpSelectors {
@@ -74,6 +75,9 @@ const CLICKABLE = 'button, [role="button"], a, input[type="button"], input[type=
 export interface ConsentCheckOptions {
   settleMs: number;
   timeoutMs: number;
+  signal?: AbortSignal;
+  onReject?: () => void;
+  onTimeout?: () => void;
 }
 
 /**
@@ -87,14 +91,16 @@ export async function observeConsent(
   requests: RecordedRequest[],
   options: ConsentCheckOptions,
 ): Promise<ConsentObservation> {
+  if (options.signal?.aborted) throw new DOMException('Consent check aborted', 'AbortError');
   const banner = await findBanner(page);
   if (banner === undefined) {
-    return { bannerFound: false, rejected: false };
+    return { bannerFound: false, rejected: false, state: 'not-detected' };
   }
 
   const observation: ConsentObservation = {
     bannerFound: true,
     rejected: false,
+    state: 'reject-unavailable',
     ...(banner.cmp === undefined ? {} : { cmp: banner.cmp }),
     ...(banner.acceptLabel === undefined ? {} : { acceptLabel: banner.acceptLabel }),
     ...(banner.rejectLabel === undefined ? {} : { rejectLabel: banner.rejectLabel }),
@@ -108,9 +114,11 @@ export async function observeConsent(
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
     const firstRequest = requests.length;
 
-    await banner.reject.click({ timeout: 5_000 });
+    options.onReject?.();
+    await banner.reject.click({ timeout: Math.min(5_000, options.timeoutMs) });
     await settle(page, options);
-    await page.reload({ waitUntil: 'load', timeout: options.timeoutMs });
+    const response = await page.reload({ waitUntil: 'load', timeout: options.timeoutMs });
+    if (response === null || response.status() >= 400) throw new Error('HTTP reload failed');
     await settle(page, options);
 
     const cookies: RecordedCookie[] = (await context.cookies())
@@ -120,11 +128,11 @@ export async function observeConsent(
     return {
       ...observation,
       rejected: true,
+      state: 'reject-tested',
       afterReject: { requests: requests.slice(firstRequest), cookies },
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ...observation, error: message.split('\n')[0] ?? message };
+    return { ...observation, state: 'interaction-failed', error: classifyLoadError(error) };
   }
 }
 
@@ -228,7 +236,7 @@ async function label(locator: Locator): Promise<string> {
 
 async function settle(page: Page, options: ConsentCheckOptions): Promise<void> {
   await page.waitForLoadState('networkidle', { timeout: options.timeoutMs }).catch(() => {
-    // See capturePage: some pages never go idle.
+    options.onTimeout?.();
   });
   await page.waitForTimeout(options.settleMs);
 }

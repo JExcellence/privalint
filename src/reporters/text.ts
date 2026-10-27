@@ -1,5 +1,6 @@
 import { styleText } from 'node:util';
 import type { Finding, ScanResult, Severity } from '../types.js';
+import { captureLines, coverageMessage, isPartial } from './capture.js';
 import { messagesFor, type ReportMessages } from './messages.js';
 import { countBySeverity, groupByPage } from './shared.js';
 
@@ -36,12 +37,14 @@ export function formatText(result: ScanResult, color = false): string {
   const duration = m.duration(result.durationMs);
 
   lines.push('');
+  lines.push(...captureLines(result));
+  if (isPartial(result)) lines.push(paint('yellow', coverageMessage(result)));
   if (result.consent !== undefined) {
     lines.push(paint('dim', m.consent(result.consent)));
   }
-  if (result.findings.length === 0) {
+  if (result.findings.length === 0 && !isPartial(result)) {
     lines.push(paint('green', `✔ ${m.noProblems(pages, duration)}`));
-  } else {
+  } else if (result.findings.length > 0) {
     lines.push(
       `${paint('red', m.errors(counts.error))}, ${paint('yellow', m.warnings(counts.warning))} ${m.on} ${pages} (${duration}).`,
     );
