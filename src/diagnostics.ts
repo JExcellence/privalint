@@ -62,6 +62,9 @@ export class Diagnostics {
   phase: CapturePhase = 'before-consent';
   private readonly pending = new Map<Request, PendingRequest>();
   private readonly earlyFailures = new Map<string, LoadDiagnostic[]>();
+  /** ERR_ABORTED failures without an adapter reason, waiting for the cancel signal. */
+  private readonly unexplained: { url: string; entry: PendingRequest; issue: LoadDiagnostic }[] =
+    [];
   private stopped = false;
   private readonly phaseIssues = { 'before-consent': 0, 'after-reject': 0 };
   private restricting = 0;
@@ -107,18 +110,60 @@ export class Diagnostics {
     context.on('requestfailed', (request) => {
       const entry = this.pending.get(request);
       if (entry === undefined || this.stopped) return;
-      entry.record.outcome = 'failed';
+      this.pending.delete(request);
+      const errorText = request.failure()?.errorText;
       const issue = entry.issue ?? {
-        kind: classifyLoadError(request.failure()?.errorText),
+        kind: classifyLoadError(errorText),
         url: diagnosticUrl(request.url()),
         phase: entry.phase,
       };
-      if (issue.skippedReason !== undefined) entry.record.skippedReason = issue.skippedReason;
-      this.terminalFailure(issue.kind);
-      this.store(issue);
-      this.data.failed++;
-      this.pending.delete(request);
+      // Chromium reports a request the page cancelled as ERR_ABORTED, but so does teardown. The
+      // text only defers the decision; cancelledByPage() or stop() settles it.
+      if (entry.issue === undefined && errorText === 'net::ERR_ABORTED') {
+        this.unexplained.push({ url: request.url(), entry, issue });
+        return;
+      }
+      this.settle(entry, issue);
     });
+  }
+
+  private settle(entry: PendingRequest, issue: LoadDiagnostic): void {
+    entry.record.outcome = 'failed';
+    if (issue.skippedReason !== undefined) entry.record.skippedReason = issue.skippedReason;
+    this.terminalFailure(issue.kind);
+    this.store(issue);
+    this.data.failed++;
+  }
+
+  /**
+   * The browser reported that the page itself cancelled a request to this URL (CDP
+   * Network.loadingFailed with canceled). The page no longer wanted the response, so this is
+   * not an observation gap; the URL stays in the report as a skipped request.
+   */
+  cancelledByPage(url: string): void {
+    if (this.stopped) return;
+    const issue = (phase: CapturePhase): LoadDiagnostic => ({
+      kind: 'skipped',
+      phase,
+      url: diagnosticUrl(url),
+      skippedReason: 'cancelled-by-page',
+    });
+    const index = this.unexplained.findIndex((failure) => failure.url === url);
+    if (index !== -1) {
+      const [failure] = this.unexplained.splice(index, 1);
+      if (failure) this.settle(failure.entry, issue(failure.entry.phase));
+      return;
+    }
+    for (const [request, entry] of this.pending) {
+      if (request.url() === url) {
+        entry.issue = issue(entry.phase);
+        return;
+      }
+    }
+    // The cancellation can overtake Playwright's request event; apply it on arrival.
+    const early = this.earlyFailures.get(url) ?? [];
+    early.push(issue(this.phase));
+    this.earlyFailures.set(url, early);
   }
 
   private finish(request: Request): void {
@@ -180,9 +225,10 @@ export class Diagnostics {
 
   private store(issue: LoadDiagnostic): void {
     this.data.issueCount++;
-    // A beacon's URL is recorded and the page never reads its response, so not sending it hides
-    // nothing from the rules. Every other issue limits what the scanner observed.
-    if (!isOmittedBeacon(issue)) {
+    // Omitted beacons and requests the page cancelled itself hide nothing from the rules: their
+    // URL is recorded and the page never uses the response. Every other issue limits what the
+    // scanner observed.
+    if (!isUnrestricting(issue)) {
       this.phaseIssues[issue.phase]++;
       this.restricting++;
     }
@@ -194,7 +240,7 @@ export class Diagnostics {
     return this.phaseIssues[phase] > 0;
   }
 
-  /** Issues that limit what the scanner observed: all except deliberately omitted beacons. */
+  /** Issues that limit what the scanner observed: all except omitted beacons and page cancels. */
   get restrictingIssues(): number {
     return this.restricting;
   }
@@ -202,6 +248,8 @@ export class Diagnostics {
   /** Freeze before closing the context: teardown errors are not resource failures. */
   stop(): void {
     if (this.stopped) return;
+    // No cancel signal arrived for these, so they stay what Chromium reported.
+    for (const failure of this.unexplained.splice(0)) this.settle(failure.entry, failure.issue);
     for (const [request, entry] of this.pending) {
       entry.record.outcome = 'failed';
       const issue = entry.issue ?? {
@@ -233,5 +281,6 @@ export class Diagnostics {
   }
 }
 
-const isOmittedBeacon = (issue: LoadDiagnostic): boolean =>
-  issue.kind === 'skipped' && issue.skippedReason === 'beacon';
+const isUnrestricting = (issue: LoadDiagnostic): boolean =>
+  issue.kind === 'skipped' &&
+  (issue.skippedReason === 'beacon' || issue.skippedReason === 'cancelled-by-page');

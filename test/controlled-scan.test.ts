@@ -313,6 +313,84 @@ describe('controlled capture', () => {
   });
 });
 
+describe('requests the page cancels itself', () => {
+  // The page starts a fetch and aborts it after 100 ms; the adapter needs 800 ms for it.
+  const cancelling = html(
+    "<script>const c=new AbortController();fetch('/slow',{signal:c.signal}).catch(()=>{});setTimeout(()=>c.abort(),100)</script>",
+  );
+  const slow =
+    (onAbort?: (afterMs: number) => void): NetworkAdapter =>
+    async ({ url, signal }) => {
+      if (url !== `${origin}/slow`) return cancelling;
+      const started = Date.now();
+      signal.addEventListener('abort', () => onAbort?.(Date.now() - started), { once: true });
+      await delay(800, undefined, { signal });
+      return { status: 200, body: '{}', headers: { 'content-type': 'application/json' } };
+    };
+
+  it('keeps the capture complete and lists the request as cancelled by the page', async () => {
+    const result = await scan(origin, { ...settings, networkAdapter: slow(), consentCheck: false });
+    const capture = result.pages[0]?.capture;
+    expect(capture?.complete).toBe(true);
+    expect(capture?.diagnostics).toMatchObject({ failedRequests: 0, skippedRequests: 1 });
+    expect(capture?.diagnostics.issues).toEqual([
+      expect.objectContaining({ kind: 'skipped', skippedReason: 'cancelled-by-page' }),
+    ]);
+  });
+
+  it('stops the adapter request when the page cancels it', async () => {
+    // The page cancels /slow only once the adapter has started it: /ping waits for that.
+    let started!: () => void;
+    const slowStarted = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    let abortedAt = Number.POSITIVE_INFINITY;
+    const adapter: NetworkAdapter = async ({ url, signal }) => {
+      if (url === `${origin}/ping`) {
+        await slowStarted;
+        return { status: 200, body: '' };
+      }
+      if (url !== `${origin}/slow`) {
+        return html(
+          "<script>const c=new AbortController();fetch('/slow',{signal:c.signal}).catch(()=>{});fetch('/ping').then(()=>c.abort())</script>",
+        );
+      }
+      signal.addEventListener(
+        'abort',
+        () => {
+          abortedAt = Date.now();
+        },
+        { once: true },
+      );
+      started();
+      await delay(5_000, undefined, { signal });
+      return { status: 200, body: '' };
+    };
+    await scan(origin, { ...settings, networkAdapter: adapter, consentCheck: false });
+    // Teardown would abort it too, but only as the scan ends, after 500 ms of network idle.
+    expect(Date.now() - abortedAt).toBeGreaterThan(300);
+  });
+
+  it.each([
+    ['throws', async () => Promise.reject(new Error('socket hang up'))],
+    ['times out', ({ signal }: { signal: AbortSignal }) => delay(5_000, undefined, { signal })],
+  ])('still treats an adapter that %s as incomplete', async (_, failing) => {
+    const adapter: NetworkAdapter = async (request) => {
+      if (request.url !== `${origin}/data`) return html("<script>fetch('/data')</script>");
+      await failing(request);
+      return { status: 200, body: '' };
+    };
+    const result = await scan(origin, {
+      ...settings,
+      networkAdapter: adapter,
+      networkLimits: { requestTimeoutMs: 500 },
+      consentCheck: false,
+    });
+    expect(result.pages[0]?.capture?.complete).toBe(false);
+    expect(result.pages[0]?.capture?.diagnostics.failedRequests).toBe(1);
+  });
+});
+
 describe('consent with controlled capture', () => {
   it('keeps initial load failures separate from a completed reject observation', async () => {
     let documents = 0;
