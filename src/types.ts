@@ -9,7 +9,7 @@ export interface RecordedRequest {
   /** Absent on legacy snapshots. Only received responses count as network evidence. */
   outcome?: 'pending' | 'response' | 'failed';
   status?: number;
-  /** Set when the network adapter deliberately did not send the request. */
+  /** Set when the request was deliberately not completed: by the adapter, or by the page itself. */
   skippedReason?: SkipReason;
 }
 
@@ -28,7 +28,13 @@ export type LoadIssueKind =
   | 'aborted';
 
 export type CapturePhase = 'before-consent' | 'after-reject';
-export type SkipReason = 'beacon' | 'unsupported-method' | 'unsupported-protocol' | 'policy';
+export type SkipReason =
+  | 'beacon'
+  | 'unsupported-method'
+  | 'unsupported-protocol'
+  | 'policy'
+  /** The page aborted the request itself, e.g. a framework cancelling a prefetch. */
+  | 'cancelled-by-page';
 
 export interface LoadDiagnostic {
   kind: LoadIssueKind;

@@ -46,7 +46,8 @@ const explanation = choices(
 const meta = { $schema: 'https://json-schema.org/draft/2020-12/schema' };
 
 function definitions(version) {
-  const identified = version === '1.1.0';
+  // 1.1.0 added scan and page IDs; every later version keeps them.
+  const identified = version !== '1.0.0';
   const pageIdentity = identified ? { pageId: uuid } : {};
   return {
     diagnostic: object(
@@ -69,7 +70,14 @@ function definitions(version) {
         url: { type: 'string', pattern: '^(https?://[^/?#@\\s]+/\\[redacted\\]|\\[redacted\\])$' },
         status: { type: 'integer', minimum: 100, maximum: 599 },
         limit: choices('requests', 'response-bytes', 'total-bytes', 'redirects'),
-        skippedReason: choices('beacon', 'unsupported-method', 'unsupported-protocol', 'policy'),
+        skippedReason: choices(
+          'beacon',
+          'unsupported-method',
+          'unsupported-protocol',
+          'policy',
+          // New in 1.2.0: a validator holding the 1.1.0 file would reject it.
+          ...(version === '1.0.0' || version === '1.1.0' ? [] : ['cancelled-by-page']),
+        ),
       },
       ['kind', 'phase', 'url'],
     ),
@@ -297,7 +305,7 @@ function reportSchema(version) {
       'Structural contract; not a guarantee of complete observation, URL safety or legal compliance. Counter equations and page-ID references require semantic checks.',
     ...object(
       {
-        ...(version === '1.1.0' ? { scanId: uuid } : {}),
+        ...(version !== '1.0.0' ? { scanId: uuid } : {}),
         schemaVersion: { const: version },
         scannerVersion: { type: 'string', minLength: 1 },
         options: ref('options'),
@@ -316,7 +324,7 @@ function reportSchema(version) {
         coverage: choices('complete', 'partial'),
       },
       [
-        ...(version === '1.1.0' ? ['scanId'] : []),
+        ...(version !== '1.0.0' ? ['scanId'] : []),
         'schemaVersion',
         'scannerVersion',
         'options',
@@ -343,14 +351,14 @@ function sarifPropertiesSchema(version) {
     description: 'Validates PrivaLint run.properties only, not the enclosing SARIF 2.1.0 standard.',
     ...object(
       {
-        ...(version === '1.1.0' ? { scanId: uuid } : {}),
+        ...(version !== '1.0.0' ? { scanId: uuid } : {}),
         schemaVersion: { const: version },
         scannerVersion: string,
         options: ref('options'),
         coverage: choices('complete', 'partial'),
         observations: array(
           object({
-            ...(version === '1.1.0' ? { pageId: uuid } : {}),
+            ...(version !== '1.0.0' ? { pageId: uuid } : {}),
             url: string,
             capture: ref('capture'),
             ruleEvaluations: array(ref('evaluation')),
@@ -359,7 +367,7 @@ function sarifPropertiesSchema(version) {
         consent: ref('consent'),
       },
       [
-        ...(version === '1.1.0' ? ['scanId'] : []),
+        ...(version !== '1.0.0' ? ['scanId'] : []),
         'schemaVersion',
         'scannerVersion',
         'options',
@@ -373,7 +381,7 @@ function sarifPropertiesSchema(version) {
 
 const directory = new URL('../schemas/', import.meta.url);
 await mkdir(directory, { recursive: true });
-for (const version of ['1.0.0', '1.1.0']) {
+for (const version of ['1.0.0', '1.1.0', '1.2.0']) {
   for (const [name, schema] of [
     ['report', reportSchema(version)],
     ['sarif-properties', sarifPropertiesSchema(version)],
