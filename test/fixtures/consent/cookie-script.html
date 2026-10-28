@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="de">
+  <head><meta charset="utf-8" /><title>Cookie-Script selector fixture</title></head>
+  <body>
+    <a href="/clean/impressum.html">Impressum</a>
+    <a href="/clean/datenschutz.html">Datenschutz</a>
+    <!-- Markup as served on cookie-script.com, checked 2026-10-28. -->
+    <div id="banner"><div class="cookiescript_banner_container"><p>Diese Website verwendet Cookies.</p><button id="cookiescript_accept" class="cookiescript_primary_btn">Accept all</button><button id="cookiescript_reject" class="cookiescript_primary_btn">Decline all</button></div></div>
+    <script>
+      const banner = document.getElementById('banner');
+      if (localStorage.getItem('choice')) banner.remove();
+      banner.querySelector('#cookiescript_reject').addEventListener('click', () => {
+        localStorage.setItem('choice', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>

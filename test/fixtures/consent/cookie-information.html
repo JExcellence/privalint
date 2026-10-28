@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="de">
+  <head><meta charset="utf-8" /><title>Cookie Information selector fixture</title></head>
+  <body>
+    <a href="/clean/impressum.html">Impressum</a>
+    <a href="/clean/datenschutz.html">Datenschutz</a>
+    <!-- Markup as served on cookieinformation.com, checked 2026-10-28. -->
+    <div id="banner"><div id="cookie-information-template-wrapper"><p>Wir verwenden Cookies.</p><button id="declineButton" class="coi-banner__decline" data-testid="coi-banner__decline-all-categories-button">Decline all</button><button class="coi-banner__accept" data-testid="coi-banner__accept-all-categories-button">Accept all</button></div></div>
+    <script>
+      const banner = document.getElementById('banner');
+      if (localStorage.getItem('choice')) banner.remove();
+      banner.querySelector('[data-testid="coi-banner__decline-all-categories-button"]').addEventListener('click', () => {
+        localStorage.setItem('choice', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>

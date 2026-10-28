@@ -77,6 +77,21 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
     accept: 'button.sp_choice_type_11',
     reject: 'button.sp_choice_type_13',
   },
+  // The five below were read from live banners on 2026-10-28: axeptio.eu, trustarc.com,
+  // tradedoubler.com (CookieHub), cookieinformation.com and cookie-script.com.
+  { name: 'Axeptio', accept: '#axeptio_btn_acceptAll', reject: '#axeptio_btn_dismiss' },
+  {
+    name: 'TrustArc',
+    accept: '.ta-modal-primary-btn[data-button-key="accept_all"]',
+    reject: '.ta-modal-primary-btn[data-button-key="decline_all"]',
+  },
+  { name: 'CookieHub', accept: '.ch2-allow-all-btn', reject: '.ch2-deny-all-btn' },
+  {
+    name: 'Cookie Information',
+    accept: '[data-testid="coi-banner__accept-all-categories-button"]',
+    reject: '[data-testid="coi-banner__decline-all-categories-button"]',
+  },
+  { name: 'Cookie-Script', accept: '#cookiescript_accept', reject: '#cookiescript_reject' },
 ];
 
 // Unanchored on purpose: "Alle Cookies akzeptieren" and "Accept all cookies" must both match.
