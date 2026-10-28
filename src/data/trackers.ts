@@ -174,6 +174,27 @@ export const trackers: readonly Tracker[] = [
     domains: ['quantserve.com', 'quantcount.com'],
     cookies: ['__qca'],
   },
+  // Session-replay tools below. Hosts from the vendors' own install material or observed on
+  // live sites on 2026-10-28; the sources are listed in docs/rules/pre-consent-trackers.md.
+  {
+    vendor: 'FullStory',
+    category: 'session-replay',
+    domains: ['edge.fullstory.com', 'rs.fullstory.com'],
+  },
+  { vendor: 'Mouseflow', category: 'session-replay', domains: ['cdn.mouseflow.com'] },
+  { vendor: 'Smartlook', category: 'session-replay', domains: ['web-sdk.smartlook.com'] },
+  {
+    vendor: 'Lucky Orange',
+    category: 'session-replay',
+    domains: ['tools.luckyorange.com', 'settings.luckyorange.com'],
+  },
+  {
+    // The tag and recording hosts; the corporate site is contentsquare.com.
+    vendor: 'Contentsquare',
+    category: 'session-replay',
+    domains: ['contentsquare.net'],
+    cookies: ['_cs_'],
+  },
 ];
 
 export function findTrackerByUrl(url: string): Tracker | undefined {

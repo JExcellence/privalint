@@ -51,6 +51,38 @@ describe('findTrackerByCookie', () => {
   });
 });
 
+describe('session-replay tools', () => {
+  it.each([
+    ['https://edge.fullstory.com/s/fs.js', 'FullStory'],
+    ['https://rs.fullstory.com/rec/page', 'FullStory'],
+    ['https://cdn.mouseflow.com/projects/f2a6083d-2ff6-4fcc-a93f-418acf05a709.js', 'Mouseflow'],
+    ['https://web-sdk.smartlook.com/recorder.js', 'Smartlook'],
+    ['https://tools.luckyorange.com/core/lo.js', 'Lucky Orange'],
+    ['https://t.contentsquare.net/uxa/355d5ac78f8a5.js', 'Contentsquare'],
+    ['https://k-aeu1.contentsquare.net/v2/recording', 'Contentsquare'],
+  ])('%s -> %s', (url, vendor) => {
+    const tracker = findTrackerByUrl(url);
+    expect(tracker?.vendor).toBe(vendor);
+    expect(tracker?.category).toBe('session-replay');
+  });
+
+  it('leaves the vendor websites and lookalikes alone', () => {
+    for (const url of [
+      'https://www.fullstory.com/',
+      'https://mouseflow.com/pricing/',
+      'https://www.smartlook.com/',
+      'https://contentsquare.com/',
+      'https://smartlook.com.example.net/recorder.js',
+    ]) {
+      expect(findTrackerByUrl(url)).toBeUndefined();
+    }
+  });
+
+  it('recognises Contentsquare cookies', () => {
+    expect(findTrackerByCookie('_cs_id')?.vendor).toBe('Contentsquare');
+  });
+});
+
 describe('ad-tech vendors', () => {
   // URLs as observed on German and international news sites on 2026-10-27.
   it.each([
