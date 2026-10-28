@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.6.0 - 2026-10-28
+
 ### Added
 
 - Action input `concurrency`, passed to `--concurrency`, so multi-page scans in CI can load
