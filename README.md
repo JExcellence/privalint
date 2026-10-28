@@ -69,6 +69,7 @@ jobs:
         with:
           url: https://your-site.de
           max-pages: 20
+          concurrency: 3
 
       - uses: github/codeql-action/upload-sarif@v4
         if: always()
@@ -92,6 +93,7 @@ preview URL from your hosting provider's deployment event or action output as `u
 | -------------------- | ----------------- | ----------------------------------------------------- |
 | `url`                |                   | Page to scan. Required.                               |
 | `max-pages`          | `1`               | How many pages of the same site to crawl.             |
+| `concurrency`        | `1`               | Pages loaded at the same time; same report as with 1. |
 | `fail-on`            | `error`           | `error`, `warning` or `never`.                        |
 | `fail-on-incomplete` | `false`           | Fail separately for incomplete required observations. |
 | `disable`            |                   | Comma-separated rule ids to skip.                     |

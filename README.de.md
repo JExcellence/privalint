@@ -65,6 +65,7 @@ Details, Hintergründe und Lösungen stehen auf Englisch in [`docs/rules`](docs/
   with:
     url: https://ihre-seite.de
     max-pages: 20
+    concurrency: 3
     lang: de
     region: de
 ```

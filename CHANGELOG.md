@@ -8,6 +8,8 @@ All notable changes are listed here. The format follows
 
 ### Added
 
+- Action input `concurrency`, passed to `--concurrency`, so multi-page scans in CI can load
+  several pages at once (#34)
 - Axeptio, TrustArc, CookieHub, Cookie Information and Cookie-Script are recognised by their
   button selectors, read from their live banners. Reports name the tool, and the reject path is
   tested with the real button instead of a label guess (#30)
