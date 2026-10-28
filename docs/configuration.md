@@ -48,7 +48,7 @@ can contain several resources, so a partial host match must not suppress unrelat
 
 ## Report version and outcomes
 
-`schemaVersion: '1.1.0'` identifies the current additive report contract; schema 1.0.0 remains
+`schemaVersion: '1.2.0'` identifies the current report contract; schemas 1.0.0 and 1.1.0 remain
 available. See [standalone schemas, page identity and coverage gates](report-contract.md).
 `scannerVersion` is the actual
 package version used to generate it. Reports from 0.3.0 or earlier lack schemaVersion: treat them
@@ -100,8 +100,14 @@ if (request.resourceType === 'ping') {
 The scanner does not omit beacons by default. Skips are diagnostic observations (`kind: 'skipped'`,
 `skippedReason: 'beacon'`), not privacy findings or transport failures. An omitted beacon does not
 make the capture incomplete: its URL is still recorded and matched by the tracker rules, and the
-page never reads a beacon's response. Every other skip still restricts what the scanner observed,
-because a missing resource can affect downstream behaviour.
+page never reads a beacon's response.
+
+The same holds for a request the page cancels itself, for example a framework dropping a prefetch
+when the network is slow. privalint detects it from Chromium (`Network.loadingFailed` with
+`canceled`), stops the adapter call if it is still running, and records it as `kind: 'skipped'`,
+`skippedReason: 'cancelled-by-page'`. Requests the browser cancels because the page navigates,
+such as the reload after rejecting, are recorded the same way. Every other skip still restricts
+what the scanner observed, because a missing resource can affect downstream behaviour.
 
 ## Consent and progress
 

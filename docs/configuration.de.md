@@ -48,8 +48,8 @@ oder URL-Teilstrings freigegeben: Ein Befund kann mehrere Ressourcen enthalten.
 
 ## Berichtsversion und Regelergebnis
 
-`schemaVersion: '1.1.0'` bezeichnet den aktuellen additiven Berichtsvertrag; Schema 1.0.0 bleibt
-verfügbar. Siehe [Schemas, Seitenidentität und CI-Schranke](report-contract.de.md). `scannerVersion`
+`schemaVersion: '1.2.0'` bezeichnet den aktuellen Berichtsvertrag; die Schemas 1.0.0 und 1.1.0
+bleiben verfügbar. Siehe [Schemas, Seitenidentität und CI-Schranke](report-contract.de.md). `scannerVersion`
 enthält die tatsächlich eingesetzte Paketversion. Berichte von 0.3.0 oder älter haben keine
 Schemaversion; fehlende Zähler oder Ergebnisse dürfen nicht als null bzw. Erfolg interpretiert
 werden. Schema- und npm-Paketversion werden unabhängig voneinander geführt.
@@ -100,7 +100,13 @@ if (request.resourceType === 'ping') {
 Standardmäßig werden Beacons nicht ausgelassen. `kind: 'skipped'` und `skippedReason: 'beacon'`
 sind technische Diagnosen, keine Datenschutzbefunde oder Transportfehler. Ein ausgelassener Beacon
 macht die Erfassung nicht unvollständig: Seine URL wird weiterhin erfasst und von den
-Tracker-Regeln geprüft, und die Seite liest die Antwort eines Beacons nie aus. Alle anderen
+Tracker-Regeln geprüft, und die Seite liest die Antwort eines Beacons nie aus.
+
+Dasselbe gilt für Anfragen, die die Seite selbst abbricht, etwa wenn ein Framework bei langsamem
+Netz einen Prefetch verwirft. privalint erkennt das über Chromium (`Network.loadingFailed` mit
+`canceled`), stoppt den Adapter-Aufruf, falls er noch läuft, und erfasst die Anfrage als
+`kind: 'skipped'`, `skippedReason: 'cancelled-by-page'`. Anfragen, die der Browser wegen einer
+Navigation abbricht, etwa beim Neuladen nach dem Ablehnen, werden genauso erfasst. Alle anderen
 ausgelassenen Anfragen schränken die Beobachtung weiterhin ein, weil fehlende Ressourcen
 nachfolgendes Verhalten beeinflussen können.
 

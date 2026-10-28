@@ -4,7 +4,8 @@
 
 ## Versionierte Validierung
 
-Neue Scans verwenden Schema **1.1.0**; 1.0.0 bleibt für frühere versionierte Berichte verfügbar.
+Neue Scans verwenden Schema **1.2.0**; 1.0.0 und 1.1.0 bleiben für frühere versionierte Berichte
+verfügbar. 1.2.0 ergänzt den Grund `cancelled-by-page`, den ein 1.1.0-Validator ablehnen würde.
 Paket-/Scanner-Version und Schemaversion sind unabhängig. Ohne `schemaVersion` ist ein Bericht
 Legacy; unbekannte Versionen müssen ausdrücklich unterstützt werden. Alte Daten bekommen nicht
 einfach eine neue Version zugewiesen, damit sie validieren.
@@ -13,8 +14,10 @@ Das npm-Paket enthält eigenständige JSON-Schema-2020-12-Dateien:
 
 - `privalint/schemas/report-1.0.0.schema.json`
 - `privalint/schemas/report-1.1.0.schema.json`
+- `privalint/schemas/report-1.2.0.schema.json`
 - `privalint/schemas/sarif-properties-1.0.0.schema.json`
 - `privalint/schemas/sarif-properties-1.1.0.schema.json`
+- `privalint/schemas/sarif-properties-1.2.0.schema.json`
 
 Die SARIF-Schemas prüfen `runs[].properties`, nicht den vollständigen SARIF-Standard. Pflichtfelder,
 Typen, Ergebnisse und Widersprüche wie negativer Erfolg mit `partial: true` werden geprüft.
@@ -68,9 +71,11 @@ Ungültige Boolean-Werte werden abgelehnt statt die Schranke stillschweigend abz
 Die Schranke scheitert bei fehlenden Seiten/Erfassungen, HTTP-Fehlerseiten, widersprüchlichen Zählern,
 fehlenden nötigen Regelergebnissen, nicht prüfbaren Regeln und eingeschränkten Ergebnissen.
 Deaktivierte Regeln, ausdrücklich abgeschaltete Consent-Prüfungen und Consent außerhalb der
-Startseite sind bewusste Ausnahmen. Ein nicht erkanntes Banner beweist keinen Datenschutzverstoß;
-eine aktivierte Ablehnen-Regel bleibt aber ungeprüft und verfehlt die optionale Schranke.
-Ausgelassene Beacons schränken Beobachtung ebenfalls ein. Findings können bei vollständiger
+Startseite sind bewusste Ausnahmen, ebenso Banner-Regeln mit `no-consent-needed` (kein Banner, und
+nichts Einwilligungspflichtiges geladen). Lädt ohne Banner etwas Einwilligungspflichtiges, bleiben
+die Ablehnen-Regeln ungeprüft und verfehlen die optionale Schranke. Ausgelassene Beacons und von
+der Seite selbst abgebrochene Anfragen (`cancelled-by-page`) schränken die Beobachtung nicht ein,
+alle anderen ausgelassenen Anfragen schon. Findings können bei vollständiger
 Beobachtung vorliegen; Freigabelisten allein lassen die Coverage-Schranke nicht scheitern.
 
 Exit-Vorrang: `2` bei Argument-/Startseiten-Scanfehlern. Nach Berichtserzeugung `1` für Befunde über
