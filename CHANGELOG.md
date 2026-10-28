@@ -8,6 +8,8 @@ All notable changes are listed here. The format follows
 
 ### Added
 
+- Action input `concurrency`, passed to `--concurrency`, so multi-page scans in CI can load
+  several pages at once (#34)
 - Session-replay tools FullStory, Mouseflow, Smartlook, Lucky Orange and Contentsquare in the
   tracker list, with hosts from the vendors or observed on live sites (#31)
 

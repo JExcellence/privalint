@@ -44,6 +44,7 @@ jobs:
           # IANA has no consent banner; reject-path checks are deliberate exclusions here.
           disable: impressum-link,trackers-after-reject,reject-option,consent-settings-link
           fail-on-incomplete: "true"
+          concurrency: "2"
       - name: Check outputs
         env:
           EXIT_CODE: ${{ steps.privalint.outputs.exit-code }}
