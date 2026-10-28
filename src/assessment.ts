@@ -4,6 +4,12 @@ import { defaultRules } from './rules/index.js';
 import type { Finding, ObservationKind, PageSnapshot, Rule, RuleEvaluation } from './types.js';
 import { isFirstParty } from './url.js';
 
+/**
+ * Rules whose clean, complete result shows that nothing needing consent loaded before a
+ * choice. Without a banner that is a good outcome, so the banner rules are skipped then.
+ */
+const CONSENT_TRIGGERS = ['pre-consent-trackers', 'third-party-embeds'];
+
 const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'pre-consent-trackers': ['network'],
   'google-fonts': ['network'],
@@ -60,9 +66,13 @@ export function assessPage(
           },
         }),
   };
-  const evaluations = [...allRules.values()].map((rule): RuleEvaluation => {
-    const requirements = rule.requires ?? REQUIREMENTS[rule.id] ?? ['document'];
-    const consentRule = requirements.some((kind) => kind === 'consent' || kind === 'after-reject');
+  const requirementsOf = (rule: Rule) => rule.requires ?? REQUIREMENTS[rule.id] ?? ['document'];
+  const needsConsent = (rule: Rule) =>
+    requirementsOf(rule).some((kind) => kind === 'consent' || kind === 'after-reject');
+  const detectedBy = new Map<string, Finding[]>();
+  const evaluate = (rule: Rule, noConsentNeeded: boolean): RuleEvaluation => {
+    const requirements = requirementsOf(rule);
+    const consentRule = needsConsent(rule);
     if (!selected.has(rule.id)) {
       return {
         ruleId: rule.id,
@@ -85,6 +95,17 @@ export function assessPage(
         findingCount: 0,
       };
     }
+    if (noConsentNeeded && !requirements.every((kind) => available[kind])) {
+      return {
+        ruleId: rule.id,
+        status: 'skipped',
+        reason: 'no-consent-needed',
+        partial: false,
+        outcome: 'not-evaluable',
+        explanation: 'no-consent-needed',
+        findingCount: 0,
+      };
+    }
     if (!requirements.every((kind) => available[kind])) {
       return {
         ruleId: rule.id,
@@ -101,12 +122,7 @@ export function assessPage(
       };
     }
     const detected = rule.check({ page: input, siteUrl, lang });
-    findings.push(
-      ...detected.map((finding) => ({
-        ...finding,
-        ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
-      })),
-    );
+    detectedBy.set(rule.id, detected);
     const partial = requirements.includes('after-reject')
       ? page.consent?.afterRejectComplete === false
       : !complete;
@@ -124,7 +140,35 @@ export function assessPage(
             : 'required-observations-available',
       findingCount: detected.length,
     };
-  });
+  };
+
+  // Banner rules come last: whether a banner is needed at all depends on the other rules.
+  const ordered = [...allRules.values()];
+  const results = new Map<string, RuleEvaluation>();
+  for (const rule of ordered.filter((rule) => !needsConsent(rule))) {
+    results.set(rule.id, evaluate(rule, false));
+  }
+  const noConsentNeeded =
+    isStart &&
+    consentEnabled &&
+    page.consent?.bannerFound === false &&
+    page.consent.state === 'not-detected' &&
+    CONSENT_TRIGGERS.every((ruleId) => {
+      const evaluation = results.get(ruleId);
+      return evaluation?.outcome === 'checked-no-finding' && !evaluation.partial;
+    });
+  for (const rule of ordered.filter(needsConsent)) {
+    results.set(rule.id, evaluate(rule, noConsentNeeded));
+  }
+  const evaluations = ordered.map((rule) => results.get(rule.id) as RuleEvaluation);
+  for (const rule of ordered) {
+    findings.push(
+      ...(detectedBy.get(rule.id) ?? []).map((finding) => ({
+        ...finding,
+        ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
+      })),
+    );
+  }
   return {
     findings,
     evaluations: evaluations.map((evaluation) => ({

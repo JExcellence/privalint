@@ -311,7 +311,8 @@
             "disabled",
             "consent-disabled",
             "not-start-page",
-            "missing-observation"
+            "missing-observation",
+            "no-consent-needed"
           ]
         },
         "partial": {
@@ -341,7 +342,8 @@
             "no-supported-reject-control",
             "unsupported-banner-markup",
             "browser-interaction-failed",
-            "reject-clicked-and-reloaded"
+            "reject-clicked-and-reloaded",
+            "no-consent-needed"
           ]
         },
         "findingCount": {
