@@ -70,6 +70,10 @@ const EXPLANATIONS: Record<RuleExplanation, [string, string]> = {
     'Consent wird nur auf der Startseite geprüft',
   ],
   'consent-disabled': ['Consent check disabled', 'Consent-Prüfung ausgeschaltet'],
+  'no-consent-needed': [
+    'No banner, and nothing that needs consent loaded',
+    'Kein Banner, und nichts Einwilligungspflichtiges geladen',
+  ],
   'missing-reject-observation': ['Reject path not observed', 'Ablehnen-Pfad nicht beobachtet'],
   'missing-consent-observation': ['Consent not observed', 'Consent nicht beobachtet'],
   'incomplete-document': [

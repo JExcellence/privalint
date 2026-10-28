@@ -73,7 +73,13 @@ export interface RuleEvaluation {
   pageId?: string;
   ruleId: string;
   status: 'executed' | 'skipped' | 'not-evaluable';
-  reason?: 'disabled' | 'consent-disabled' | 'not-start-page' | 'missing-observation';
+  reason?:
+    | 'disabled'
+    | 'consent-disabled'
+    | 'not-start-page'
+    | 'missing-observation'
+    /** No banner, and nothing that needs consent loaded before a choice. */
+    | 'no-consent-needed';
   /** Executed against available positive evidence, without ruling out additional findings. */
   partial: boolean;
   outcome?: 'checked-no-finding' | 'finding-detected' | 'not-evaluable';
@@ -85,6 +91,7 @@ export type RuleExplanation =
   | 'disabled'
   | 'not-start-page'
   | 'consent-disabled'
+  | 'no-consent-needed'
   | 'missing-reject-observation'
   | 'missing-consent-observation'
   | 'incomplete-document'

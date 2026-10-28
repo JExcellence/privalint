@@ -11,6 +11,14 @@ All notable changes are listed here. The format follows
 - Action input `concurrency`, passed to `--concurrency`, so multi-page scans in CI can load
   several pages at once (#34)
 
+### Changed
+
+- On a site without a consent banner where nothing that needs consent loaded before a choice
+  (`pre-consent-trackers` and `third-party-embeds` checked completely, no findings), the banner
+  rules are now skipped with the reason `no-consent-needed` instead of being not evaluable.
+  `--fail-on-incomplete` and the Action no longer fail such sites, and the rules no longer need
+  to be disabled by name. Schema 1.1.0 gains the reason (#35)
+
 ## 0.5.0 - 2026-10-27
 
 ### Added
