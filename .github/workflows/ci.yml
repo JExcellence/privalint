@@ -41,8 +41,9 @@ jobs:
         uses: ./
         with:
           url: https://example.com
-          # IANA has no consent banner; reject-path checks are deliberate exclusions here.
-          disable: impressum-link,trackers-after-reject,reject-option,consent-settings-link
+          # IANA has no banner and loads nothing needing consent, so the banner rules are
+          # skipped by privalint itself. The page has no Impressum link.
+          disable: impressum-link
           fail-on-incomplete: "true"
       - name: Check outputs
         env:
