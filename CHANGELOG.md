@@ -6,6 +6,11 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- Action input `concurrency`, passed to `--concurrency`, so multi-page scans in CI can load
+  several pages at once (#34)
+
 ## 0.5.0 - 2026-10-27
 
 ### Added
