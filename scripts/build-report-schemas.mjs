@@ -23,6 +23,10 @@ const ruleSettings = {
   type: 'object',
   additionalProperties: choices('error', 'warning', 'info', 'off'),
 };
+const EXPLANATIONS = [
+  // Added within 1.1.0; see definitions().
+  'no-consent-needed',
+];
 const explanation = choices(
   'disabled',
   'not-start-page',
@@ -126,10 +130,18 @@ function definitions(version) {
           ...pageIdentity,
           ruleId: string,
           status: choices('executed', 'skipped', 'not-evaluable'),
-          reason: choices('disabled', 'consent-disabled', 'not-start-page', 'missing-observation'),
+          reason: choices(
+            'disabled',
+            'consent-disabled',
+            'not-start-page',
+            'missing-observation',
+            ...(identified ? EXPLANATIONS : []),
+          ),
           partial: boolean,
           outcome: choices('checked-no-finding', 'finding-detected', 'not-evaluable'),
-          explanation,
+          explanation: identified
+            ? { ...explanation, enum: [...explanation.enum, ...EXPLANATIONS] }
+            : explanation,
           findingCount: count,
         },
         [
