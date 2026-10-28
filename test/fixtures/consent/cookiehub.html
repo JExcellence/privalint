@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="de">
+  <head><meta charset="utf-8" /><title>CookieHub selector fixture</title></head>
+  <body>
+    <a href="/clean/impressum.html">Impressum</a>
+    <a href="/clean/datenschutz.html">Datenschutz</a>
+    <!-- Markup as served on tradedoubler.com, checked 2026-10-28. -->
+    <div id="banner"><div class="ch2-container"><div class="ch2-dialog"><p>Diese Website verwendet Cookies.</p><button class="ch2-btn ch2-allow-all-btn ch2-btn-primary">Alle zulassen</button><button class="ch2-btn ch2-deny-all-btn ch2-btn-primary">Alle ablehnen</button><button class="ch2-btn ch2-open-settings-btn">Einstellungen</button></div></div></div>
+    <script>
+      const banner = document.getElementById('banner');
+      if (localStorage.getItem('choice')) banner.remove();
+      banner.querySelector('.ch2-deny-all-btn').addEventListener('click', () => {
+        localStorage.setItem('choice', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>

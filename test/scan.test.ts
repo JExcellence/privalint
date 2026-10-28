@@ -148,6 +148,17 @@ describe('consent check', () => {
       rejectLabel: 'Nicht wesentliche Cookies ablehnen',
     });
   });
+  it.each([
+    ['axeptio.html', 'Axeptio', 'No, thanks'],
+    ['trustarc.html', 'TrustArc', 'REJECT OPTIONAL'],
+    ['cookiehub.html', 'CookieHub', 'Alle ablehnen'],
+    ['cookie-information.html', 'Cookie Information', 'Decline all'],
+    ['cookie-script.html', 'Cookie-Script', 'Decline all'],
+  ])('recognises %s by its selectors and tests reject', async (fixture, cmp, rejectLabel) => {
+    const result = await scan(`${origin}/consent/${fixture}`, options);
+    expect(result.consent).toMatchObject({ cmp, outcome: 'reject-succeeded', rejectLabel });
+  });
+
   const ruleIds = (findings: { ruleId: string }[]) => findings.map((f) => f.ruleId);
 
   it.each([

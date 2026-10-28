@@ -13,6 +13,11 @@ mehrsprachigen Beschriftungs-Heuristiken stehen in `scan()` und `observeConsent(
 | Termly             | `data-tid=banner-accept/banner-decline`, CSS-Modul-Präfix des Zustimmen-Buttons      |
 | Sourcepoint        | `button.sp_choice_type_11`, `button.sp_choice_type_13`, auch in Iframes              |
 | Real Cookie Banner | Vorhandene Heuristik für sichtbare Beschriftungen plus Script-/Konfigurationsmarker  |
+| Axeptio            | `#axeptio_btn_acceptAll`, `#axeptio_btn_dismiss`                                     |
+| TrustArc           | `.ta-modal-primary-btn` mit `data-button-key=accept_all/decline_all`                 |
+| CookieHub          | `.ch2-allow-all-btn`, `.ch2-deny-all-btn`                                            |
+| Cookie Information | `data-testid=coi-banner__accept/decline-all-categories-button`                       |
+| Cookie-Script      | `#cookiescript_accept`, `#cookiescript_reject`                                       |
 
 Real Cookie Banner verwendet die gemeinsame Beschriftungs-Heuristik statt geratener Selektoren
 für generierte Klassen/IDs. Es wird keine API zur erzwungenen Einwilligung aufgerufen und keine
@@ -24,13 +29,18 @@ Ein erfolgreicher Klick mit Neuladen verifiziert den gespeicherten CMP-Zustand n
 
 Am 27.10.2026 lief privalint mit einem Headless-Chromium aus Deutschland gegen diese Websites:
 
-| CMP                | Website             | Ergebnis                                                                  |
-| ------------------ | ------------------- | ------------------------------------------------------------------------- |
-| CookieFirst        | cookiefirst.com     | erkannt, „Deny“ geklickt und neu geladen                                  |
-| Osano              | osano.com           | erkannt, „Nicht wesentliche Cookies ablehnen“ geklickt und neu geladen    |
-| Termly             | termly.io           | erkannt, „Ablehnen“ geklickt und neu geladen                              |
-| Sourcepoint        | spiegel.de, welt.de | im Iframe erkannt, korrekt als Pur-Abo-Modell ohne Ablehnen eingestuft    |
-| Real Cookie Banner | devowl.io           | Marker erkannt, Banner aber nicht gerendert (leeres, verstecktes Overlay) |
+| CMP                | Website               | Ergebnis                                                                  |
+| ------------------ | --------------------- | ------------------------------------------------------------------------- |
+| CookieFirst        | cookiefirst.com       | erkannt, „Deny“ geklickt und neu geladen                                  |
+| Osano              | osano.com             | erkannt, „Nicht wesentliche Cookies ablehnen“ geklickt und neu geladen    |
+| Termly             | termly.io             | erkannt, „Ablehnen“ geklickt und neu geladen                              |
+| Sourcepoint        | spiegel.de, welt.de   | im Iframe erkannt, korrekt als Pur-Abo-Modell ohne Ablehnen eingestuft    |
+| Real Cookie Banner | devowl.io             | Marker erkannt, Banner aber nicht gerendert (leeres, verstecktes Overlay) |
+| Axeptio            | axeptio.eu            | erkannt, "No, thanks" geklickt und neu geladen                            |
+| TrustArc           | trustarc.com          | erkannt, "REJECT OPTIONAL" geklickt und neu geladen                       |
+| CookieHub          | tradedoubler.com      | erkannt, "Alle ablehnen" geklickt und neu geladen                         |
+| Cookie Information | cookieinformation.com | erkannt, "Decline all" geklickt und neu geladen                           |
+| Cookie-Script      | cookie-script.com     | erkannt, "Decline all" geklickt und neu geladen                           |
 
 Bei Osano stand der Ablehnen-Selektor zuvor auf `.osano-cm-deny-all`. osano.com liefert jedoch
 `.osano-cm-denyAll`; der Selektor ist korrigiert und durch ein Fixture abgesichert.
