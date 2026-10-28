@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.6.1 - 2026-10-28
+
 ### Fixed
 
 - A request the page cancels itself, for example a framework dropping a prefetch on a slow
