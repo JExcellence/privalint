@@ -6,6 +6,12 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- Axeptio, TrustArc, CookieHub, Cookie Information and Cookie-Script are recognised by their
+  button selectors, read from their live banners. Reports name the tool, and the reject path is
+  tested with the real button instead of a label guess (#30)
+
 ## 0.5.0 - 2026-10-27
 
 ### Added
