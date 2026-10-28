@@ -1,7 +1,7 @@
 import type { Browser } from 'playwright';
 import { observeConsent } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
-import { ControlledNetwork, networkLimits } from './network.js';
+import { ControlledNetwork, networkLimits, watchPageCancellations } from './network.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import type { PageSnapshot } from './types.js';
 import { isFirstParty } from './url.js';
@@ -70,7 +70,14 @@ export async function capturePage(
       );
     }
     const page = await context.newPage();
-    await network?.attachPage(page);
+    if (network) await network.attachPage(page);
+    else {
+      // Without an adapter nothing else listens to CDP; page cancels need their own session.
+      const session = await context.newCDPSession(page);
+      await watchPageCancellations(session, (_, cancelled) =>
+        diagnostics.cancelledByPage(cancelled),
+      );
+    }
     const response = await page.goto(url, {
       waitUntil: 'load',
       timeout: options.timeoutMs ?? DEFAULTS.timeoutMs,

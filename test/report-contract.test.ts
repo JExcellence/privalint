@@ -104,7 +104,7 @@ describe('versioned report contract', () => {
     ).toBe(true);
     expect(JSON.stringify(events)).not.toContain('SECRET');
     expect(result).toMatchObject({
-      schemaVersion: '1.1.0',
+      schemaVersion: '1.2.0',
       scannerVersion: VERSION,
       options: {
         maxPages: 1,

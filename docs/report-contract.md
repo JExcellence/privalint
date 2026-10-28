@@ -4,7 +4,8 @@
 
 ## Versioned validation
 
-New scans use schema **1.1.0**. Schema 1.0.0 remains available for earlier versioned reports.
+New scans use schema **1.2.0**. Schemas 1.0.0 and 1.1.0 remain available for earlier versioned
+reports. 1.2.0 adds the skip reason `cancelled-by-page`, which a 1.1.0 validator would reject.
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;
 unknown versions are unsupported. Never assign a schema version to old data merely to validate it.
 
@@ -12,8 +13,10 @@ The npm package ships self-contained JSON Schema 2020-12 files:
 
 - `privalint/schemas/report-1.0.0.schema.json`
 - `privalint/schemas/report-1.1.0.schema.json`
+- `privalint/schemas/report-1.2.0.schema.json`
 - `privalint/schemas/sarif-properties-1.0.0.schema.json`
 - `privalint/schemas/sarif-properties-1.1.0.schema.json`
+- `privalint/schemas/sarif-properties-1.2.0.schema.json`
 
 SARIF extension schemas validate `runs[].properties`, not the entire SARIF standard. Required
 fields, types, outcomes and contradictions (for example a negative success with `partial: true`)
@@ -79,9 +82,11 @@ invalid boolean input is rejected rather than silently weakening the gate.
 
 The gate rejects missing pages/capture, HTTP error pages, inconsistent counters, missing required
 evaluations, non-evaluable checks and partial results. Disabled rules, explicitly disabled consent
-and consent outside the start page are intentional exclusions. No banner detected is not itself
-a privacy finding, but an enabled reject-path check remains untested and fails this opt-in gate.
-Intentional beacon skips restrict observation too. Findings can coexist with complete coverage;
+and consent outside the start page are intentional exclusions, and so are banner rules skipped as
+`no-consent-needed` (no banner, and nothing needing consent loaded). If something needing consent
+did load without a banner, the reject-path checks stay untested and fail this opt-in gate.
+Omitted beacons and requests the page cancelled itself (`cancelled-by-page`) do not restrict
+observation; every other skip does. Findings can coexist with complete coverage;
 allowlist annotations alone do not fail the coverage gate.
 
 Exit precedence: `2` for argument/start-page scan errors. After generating a report, `1` for

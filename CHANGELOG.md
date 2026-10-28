@@ -6,6 +6,20 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- A request the page cancels itself, for example a framework dropping a prefetch on a slow
+  network, no longer makes the page capture incomplete. privalint detects the cancel from Chromium,
+  stops the adapter call if it is still running, and records the request as skipped with
+  `cancelled-by-page`. Its URL still counts for the tracker rules. Real failures (adapter errors,
+  timeouts, connection, TLS, DNS, limits) stay restricting. Before, one cancelled prefetch on a
+  busy server could mark every rule on the start page as not checkable
+
+### Changed
+
+- Report schema 1.2.0: adds the skip reason `cancelled-by-page`. New reports use 1.2.0; schemas
+  1.0.0 and 1.1.0 are unchanged and still supported
+
 ## 0.6.0 - 2026-10-28
 
 ### Added

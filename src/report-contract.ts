@@ -1,5 +1,5 @@
-export const REPORT_SCHEMA_VERSION = '1.1.0';
-export const SUPPORTED_REPORT_SCHEMAS = ['1.0.0', REPORT_SCHEMA_VERSION] as const;
+export const REPORT_SCHEMA_VERSION = '1.2.0';
+export const SUPPORTED_REPORT_SCHEMAS = ['1.0.0', '1.1.0', REPORT_SCHEMA_VERSION] as const;
 
 export type ReportSchemaIdentity =
   | { kind: 'legacy' }

@@ -13,7 +13,7 @@ const readJson = async (path: string): Promise<unknown> =>
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 const schemas = new Map(
   await Promise.all(
-    ['1.0.0', '1.1.0'].map(async (version) => {
+    ['1.0.0', '1.1.0', '1.2.0'].map(async (version) => {
       const report = ajv.compile(
         (await readJson(`../schemas/report-${version}.schema.json`)) as object,
       );
@@ -47,12 +47,26 @@ describe('standalone report contracts', () => {
             (counters?.skippedRequests ?? 0) +
             (counters?.securityBlockedRequests ?? 0),
         );
-        if (identity.version === '1.1.0') {
+        if (identity.version !== '1.0.0') {
           expect(page.ruleEvaluations?.every((rule) => rule.pageId === page.pageId)).toBe(true);
         }
       }
     },
   );
+  it('accepts cancelled-by-page only from schema 1.2.0 on', async () => {
+    const value = (await fixture('complete')) as ScanResult;
+    value.pages[0]?.capture?.diagnostics.issues.push({
+      kind: 'skipped',
+      phase: 'before-consent',
+      url: 'https://example.org/[redacted]',
+      skippedReason: 'cancelled-by-page',
+    });
+    const validate = (version: string) =>
+      schemas.get(version)?.report({ ...value, schemaVersion: version });
+    expect(validate('1.2.0')).toBe(true);
+    expect(validate('1.1.0')).toBe(false);
+  });
+
   it('never interprets a legacy or unknown report as valid/current or complete', async () => {
     const legacy = await fixture('legacy');
     expect(identifyReportSchema(legacy)).toEqual({ kind: 'legacy' });
