@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { assessCoverage } from '../src/coverage.js';
 import { scan } from '../src/scanner.js';
 
 const FIXTURES = fileURLToPath(new URL('./fixtures/', import.meta.url));
@@ -147,6 +148,17 @@ describe('consent check', () => {
       rejectLabel: 'Nicht wesentliche Cookies ablehnen',
     });
   });
+  it.each([
+    ['axeptio.html', 'Axeptio', 'No, thanks'],
+    ['trustarc.html', 'TrustArc', 'REJECT OPTIONAL'],
+    ['cookiehub.html', 'CookieHub', 'Alle ablehnen'],
+    ['cookie-information.html', 'Cookie Information', 'Decline all'],
+    ['cookie-script.html', 'Cookie-Script', 'Decline all'],
+  ])('recognises %s by its selectors and tests reject', async (fixture, cmp, rejectLabel) => {
+    const result = await scan(`${origin}/consent/${fixture}`, options);
+    expect(result.consent).toMatchObject({ cmp, outcome: 'reject-succeeded', rejectLabel });
+  });
+
   const ruleIds = (findings: { ruleId: string }[]) => findings.map((f) => f.ruleId);
 
   it.each([
@@ -214,6 +226,24 @@ describe('consent check', () => {
     const result = await scan(`${origin}/consent/broken.html`, { ...options, consentCheck: false });
     expect(result.consent).toBeUndefined();
     expect(result.findings).toEqual([]);
+  });
+
+  const bannerRules = ['trackers-after-reject', 'reject-option', 'consent-settings-link'];
+  const startEvaluations = (result: Awaited<ReturnType<typeof scan>>) =>
+    (result.pages[0]?.ruleEvaluations ?? []).filter((e) => bannerRules.includes(e.ruleId));
+
+  it('skips the banner rules when no banner is needed', async () => {
+    const result = await scan(`${origin}/clean/`, options);
+    expect(startEvaluations(result).map((e) => [e.ruleId, e.status, e.reason])).toEqual(
+      bannerRules.map((ruleId) => [ruleId, 'skipped', 'no-consent-needed']),
+    );
+    expect(assessCoverage(result).complete).toBe(true);
+  });
+
+  it('keeps them not evaluable when something needing consent loaded without a banner', async () => {
+    const result = await scan(`${origin}/leaky/`, options);
+    expect(result.consent?.bannerFound).toBe(false);
+    expect(startEvaluations(result).every((e) => e.status === 'not-evaluable')).toBe(true);
   });
 
   it('reports no banner on a page without one', async () => {

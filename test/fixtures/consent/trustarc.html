@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="de">
+  <head><meta charset="utf-8" /><title>TrustArc selector fixture</title></head>
+  <body>
+    <a href="/clean/impressum.html">Impressum</a>
+    <a href="/clean/datenschutz.html">Datenschutz</a>
+    <!-- Markup as served on trustarc.com, checked 2026-10-28. -->
+    <div id="banner"><div class="wrapper" role="dialog"><p>Wir verwenden Cookies.</p><button data-button-key="accept_all" class="ta-modal-primary-btn acceptAllButtonLower">ALLES AKZEPTIEREN</button><button data-button-key="decline_all" class="ta-modal-primary-btn declineAllButtonLower">REJECT OPTIONAL</button></div></div>
+    <script>
+      const banner = document.getElementById('banner');
+      if (localStorage.getItem('choice')) banner.remove();
+      banner.querySelector('[data-button-key="decline_all"]').addEventListener('click', () => {
+        localStorage.setItem('choice', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>

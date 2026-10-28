@@ -224,8 +224,10 @@ describe('JSON configuration', () => {
       expect(partial.code).toBe(3);
       expect(JSON.parse(partial.stdout).findings).toEqual([]);
       expect((await run('/', '--skip-consent', '--fail-on-incomplete')).code).toBe(0);
-      // No banner means the enabled reject-path checks were not evaluable.
-      expect((await run('/', '--fail-on-incomplete')).code).toBe(3);
+      // No banner and nothing needing consent: the reject-path checks are skipped, not missing.
+      expect((await run('/', '--fail-on-incomplete')).code).toBe(0);
+      // An incomplete capture can't show that nothing needed consent, so it still counts.
+      expect((await run('/partial', '--fail-on-incomplete')).code).toBe(3);
       await writeFile(configPath, JSON.stringify({ failOnIncomplete: true, consentCheck: false }));
       expect((await run('/partial')).code).toBe(3);
       expect((await run('/partial', '--allow-incomplete')).code).toBe(0);

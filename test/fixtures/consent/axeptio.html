@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="de">
+  <head><meta charset="utf-8" /><title>Axeptio selector fixture</title></head>
+  <body>
+    <a href="/clean/impressum.html">Impressum</a>
+    <a href="/clean/datenschutz.html">Datenschutz</a>
+    <!-- Markup as served on axeptio.eu, checked 2026-10-28. -->
+    <div id="banner"><div id="axeptio_overlay" class="axeptio_mount"><div class="axeptio_widget"><p>Diese Website verwendet Cookies.</p><button id="axeptio_btn_dismiss">No, thanks</button><button id="axeptio_btn_configure">I want to choose</button><button id="axeptio_btn_acceptAll">Ok for me</button></div></div></div>
+    <script>
+      const banner = document.getElementById('banner');
+      if (localStorage.getItem('choice')) banner.remove();
+      banner.querySelector('#axeptio_btn_dismiss').addEventListener('click', () => {
+        localStorage.setItem('choice', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>

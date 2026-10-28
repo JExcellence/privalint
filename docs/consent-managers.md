@@ -15,6 +15,11 @@ Additional support:
 | Termly             | `data-tid=banner-accept/banner-decline`, accept-button CSS-module prefix             |
 | Sourcepoint        | `button.sp_choice_type_11`, `button.sp_choice_type_13`, including iframe messages    |
 | Real Cookie Banner | Existing visible-button label heuristics plus vendor script/config marker            |
+| Axeptio            | `#axeptio_btn_acceptAll`, `#axeptio_btn_dismiss`                                     |
+| TrustArc           | `.ta-modal-primary-btn` with `data-button-key=accept_all/decline_all`                |
+| CookieHub          | `.ch2-allow-all-btn`, `.ch2-deny-all-btn`                                            |
+| Cookie Information | `data-testid=coi-banner__accept/decline-all-categories-button`                       |
+| Cookie-Script      | `#cookiescript_accept`, `#cookiescript_reject`                                       |
 
 Real Cookie Banner deliberately uses the shared label heuristic rather than guessed selectors
 against its generated classes/IDs. No API is invoked to force consent, and no settings layer is
@@ -40,13 +45,18 @@ On 2026-10-27, public HTML and official scripts were inspected by HTTP from thes
 
 On 2026-10-27 privalint ran in headless Chromium from Germany against these sites:
 
-| CMP                | Site                | Result                                                              |
-| ------------------ | ------------------- | ------------------------------------------------------------------- |
-| CookieFirst        | cookiefirst.com     | recognized, clicked "Deny" and reloaded                             |
-| Osano              | osano.com           | recognized, clicked "Nicht wesentliche Cookies ablehnen", reloaded  |
-| Termly             | termly.io           | recognized, clicked "Ablehnen" and reloaded                         |
-| Sourcepoint        | spiegel.de, welt.de | recognized in its iframe, correctly classified as pay-or-OK         |
-| Real Cookie Banner | devowl.io           | marker found, but the banner is not rendered (empty hidden overlay) |
+| CMP                | Site                  | Result                                                              |
+| ------------------ | --------------------- | ------------------------------------------------------------------- |
+| CookieFirst        | cookiefirst.com       | recognized, clicked "Deny" and reloaded                             |
+| Osano              | osano.com             | recognized, clicked "Nicht wesentliche Cookies ablehnen", reloaded  |
+| Termly             | termly.io             | recognized, clicked "Ablehnen" and reloaded                         |
+| Sourcepoint        | spiegel.de, welt.de   | recognized in its iframe, correctly classified as pay-or-OK         |
+| Real Cookie Banner | devowl.io             | marker found, but the banner is not rendered (empty hidden overlay) |
+| Axeptio            | axeptio.eu            | recognized, clicked "No, thanks" and reloaded                       |
+| TrustArc           | trustarc.com          | recognized, clicked "REJECT OPTIONAL" and reloaded                  |
+| CookieHub          | tradedoubler.com      | recognized, clicked "Alle ablehnen" and reloaded                    |
+| Cookie Information | cookieinformation.com | recognized, clicked "Decline all" and reloaded                      |
+| Cookie-Script      | cookie-script.com     | recognized, clicked "Decline all" and reloaded                      |
 
 The Osano reject selector used to be `.osano-cm-deny-all`, while osano.com serves
 `.osano-cm-denyAll`. The selector is fixed and covered by a fixture.
