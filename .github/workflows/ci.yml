@@ -45,6 +45,7 @@ jobs:
           # skipped by privalint itself. The page has no Impressum link.
           disable: impressum-link
           fail-on-incomplete: "true"
+          concurrency: "2"
       - name: Check outputs
         env:
           EXIT_CODE: ${{ steps.privalint.outputs.exit-code }}
