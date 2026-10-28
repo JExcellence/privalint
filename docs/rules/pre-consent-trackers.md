@@ -53,3 +53,16 @@ Two things need consent here, and a tracker usually does both:
 The list matches hostnames, so a domain that serves both tracking and harmless content may be
 flagged. Please [open an issue](https://github.com/jexcellence/privalint/issues/new?template=false-positive.yml)
 with the URL and the finding.
+
+## Sources for the session-replay hosts
+
+Guessed domains cause false positives, so each host comes from the vendor or from a live site
+(checked 2026-10-28):
+
+| Vendor        | Hosts                                               | Source                                                                                                                                                                      |
+| ------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FullStory     | `edge.fullstory.com`, `rs.fullstory.com`            | [FullStory system requirements](https://developer.fullstory.com/browser/system-requirements/) name `edge.fullstory.com/s/fs.js`; `rs.fullstory.com` loaded on fullstory.com |
+| Mouseflow     | `cdn.mouseflow.com`                                 | Tracking snippet in Mouseflow's own WordPress plugin (`mouseflow-for-wordpress` 5.1.3)                                                                                      |
+| Smartlook     | `web-sdk.smartlook.com`                             | Loaded on fogbugz.com, braiins.com and pinata.cloud                                                                                                                         |
+| Lucky Orange  | `tools.luckyorange.com`, `settings.luckyorange.com` | Loaded on luckyorange.com                                                                                                                                                   |
+| Contentsquare | `contentsquare.net`, cookies `_cs_*`                | Tag, page view and recording requests and the cookies on contentsquare.com                                                                                                  |

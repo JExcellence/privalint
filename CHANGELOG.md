@@ -6,6 +6,11 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- Session-replay tools FullStory, Mouseflow, Smartlook, Lucky Orange and Contentsquare in the
+  tracker list, with hosts from the vendors or observed on live sites (#31)
+
 ## 0.5.0 - 2026-10-27
 
 ### Added
