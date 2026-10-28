@@ -12,6 +12,9 @@ inputs:
   max-pages:
     description: How many pages on the same host to crawl.
     default: "1"
+  concurrency:
+    description: How many of those pages to load at the same time. The report is the same as with 1.
+    default: "1"
   fail-on:
     description: Fail the step on findings at this level or above. One of error, warning, never.
     default: error
@@ -69,6 +72,7 @@ runs:
       env:
         URL: ${{ inputs.url }}
         MAX_PAGES: ${{ inputs.max-pages }}
+        CONCURRENCY: ${{ inputs.concurrency }}
         FAIL_ON: ${{ inputs.fail-on }}
         FAIL_ON_INCOMPLETE: ${{ inputs.fail-on-incomplete }}
         DISABLE: ${{ inputs.disable }}
@@ -89,7 +93,7 @@ runs:
         summary="$RUNNER_TEMP/privalint.md"
         # A failed scan must not post a report left by a previous action invocation.
         node -e 'require("node:fs").rmSync(process.argv[1], {force: true})' "$summary"
-        args=("$URL" --max-pages "$MAX_PAGES" --fail-on "$FAIL_ON" --lang "$REPORT_LANG" --region "$REGION" --output "$summary")
+        args=("$URL" --max-pages "$MAX_PAGES" --concurrency "$CONCURRENCY" --fail-on "$FAIL_ON" --lang "$REPORT_LANG" --region "$REGION" --output "$summary")
         if [[ "$FAIL_ON_INCOMPLETE" == "true" ]]; then
           args+=(--fail-on-incomplete)
         else
