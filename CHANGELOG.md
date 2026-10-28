@@ -13,6 +13,8 @@ All notable changes are listed here. The format follows
 - Axeptio, TrustArc, CookieHub, Cookie Information and Cookie-Script are recognised by their
   button selectors, read from their live banners. Reports name the tool, and the reject path is
   tested with the real button instead of a label guess (#30)
+- Session-replay tools FullStory, Mouseflow, Smartlook, Lucky Orange and Contentsquare in the
+  tracker list, with hosts from the vendors or observed on live sites (#31)
 
 ### Changed
 
