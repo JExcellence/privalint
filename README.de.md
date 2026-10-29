@@ -117,6 +117,12 @@ Weiterführend:
   Banner gefunden“. Lokal hilft `--headed --channel msedge` (oder `chrome`).
 - Viele Consent-Tools entscheiden anhand der IP-Adresse, ob sie ein Banner zeigen. GitHub-Runner
   haben US-Adressen und sehen deshalb unter Umständen etwas anderes als Besucher aus der EU.
+- Tracker erkennt privalint über eine handgepflegte Liste
+  ([`src/data/trackers.ts`](src/data/trackers.ts)). Cookies, die dort fehlen, werden zusätzlich
+  mit den Analyse- und Marketing-Cookies der
+  [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database) abgeglichen
+  (Apache-2.0, siehe [NOTICE](NOTICE)), nur über den Cookie-Namen und ohne kurze, generische oder
+  Einwilligungs-Cookies.
 - Serverseitiges Tracking ist im Browser nicht sichtbar.
 - Chromium läuft standardmäßig ohne seine Sandbox, weil sie in vielen Containern nicht startet.
   Wer fremde Seiten auf einem Rechner mit Zugangsdaten prüft, sollte `--sandbox` setzen.
@@ -146,4 +152,5 @@ anderen, es zu finden.
 
 ## Lizenz
 
-[MIT](LICENSE)
+[MIT](LICENSE). Die Cookie-Daten in `src/data/open-cookie-database.ts` stammen aus der Open
+Cookie Database unter Apache-2.0; siehe [NOTICE](NOTICE).

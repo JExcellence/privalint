@@ -1,7 +1,8 @@
 // Generates src/data/open-cookie-database.ts from the Open Cookie Database
 // (https://github.com/jkwakman/Open-Cookie-Database, Apache-2.0, see NOTICE).
 // Run with `npm run cookies:build`. To pick up upstream changes, set COMMIT to a newer commit
-// of the database, run the script and review the diff of the generated file.
+// of the database, run the script, update the commit in NOTICE and review the diff of the
+// generated file.
 import { spawnSync } from 'node:child_process';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';

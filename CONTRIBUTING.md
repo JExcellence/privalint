@@ -34,6 +34,7 @@ Useful scripts:
 | `npm run lint`           | Biome lint and format check (`npm run lint:fix` to apply) |
 | `npm run typecheck`      | TypeScript without emitting                               |
 | `npm run build`          | Compile to `dist/`                                        |
+| `npm run cookies:build`  | Regenerate the Open Cookie Database cookie list           |
 | `node dist/cli.js <url>` | Run your local build                                      |
 
 The headed-mode test is skipped by default. Run it with `PRIVALINT_TEST_HEADED=1 npm test`, and add
@@ -65,6 +66,27 @@ Add an entry to the list in `src/data/trackers.ts`:
 
 Please don't copy entries from Tracker Radar, trackerdb/WhoTracks.me or other lists under a
 non-commercial license. privalint is MIT and must stay usable for commercial projects.
+
+## Cookies from the Open Cookie Database
+
+Cookies the hand-maintained list doesn't know are looked up in
+[`src/data/open-cookie-database.ts`](src/data/open-cookie-database.ts). That file is generated
+from the [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database) (Apache-2.0)
+and committed. Don't edit it by hand: a vendor that needs hosts, a different category or a fix
+belongs in `src/data/trackers.ts`, which always wins. Wrong data in the database itself is best
+fixed upstream.
+
+To update it:
+
+1. Set `COMMIT` in [`scripts/build-cookie-trackers.mjs`](scripts/build-cookie-trackers.mjs) to
+   a newer commit of the database.
+2. Run `npm run cookies:build`. It downloads the CSV from that commit, keeps the Analytics and
+   Marketing rows, drops short, generic and consent-related names and writes a formatted file.
+3. Update the commit in [`NOTICE`](NOTICE), review the diff of the generated file and run the
+   tests.
+
+If a generated cookie name causes a false positive, add it to `GENERIC` in the script, with the
+reason, and regenerate.
 
 ## Writing a rule
 

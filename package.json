@@ -18,7 +18,8 @@
   "files": [
     "schemas",
     "dist",
-    "README.de.md"
+    "README.de.md",
+    "NOTICE"
   ],
   "engines": {
     "node": ">=20.12"

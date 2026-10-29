@@ -249,7 +249,11 @@ Going further:
 - Only "reject" is tested. Whether "accept" works, and whether rejecting is as easy as accepting
   beyond the presence of a button, is not judged.
 - Tracker detection uses a hand-maintained list ([`src/data/trackers.ts`](src/data/trackers.ts)).
-  A vendor missing from the list goes unnoticed. Additions are very welcome.
+  A vendor missing from the list goes unnoticed. Additions are very welcome. Cookies the list
+  doesn't know are also looked up in analytics and marketing cookies from the
+  [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database) (Apache-2.0, see
+  [NOTICE](NOTICE)). That data only matches cookie names, never request hosts, and leaves out
+  short, generic and consent-related names.
 - Server-side tracking can't be seen from the browser.
 - Many consent managers decide by IP address whether to show a banner. GitHub-hosted runners
   have US addresses, so some sites load trackers there that EU visitors never get, and the
@@ -264,8 +268,6 @@ Going further:
 ## Roadmap
 
 - Don't count banner rules as incomplete when a site needs no banner ([#35](https://github.com/jexcellence/privalint/issues/35))
-- Cookie trackers generated from the Apache-licensed
-  [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database) ([#39](https://github.com/jexcellence/privalint/issues/39))
 - Report comparison between two scans
 
 ## Contributing
@@ -291,4 +293,5 @@ If privalint saved you a warning letter or a review round, a star helps others f
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The cookie data in `src/data/open-cookie-database.ts` comes from the Open Cookie
+Database under Apache-2.0; see [NOTICE](NOTICE).
