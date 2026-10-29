@@ -253,8 +253,9 @@ Going further:
   want to rely on.
 - Chromium runs without its sandbox by default, like Playwright's own default, because the
   sandbox often can't start in containers. Pass `--sandbox` when you scan sites you don't trust
-  on a machine that holds secrets. On Ubuntu 23.10 and later it needs unprivileged user
-  namespaces, which AppArmor restricts unless Chromium is allowed to use them.
+  on a machine that holds secrets. The sandbox needs unprivileged user namespaces. Docker's
+  default seccomp profile blocks them inside containers, and on Ubuntu 23.10 and later AppArmor
+  restricts them unless Chromium is allowed to use them.
 
 ## Roadmap
 

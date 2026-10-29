@@ -118,6 +118,8 @@ Weiterführend:
 - Serverseitiges Tracking ist im Browser nicht sichtbar.
 - Chromium läuft standardmäßig ohne seine Sandbox, weil sie in vielen Containern nicht startet.
   Wer fremde Seiten auf einem Rechner mit Zugangsdaten prüft, sollte `--sandbox` setzen.
+  Die Sandbox braucht unprivilegierte User-Namespaces. In Docker-Containern blockiert sie das
+  Standard-Seccomp-Profil, unter Ubuntu ab 23.10 schränkt AppArmor sie ein.
 
 ## Mitmachen
 

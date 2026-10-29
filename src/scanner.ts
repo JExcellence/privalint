@@ -41,9 +41,11 @@ async function launchBrowser(options: ScanOptions): Promise<Browser> {
     if (!sandbox) throw error;
     // Chromium's own message ("No usable sandbox!") does not say what to change.
     throw new Error(
-      'Chromium could not start with its sandbox. On Linux this usually means unprivileged user ' +
-        'namespaces are restricted (Ubuntu 23.10 and later, many containers). Allow them for ' +
-        'Chromium or run without --sandbox; see ' +
+      'Chromium could not start with its sandbox. It needs unprivileged user namespaces. ' +
+        'In a Docker container the default seccomp profile blocks them: run the container with ' +
+        'a seccomp profile that allows them (see Docker’s seccomp docs) or run privalint ' +
+        'without --sandbox. On Ubuntu 23.10 and later, AppArmor restricts them unless Chromium ' +
+        'is allowed to use them: ' +
         'https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md',
       { cause: error },
     );
