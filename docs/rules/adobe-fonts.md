@@ -1,5 +1,7 @@
 # adobe-fonts
 
+[Deutsch](adobe-fonts.de.md)
+
 Reports fonts loaded from Adobe Fonts (formerly Typekit), and leftover connections to it.
 
 ## What it checks
