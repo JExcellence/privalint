@@ -4,7 +4,9 @@
 
 Die Regel meldet beobachtete Kontakte eingebetteter Drittanbieter vor einer Consent-Interaktion.
 Sie erfasst YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar, X, Instagram, Facebook-Plugins,
-Spotify, Disqus sowie hCaptcha, Cloudflare Turnstile, OpenStreetMap-Kacheln, TikTok und Calendly.
+Spotify, Disqus sowie hCaptcha, Cloudflare Turnstile, OpenStreetMap-Kacheln, TikTok und Calendly,
+dazu die Chat- und Bewertungs-Widgets Intercom, Tawk.to, Zendesk Web Widget, Trustpilot und
+Typeform. Die Quellen der Hosts stehen auf der englischen Seite.
 
 Turnstile wird auf `challenges.cloudflare.com/turnstile/` eingegrenzt, OpenStreetMap auf
 `tile.openstreetmap.org` einschließlich Subdomains und TikTok auf `/embed`, `/embed.js` und

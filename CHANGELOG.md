@@ -6,6 +6,11 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- Chat and review widgets in `third-party-embeds`: Intercom, Tawk.to, Zendesk Web Widget,
+  Trustpilot and Typeform, with hosts from the vendors or observed on live sites (#32)
+
 ## 0.6.1 - 2026-10-28
 
 ### Fixed
