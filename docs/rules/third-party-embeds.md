@@ -1,5 +1,7 @@
 # third-party-embeds
 
+[Deutsch](third-party-embeds.de.md)
+
 Warns about embedded content that contacts its provider before the visitor agreed to it.
 
 ## What it checks

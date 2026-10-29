@@ -1,5 +1,7 @@
 # privacy-policy-link
 
+[Deutsch](privacy-policy-link.de.md)
+
 Warns when a page has no link to a privacy policy.
 
 ## What it checks
