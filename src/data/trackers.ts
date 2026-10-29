@@ -1,4 +1,5 @@
 import { findByUrl, type HostPattern } from '../url.js';
+import { openCookieDatabase } from './open-cookie-database.js';
 
 export type TrackerCategory =
   | 'analytics'
@@ -8,9 +9,13 @@ export type TrackerCategory =
   | 'marketing-automation'
   | 'tag-manager';
 
-export interface Tracker extends HostPattern {
+/** Who set a cookie and why. Cookies from the Open Cookie Database carry no hosts. */
+export interface CookieTracker {
   vendor: string;
   category: TrackerCategory;
+}
+
+export interface Tracker extends HostPattern, CookieTracker {
   /**
    * Cookies the vendor's script sets, including on the first-party domain.
    * Strings are name prefixes; use a RegExp where a prefix would be too broad.
@@ -201,10 +206,47 @@ export function findTrackerByUrl(url: string): Tracker | undefined {
   return findByUrl(trackers, url);
 }
 
-export function findTrackerByCookie(name: string): Tracker | undefined {
+// The generated list, indexed once. Exact names are looked up directly; prefixes are tried
+// longest first so the most specific wildcard wins.
+const databaseNames = new Map<string, CookieTracker>();
+const databasePrefixes: Array<{ prefix: string; tracker: CookieTracker }> = [];
+for (const { vendor, category, names, prefixes } of openCookieDatabase) {
+  const tracker: CookieTracker = { vendor, category };
+  for (const name of names) {
+    if (!databaseNames.has(name)) {
+      databaseNames.set(name, tracker);
+    }
+  }
+  for (const prefix of prefixes) {
+    databasePrefixes.push({ prefix, tracker });
+  }
+}
+databasePrefixes.sort((a, b) => b.prefix.length - a.prefix.length);
+
+function findListedTrackerByCookie(name: string): Tracker | undefined {
   return trackers.find((tracker) =>
     tracker.cookies?.some((pattern) =>
       typeof pattern === 'string' ? name.startsWith(pattern) : pattern.test(name),
     ),
+  );
+}
+
+function findDatabaseTrackerByCookie(name: string): CookieTracker | undefined {
+  return (
+    databaseNames.get(name) ??
+    databasePrefixes.find(({ prefix }) => name.startsWith(prefix))?.tracker
+  );
+}
+
+/**
+ * Finds who set a cookie. The hand-maintained list wins: first by cookie name, then, if a domain
+ * is given, by the host the cookie belongs to. Only then the Open Cookie Database is asked.
+ */
+export function findTrackerByCookie(name: string, domain?: string): CookieTracker | undefined {
+  const host = domain?.replace(/^\./, '');
+  return (
+    findListedTrackerByCookie(name) ??
+    (host ? findTrackerByUrl(`https://${host}/`) : undefined) ??
+    findDatabaseTrackerByCookie(name)
   );
 }

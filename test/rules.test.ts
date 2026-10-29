@@ -56,6 +56,13 @@ describe('pre-consent-trackers', () => {
     expect(run(preConsentTrackers, page)[0]?.message).toContain('Google Ads');
   });
 
+  it('catches first-party cookies known from the Open Cookie Database', () => {
+    const page = snapshot({ cookies: [cookie('_sp_id.1fff')] });
+    const findings = run(preConsentTrackers, page);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toContain('Snowplow');
+  });
+
   it('downgrades a bare tag manager to a warning', () => {
     const page = snapshot({
       requests: [request('https://www.googletagmanager.com/gtm.js?id=GTM-1')],
