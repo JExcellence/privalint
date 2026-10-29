@@ -9,7 +9,8 @@ providers in [`src/data/third-parties.ts`](../../src/data/third-parties.ts):
 
 YouTube (including `youtube-nocookie.com`), Vimeo, Google Maps, Google reCAPTCHA, Gravatar,
 X (Twitter) embeds, Instagram embeds, Facebook plugins, Spotify embeds, Disqus, hCaptcha,
-Cloudflare Turnstile, OpenStreetMap tiles, TikTok embeds and Calendly.
+Cloudflare Turnstile, OpenStreetMap tiles, TikTok embeds, Calendly, and the chat and review widgets
+Intercom, Tawk.to, Zendesk Web Widget, Trustpilot and Typeform.
 
 New provider patterns are deliberately bounded: Turnstile matches `challenges.cloudflare.com/turnstile/`,
 OpenStreetMap matches `tile.openstreetmap.org` and subdomains, and TikTok matches `/embed`,
@@ -40,6 +41,16 @@ Provider integration references:
 - [TikTok embedded videos](https://developers.tiktok.com/doc/embed-videos/)
 - [Calendly embed options](https://help.calendly.com/hc/en-us/articles/223147027-Embed-options-overview)
 
+Chat and review widgets (checked 2026-10-29). Only the widget hosts match, not the vendors' own
+websites:
+
+| Widget             | Hosts                                     | Source                                                                          |
+| ------------------ | ----------------------------------------- | ------------------------------------------------------------------------------- |
+| Intercom           | `widget.intercom.io`                      | Loaded on intercom.com                                                          |
+| Tawk.to            | `embed.tawk.to`                           | Loaded on tawk.to                                                               |
+| Zendesk Web Widget | `static.zdassets.com`                     | Messaging widget loaded on Zendesk's help centre                                |
+| Trustpilot         | `widget.trustpilot.com`                   | Bootstrap script in Trustpilot's WordPress plugin (`trustpilot-reviews` 3.16.0) |
+| Typeform           | `embed.typeform.com`, `form.typeform.com` | [`@typeform/embed` README](https://www.npmjs.com/package/@typeform/embed)       |
 - Art. 6(1) GDPR
 - § 25 Abs. 1 TDDDG, where the embed stores or reads data on the device
 

@@ -33,6 +33,12 @@ export const embeds: readonly ThirdParty[] = [
   { vendor: 'OpenStreetMap tiles', domains: ['tile.openstreetmap.org'] },
   { vendor: 'TikTok embed', domains: ['tiktok.com'], paths: ['/embed', '/embed.js', '/player/'] },
   { vendor: 'Calendly', domains: ['calendly.com'] },
+  // Chat and review widgets, hosts checked 2026-10-29; sources in docs/rules/third-party-embeds.md.
+  { vendor: 'Intercom', domains: ['widget.intercom.io'] },
+  { vendor: 'Tawk.to', domains: ['embed.tawk.to'] },
+  { vendor: 'Zendesk Web Widget', domains: ['static.zdassets.com'] },
+  { vendor: 'Trustpilot widget', domains: ['widget.trustpilot.com'] },
+  { vendor: 'Typeform', domains: ['embed.typeform.com', 'form.typeform.com'] },
 ];
 
 /** Public CDNs for scripts, styles and icon fonts. */

@@ -72,6 +72,12 @@ describe('additional third-party embeds', () => {
     ['TikTok embed', 'https://www.tiktok.com/embed.js'],
     ['TikTok embed', 'https://www.tiktok.com/player/v1/12345'],
     ['Calendly', 'https://assets.calendly.com/assets/external/widget.js'],
+    ['Intercom', 'https://widget.intercom.io/widget/tx2p130c'],
+    ['Tawk.to', 'https://embed.tawk.to/521727297ca1334016000005/18nms7gql'],
+    ['Zendesk Web Widget', 'https://static.zdassets.com/ekr/snippet.js?key=abc'],
+    ['Trustpilot widget', 'https://widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js'],
+    ['Typeform', 'https://embed.typeform.com/next/embed.js'],
+    ['Typeform', 'https://form.typeform.com/to/abc123'],
   ])('recognizes %s as an observed third-party resource', (vendor, url) => {
     expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
       { subject: vendor, ruleId: 'third-party-embeds' },
@@ -85,6 +91,10 @@ describe('additional third-party embeds', () => {
     'https://www.tiktok.com/about',
     'https://www.tiktok.com/embedding',
     'https://calendly.com.evil.invalid/widget.js',
+    'https://www.intercom.com/pricing',
+    'https://www.trustpilot.com/review/example.com',
+    'https://www.typeform.com/',
+    'https://tawk.to.example.net/embed.js',
   ])('does not match unrelated content or lookalike hosts: %s', (url) => {
     expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toEqual([]);
   });
