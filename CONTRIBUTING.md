@@ -108,6 +108,10 @@ Guidelines for findings:
 
 ## Releases
 
+The public suffix list used to decide which hosts belong to the scanned site ships with the
+`tldts` dependency. Dependabot proposes new versions weekly; a release picks up the list that
+the merged `tldts` version contains.
+
 Maintainers bump the version in `package.json` and move the "Unreleased" changelog entries
 under the new version, then tag `vX.Y.Z` on `main`. The release workflow checks that the tag
 matches `package.json`, runs lint, typecheck and tests, publishes to npm through npm's trusted
