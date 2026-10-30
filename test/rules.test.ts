@@ -141,14 +141,11 @@ describe('additional third-party embeds', () => {
       { subject: vendor, ruleId: 'third-party-embeds' },
     ]);
   });
-  it.each(intercomMessengerHosts)(
-    'recognizes Intercom Messenger host %s',
-    (_host, url) => {
-      expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
-        { subject: 'Intercom', ruleId: 'third-party-embeds' },
-      ]);
-    },
-  );
+  it.each(intercomMessengerHosts)('recognizes Intercom Messenger host %s', (_host, url) => {
+    expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
+      { subject: 'Intercom', ruleId: 'third-party-embeds' },
+    ]);
+  });
   it.each(intercomMessengerHosts)(
     'does not match a lookalike of Intercom Messenger host %s',
     (_host, url) => {
