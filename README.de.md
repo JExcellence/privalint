@@ -53,7 +53,7 @@ npx privalint https://ihre-seite.at --region at --lang de --max-pages 20
 | [`consent-settings-link`](docs/rules/consent-settings-link.de.md)     | Kein sichtbarer Link oder Button, um die Cookie-Einstellungen nach dem Ablehnen wieder zu öffnen                             |
 | [`google-fonts`](docs/rules/google-fonts.de.md)                       | Schriften von `fonts.googleapis.com` / `fonts.gstatic.com`                                                                   |
 | [`adobe-fonts`](docs/rules/adobe-fonts.de.md)                         | Schriften von Adobe Fonts (`use.typekit.net` / `p.typekit.net`)                                                              |
-| [`third-party-embeds`](docs/rules/third-party-embeds.de.md)           | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar und Social-Media-Einbindungen vor der Einwilligung                          |
+| [`third-party-embeds`](docs/rules/third-party-embeds.de.md)           | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar, Social-Media-Einbindungen und Chat-/Bewertungs-Widgets wie Intercom vor der Einwilligung |
 | [`third-party-cdns`](docs/rules/third-party-cdns.de.md)               | Skripte und Styles von jsDelivr, unpkg, cdnjs und anderen öffentlichen CDNs (Hinweis)                                        |
 | [`impressum-link`](docs/rules/impressum-link.de.md)                   | Seiten ohne Link zum Impressum                                                                                               |
 | [`privacy-policy-link`](docs/rules/privacy-policy-link.de.md)         | Seiten ohne Link zur Datenschutzerklärung                                                                                    |
