@@ -6,6 +6,10 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- `third-party-embeds` recognizes Intercom Messenger's documented service hosts, including regional and realtime endpoints (#61)
+
 ## 0.7.0 - 2026-10-30
 
 ### Added
