@@ -71,6 +71,56 @@ describe('pre-consent-trackers', () => {
   });
 });
 
+const intercomMessengerHosts = [
+  ['app.intercom.io', 'https://app.intercom.io/messenger/'],
+  ['widget.intercom.io', 'https://widget.intercom.io/widget/tx2p130c'],
+  ['js.intercomcdn.com', 'https://js.intercomcdn.com/widget/abc.js'],
+  ['via.intercom.io', 'https://via.intercom.io/messenger'],
+  ['api.intercom.io', 'https://api.intercom.io/messenger'],
+  ['api.au.intercom.io', 'https://api.au.intercom.io/messenger'],
+  ['api.eu.intercom.io', 'https://api.eu.intercom.io/messenger'],
+  ['api-iam.intercom.io', 'https://api-iam.intercom.io/messenger'],
+  ['api-iam.eu.intercom.io', 'https://api-iam.eu.intercom.io/messenger'],
+  ['api-iam.au.intercom.io', 'https://api-iam.au.intercom.io/messenger'],
+  ['api-ping.intercom.io', 'https://api-ping.intercom.io/messenger'],
+  ['intercom-messenger.com', 'https://realtime.intercom-messenger.com/connect'],
+  ['nexus-websocket-a.intercom.io', 'https://nexus-websocket-a.intercom.io/socket'],
+  ['nexus-websocket-b.intercom.io', 'https://nexus-websocket-b.intercom.io/socket'],
+  ['nexus-europe-websocket.intercom.io', 'https://nexus-europe-websocket.intercom.io/socket'],
+  ['nexus-australia-websocket.intercom.io', 'https://nexus-australia-websocket.intercom.io/socket'],
+  ['uploads.intercomcdn.com', 'https://uploads.intercomcdn.com/file'],
+  ['uploads.intercomcdn.eu', 'https://uploads.intercomcdn.eu/file'],
+  ['uploads.au.intercomcdn.com', 'https://uploads.au.intercomcdn.com/file'],
+  ['uploads.eu.intercomcdn.com', 'https://uploads.eu.intercomcdn.com/file'],
+  ['uploads.intercomusercontent.com', 'https://uploads.intercomusercontent.com/file'],
+  ['intercom-sheets.com', 'https://intercom-sheets.com/sheet'],
+  ['www.intercom-reporting.com', 'https://www.intercom-reporting.com/report'],
+  ['fonts.intercomcdn.com', 'https://fonts.intercomcdn.com/font.woff2'],
+  ['intercom.help', 'https://intercom.help/contact'],
+  ['downloads.intercomcdn.com', 'https://downloads.intercomcdn.com/file'],
+  ['downloads.intercomcdn.eu', 'https://downloads.intercomcdn.eu/file'],
+  ['downloads.au.intercomcdn.com', 'https://downloads.au.intercomcdn.com/file'],
+  ['static.intercomassets.com', 'https://static.intercomassets.com/icon.svg'],
+  ['gifs.intercomcdn.com', 'https://gifs.intercomcdn.com/reaction.gif'],
+  ['video-messages.intercomcdn.com', 'https://video-messages.intercomcdn.com/video.mp4'],
+  ['messenger-apps.intercom.io', 'https://messenger-apps.intercom.io/app.js'],
+  ['messenger-apps.eu.intercom.io', 'https://messenger-apps.eu.intercom.io/app.js'],
+  ['messenger-apps.au.intercom.io', 'https://messenger-apps.au.intercom.io/app.js'],
+  ['intercom-attachments-1.com', 'https://files.intercom-attachments-1.com/file'],
+  ['intercom-attachments.eu', 'https://files.intercom-attachments.eu/file'],
+  ['au.intercom-attachments.com', 'https://files.au.intercom-attachments.com/file'],
+  ['intercom-attachments-2.com', 'https://files.intercom-attachments-2.com/file'],
+  ['intercom-attachments-3.com', 'https://files.intercom-attachments-3.com/file'],
+  ['intercom-attachments-4.com', 'https://files.intercom-attachments-4.com/file'],
+  ['intercom-attachments-5.com', 'https://files.intercom-attachments-5.com/file'],
+  ['intercom-attachments-6.com', 'https://files.intercom-attachments-6.com/file'],
+  ['intercom-attachments-7.com', 'https://files.intercom-attachments-7.com/file'],
+  ['intercom-attachments-8.com', 'https://files.intercom-attachments-8.com/file'],
+  ['intercom-attachments-9.com', 'https://files.intercom-attachments-9.com/file'],
+  ['static.intercomassets.eu', 'https://static.intercomassets.eu/icon.svg'],
+  ['static.au.intercomassets.com', 'https://static.au.intercomassets.com/icon.svg'],
+] as const;
+
 describe('additional third-party embeds', () => {
   it.each([
     ['hCaptcha', 'https://js.hcaptcha.com/1/api.js'],
@@ -79,7 +129,6 @@ describe('additional third-party embeds', () => {
     ['TikTok embed', 'https://www.tiktok.com/embed.js'],
     ['TikTok embed', 'https://www.tiktok.com/player/v1/12345'],
     ['Calendly', 'https://assets.calendly.com/assets/external/widget.js'],
-    ['Intercom', 'https://widget.intercom.io/widget/tx2p130c'],
     ['Tawk.to', 'https://embed.tawk.to/521727297ca1334016000005/18nms7gql'],
     ['Zendesk Web Widget', 'https://static.zdassets.com/ekr/snippet.js?key=abc'],
     ['Zendesk Web Widget', 'https://ekr.zdassets.com/compose/abc'],
@@ -88,6 +137,23 @@ describe('additional third-party embeds', () => {
     ['Typeform', 'https://embed.typeform.com/next/embed.js'],
     ['Typeform', 'https://form.typeform.com/to/abc123'],
   ])('recognizes %s as an observed third-party resource', (vendor, url) => {
+  it.each(intercomMessengerHosts)(
+    'recognizes Intercom Messenger host %s',
+    (_host, url) => {
+      expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
+        { subject: 'Intercom', ruleId: 'third-party-embeds' },
+      ]);
+    },
+  );
+  it.each(intercomMessengerHosts)(
+    'does not match a lookalike of Intercom Messenger host %s',
+    (_host, url) => {
+      const host = new URL(url).hostname;
+      expect(
+        run(thirdPartyEmbeds, snapshot({ requests: [request(`https://${host}.evil.invalid/`)] })),
+      ).toEqual([]);
+    },
+  );
     expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
       { subject: vendor, ruleId: 'third-party-embeds' },
     ]);
@@ -101,6 +167,9 @@ describe('additional third-party embeds', () => {
     'https://www.tiktok.com/embedding',
     'https://calendly.com.evil.invalid/widget.js',
     'https://www.intercom.com/pricing',
+    'https://app.intercom.com/',
+    'https://app.eu.intercom.com/',
+    'https://app.au.intercom.com/',
     'https://www.trustpilot.com/review/example.com',
     'https://www.typeform.com/',
     'https://tawk.to.example.net/embed.js',
