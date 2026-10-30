@@ -44,21 +44,21 @@ npx privalint https://ihre-seite.at --region at --lang de --max-pages 20
 
 ## Was geprüft wird
 
-| Regel                     | Was sie findet                                                                                                               |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `pre-consent-trackers`    | Analyse-, Werbe- und Session-Replay-Tools, die vor der Einwilligung Anfragen senden oder Cookies setzen                      |
-| `trackers-after-reject`   | Tracker, die nach Klick auf „Ablehnen“ und Neuladen weiterlaufen                                                             |
-| `trackers-after-settings` | Optional (`--check-settings`): Tracker, die laufen, obwohl in den Banner-Einstellungen alles abgewählt und gespeichert wurde |
-| `reject-option`           | Cookie-Banner mit „Zustimmen“, aber ohne „Ablehnen“ auf der ersten Ebene; Pur-Abo-Modelle als Hinweis                        |
-| `consent-settings-link`   | Kein sichtbarer Link oder Button, um die Cookie-Einstellungen nach dem Ablehnen wieder zu öffnen                             |
-| `google-fonts`            | Schriften von `fonts.googleapis.com` / `fonts.gstatic.com`                                                                   |
-| `adobe-fonts`             | Schriften von Adobe Fonts (`use.typekit.net` / `p.typekit.net`)                                                              |
-| `third-party-embeds`      | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar und Social-Media-Einbindungen vor der Einwilligung                          |
-| `third-party-cdns`        | Skripte und Styles von jsDelivr, unpkg, cdnjs und anderen öffentlichen CDNs (Hinweis)                                        |
-| `impressum-link`          | Seiten ohne Link zum Impressum                                                                                               |
-| `privacy-policy-link`     | Seiten ohne Link zur Datenschutzerklärung                                                                                    |
+| Regel                                                                 | Was sie findet                                                                                                               |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.de.md)       | Analyse-, Werbe- und Session-Replay-Tools, die vor der Einwilligung Anfragen senden oder Cookies setzen                      |
+| [`trackers-after-reject`](docs/rules/trackers-after-reject.de.md)     | Tracker, die nach Klick auf „Ablehnen“ und Neuladen weiterlaufen                                                             |
+| [`trackers-after-settings`](docs/rules/trackers-after-settings.de.md) | Optional (`--check-settings`): Tracker, die laufen, obwohl in den Banner-Einstellungen alles abgewählt und gespeichert wurde |
+| [`reject-option`](docs/rules/reject-option.de.md)                     | Cookie-Banner mit „Zustimmen“, aber ohne „Ablehnen“ auf der ersten Ebene; Pur-Abo-Modelle als Hinweis                        |
+| [`consent-settings-link`](docs/rules/consent-settings-link.de.md)     | Kein sichtbarer Link oder Button, um die Cookie-Einstellungen nach dem Ablehnen wieder zu öffnen                             |
+| [`google-fonts`](docs/rules/google-fonts.de.md)                       | Schriften von `fonts.googleapis.com` / `fonts.gstatic.com`                                                                   |
+| [`adobe-fonts`](docs/rules/adobe-fonts.de.md)                         | Schriften von Adobe Fonts (`use.typekit.net` / `p.typekit.net`)                                                              |
+| [`third-party-embeds`](docs/rules/third-party-embeds.de.md)           | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar und Social-Media-Einbindungen vor der Einwilligung                          |
+| [`third-party-cdns`](docs/rules/third-party-cdns.de.md)               | Skripte und Styles von jsDelivr, unpkg, cdnjs und anderen öffentlichen CDNs (Hinweis)                                        |
+| [`impressum-link`](docs/rules/impressum-link.de.md)                   | Seiten ohne Link zum Impressum                                                                                               |
+| [`privacy-policy-link`](docs/rules/privacy-policy-link.de.md)         | Seiten ohne Link zur Datenschutzerklärung                                                                                    |
 
-Details, Hintergründe und Lösungen stehen auf Englisch in [`docs/rules`](docs/rules).
+Details, Hintergründe und Lösungen stehen auf den verlinkten Regelseiten in [`docs/rules`](docs/rules).
 
 ## GitHub Action
 
