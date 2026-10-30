@@ -8,7 +8,7 @@ New scans use schema **1.3.0**. Schemas 1.0.0, 1.1.0 and 1.2.0 remain available 
 versioned reports. 1.2.0 adds the skip reason `cancelled-by-page`, which a 1.1.0 validator would
 reject. 1.3.0 adds the opt-in settings-layer check: `consent.settings`, `options.settingsCheck`,
 the observation kind `after-settings`, the skip reason `settings-check-disabled` and its
-explanations, which a 1.2.0 validator would reject.
+explanations, and the region `hu`, all of which a 1.2.0 validator would reject.
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;
 unknown versions are unsupported. Never assign a schema version to old data merely to validate it.
 

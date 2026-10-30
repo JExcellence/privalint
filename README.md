@@ -99,7 +99,7 @@ preview URL from your hosting provider's deployment event or action output as `u
 | `fail-on-incomplete` | `false`           | Fail separately for incomplete required observations. |
 | `disable`            |                   | Comma-separated rule ids to skip.                     |
 | `lang`               | `en`              | Language of the report: `en` or `de`.                 |
-| `region`             | `de`              | Whose law to cite: `de`, `at`, `ch`, `eu`.            |
+| `region`             | `de`              | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.      |
 | `sarif-file`         | `privalint.sarif` | Where to write SARIF. Empty to skip.                  |
 | `job-summary`        | `true`            | Add the Markdown report to the job summary.           |
 | `pr-comment`         | `false`           | Create/update a same-repository PR report comment.    |
@@ -136,7 +136,7 @@ privalint <url> [options]
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
       --lang <lang>       Language of the report: en | de (default en)
-      --region <region>   Whose law to cite: de | at | ch | eu (default de)
+      --region <region>   Whose law to cite: de | at | ch | hu | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
       --check-settings    Also open the banner's settings, switch everything off and
                           save, then check what still loads (loads the start page again)
@@ -167,6 +167,7 @@ which law applies to a website, and findings are not legal determinations:
 | `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                               | none                                                                             |
 | `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                 | none                                                                             |
 | `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce) | `pre-consent-trackers`, `third-party-embeds` and `impressum-link` drop one level |
+| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                          | none                                                                             |
 | `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC           | none                                                                             |
 
 Every finding lists its legal basis for the chosen country. Trackers that run after an explicit

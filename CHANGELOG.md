@@ -16,7 +16,12 @@ All notable changes are listed here. The format follows
   `trackers-after-settings` reports trackers that still load. Without the flag the rule is
   skipped with `settings-check-disabled`, which does not make a report partial
 - Report schema 1.3.0 with `consent.settings`, `options.settingsCheck`, the observation kind
-  `after-settings` and the matching reasons. 1.0.0 to 1.2.0 stay unchanged and supported
+  `after-settings` and the matching reasons, and the region `hu`. 1.0.0 to 1.2.0 stay unchanged
+  and supported
+- Region `hu` for Hungary (#47): findings cite Eht. 155. § (4) for cookies, Ekertv. 4. § for the
+  imprint and the GDPR in Hungarian form. Hungarian banner buttons ("Elfogadom", "Elutasítom",
+  "Csak a szükségesek"), settings links ("Süti beállítások"), "Impresszum" and
+  "Adatkezelési tájékoztató" are recognised. Reports stay in English or German
 
 ### Changed
 
