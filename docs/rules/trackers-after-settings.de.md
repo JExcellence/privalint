@@ -47,8 +47,10 @@ Alles abzuwählen ist eine Ablehnung wie die Ablehnen-Schaltfläche und muss gen
 
 ## Grenzen
 
-- Die Selektoren für die Einstellungen der sechs genannten Consent-Manager sind noch nicht alle an
-  echten Bannern geprüft. Passt einer nicht, greift die Erkennung über die Beschriftung.
+- Am 30.10.2026 hat der Einstellungs-Pfad auf cookiebot.com, onetrust.com, cookieyes.com und
+  complianz.io geöffnet, umgeschaltet und gespeichert. usercentrics.com und der
+  CookieConsent-Playground zeigten Headless-Chromium kein Banner; diese beiden Selektoren sind
+  ungeprüft. Passt ein Selektor nicht, greift die Erkennung über die Beschriftung.
 - Schalter für einzelne Anbieter in zugeklappten Abschnitten bleiben unverändert; das Abwählen ihrer
   Kategorie soll sie mit abdecken.
 - Die Prüfung lädt die Startseite ein weiteres Mal und lädt sie danach neu.

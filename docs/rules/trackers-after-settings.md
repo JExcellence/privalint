@@ -47,8 +47,12 @@ Switching everything off is a refusal, just like the reject button, and it has t
 
 ## Limits
 
-- The settings selectors for the six consent managers above have not all been checked against live
-  banners yet. If one doesn't match, the label fallback takes over.
+- On 2026-10-30 the settings path opened, switched and saved on cookiebot.com ("Anpassen" /
+  "Auswahl erlauben"), onetrust.com ("Meine Einstellungen anpassen" / "Meine Auswahl bestätigen"),
+  cookieyes.com ("Customise" / "Save My Preferences") and complianz.io ("View preferences" /
+  "Save preferences"). usercentrics.com and the CookieConsent playground showed no banner to
+  headless Chromium, so those two selectors are unchecked. If a selector doesn't match, the label
+  fallback takes over.
 - Vendor-level switches inside collapsed sections are left alone; switching off their category is
   expected to cover them.
 - The check adds one more load and reload of the start page.
