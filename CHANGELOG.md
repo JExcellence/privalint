@@ -20,6 +20,10 @@ All notable changes are listed here. The format follows
   as one site. IP addresses, `localhost` and hosts that are themselves a public suffix only match
   the exact same host. The list ships with the new runtime dependency `tldts`, so scans make no
   extra network requests (#36)
+- The error for `--sandbox` failing to start now names Docker's default seccomp profile as the
+  usual cause inside containers. Tested on Ubuntu 24.04 in Docker: the sandbox fails with the
+  default profile and starts once the profile allows user namespaces. Before, the message only
+  pointed to AppArmor, which does not apply there
 
 ## 0.6.1 - 2026-10-28
 
