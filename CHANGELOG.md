@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.7.0 - 2026-10-30
+
 ### Added
 
 - Chat and review widgets in `third-party-embeds`: Intercom, Tawk.to, Zendesk Web Widget,

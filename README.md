@@ -267,7 +267,6 @@ Going further:
 
 ## Roadmap
 
-- Don't count banner rules as incomplete when a site needs no banner ([#35](https://github.com/jexcellence/privalint/issues/35))
 - Report comparison between two scans
 
 ## Contributing
