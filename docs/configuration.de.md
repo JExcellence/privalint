@@ -13,7 +13,7 @@ werden abgelehnt.
 Unterstützt sind `url` (absolute HTTP(S)-URL), `maxPages` (positive Ganzzahl), `concurrency`
 (positive Ganzzahl, gleichzeitig geladene Seiten), `settleMs` (ab 0),
 `timeoutMs` (positiv), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`eu`),
-`consentCheck` und `failOnIncomplete` (Boolean), `rules` (bekannte IDs mit `off`/`error`/`warning`/`info`) und
+`consentCheck`, `settingsCheck` und `failOnIncomplete` (Boolean), `rules` (bekannte IDs mit `off`/`error`/`warning`/`info`) und
 `allow: { vendors: string[] }` (exakte, groß-/kleinschreibungsabhängige `subject`-Anbieternamen).
 
 ```json

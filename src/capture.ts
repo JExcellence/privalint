@@ -1,10 +1,16 @@
 import type { Browser } from 'playwright';
-import { observeConsent } from './consent.js';
+import { observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
 import { ControlledNetwork, networkLimits, watchPageCancellations } from './network.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import type { PageSnapshot } from './types.js';
 import { isFirstParty } from './url.js';
+
+/**
+ * Which consent path to test on the page: none, the reject button, or the settings layer.
+ * Settings runs in its own capture because a stored reject would hide the banner.
+ */
+export type ConsentPath = 'none' | 'reject' | 'settings';
 
 /** Always owns and closes its context. Each crawl page starts without cookies/storage. */
 export async function capturePage(
@@ -12,8 +18,9 @@ export async function capturePage(
   url: string,
   siteUrl: URL,
   options: ScanOptions,
-  checkConsent: boolean,
+  consentPath: ConsentPath,
 ): Promise<PageSnapshot> {
+  const checkConsent = consentPath !== 'none';
   const controlled = options.networkAdapter !== undefined;
   const context = await browser.newContext({
     locale: options.locale ?? DEFAULTS.locale,
@@ -125,7 +132,7 @@ export async function capturePage(
         elapsedMs: 0,
         pageUrl: diagnosticUrl(url),
       });
-      snapshot.consent = await observeConsent(page, context, requests, {
+      const consentOptions = {
         settleMs: options.settleMs ?? DEFAULTS.settleMs,
         timeoutMs: options.timeoutMs ?? DEFAULTS.timeoutMs,
         signal,
@@ -133,7 +140,17 @@ export async function capturePage(
           diagnostics.phase = 'after-reject';
         },
         onTimeout: () => diagnostics.add('timeout', page.url()),
-      });
+      };
+      if (consentPath === 'settings') {
+        const settings = await observeSettings(page, context, requests, consentOptions);
+        snapshot.consent = {
+          bannerFound: settings !== undefined,
+          rejected: false,
+          ...(settings === undefined ? {} : { settings }),
+        };
+      } else {
+        snapshot.consent = await observeConsent(page, context, requests, consentOptions);
+      }
       if (signal.aborted) throw new DOMException('Capture ended', 'AbortError');
       if (snapshot.consent.error && !diagnostics.hasIssues('after-reject')) {
         diagnostics.add(classifyLoadError(snapshot.consent.error), page.url());
@@ -174,6 +191,10 @@ export async function capturePage(
   beforeComplete = beforeComplete && !diagnostics.hasIssues('before-consent');
   if (snapshot.consent?.rejected) {
     snapshot.consent.afterRejectComplete = !diagnostics.hasIssues('after-reject');
+  }
+  // The settings path reuses the after-reject phase for what loads after saving.
+  if (snapshot.consent?.settings?.afterSave !== undefined) {
+    snapshot.consent.settings.afterSaveComplete = !diagnostics.hasIssues('after-reject');
   }
   snapshot.capture = {
     complete: beforeComplete && diagnostics.restrictingIssues === 0,

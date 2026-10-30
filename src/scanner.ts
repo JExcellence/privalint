@@ -10,7 +10,7 @@ import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
 import { defaultRules } from './rules/index.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
-import type { PageSnapshot, ScanProgressEvent, ScanResult } from './types.js';
+import type { PageSnapshot, ScanProgressEvent, ScanResult, SettingsObservation } from './types.js';
 import { crawlTarget, withoutHash } from './url.js';
 
 export type { ScanOptions } from './scan-options.js';
@@ -135,9 +135,17 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
             }
           },
         },
-        isStart,
-      ).then((snapshot) => {
+        isStart ? 'reject' : 'none',
+      ).then(async (snapshot) => {
         if (progressFailure) throw progressFailure.error;
+        if (
+          isStart &&
+          options.settingsCheck === true &&
+          options.consentCheck !== false &&
+          snapshot.consent?.bannerFound === true
+        ) {
+          snapshot.consent.settings = await checkSettings(browser, url, siteUrl, options);
+        }
         return { url, snapshot, isStart, pageIndex, captureId };
       });
       // Awaited in queue order below; this only keeps a page that fails while an earlier one is
@@ -215,6 +223,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         index === 0,
         options.consentCheck !== false,
         configuredRules,
+        options.settingsCheck === true,
       );
     });
     const partial =
@@ -236,6 +245,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         lang,
         region,
         consentCheck: options.consentCheck !== false,
+        settingsCheck: options.settingsCheck === true,
         headed: options.headed === true,
         channel: options.channel ?? 'chromium',
         sandbox: options.sandbox === true,
@@ -287,10 +297,30 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
   }
 }
 
+/** Runs the settings path on the start page in a fresh context, after the reject path. */
+async function checkSettings(
+  browser: Browser,
+  url: string,
+  siteUrl: URL,
+  options: ScanOptions,
+): Promise<SettingsObservation> {
+  const capture = await capturePage(browser, url, siteUrl, options, 'settings');
+  return (
+    capture.consent?.settings ?? {
+      outcome: 'interaction-failed',
+      reason: 'browser-interaction-failed',
+      // The banner showed in the first context but not in this one.
+      error: capture.error ?? 'browser-failure',
+    }
+  );
+}
+
 function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'consent'> {
   if (start?.consent === undefined) return {};
-  const { afterReject: _afterReject, ...summary } = start.consent;
-  return { consent: summary };
+  const { afterReject: _afterReject, settings, ...summary } = start.consent;
+  if (settings === undefined) return { consent: summary };
+  const { afterSave: _afterSave, ...settingsSummary } = settings;
+  return { consent: { ...summary, settings: settingsSummary } };
 }
 
 /** Adapter reports omit URL credentials, paths, queries and fragments by default. */
@@ -310,6 +340,19 @@ function redactReport(result: ScanResult): ScanResult {
             ...(result.consent.rejectLabel === undefined
               ? {}
               : { rejectLabel: redactText(result.consent.rejectLabel) }),
+            ...(result.consent.settings === undefined
+              ? {}
+              : {
+                  settings: {
+                    ...result.consent.settings,
+                    ...(result.consent.settings.openLabel === undefined
+                      ? {}
+                      : { openLabel: redactText(result.consent.settings.openLabel) }),
+                    ...(result.consent.settings.saveLabel === undefined
+                      ? {}
+                      : { saveLabel: redactText(result.consent.settings.saveLabel) }),
+                  },
+                }),
           },
         }),
     pages: result.pages.map((page) => ({

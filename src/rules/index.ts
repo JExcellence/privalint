@@ -9,10 +9,12 @@ import { rejectOption } from './reject-option.js';
 import { thirdPartyCdns } from './third-party-cdns.js';
 import { thirdPartyEmbeds } from './third-party-embeds.js';
 import { trackersAfterReject } from './trackers-after-reject.js';
+import { trackersAfterSettings } from './trackers-after-settings.js';
 
 export const defaultRules: readonly Rule[] = [
   preConsentTrackers,
   trackersAfterReject,
+  trackersAfterSettings,
   rejectOption,
   consentSettingsLink,
   googleFonts,
@@ -34,4 +36,5 @@ export {
   thirdPartyCdns,
   thirdPartyEmbeds,
   trackersAfterReject,
+  trackersAfterSettings,
 };

@@ -21,6 +21,13 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     ch: ['Art. 45c FMG', 'Art. 30 Abs. 2 lit. b DSG'],
     eu: ['Art. 5(3) ePrivacy Directive', 'Art. 7(3) GDPR'],
   },
+  // Switching everything off in the settings is a refusal like the reject button.
+  'trackers-after-settings': {
+    de: ['§ 25 Abs. 1 TDDDG', 'Art. 7 Abs. 3 DSGVO'],
+    at: ['§ 165 Abs. 3 TKG 2021', 'Art. 7 Abs. 3 DSGVO'],
+    ch: ['Art. 45c FMG', 'Art. 30 Abs. 2 lit. b DSG'],
+    eu: ['Art. 5(3) ePrivacy Directive', 'Art. 7(3) GDPR'],
+  },
   'reject-option': {
     de: [
       '§ 25 Abs. 1 TDDDG',

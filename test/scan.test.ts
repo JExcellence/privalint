@@ -203,6 +203,52 @@ describe('consent check', () => {
     expect(result.findings[0]?.evidence[0]).toContain('G-CONSENT');
   });
 
+  describe('settings layer', () => {
+    const settingsOptions = { ...options, settingsCheck: true };
+
+    it('is skipped unless enabled', async () => {
+      const result = await scan(`${origin}/consent/settings-broken.html`, options);
+      expect(result.consent?.settings).toBeUndefined();
+      expect(result.options?.settingsCheck).toBe(false);
+      const evaluation = result.pages[0]?.ruleEvaluations?.find(
+        (rule) => rule.ruleId === 'trackers-after-settings',
+      );
+      expect(evaluation).toMatchObject({ status: 'skipped', reason: 'settings-check-disabled' });
+    });
+
+    it('switches everything off, saves and passes a page that respects it', async () => {
+      const result = await scan(`${origin}/consent/settings-good.html`, settingsOptions);
+      expect(result.consent?.settings).toMatchObject({
+        outcome: 'saved',
+        reason: 'settings-saved-and-reloaded',
+        openLabel: 'Einstellungen',
+        saveLabel: 'Auswahl speichern',
+        switchedOff: 2,
+        afterSaveComplete: true,
+      });
+      expect(result.findings).toEqual([]);
+    });
+
+    it('catches trackers that load after saving with everything off', async () => {
+      const result = await scan(`${origin}/consent/settings-broken.html`, settingsOptions);
+      expect(ruleIds(result.findings)).toEqual(['trackers-after-settings']);
+      expect(result.findings[0]?.message).toContain('Auswahl speichern');
+      expect(result.findings[0]?.evidence[0]).toContain('G-SETTINGS');
+    });
+
+    it('reports a banner without a settings control', async () => {
+      const result = await scan(`${origin}/consent/good.html`, settingsOptions);
+      expect(result.consent?.settings).toMatchObject({ outcome: 'no-settings-control' });
+      const evaluation = result.pages[0]?.ruleEvaluations?.find(
+        (rule) => rule.ruleId === 'trackers-after-settings',
+      );
+      expect(evaluation).toMatchObject({
+        status: 'not-evaluable',
+        explanation: 'no-settings-control',
+      });
+    });
+  });
+
   it('warns when the banner has no reject button', async () => {
     const result = await scan(`${origin}/consent/accept-only.html`, options);
     expect(result.consent).toMatchObject({ bannerFound: true, rejected: false });
