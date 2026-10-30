@@ -47,6 +47,12 @@ describe('findTrackerByCookie', () => {
     expect(findTrackerByCookie('mp_session')).toBeUndefined();
   });
 
+  it('does not report the Contentsquare opt-out cookie as tracking', () => {
+    expect(findTrackerByCookie('_cs_optout')).toBeUndefined();
+    expect(findTrackerByCookie('_cs_id')?.vendor).toBe('Contentsquare');
+    expect(findTrackerByCookie('_cs_s')?.vendor).toBe('Contentsquare');
+  });
+
   it('leaves unrelated cookies alone', () => {
     expect(findTrackerByCookie('session')).toBeUndefined();
   });

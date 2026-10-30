@@ -198,7 +198,8 @@ export const trackers: readonly Tracker[] = [
     vendor: 'Contentsquare',
     category: 'session-replay',
     domains: ['contentsquare.net'],
-    cookies: ['_cs_'],
+    // _cs_optout is set when the visitor opts out and must not be reported as tracking.
+    cookies: [/^_cs_(?!optout)/],
   },
 ];
 
