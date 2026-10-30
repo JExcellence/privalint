@@ -9,6 +9,8 @@ All notable changes are listed here. The format follows
 ### Fixed
 
 - `third-party-embeds` recognizes Intercom Messenger's documented service hosts, including regional and realtime endpoints (#61)
+- Contentsquare's opt-out cookie `_cs_optout` is no longer reported as a tracker, so
+  `trackers-after-reject` doesn't flag the visitor's own refusal (#56)
 
 ## 0.7.0 - 2026-10-30
 
