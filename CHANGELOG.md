@@ -11,6 +11,16 @@ All notable changes are listed here. The format follows
 - Chat and review widgets in `third-party-embeds`: Intercom, Tawk.to, Zendesk Web Widget,
   Trustpilot and Typeform, with hosts from the vendors or observed on live sites (#32)
 
+### Changed
+
+- First-party detection uses the registrable domain from the public suffix list, including
+  private suffixes like `github.io`, `netlify.app` and `vercel.app`. A crawl on `a.github.io` no
+  longer follows links to `b.github.io`, and `shop.example.co.uk` counts as part of
+  `example.co.uk`. Sibling subdomains such as `blog.example.de` and `shop.example.de` now count
+  as one site. IP addresses, `localhost` and hosts that are themselves a public suffix only match
+  the exact same host. The list ships with the new runtime dependency `tldts`, so scans make no
+  extra network requests (#36)
+
 ## 0.6.1 - 2026-10-28
 
 ### Fixed

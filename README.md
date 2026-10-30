@@ -227,6 +227,12 @@ Going further:
 6. With `--max-pages`, links to the same site are followed breadth-first. Query strings are
    dropped, pages are deduplicated after redirects, and pages that fail to load (downloads,
    timeouts) are listed but don't stop the crawl.
+   "Same site" means the same registrable domain from the
+   [public suffix list](https://publicsuffix.org/), so `shop.example.co.uk` belongs to
+   `example.co.uk`, but `a.github.io` and `b.github.io` are different sites. IP addresses and
+   `localhost` only match themselves. The list ships with the
+   [tldts](https://github.com/remusao/tldts) dependency, so nothing is looked up during a scan,
+   and it is updated by updating that dependency.
 
 ### Limitations
 
@@ -240,8 +246,6 @@ Going further:
   beyond the presence of a button, is not judged.
 - Tracker detection uses a hand-maintained list ([`src/data/trackers.ts`](src/data/trackers.ts)).
   A vendor missing from the list goes unnoticed. Additions are very welcome.
-- First-party detection compares hostnames and ignores the public suffix list, so sibling
-  subdomains on shared hosts like `*.github.io` count as first party.
 - Server-side tracking can't be seen from the browser.
 - Many consent managers decide by IP address whether to show a banner. GitHub-hosted runners
   have US addresses, so some sites load trackers there that EU visitors never get, and the
@@ -256,7 +260,6 @@ Going further:
 
 - Test the settings layer of banners, not only "reject" ([#38](https://github.com/jexcellence/privalint/issues/38))
 - Don't count banner rules as incomplete when a site needs no banner ([#35](https://github.com/jexcellence/privalint/issues/35))
-- First-party detection with the public suffix list ([#36](https://github.com/jexcellence/privalint/issues/36))
 - Cookie trackers generated from the Apache-licensed
   [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database) ([#39](https://github.com/jexcellence/privalint/issues/39))
 - Report comparison between two scans

@@ -55,7 +55,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "playwright": "^1.64.1"
+    "playwright": "^1.64.1",
+    "tldts": "^7.4.19"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",

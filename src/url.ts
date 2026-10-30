@@ -1,3 +1,5 @@
+import { getDomain } from 'tldts';
+
 const SKIPPED_EXTENSIONS =
   /\.(pdf|zip|gz|rar|7z|jpe?g|png|gif|webp|avif|svg|ico|mp4|webm|mp3|wav|docx?|xlsx?|pptx?|csv|xml|json|txt)$/i;
 
@@ -6,17 +8,30 @@ export function hostMatches(host: string, domain: string): boolean {
 }
 
 /**
- * Treats `example.com`, `www.example.com` and `cdn.example.com` as the same site.
- * This is a simplification: it does not consult the public suffix list, so
- * sibling subdomains on shared hosts (e.g. `*.github.io`) count as first party.
+ * Whether the URL belongs to the same site, meaning the same registrable domain (eTLD+1) per the
+ * public suffix list bundled with `tldts`, private suffixes included. So `example.co.uk`,
+ * `www.example.co.uk` and `shop.example.co.uk` are one site, while `a.github.io` and
+ * `b.github.io` are two.
+ *
+ * Hosts without a registrable domain (IP addresses, `localhost`, single-label names, or a host
+ * that is itself a public suffix such as `github.io`) only match the exact same host.
  */
 export function isFirstParty(url: string, siteUrl: URL): boolean {
   const host = safeHost(url);
   if (host === undefined) {
     return false;
   }
-  const siteHost = siteUrl.hostname.replace(/^www\./, '');
-  return hostMatches(host, siteHost) || hostMatches(siteHost, host);
+  const siteHost = siteUrl.hostname;
+  const domain = registrableDomain(host);
+  const siteDomain = registrableDomain(siteHost);
+  if (domain === null || siteDomain === null) {
+    return host === siteHost;
+  }
+  return domain === siteDomain;
+}
+
+function registrableDomain(host: string): string | null {
+  return getDomain(host, { allowPrivateDomains: true });
 }
 
 /** Anything listed by host, optionally narrowed to some paths. */
