@@ -122,16 +122,17 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
 // Unanchored on purpose: "Alle Cookies akzeptieren" and "Accept all cookies" must both match.
 // Labels that also match REJECT_LABEL ("Nur notwendige akzeptieren") are never treated as accept.
 const ACCEPT_LABEL =
-  /akzeptieren|annehmen|zustimmen|einwilligen|einverstanden|alles? (cookies )?(zulassen|erlauben)|\baccept|\ballow all|\bagree\b|accepter|aceptar|accetta|accepteren|alles toestaan/i;
+  /akzeptieren|annehmen|zustimmen|einwilligen|einverstanden|alles? (cookies )?(zulassen|erlauben)|\baccept|\ballow all|\bagree\b|accepter|aceptar|accetta|accepteren|alles toestaan|elfogad/i;
 
 const REJECT_LABEL =
-  /ablehnen|verweigern|nur (technisch )?(notwendige|essenzielle|erforderliche)|\breject|\bdecline|\bdeny\b|\brefuse|(only|use) (strictly )?(necessary|essential|required)|refuser|continuer sans accepter|rechazar|rifiuta|weigeren|alleen noodzakelijke/i;
+  /ablehnen|verweigern|nur (technisch )?(notwendige|essenzielle|erforderliche)|\breject|\bdecline|\bdeny\b|\brefuse|(only|use) (strictly )?(necessary|essential|required)|refuser|continuer sans accepter|rechazar|rifiuta|weigeren|alleen noodzakelijke|elutasít|csak a (feltétlenül )?szükséges/i;
 
 /** Second option on "pay or OK" banners: accept tracking or take out a subscription. */
 const SUBSCRIBE = /abonn|\babo\b|subscri|werbefrei|ohne werbung|ad-free|without ads|\bpur\b/i;
 
 /** A frame without any of these words is not showing a consent banner. */
-const CONSENT_CONTEXT = /cookie|consent|einwillig|tracking|datenschutz|privacy/i;
+const CONSENT_CONTEXT =
+  /cookie|consent|einwillig|tracking|datenschutz|privacy|süti|hozzájárul|adatvédel/i;
 
 const CLICKABLE = 'button, [role="button"], a, input[type="button"], input[type="submit"]';
 
@@ -164,17 +165,18 @@ const REOPEN_CONTROLS = [
 
 // Word boundaries keep nav links like "Consent management platform" from matching.
 const SETTINGS_LABEL =
-  /(cookie|consent|datenschutz|privatsphäre|privacy|tracking)[-\s]?(einstellungen|settings|preferences|präferenzen|optionen|options)\b|(einwilligung|zustimmung|consent)(en)?\s+(widerrufen|ändern|verwalten|anpassen|bearbeiten|withdraw|manage|change)\b|cookies?\s+(verwalten|anpassen|ändern|manage)\b|manage\s+(cookies|consent|privacy)\b|withdraw\s+(my\s+)?consent\b|paramètres des cookies|gérer (les )?cookies/i;
+  /(cookie|consent|datenschutz|privatsphäre|privacy|tracking)[-\s]?(einstellungen|settings|preferences|präferenzen|optionen|options)\b|(einwilligung|zustimmung|consent)(en)?\s+(widerrufen|ändern|verwalten|anpassen|bearbeiten|withdraw|manage|change)\b|cookies?\s+(verwalten|anpassen|ändern|manage)\b|manage\s+(cookies|consent|privacy)\b|withdraw\s+(my\s+)?consent\b|paramètres des cookies|gérer (les )?cookies|süti[-\s]?beállítás|adatvédelmi beállítás|hozzájárulás (visszavonása|módosítása|kezelése)/i;
 
 /** Opens the second layer from the first: "Einstellungen", "Customize", "More options". */
 const OPEN_SETTINGS_LABEL =
-  /einstellungen|anpassen|individuell|optionen|details|customi[sz]e|settings|preferences|options|paramètres|personnaliser|configurar|preferenze|impostazioni|instellingen|voorkeuren/i;
+  /einstellungen|anpassen|individuell|optionen|details|customi[sz]e|settings|preferences|options|paramètres|personnaliser|configurar|preferenze|impostazioni|instellingen|voorkeuren|beállítás|testreszab|további lehetőségek|részletek/i;
 
 /** Saves the selection in the second layer. "Alle akzeptieren" never counts, see isAcceptAll. */
 const SAVE_LABEL =
-  /speichern|bestätigen|übernehmen|auswahl (akzeptieren|erlauben|zulassen)|\bsave\b|confirm|(accept|allow) selection|enregistrer|guardar|salva|opslaan/i;
+  /speichern|bestätigen|übernehmen|auswahl (akzeptieren|erlauben|zulassen)|\bsave\b|confirm|(accept|allow) selection|enregistrer|guardar|salva|opslaan|mentés|megerősít|kiválasztottak (engedélyezése|elfogadása)/i;
 
-const ALL_WORD = /\b(alle|alles|all|tout|tous|todo|todas|tutti|tutto)\b/i;
+// No \b around the Hungarian words: \b only knows ASCII letters, so it fails next to "ö".
+const ALL_WORD = /\b(alle|alles|all|tout|tous|todo|todas|tutti|tutto)\b|összes|minden|mindet/i;
 
 export interface ConsentCheckOptions {
   settleMs: number;

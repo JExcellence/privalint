@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <title>Magyar süti banner</title>
+    <style>
+      .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+      .slider { display: inline-block; width: 32px; height: 16px; background: #ccc; }
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <h1>Magyar süti banner</h1>
+    <footer>
+      <a href="/clean/impressum.html">Impresszum</a>
+      <a href="/clean/datenschutz.html">Adatkezelési tájékoztató</a>
+      <button type="button">Süti beállítások</button>
+    </footer>
+    <div id="banner" role="dialog" aria-label="Süti tájékoztató">
+      <p>Weboldalunk sütiket használ a látogatottság méréséhez.</p>
+      <button id="accept">Elfogadom</button>
+      <button id="reject">Elutasítom</button>
+      <button id="open">Beállítások</button>
+      <div id="layer" hidden>
+        <label class="switch">
+          <input type="checkbox" name="necessary" checked disabled />
+          <span class="slider"></span> Szükséges
+        </label>
+        <label class="switch">
+          <input type="checkbox" name="statistics" checked />
+          <span class="slider"></span> Statisztika
+        </label>
+        <span>Marketing</span>
+        <button type="button" role="switch" aria-checked="true" id="marketing"></button>
+        <button id="save">Beállítások mentése</button>
+      </div>
+    </div>
+    <script>
+      const banner = document.getElementById('banner');
+      const stored = localStorage.getItem('consent');
+      const choice = stored ? JSON.parse(stored) : undefined;
+      const load = (src) => {
+        const tag = document.createElement('script');
+        tag.src = src;
+        document.head.append(tag);
+      };
+      if (choice?.statistics) load('https://www.googletagmanager.com/gtag/js?id=G-SETTINGS');
+      if (choice?.marketing) load('https://connect.facebook.net/en_US/fbevents.js');
+      if (choice) banner.remove();
+      const store = (value) => localStorage.setItem('consent', JSON.stringify(value));
+      const marketing = document.getElementById('marketing');
+      marketing.addEventListener('click', () => {
+        marketing.setAttribute('aria-checked', String(marketing.getAttribute('aria-checked') !== 'true'));
+      });
+      document.getElementById('accept').onclick = () => {
+        store({ statistics: true, marketing: true });
+        location.reload();
+      };
+      document.getElementById('reject').onclick = () => {
+        store({ statistics: false, marketing: false });
+        banner.remove();
+      };
+      document.getElementById('open').onclick = () => {
+        document.getElementById('layer').hidden = false;
+      };
+      document.getElementById('save').onclick = () => {
+        store({
+          statistics: document.querySelector('[name="statistics"]').checked,
+          marketing: marketing.getAttribute('aria-checked') === 'true',
+        });
+        banner.remove();
+      };
+    </script>
+  </body>
+</html>

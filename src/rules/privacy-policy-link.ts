@@ -5,7 +5,7 @@ import { linkMatches, linksChecked } from './links.js';
 const ID = 'privacy-policy-link';
 
 const PRIVACY_POLICY =
-  /datenschutz|privacy|data[\s_-]?protection|confidentialit|privacidad|protezione[\s_-]?dei[\s_-]?dati|privacybeleid|polityka[\s_-]?prywatno/i;
+  /datenschutz|privacy|data[\s_-]?protection|confidentialit|privacidad|protezione[\s_-]?dei[\s_-]?dati|privacybeleid|polityka[\s_-]?prywatno|adatv[eé]del|adatkezel/i;
 
 export const privacyPolicyLink: Rule = {
   id: ID,

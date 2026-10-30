@@ -236,6 +236,27 @@ describe('consent check', () => {
       expect(result.findings[0]?.evidence[0]).toContain('G-SETTINGS');
     });
 
+    it('understands a Hungarian banner, its settings and its links', async () => {
+      const result = await scan(`${origin}/consent/hungarian.html`, {
+        ...settingsOptions,
+        region: 'hu',
+      });
+      expect(result.consent).toMatchObject({
+        rejected: true,
+        acceptLabel: 'Elfogadom',
+        rejectLabel: 'Elutasítom',
+        settingsControl: { found: true, label: 'Süti beállítások' },
+        settings: {
+          outcome: 'saved',
+          openLabel: 'Beállítások',
+          saveLabel: 'Beállítások mentése',
+          switchedOff: 2,
+        },
+      });
+      expect(result.region).toBe('hu');
+      expect(result.findings).toEqual([]);
+    });
+
     it('reports a banner without a settings control', async () => {
       const result = await scan(`${origin}/consent/good.html`, settingsOptions);
       expect(result.consent?.settings).toMatchObject({ outcome: 'no-settings-control' });
