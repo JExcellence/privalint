@@ -1,5 +1,7 @@
 # pre-consent-trackers
 
+[Deutsch](pre-consent-trackers.de.md)
+
 Reports analytics, advertising, session-replay and marketing tools that send requests or set
 cookies before the visitor has agreed to it.
 

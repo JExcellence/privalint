@@ -1,5 +1,7 @@
 # consent-settings-link
 
+[Deutsch](consent-settings-link.de.md)
+
 Reports a site where the visitor has no visible way back into the cookie settings after rejecting.
 
 ## What it checks

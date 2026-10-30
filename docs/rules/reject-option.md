@@ -1,5 +1,7 @@
 # reject-option
 
+[Deutsch](reject-option.de.md)
+
 Warns when the first layer of a recognized consent banner offers "accept" but no supported
 reject control was detected. Verify the banner manually before treating this as a site defect.
 

@@ -1,5 +1,7 @@
 # third-party-cdns
 
+[Deutsch](third-party-cdns.de.md)
+
 Notes scripts, styles and icon fonts loaded from public CDNs.
 
 ## What it checks

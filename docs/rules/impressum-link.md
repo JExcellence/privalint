@@ -1,5 +1,7 @@
 # impressum-link
 
+[Deutsch](impressum-link.de.md)
+
 Warns when a page has no link to an Impressum (legal notice).
 
 ## What it checks

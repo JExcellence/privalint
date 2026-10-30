@@ -1,5 +1,7 @@
 # trackers-after-reject
 
+[Deutsch](trackers-after-reject.de.md)
+
 Reports trackers that still load, or set new cookies, after the visitor clicked "reject".
 
 ## What it checks

@@ -1,5 +1,7 @@
 # google-fonts
 
+[Deutsch](google-fonts.de.md)
+
 Reports fonts loaded from Google's servers, and leftover connections to them.
 
 ## What it checks
