@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { openCookieDatabase } from '../src/data/open-cookie-database.js';
 import { findTrackerByCookie, findTrackerByUrl, trackers } from '../src/data/trackers.js';
 
 describe('findTrackerByUrl', () => {
@@ -123,6 +124,60 @@ describe('tracker list', () => {
   it('has a domain for every entry', () => {
     for (const tracker of trackers) {
       expect(tracker.domains.length, tracker.vendor).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('cookies from the Open Cookie Database', () => {
+  it('recognises exact names the hand-maintained list does not know', () => {
+    expect(findTrackerByCookie('__utma')).toEqual({
+      vendor: 'Google Analytics',
+      category: 'analytics',
+    });
+    expect(findTrackerByCookie('__gads')).toEqual({
+      vendor: 'DoubleClick/Google Marketing',
+      category: 'advertising',
+    });
+  });
+
+  it('treats wildcard rows as prefixes', () => {
+    expect(findTrackerByCookie('_sp_id.1fff')?.vendor).toBe('Snowplow');
+    expect(findTrackerByCookie('AMCV_0123ABCD%40AdobeOrg')?.vendor).toBe('Adobe Audience Manager');
+  });
+
+  it('matches exact rows only exactly', () => {
+    expect(findTrackerByCookie('__gads_backup')).toBeUndefined();
+    expect(findTrackerByCookie('x__gads')).toBeUndefined();
+  });
+
+  it('lets the hand-maintained list win', () => {
+    const ga = findTrackerByCookie('_ga');
+    expect(ga?.vendor).toBe('Google Analytics');
+    expect(trackers).toContain(ga);
+    expect(trackers).toContain(findTrackerByCookie('_pk_id.1.abcd'));
+    expect(findTrackerByCookie('_hjSessionUser_42')?.category).toBe('session-replay');
+  });
+
+  it('prefers a hand-maintained host over the generated list', () => {
+    expect(findTrackerByCookie('__utma', '.criteo.com')?.vendor).toBe('Criteo');
+    expect(findTrackerByCookie('__utma', 'example.com')?.vendor).toBe('Google Analytics');
+  });
+
+  it('leaves generic and consent cookies alone', () => {
+    for (const name of ['session', 'sessionid', 'uid', 'user', 'token', 'lang', 'visitor']) {
+      expect(findTrackerByCookie(name), name).toBeUndefined();
+    }
+    for (const name of ['euconsent', 'mtm_consent_removed', 'matomo_ignore', '__gpi_optout']) {
+      expect(findTrackerByCookie(name), name).toBeUndefined();
+    }
+  });
+
+  it('only contains analytics and advertising cookies of a safe length', () => {
+    for (const { vendor, category, names, prefixes } of openCookieDatabase) {
+      expect(['analytics', 'advertising'], vendor).toContain(category);
+      for (const name of [...names, ...prefixes]) {
+        expect(name.length, `${vendor} ${name}`).toBeGreaterThanOrEqual(4);
+      }
     }
   });
 });

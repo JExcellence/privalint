@@ -18,7 +18,8 @@
   "files": [
     "schemas",
     "dist",
-    "README.de.md"
+    "README.de.md",
+    "NOTICE"
   ],
   "engines": {
     "node": ">=20.12"
@@ -28,6 +29,7 @@
     "typecheck": "tsc --noEmit",
     "schemas:build": "node scripts/build-report-schemas.mjs",
     "schemas:check": "node scripts/build-report-schemas.mjs --check",
+    "cookies:build": "node scripts/build-cookie-trackers.mjs",
     "fixtures:reports": "npm run build && node scripts/build-report-fixtures.mjs",
     "test": "vitest run",
     "test:watch": "vitest",

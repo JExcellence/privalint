@@ -1,7 +1,7 @@
 import {
+  type CookieTracker,
   findTrackerByCookie,
   findTrackerByUrl,
-  type Tracker,
   type TrackerCategory,
 } from '../data/trackers.js';
 import { type Lang, say, type Text } from '../i18n.js';
@@ -11,7 +11,8 @@ import type { RecordedCookie, RecordedRequest } from '../types.js';
 const MAX_EVIDENCE = 5;
 
 export interface TrackerHit {
-  tracker: Tracker;
+  /** A full tracker for host matches; cookie matches from the generated list have no hosts. */
+  tracker: CookieTracker;
   /** Up to five request URLs and cookie names, deduplicated. */
   evidence: string[];
 }
@@ -23,8 +24,8 @@ export function findTrackerHits(
   lang: Lang,
 ): TrackerHit[] {
   const requestLabel = say(lang, { en: 'request', de: 'Anfrage' });
-  const hits = new Map<string, { tracker: Tracker; evidence: Set<string> }>();
-  const record = (tracker: Tracker, evidence: string) => {
+  const hits = new Map<string, { tracker: CookieTracker; evidence: Set<string> }>();
+  const record = (tracker: CookieTracker, evidence: string) => {
     const hit = hits.get(tracker.vendor) ?? { tracker, evidence: new Set<string>() };
     hit.evidence.add(evidence);
     hits.set(tracker.vendor, hit);
@@ -37,9 +38,7 @@ export function findTrackerHits(
     }
   }
   for (const cookie of cookies) {
-    const tracker =
-      findTrackerByCookie(cookie.name) ??
-      findTrackerByUrl(`https://${cookie.domain.replace(/^\./, '')}/`);
+    const tracker = findTrackerByCookie(cookie.name, cookie.domain);
     if (tracker !== undefined) {
       record(tracker, `cookie ${cookie.name} (${cookie.domain})`);
     }

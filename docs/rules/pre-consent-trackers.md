@@ -11,7 +11,10 @@ Each page is loaded in a fresh browser without touching the consent banner. priv
 compares:
 
 - every request URL against the tracker list in [`src/data/trackers.ts`](../../src/data/trackers.ts)
-- every cookie in the jar, by name prefix (e.g. `_ga`, `_fbp`, `_hj`) and by domain
+- every cookie in the jar, by name prefix (e.g. `_ga`, `_fbp`, `_hj`) and by domain, then, if
+  neither matches, by name against the analytics and marketing cookies generated from the
+  [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database)
+  ([`src/data/open-cookie-database.ts`](../../src/data/open-cookie-database.ts))
 
 Findings are grouped by vendor, with up to five pieces of evidence each.
 

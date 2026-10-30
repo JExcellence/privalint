@@ -22,6 +22,13 @@ All notable changes are listed here. The format follows
   imprint and the GDPR in Hungarian form. Hungarian banner buttons ("Elfogadom", "Elutasítom",
   "Csak a szükségesek"), settings links ("Süti beállítások"), "Impresszum" and
   "Adatkezelési tájékoztató" are recognised. Reports stay in English or German
+- Cookies the hand-maintained tracker list doesn't know are looked up in about 1,000 analytics
+  and marketing cookies from the [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database)
+  (Apache-2.0, credited in the new `NOTICE` file). The data matches cookie names only, never
+  request hosts; wildcard entries match as prefixes, all others exactly. Names shorter than four
+  characters, generic names such as `session` or `visitor` and cookies that store a consent or
+  opt-out choice are left out. Entries in `src/data/trackers.ts` still win, by cookie name and by
+  the cookie's domain. `npm run cookies:build` regenerates the list (#39)
 
 ### Changed
 
