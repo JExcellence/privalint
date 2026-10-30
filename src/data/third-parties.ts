@@ -36,7 +36,9 @@ export const embeds: readonly ThirdParty[] = [
   // Chat and review widgets, hosts checked 2026-10-29; sources in docs/rules/third-party-embeds.md.
   { vendor: 'Intercom', domains: ['widget.intercom.io'] },
   { vendor: 'Tawk.to', domains: ['embed.tawk.to'] },
-  { vendor: 'Zendesk Web Widget', domains: ['static.zdassets.com'] },
+  // static.zdassets.com also serves help centre themes, so only the widget's /ekr/ path counts.
+  { vendor: 'Zendesk Web Widget', domains: ['static.zdassets.com'], paths: ['/ekr/'] },
+  { vendor: 'Zendesk Web Widget', domains: ['ekr.zdassets.com', 'zopim.com'] },
   { vendor: 'Trustpilot widget', domains: ['widget.trustpilot.com'] },
   { vendor: 'Typeform', domains: ['embed.typeform.com', 'form.typeform.com'] },
 ];
