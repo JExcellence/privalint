@@ -316,7 +316,7 @@ function definitions(version) {
         ...reportOptions,
         // Added within 1.1.0; optional so reports from earlier 1.1.0 scanners stay valid.
         ...(identified ? { sandbox: boolean, concurrency: positive } : {}),
-        ...(settingsAware ? { settingsCheck: boolean } : {}),
+        ...(settingsAware ? { settingsCheck: boolean, region: regionFor(version) } : {}),
       },
       Object.keys(reportOptions),
     ),
@@ -343,6 +343,12 @@ const reportOptions = {
   allowedVendors: array(string),
 };
 
+// 1.3.0 added Hungary.
+const regionFor = (version) =>
+  ['1.0.0', '1.1.0', '1.2.0'].includes(version)
+    ? reportOptions.region
+    : choices('de', 'at', 'ch', 'hu', 'eu');
+
 function reportSchema(version) {
   return {
     ...meta,
@@ -358,7 +364,7 @@ function reportSchema(version) {
         options: ref('options'),
         siteUrl: string,
         lang: choices('en', 'de'),
-        region: choices('de', 'at', 'ch', 'eu'),
+        region: regionFor(version),
         scannedAt: {
           type: 'string',
           pattern: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$',

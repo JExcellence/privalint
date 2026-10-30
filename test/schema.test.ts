@@ -98,6 +98,16 @@ describe('standalone report contracts', () => {
     expect(schemas.get('1.3.0')?.report({ ...broken, schemaVersion: '1.3.0' })).toBe(false);
   });
 
+  it('accepts the Hungary region only from schema 1.3.0 on', async () => {
+    const value = (await fixture('complete')) as ScanResult;
+    const hungarian = { ...value, region: 'hu' } as ScanResult;
+    if (hungarian.options) hungarian.options = { ...hungarian.options, region: 'hu' };
+    const validate = (version: string) =>
+      schemas.get(version)?.report({ ...hungarian, schemaVersion: version });
+    expect(validate('1.3.0')).toBe(true);
+    expect(validate('1.2.0')).toBe(false);
+  });
+
   it('never interprets a legacy or unknown report as valid/current or complete', async () => {
     const legacy = await fixture('legacy');
     expect(identifyReportSchema(legacy)).toEqual({ kind: 'legacy' });

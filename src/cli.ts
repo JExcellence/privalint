@@ -46,7 +46,7 @@ Options
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
       --lang <lang>       Language of the report: en | de (default en)
-      --region <region>   Whose law to cite: de | at | ch | eu (default de)
+      --region <region>   Whose law to cite: de | at | ch | hu | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
       --consent           Enable consent checking even if the JSON config disables it
       --check-settings    Also open the banner's settings, switch everything off and
