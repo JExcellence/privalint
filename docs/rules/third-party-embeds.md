@@ -53,6 +53,9 @@ websites:
 | Zendesk Web Widget | `static.zdassets.com/ekr/`, `ekr.zdassets.com`, `zopim.com` | [Zendesk CSP guide](https://developer.zendesk.com/documentation/zendesk-web-widget-sdks/sdks/web/csp/); help centre themes on `static.zdassets.com/hc/` don't count |
 | Trustpilot         | `widget.trustpilot.com`                                     | Bootstrap script in Trustpilot's WordPress plugin (`trustpilot-reviews` 3.16.0)                                                                                     |
 | Typeform           | `embed.typeform.com`, `form.typeform.com`                   | [`@typeform/embed` README](https://www.npmjs.com/package/@typeform/embed)                                                                                           |
+
+Legal basis:
+
 - Art. 6(1) GDPR
 - § 25 Abs. 1 TDDDG, where the embed stores or reads data on the device
 
