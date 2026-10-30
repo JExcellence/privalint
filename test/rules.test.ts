@@ -137,6 +137,10 @@ describe('additional third-party embeds', () => {
     ['Typeform', 'https://embed.typeform.com/next/embed.js'],
     ['Typeform', 'https://form.typeform.com/to/abc123'],
   ])('recognizes %s as an observed third-party resource', (vendor, url) => {
+    expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
+      { subject: vendor, ruleId: 'third-party-embeds' },
+    ]);
+  });
   it.each(intercomMessengerHosts)(
     'recognizes Intercom Messenger host %s',
     (_host, url) => {
@@ -154,10 +158,6 @@ describe('additional third-party embeds', () => {
       ).toEqual([]);
     },
   );
-    expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
-      { subject: vendor, ruleId: 'third-party-embeds' },
-    ]);
-  });
   it.each([
     'https://hcaptcha.com.evil.invalid/1/api.js',
     'https://challenges.cloudflare.com/something-else',
