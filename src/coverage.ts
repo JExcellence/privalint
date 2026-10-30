@@ -60,9 +60,14 @@ export function assessCoverage(result: ScanResult): CoverageAssessment {
         issues.push({ ...location, ruleId, reason: 'missing-evaluation' });
       } else if (
         evaluation.status === 'skipped' &&
-        ['disabled', 'consent-disabled', 'not-start-page', 'no-consent-needed'].includes(
-          evaluation.reason ?? '',
-        )
+        [
+          'disabled',
+          'consent-disabled',
+          'not-start-page',
+          'no-consent-needed',
+          // Opt-in check; leaving it off is a choice, not a gap in the observation.
+          'settings-check-disabled',
+        ].includes(evaluation.reason ?? '')
       ) {
         continue;
       } else if (

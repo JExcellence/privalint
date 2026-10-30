@@ -33,18 +33,19 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 
 ## What it checks
 
-| Rule                                                           | Severity | What it finds                                                                                                              |
-| -------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.md)   | error    | Analytics, ads and session-replay tools that send requests or set cookies before consent. A bare tag manager is a warning. |
-| [`trackers-after-reject`](docs/rules/trackers-after-reject.md) | error    | Trackers that still load after clicking "reject" on the consent banner and reloading.                                      |
-| [`reject-option`](docs/rules/reject-option.md)                 | warning  | A banner with "accept" but no "reject" on its first layer. Pay-or-OK banners are noted as info.                            |
-| [`consent-settings-link`](docs/rules/consent-settings-link.md) | warning  | No visible link or button to reopen the cookie settings after rejecting.                                                   |
-| [`google-fonts`](docs/rules/google-fonts.md)                   | error    | Fonts fetched from `fonts.googleapis.com` / `fonts.gstatic.com`. Leftover preconnects are a warning.                       |
-| [`adobe-fonts`](docs/rules/adobe-fonts.md)                     | error    | Fonts fetched from Adobe Fonts (`use.typekit.net` / `p.typekit.net`). Leftover preconnects are a warning.                  |
-| [`third-party-embeds`](docs/rules/third-party-embeds.md)       | warning  | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar and social embeds loading before consent.                                 |
-| [`third-party-cdns`](docs/rules/third-party-cdns.md)           | info     | Scripts and styles from jsDelivr, unpkg, cdnjs and other public CDNs.                                                      |
-| [`impressum-link`](docs/rules/impressum-link.md)               | warning  | Pages without a link to an Impressum. A contact link alone is noted as info.                                               |
-| [`privacy-policy-link`](docs/rules/privacy-policy-link.md)     | warning  | Pages without a link to a privacy policy.                                                                                  |
+| Rule                                                               | Severity | What it finds                                                                                                               |
+| ------------------------------------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------- |
+| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.md)       | error    | Analytics, ads and session-replay tools that send requests or set cookies before consent. A bare tag manager is a warning.  |
+| [`trackers-after-reject`](docs/rules/trackers-after-reject.md)     | error    | Trackers that still load after clicking "reject" on the consent banner and reloading.                                       |
+| [`trackers-after-settings`](docs/rules/trackers-after-settings.md) | error    | Opt-in (`--check-settings`): trackers that still load after switching off every category in the banner settings and saving. |
+| [`reject-option`](docs/rules/reject-option.md)                     | warning  | A banner with "accept" but no "reject" on its first layer. Pay-or-OK banners are noted as info.                             |
+| [`consent-settings-link`](docs/rules/consent-settings-link.md)     | warning  | No visible link or button to reopen the cookie settings after rejecting.                                                    |
+| [`google-fonts`](docs/rules/google-fonts.md)                       | error    | Fonts fetched from `fonts.googleapis.com` / `fonts.gstatic.com`. Leftover preconnects are a warning.                        |
+| [`adobe-fonts`](docs/rules/adobe-fonts.md)                         | error    | Fonts fetched from Adobe Fonts (`use.typekit.net` / `p.typekit.net`). Leftover preconnects are a warning.                   |
+| [`third-party-embeds`](docs/rules/third-party-embeds.md)           | warning  | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar and social embeds loading before consent.                                  |
+| [`third-party-cdns`](docs/rules/third-party-cdns.md)               | info     | Scripts and styles from jsDelivr, unpkg, cdnjs and other public CDNs.                                                       |
+| [`impressum-link`](docs/rules/impressum-link.md)                   | warning  | Pages without a link to an Impressum. A contact link alone is noted as info.                                                |
+| [`privacy-policy-link`](docs/rules/privacy-policy-link.md)         | warning  | Pages without a link to a privacy policy.                                                                                   |
 
 Each rule is a small file with tests. Missing a check? See [Contributing](#contributing).
 
@@ -98,7 +99,7 @@ preview URL from your hosting provider's deployment event or action output as `u
 | `fail-on-incomplete` | `false`           | Fail separately for incomplete required observations. |
 | `disable`            |                   | Comma-separated rule ids to skip.                     |
 | `lang`               | `en`              | Language of the report: `en` or `de`.                 |
-| `region`             | `de`              | Whose law to cite: `de`, `at`, `ch`, `eu`.            |
+| `region`             | `de`              | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.      |
 | `sarif-file`         | `privalint.sarif` | Where to write SARIF. Empty to skip.                  |
 | `job-summary`        | `true`            | Add the Markdown report to the job summary.           |
 | `pr-comment`         | `false`           | Create/update a same-repository PR report comment.    |
@@ -135,8 +136,10 @@ privalint <url> [options]
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
       --lang <lang>       Language of the report: en | de (default en)
-      --region <region>   Whose law to cite: de | at | ch | eu (default de)
+      --region <region>   Whose law to cite: de | at | ch | hu | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
+      --check-settings    Also open the banner's settings, switch everything off and
+                          save, then check what still loads (loads the start page again)
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
       --sandbox           Run Chromium with its sandbox (recommended for untrusted
@@ -164,6 +167,7 @@ which law applies to a website, and findings are not legal determinations:
 | `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                               | none                                                                             |
 | `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                 | none                                                                             |
 | `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce) | `pre-consent-trackers`, `third-party-embeds` and `impressum-link` drop one level |
+| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                          | none                                                                             |
 | `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC           | none                                                                             |
 
 Every finding lists its legal basis for the chosen country. Trackers that run after an explicit
@@ -259,7 +263,6 @@ Going further:
 
 ## Roadmap
 
-- Test the settings layer of banners, not only "reject" ([#38](https://github.com/jexcellence/privalint/issues/38))
 - Don't count banner rules as incomplete when a site needs no banner ([#35](https://github.com/jexcellence/privalint/issues/35))
 - Cookie trackers generated from the Apache-licensed
   [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database) ([#39](https://github.com/jexcellence/privalint/issues/39))

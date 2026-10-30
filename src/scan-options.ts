@@ -21,6 +21,11 @@ export interface ScanOptions {
   /** Legacy test helper: third-party requests receive synthetic empty responses. */
   offline?: boolean;
   consentCheck?: boolean | undefined;
+  /**
+   * Also open the banner's settings layer, switch off every optional category and save, in a
+   * second capture of the start page. Off by default: it loads the start page once more.
+   */
+  settingsCheck?: boolean | undefined;
   headed?: boolean | undefined;
   channel?: string | undefined;
   /**

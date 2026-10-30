@@ -1,7 +1,14 @@
 import type { Lang } from './i18n.js';
 import { observedRequests } from './observations.js';
 import { defaultRules } from './rules/index.js';
-import type { Finding, ObservationKind, PageSnapshot, Rule, RuleEvaluation } from './types.js';
+import type {
+  ConsentObservation,
+  Finding,
+  ObservationKind,
+  PageSnapshot,
+  Rule,
+  RuleEvaluation,
+} from './types.js';
 import { isFirstParty } from './url.js';
 
 /**
@@ -21,6 +28,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'reject-option': ['consent'],
   'trackers-after-reject': ['after-reject'],
   'consent-settings-link': ['after-reject'],
+  'trackers-after-settings': ['after-settings'],
 };
 
 export function assessPage(
@@ -31,6 +39,7 @@ export function assessPage(
   isStart: boolean,
   consentEnabled: boolean,
   catalog: readonly Rule[] = rules,
+  settingsEnabled = false,
 ): { findings: Finding[]; evaluations: RuleEvaluation[] } {
   const findings: Finding[] = [];
   const allRules = new Map([...defaultRules, ...catalog].map((rule) => [rule.id, rule]));
@@ -48,27 +57,20 @@ export function assessPage(
     consent:
       validPage && page.consent?.bannerFound === true && page.consent.acceptLabel !== undefined,
     'after-reject': validPage && page.consent?.rejected === true,
+    'after-settings': validPage && page.consent?.settings?.afterSave !== undefined,
   };
   const input: PageSnapshot = {
     ...page,
     requests: observedRequests(page.requests),
     // A preconnect hint is not evidence of an actual connection in an offline adapter context.
     resourceHints: complete ? page.resourceHints : [],
-    ...(page.consent?.afterReject === undefined
-      ? {}
-      : {
-          consent: {
-            ...page.consent,
-            afterReject: {
-              ...page.consent.afterReject,
-              requests: observedRequests(page.consent.afterReject.requests),
-            },
-          },
-        }),
+    ...(page.consent === undefined ? {} : { consent: observedConsent(page.consent) }),
   };
   const requirementsOf = (rule: Rule) => rule.requires ?? REQUIREMENTS[rule.id] ?? ['document'];
   const needsConsent = (rule: Rule) =>
-    requirementsOf(rule).some((kind) => kind === 'consent' || kind === 'after-reject');
+    requirementsOf(rule).some(
+      (kind) => kind === 'consent' || kind === 'after-reject' || kind === 'after-settings',
+    );
   const detectedBy = new Map<string, Finding[]>();
   const evaluate = (rule: Rule, noConsentNeeded: boolean): RuleEvaluation => {
     const requirements = requirementsOf(rule);
@@ -95,6 +97,17 @@ export function assessPage(
         findingCount: 0,
       };
     }
+    if (requirements.includes('after-settings') && !settingsEnabled) {
+      return {
+        ruleId: rule.id,
+        status: 'skipped',
+        reason: 'settings-check-disabled',
+        partial: false,
+        outcome: 'not-evaluable',
+        explanation: 'settings-check-disabled',
+        findingCount: 0,
+      };
+    }
     if (noConsentNeeded && !requirements.every((kind) => available[kind])) {
       return {
         ruleId: rule.id,
@@ -113,19 +126,23 @@ export function assessPage(
         reason: 'missing-observation',
         partial: true,
         outcome: 'not-evaluable',
-        explanation: requirements.includes('after-reject')
-          ? (page.consent?.reason ?? 'missing-reject-observation')
-          : requirements.includes('consent')
-            ? (page.consent?.reason ?? 'missing-consent-observation')
-            : 'incomplete-document',
+        explanation: requirements.includes('after-settings')
+          ? (page.consent?.settings?.reason ?? 'missing-settings-observation')
+          : requirements.includes('after-reject')
+            ? (page.consent?.reason ?? 'missing-reject-observation')
+            : requirements.includes('consent')
+              ? (page.consent?.reason ?? 'missing-consent-observation')
+              : 'incomplete-document',
         findingCount: 0,
       };
     }
     const detected = rule.check({ page: input, siteUrl, lang });
     detectedBy.set(rule.id, detected);
-    const partial = requirements.includes('after-reject')
-      ? page.consent?.afterRejectComplete === false
-      : !complete;
+    const partial = requirements.includes('after-settings')
+      ? page.consent?.settings?.afterSaveComplete === false
+      : requirements.includes('after-reject')
+        ? page.consent?.afterRejectComplete === false
+        : !complete;
     return {
       ruleId: rule.id,
       status: 'executed',
@@ -175,5 +192,27 @@ export function assessPage(
       ...evaluation,
       ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
     })),
+  };
+}
+
+/** Keeps only requests that got a response, in both after-choice windows. */
+function observedConsent(consent: ConsentObservation): ConsentObservation {
+  const { afterReject, settings } = consent;
+  return {
+    ...consent,
+    ...(afterReject === undefined
+      ? {}
+      : { afterReject: { ...afterReject, requests: observedRequests(afterReject.requests) } }),
+    ...(settings?.afterSave === undefined
+      ? {}
+      : {
+          settings: {
+            ...settings,
+            afterSave: {
+              ...settings.afterSave,
+              requests: observedRequests(settings.afterSave.requests),
+            },
+          },
+        }),
   };
 }

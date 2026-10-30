@@ -4,8 +4,12 @@
 
 ## Versionierte Validierung
 
-Neue Scans verwenden Schema **1.2.0**; 1.0.0 und 1.1.0 bleiben für frühere versionierte Berichte
-verfügbar. 1.2.0 ergänzt den Grund `cancelled-by-page`, den ein 1.1.0-Validator ablehnen würde.
+Neue Scans verwenden Schema **1.3.0**; 1.0.0, 1.1.0 und 1.2.0 bleiben für frühere versionierte
+Berichte verfügbar. 1.2.0 ergänzt den Grund `cancelled-by-page`, den ein 1.1.0-Validator ablehnen
+würde. 1.3.0 ergänzt die optionale Prüfung der Einstellungsebene: `consent.settings`,
+`options.settingsCheck`, die Beobachtungsart `after-settings`, den Grund
+`settings-check-disabled` mit den zugehörigen Erklärungen sowie die Region `hu`, die ein
+1.2.0-Validator alle ablehnen würde.
 Paket-/Scanner-Version und Schemaversion sind unabhängig. Ohne `schemaVersion` ist ein Bericht
 Legacy; unbekannte Versionen müssen ausdrücklich unterstützt werden. Alte Daten bekommen nicht
 einfach eine neue Version zugewiesen, damit sie validieren.
@@ -15,9 +19,11 @@ Das npm-Paket enthält eigenständige JSON-Schema-2020-12-Dateien:
 - `privalint/schemas/report-1.0.0.schema.json`
 - `privalint/schemas/report-1.1.0.schema.json`
 - `privalint/schemas/report-1.2.0.schema.json`
+- `privalint/schemas/report-1.3.0.schema.json`
 - `privalint/schemas/sarif-properties-1.0.0.schema.json`
 - `privalint/schemas/sarif-properties-1.1.0.schema.json`
 - `privalint/schemas/sarif-properties-1.2.0.schema.json`
+- `privalint/schemas/sarif-properties-1.3.0.schema.json`
 
 Die SARIF-Schemas prüfen `runs[].properties`, nicht den vollständigen SARIF-Standard. Pflichtfelder,
 Typen, Ergebnisse und Widersprüche wie negativer Erfolg mit `partial: true` werden geprüft.

@@ -28,7 +28,7 @@ inputs:
     description: Language of the report and the job summary. One of en, de.
     default: en
   region:
-    description: Tool reference and severity profile, not a determination of applicable law. One of de, at, ch, eu.
+    description: Tool reference and severity profile, not a determination of applicable law. One of de, at, ch, hu, eu.
     default: de
   sarif-file:
     description: Where to write the SARIF report, relative to the workspace. Empty to skip.

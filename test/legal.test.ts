@@ -28,6 +28,10 @@ describe('legal references', () => {
     expect(applyRegion([finding('impressum-link')], 'ch')[0]?.references).toEqual([
       'Art. 3 Abs. 1 lit. s UWG',
     ]);
+    expect(applyRegion([finding('impressum-link')], 'hu')[0]?.references).toEqual(['Ekertv. 4. §']);
+    expect(applyRegion([finding('pre-consent-trackers')], 'hu')[0]?.references).toContain(
+      'Eht. 155. § (4)',
+    );
   });
 
   it('leave findings of custom rules alone', () => {
@@ -40,8 +44,8 @@ describe('severity per country', () => {
   const severity = (ruleId: string, region: (typeof REGIONS)[number], start: Finding['severity']) =>
     applyRegion([finding(ruleId, start)], region)[0]?.severity;
 
-  it('keeps the rule defaults in Germany, Austria and the EU', () => {
-    for (const region of ['de', 'at', 'eu'] as const) {
+  it('keeps the rule defaults in Germany, Austria, Hungary and the EU', () => {
+    for (const region of ['de', 'at', 'hu', 'eu'] as const) {
       expect(severity('pre-consent-trackers', region, 'error')).toBe('error');
     }
   });

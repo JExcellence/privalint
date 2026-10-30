@@ -1,11 +1,20 @@
-import type { BrowserContext, Locator, Page } from 'playwright';
+import type { BrowserContext, Frame, Locator, Page } from 'playwright';
 import { classifyLoadError } from './diagnostics.js';
-import type { ConsentObservation, RecordedCookie, RecordedRequest } from './types.js';
+import type {
+  ConsentObservation,
+  RecordedCookie,
+  RecordedRequest,
+  SettingsObservation,
+} from './types.js';
 
 interface CmpSelectors {
   name: string;
   accept: string;
   reject: string;
+  /** Opens the settings layer from the first layer. */
+  settings?: string;
+  /** Saves the current selection in the settings layer. */
+  save?: string;
 }
 
 /**
@@ -19,16 +28,22 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
     accept:
       '#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll, #CybotCookiebotDialogBodyButtonAccept',
     reject: '#CybotCookiebotDialogBodyButtonDecline',
+    settings: '#CybotCookiebotDialogBodyLevelButtonCustomize',
+    save: '#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowallSelection',
   },
   {
     name: 'OneTrust',
     accept: '#onetrust-accept-btn-handler',
     reject: '#onetrust-reject-all-handler',
+    settings: '#onetrust-pc-btn-handler',
+    save: '.save-preference-btn-handler',
   },
   {
     name: 'Usercentrics',
     accept: '[data-testid="uc-accept-all-button"]',
     reject: '[data-testid="uc-deny-all-button"]',
+    settings: '[data-testid="uc-more-button"]',
+    save: '[data-testid="uc-save-button"]',
   },
   {
     name: 'Borlabs Cookie',
@@ -39,8 +54,16 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
     name: 'Complianz',
     accept: '.cmplz-cookiebanner .cmplz-accept',
     reject: '.cmplz-cookiebanner .cmplz-deny',
+    settings: '.cmplz-cookiebanner .cmplz-view-preferences',
+    save: '.cmplz-cookiebanner .cmplz-save-preferences',
   },
-  { name: 'CookieYes', accept: '.cky-btn-accept', reject: '.cky-btn-reject' },
+  {
+    name: 'CookieYes',
+    accept: '.cky-btn-accept',
+    reject: '.cky-btn-reject',
+    settings: '.cky-btn-customize',
+    save: '.cky-btn-preferences',
+  },
   {
     name: 'Didomi',
     accept: '#didomi-notice-agree-button',
@@ -53,6 +76,8 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
     name: 'CookieConsent',
     accept: '#cc-main [data-role="all"]',
     reject: '#cc-main [data-role="necessary"]',
+    settings: '#cc-main [data-role="show"]',
+    save: '#cc-main [data-role="save"]',
   },
   {
     name: 'CookieFirst',
@@ -97,16 +122,17 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
 // Unanchored on purpose: "Alle Cookies akzeptieren" and "Accept all cookies" must both match.
 // Labels that also match REJECT_LABEL ("Nur notwendige akzeptieren") are never treated as accept.
 const ACCEPT_LABEL =
-  /akzeptieren|annehmen|zustimmen|einwilligen|einverstanden|alles? (cookies )?(zulassen|erlauben)|\baccept|\ballow all|\bagree\b|accepter|aceptar|accetta|accepteren|alles toestaan/i;
+  /akzeptieren|annehmen|zustimmen|einwilligen|einverstanden|alles? (cookies )?(zulassen|erlauben)|\baccept|\ballow all|\bagree\b|accepter|aceptar|accetta|accepteren|alles toestaan|elfogad/i;
 
 const REJECT_LABEL =
-  /ablehnen|verweigern|nur (technisch )?(notwendige|essenzielle|erforderliche)|\breject|\bdecline|\bdeny\b|\brefuse|(only|use) (strictly )?(necessary|essential|required)|refuser|continuer sans accepter|rechazar|rifiuta|weigeren|alleen noodzakelijke/i;
+  /ablehnen|verweigern|nur (technisch )?(notwendige|essenzielle|erforderliche)|\breject|\bdecline|\bdeny\b|\brefuse|(only|use) (strictly )?(necessary|essential|required)|refuser|continuer sans accepter|rechazar|rifiuta|weigeren|alleen noodzakelijke|elutasít|csak a (feltétlenül )?szükséges/i;
 
 /** Second option on "pay or OK" banners: accept tracking or take out a subscription. */
 const SUBSCRIBE = /abonn|\babo\b|subscri|werbefrei|ohne werbung|ad-free|without ads|\bpur\b/i;
 
 /** A frame without any of these words is not showing a consent banner. */
-const CONSENT_CONTEXT = /cookie|consent|einwillig|tracking|datenschutz|privacy/i;
+const CONSENT_CONTEXT =
+  /cookie|consent|einwillig|tracking|datenschutz|privacy|süti|hozzájárul|adatvédel/i;
 
 const CLICKABLE = 'button, [role="button"], a, input[type="button"], input[type="submit"]';
 
@@ -139,7 +165,18 @@ const REOPEN_CONTROLS = [
 
 // Word boundaries keep nav links like "Consent management platform" from matching.
 const SETTINGS_LABEL =
-  /(cookie|consent|datenschutz|privatsphäre|privacy|tracking)[-\s]?(einstellungen|settings|preferences|präferenzen|optionen|options)\b|(einwilligung|zustimmung|consent)(en)?\s+(widerrufen|ändern|verwalten|anpassen|bearbeiten|withdraw|manage|change)\b|cookies?\s+(verwalten|anpassen|ändern|manage)\b|manage\s+(cookies|consent|privacy)\b|withdraw\s+(my\s+)?consent\b|paramètres des cookies|gérer (les )?cookies/i;
+  /(cookie|consent|datenschutz|privatsphäre|privacy|tracking)[-\s]?(einstellungen|settings|preferences|präferenzen|optionen|options)\b|(einwilligung|zustimmung|consent)(en)?\s+(widerrufen|ändern|verwalten|anpassen|bearbeiten|withdraw|manage|change)\b|cookies?\s+(verwalten|anpassen|ändern|manage)\b|manage\s+(cookies|consent|privacy)\b|withdraw\s+(my\s+)?consent\b|paramètres des cookies|gérer (les )?cookies|süti[-\s]?beállítás|adatvédelmi beállítás|hozzájárulás (visszavonása|módosítása|kezelése)/i;
+
+/** Opens the second layer from the first: "Einstellungen", "Customize", "More options". */
+const OPEN_SETTINGS_LABEL =
+  /einstellungen|anpassen|individuell|optionen|details|customi[sz]e|settings|preferences|options|paramètres|personnaliser|configurar|preferenze|impostazioni|instellingen|voorkeuren|beállítás|testreszab|további lehetőségek|részletek/i;
+
+/** Saves the selection in the second layer. "Alle akzeptieren" never counts, see isAcceptAll. */
+const SAVE_LABEL =
+  /speichern|bestätigen|übernehmen|auswahl (akzeptieren|erlauben|zulassen)|\bsave\b|confirm|(accept|allow) selection|enregistrer|guardar|salva|opslaan|mentés|megerősít|kiválasztottak (engedélyezése|elfogadása)/i;
+
+// No \b around the Hungarian words: \b only knows ASCII letters, so it fails next to "ö".
+const ALL_WORD = /\b(alle|alles|all|tout|tous|todo|todas|tutti|tutto)\b|összes|minden|mindet/i;
 
 export interface ConsentCheckOptions {
   settleMs: number;
@@ -223,6 +260,214 @@ export async function observeConsent(
       error: classifyLoadError(error),
     };
   }
+}
+
+/**
+ * Opens the settings layer of the consent banner, switches off every optional category, saves,
+ * reloads the page and records what still gets loaded. Use a fresh browser context: a choice
+ * stored by an earlier reject would hide the banner. Returns undefined when there is no banner.
+ */
+export async function observeSettings(
+  page: Page,
+  context: BrowserContext,
+  requests: RecordedRequest[],
+  options: ConsentCheckOptions,
+): Promise<SettingsObservation | undefined> {
+  if (options.signal?.aborted) throw new DOMException('Settings check aborted', 'AbortError');
+  const entry = await findSettingsEntry(page);
+  if (entry === undefined) return undefined;
+  if (entry.open === undefined) {
+    return { outcome: 'no-settings-control', reason: 'no-settings-control' };
+  }
+  const timeout = Math.min(5_000, options.timeoutMs);
+  try {
+    const openLabel = await label(entry.open);
+    await entry.open.click({ timeout });
+    // Layers slide or fade in; a short wait is enough, a full settle is not needed here.
+    await page.waitForTimeout(Math.min(1_000, options.settleMs));
+    let switchedOff = 0;
+    for (const frame of page.frames()) {
+      switchedOff += await switchOffOptional(frame);
+    }
+    const save = await findSaveControl(page, entry.cmp);
+    if (save === undefined) {
+      return { outcome: 'no-save-control', reason: 'no-save-control', openLabel, switchedOff };
+    }
+    const saveLabel = await label(save);
+    const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
+    const firstRequest = requests.length;
+
+    options.onReject?.();
+    await save.click({ timeout });
+    await settle(page, options);
+    const response = await page.reload({ waitUntil: 'load', timeout: options.timeoutMs });
+    if (response === null || response.status() >= 400) throw new Error('HTTP reload failed');
+    await settle(page, options);
+
+    const cookies: RecordedCookie[] = (await context.cookies())
+      .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
+      .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    return {
+      outcome: 'saved',
+      reason: 'settings-saved-and-reloaded',
+      openLabel,
+      saveLabel,
+      switchedOff,
+      afterSave: { requests: requests.slice(firstRequest), cookies },
+    };
+  } catch (error) {
+    return {
+      outcome: 'interaction-failed',
+      reason: 'browser-interaction-failed',
+      error: classifyLoadError(error),
+    };
+  }
+}
+
+interface SettingsEntry {
+  cmp?: CmpSelectors;
+  open?: Locator;
+}
+
+/**
+ * Finds the banner and the control on it that opens the settings layer. Known consent managers go
+ * by selector; otherwise the label closest to the banner's accept button wins, so a "Cookie
+ * settings" link in the footer is not mistaken for the banner's own.
+ */
+async function findSettingsEntry(page: Page): Promise<SettingsEntry | undefined> {
+  for (const frame of page.frames()) {
+    for (const cmp of KNOWN_CMPS) {
+      if ((await firstVisible(frame.locator(cmp.accept))) === undefined) continue;
+      const open = cmp.settings ? await firstVisible(frame.locator(cmp.settings)) : undefined;
+      if (open !== undefined) return { cmp, open };
+      // Selector missing or outdated: try the labels in this frame before giving up.
+      return { cmp, ...(await nearestOpenControl(frame)) };
+    }
+  }
+  for (const frame of page.frames()) {
+    const text = await frame
+      .locator('body')
+      .innerText({ timeout: 2_000 })
+      .catch(() => '');
+    if (!CONSENT_CONTEXT.test(text)) continue;
+    const found = await nearestOpenControl(frame);
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+/** Undefined without an accept button; `{}` when there is one but nothing opens settings. */
+async function nearestOpenControl(frame: Frame): Promise<SettingsEntry | undefined> {
+  const clickable = frame.locator(CLICKABLE);
+  const accept = await firstVisible(
+    clickable.filter({ hasText: ACCEPT_LABEL }).filter({ hasNotText: REJECT_LABEL }),
+  );
+  if (accept === undefined) return undefined;
+  const handle = await accept.elementHandle({ timeout: 1_000 }).catch(() => null);
+  if (handle === null) return {};
+  const index = await clickable
+    .evaluateAll(
+      (elements, [acceptElement, open, accepting, rejecting]) => {
+        const patterns = [open, accepting, rejecting].map((source) => new RegExp(source, 'i'));
+        const [isOpen, isAccept, isReject] = patterns as [RegExp, RegExp, RegExp];
+        const depth = (node: Node | null) => {
+          let levels = 0;
+          for (let current = node; current !== null; current = current.parentNode) levels++;
+          return levels;
+        };
+        let best = -1;
+        let bestDepth = 0;
+        (elements as HTMLElement[]).forEach((element, position) => {
+          const name = element.innerText ?? '';
+          if (!isOpen.test(name) || isAccept.test(name) || isReject.test(name)) return;
+          if (element.getClientRects().length === 0) return;
+          // Depth of the deepest element containing both: higher means closer to the banner.
+          let shared: Node | null = element;
+          while (shared !== null && !shared.contains(acceptElement as Node)) {
+            shared = shared.parentNode;
+          }
+          const sharedDepth = depth(shared);
+          if (shared !== document.body && sharedDepth > bestDepth) {
+            best = position;
+            bestDepth = sharedDepth;
+          }
+        });
+        return best;
+      },
+      [handle, OPEN_SETTINGS_LABEL.source, ACCEPT_LABEL.source, REJECT_LABEL.source] as const,
+    )
+    .catch(() => -1);
+  await handle.dispose();
+  return index < 0 ? {} : { open: clickable.nth(index) };
+}
+
+async function findSaveControl(page: Page, cmp?: CmpSelectors): Promise<Locator | undefined> {
+  for (const frame of page.frames()) {
+    if (cmp?.save !== undefined) {
+      const known = await firstVisible(frame.locator(cmp.save));
+      if (known !== undefined) return known;
+    }
+  }
+  for (const frame of page.frames()) {
+    const candidates = frame
+      .locator(CLICKABLE)
+      .filter({ hasText: SAVE_LABEL })
+      .filter({ hasNotText: REJECT_LABEL });
+    const count = Math.min(await candidates.count().catch(() => 0), 10);
+    for (let index = 0; index < count; index++) {
+      const candidate = candidates.nth(index);
+      if (!(await candidate.isVisible().catch(() => false))) continue;
+      if (!isAcceptAll(await label(candidate))) return candidate;
+    }
+  }
+  return undefined;
+}
+
+/** "Alle akzeptieren" saves too, but it is the opposite of what the settings check tests. */
+function isAcceptAll(text: string): boolean {
+  return ACCEPT_LABEL.test(text) && ALL_WORD.test(text);
+}
+
+/**
+ * Switches off every optional consent category shown in the frame and returns how many it
+ * changed. Runs after the settings layer opened; the caller saves afterwards.
+ */
+async function switchOffOptional(frame: Frame): Promise<number> {
+  // Disabled controls are the "necessary" category; they stay on.
+  const handles = await frame
+    .locator(
+      'input[type="checkbox"]:checked:not(:disabled), ' +
+        '[role="switch"][aria-checked="true"]:not([aria-disabled="true"])',
+    )
+    .elementHandles()
+    .catch(() => []);
+  let changed = 0;
+  for (const handle of handles.slice(0, 50)) {
+    // Styled toggles hide the input itself, so a visible label counts too. Collapsed vendor
+    // lists stay as they are: switching off their category covers them.
+    const shown = await handle
+      .evaluate((node) => {
+        const element = node as Element;
+        const target = element.closest('label') ?? element;
+        return (
+          [element, target].some((candidate) => candidate.getClientRects().length > 0) &&
+          getComputedStyle(target).visibility !== 'hidden'
+        );
+      })
+      .catch(() => false);
+    // A real click, not `.checked = false`: consent managers listen for click and change events.
+    if (shown) await handle.click({ force: true, timeout: 2_000 }).catch(() => undefined);
+    const off = await handle
+      .evaluate((element) =>
+        element instanceof HTMLInputElement
+          ? !element.checked
+          : (element as Element).getAttribute('aria-checked') !== 'true',
+      )
+      .catch(() => false);
+    if (off) changed++;
+    await handle.dispose();
+  }
+  return changed;
 }
 
 interface Banner {

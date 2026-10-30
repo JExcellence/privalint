@@ -27,6 +27,14 @@ const EXPLANATIONS = [
   // Added within 1.1.0; see definitions().
   'no-consent-needed',
 ];
+// Added in 1.3.0 with the opt-in settings-layer check.
+const SETTINGS_EXPLANATIONS = [
+  'settings-check-disabled',
+  'missing-settings-observation',
+  'no-settings-control',
+  'no-save-control',
+  'settings-saved-and-reloaded',
+];
 const explanation = choices(
   'disabled',
   'not-start-page',
@@ -48,6 +56,10 @@ const meta = { $schema: 'https://json-schema.org/draft/2020-12/schema' };
 function definitions(version) {
   // 1.1.0 added scan and page IDs; every later version keeps them.
   const identified = version !== '1.0.0';
+  // 1.3.0 added the settings-layer check.
+  const settingsAware = !['1.0.0', '1.1.0', '1.2.0'].includes(version);
+  const observationKinds = ['document', 'network', 'consent', 'after-reject'];
+  if (settingsAware) observationKinds.push('after-settings');
   const pageIdentity = identified ? { pageId: uuid } : {};
   return {
     diagnostic: object(
@@ -144,11 +156,19 @@ function definitions(version) {
             'not-start-page',
             'missing-observation',
             ...(identified ? EXPLANATIONS : []),
+            ...(settingsAware ? ['settings-check-disabled'] : []),
           ),
           partial: boolean,
           outcome: choices('checked-no-finding', 'finding-detected', 'not-evaluable'),
           explanation: identified
-            ? { ...explanation, enum: [...explanation.enum, ...EXPLANATIONS] }
+            ? {
+                ...explanation,
+                enum: [
+                  ...explanation.enum,
+                  ...EXPLANATIONS,
+                  ...(settingsAware ? SETTINGS_EXPLANATIONS : []),
+                ],
+              }
             : explanation,
           findingCount: count,
         },
@@ -243,6 +263,32 @@ function definitions(version) {
         ...(identified
           ? { settingsControl: object({ found: boolean, label: string }, ['found']) }
           : {}),
+        ...(settingsAware
+          ? {
+              settings: object(
+                {
+                  outcome: choices(
+                    'no-settings-control',
+                    'no-save-control',
+                    'interaction-failed',
+                    'saved',
+                  ),
+                  reason: choices(
+                    'no-settings-control',
+                    'no-save-control',
+                    'browser-interaction-failed',
+                    'settings-saved-and-reloaded',
+                  ),
+                  openLabel: string,
+                  saveLabel: string,
+                  switchedOff: count,
+                  afterSaveComplete: boolean,
+                  error: string,
+                },
+                ['outcome', 'reason'],
+              ),
+            }
+          : {}),
         error: string,
       },
       ['bannerFound', 'rejected', 'state', 'outcome', 'reason'],
@@ -253,7 +299,7 @@ function definitions(version) {
         title: string,
         description: string,
         references: array(string),
-        requires: array(choices('document', 'network', 'consent', 'after-reject')),
+        requires: array(choices(...observationKinds)),
       },
       ['id', 'title', 'description', 'references'],
     ),
@@ -270,6 +316,7 @@ function definitions(version) {
         ...reportOptions,
         // Added within 1.1.0; optional so reports from earlier 1.1.0 scanners stay valid.
         ...(identified ? { sandbox: boolean, concurrency: positive } : {}),
+        ...(settingsAware ? { settingsCheck: boolean, region: regionFor(version) } : {}),
       },
       Object.keys(reportOptions),
     ),
@@ -296,6 +343,12 @@ const reportOptions = {
   allowedVendors: array(string),
 };
 
+// 1.3.0 added Hungary.
+const regionFor = (version) =>
+  ['1.0.0', '1.1.0', '1.2.0'].includes(version)
+    ? reportOptions.region
+    : choices('de', 'at', 'ch', 'hu', 'eu');
+
 function reportSchema(version) {
   return {
     ...meta,
@@ -311,7 +364,7 @@ function reportSchema(version) {
         options: ref('options'),
         siteUrl: string,
         lang: choices('en', 'de'),
-        region: choices('de', 'at', 'ch', 'eu'),
+        region: regionFor(version),
         scannedAt: {
           type: 'string',
           pattern: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$',
@@ -381,7 +434,7 @@ function sarifPropertiesSchema(version) {
 
 const directory = new URL('../schemas/', import.meta.url);
 await mkdir(directory, { recursive: true });
-for (const version of ['1.0.0', '1.1.0', '1.2.0']) {
+for (const version of ['1.0.0', '1.1.0', '1.2.0', '1.3.0']) {
   for (const [name, schema] of [
     ['report', reportSchema(version)],
     ['sarif-properties', sarifPropertiesSchema(version)],

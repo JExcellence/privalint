@@ -10,7 +10,7 @@ const ID = 'impressum-link';
  * behind an icon-only link is still found.
  */
 const LEGAL_NOTICE =
-  /impressum|imprint|legal[\s_-]?notice|site[\s_-]?notice|anbieterkennzeichnung|mentions[\s_-]?l[eé]gales|aviso[\s_-]?legal|note[\s_-]?legali|colofon|informacje[\s_-]?prawne/i;
+  /impressum|imprint|legal[\s_-]?notice|site[\s_-]?notice|anbieterkennzeichnung|mentions[\s_-]?l[eé]gales|aviso[\s_-]?legal|note[\s_-]?legali|colofon|informacje[\s_-]?prawne|impresszum/i;
 
 const CONTACT = /kontakt|contact/i;
 

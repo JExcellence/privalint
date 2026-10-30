@@ -46,9 +46,11 @@ Options
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
       --lang <lang>       Language of the report: en | de (default en)
-      --region <region>   Whose law to cite: de | at | ch | eu (default de)
+      --region <region>   Whose law to cite: de | at | ch | hu | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
       --consent           Enable consent checking even if the JSON config disables it
+      --check-settings    Also open the banner's settings, switch everything off and
+                          save, then check what still loads (loads the start page again)
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
       --sandbox           Run Chromium with its sandbox (recommended for untrusted
@@ -91,6 +93,7 @@ async function main(argv: string[]): Promise<number> {
       region: { type: 'string' },
       'skip-consent': { type: 'boolean' },
       consent: { type: 'boolean' },
+      'check-settings': { type: 'boolean' },
       headed: { type: 'boolean' },
       channel: { type: 'string' },
       sandbox: { type: 'boolean' },
@@ -147,6 +150,7 @@ async function main(argv: string[]): Promise<number> {
         : values['skip-consent'] === true
           ? false
           : (config.consentCheck ?? true),
+    settingsCheck: values['check-settings'] === true || config.settingsCheck === true,
     headed: values.headed === true,
     channel:
       values.channel === undefined ? undefined : oneOf(values.channel, CHANNELS, '--channel'),

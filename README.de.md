@@ -26,12 +26,13 @@ npx privalint https://ihre-seite.de --lang de
 Mit `--region` wählen Sie das Referenz- und Einstufungsprofil des Tools. Das Profil bestimmt
 nicht, welches Recht für eine Website anwendbar ist. Befunde sind keine rechtliche Beurteilung.
 
-| Region                      | Cookies und Tracking                      | Impressum                                       | Besonderheit                                          |
-| --------------------------- | ----------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
-| `de` (Standard)             | Opt-in, § 25 TDDDG                        | § 5 DDG                                         | –                                                     |
-| [`at`](docs/rules/at.de.md) | Opt-in, § 165 Abs. 3 TKG 2021             | § 5 ECG, § 25 MedienG                           | –                                                     |
-| [`ch`](docs/rules/ch.de.md) | Opt-out, Art. 45c FMG                     | Art. 3 Abs. 1 lit. s UWG (bei Online-Angeboten) | Tracker, Einbindungen und Impressum eine Stufe milder |
-| [`eu`](docs/rules/eu.de.md) | Opt-in, Art. 5 Abs. 3 ePrivacy-Richtlinie | Art. 5 E-Commerce-Richtlinie                    | –                                                     |
+| Region          | Cookies und Tracking                      | Impressum                                       | Besonderheit                                          |
+| --------------- | ----------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
+| `de` (Standard) | Opt-in, § 25 TDDDG                        | § 5 DDG                                         | –                                                     |
+| `at`            | Opt-in, § 165 Abs. 3 TKG 2021             | § 5 ECG, § 25 MedienG                           | –                                                     |
+| `ch`            | Opt-out, Art. 45c FMG                     | Art. 3 Abs. 1 lit. s UWG (bei Online-Angeboten) | Tracker, Einbindungen und Impressum eine Stufe milder |
+| `hu`            | Opt-in, Eht. 155. § (4)                   | Ekertv. 4. §                                    | –                                                     |
+| `eu`            | Opt-in, Art. 5 Abs. 3 ePrivacy-Richtlinie | Art. 5 E-Commerce-Richtlinie                    | –                                                     |
 
 Tracker, die nach einem ausdrücklichen „Ablehnen“ weiterlaufen, bleiben überall ein Fehler, auch in
 der Schweiz (Art. 30 Abs. 2 lit. b DSG). Richtet sich eine Schweizer Website auch an Besucher aus
@@ -43,18 +44,19 @@ npx privalint https://ihre-seite.at --region at --lang de --max-pages 20
 
 ## Was geprüft wird
 
-| Regel                                                             | Was sie findet                                                                                          |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.de.md)   | Analyse-, Werbe- und Session-Replay-Tools, die vor der Einwilligung Anfragen senden oder Cookies setzen |
-| [`trackers-after-reject`](docs/rules/trackers-after-reject.de.md) | Tracker, die nach Klick auf „Ablehnen“ und Neuladen weiterlaufen                                        |
-| [`reject-option`](docs/rules/reject-option.de.md)                 | Cookie-Banner mit „Zustimmen“, aber ohne „Ablehnen“ auf der ersten Ebene; Pur-Abo-Modelle als Hinweis   |
-| [`consent-settings-link`](docs/rules/consent-settings-link.de.md) | Kein sichtbarer Link oder Button, um die Cookie-Einstellungen nach dem Ablehnen wieder zu öffnen        |
-| [`google-fonts`](docs/rules/google-fonts.de.md)                   | Schriften von `fonts.googleapis.com` / `fonts.gstatic.com`                                              |
-| [`adobe-fonts`](docs/rules/adobe-fonts.de.md)                     | Schriften von Adobe Fonts (`use.typekit.net` / `p.typekit.net`)                                         |
-| [`third-party-embeds`](docs/rules/third-party-embeds.de.md)       | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar und Social-Media-Einbindungen vor der Einwilligung     |
-| [`third-party-cdns`](docs/rules/third-party-cdns.de.md)           | Skripte und Styles von jsDelivr, unpkg, cdnjs und anderen öffentlichen CDNs (Hinweis)                   |
-| [`impressum-link`](docs/rules/impressum-link.de.md)               | Seiten ohne Link zum Impressum                                                                          |
-| [`privacy-policy-link`](docs/rules/privacy-policy-link.de.md)     | Seiten ohne Link zur Datenschutzerklärung                                                               |
+| Regel                                                                 | Was sie findet                                                                                                               |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.de.md)       | Analyse-, Werbe- und Session-Replay-Tools, die vor der Einwilligung Anfragen senden oder Cookies setzen                      |
+| [`trackers-after-reject`](docs/rules/trackers-after-reject.de.md)     | Tracker, die nach Klick auf „Ablehnen“ und Neuladen weiterlaufen                                                             |
+| [`trackers-after-settings`](docs/rules/trackers-after-settings.de.md) | Optional (`--check-settings`): Tracker, die laufen, obwohl in den Banner-Einstellungen alles abgewählt und gespeichert wurde |
+| [`reject-option`](docs/rules/reject-option.de.md)                     | Cookie-Banner mit „Zustimmen“, aber ohne „Ablehnen“ auf der ersten Ebene; Pur-Abo-Modelle als Hinweis                        |
+| [`consent-settings-link`](docs/rules/consent-settings-link.de.md)     | Kein sichtbarer Link oder Button, um die Cookie-Einstellungen nach dem Ablehnen wieder zu öffnen                             |
+| [`google-fonts`](docs/rules/google-fonts.de.md)                       | Schriften von `fonts.googleapis.com` / `fonts.gstatic.com`                                                                   |
+| [`adobe-fonts`](docs/rules/adobe-fonts.de.md)                         | Schriften von Adobe Fonts (`use.typekit.net` / `p.typekit.net`)                                                              |
+| [`third-party-embeds`](docs/rules/third-party-embeds.de.md)           | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar und Social-Media-Einbindungen vor der Einwilligung                          |
+| [`third-party-cdns`](docs/rules/third-party-cdns.de.md)               | Skripte und Styles von jsDelivr, unpkg, cdnjs und anderen öffentlichen CDNs (Hinweis)                                        |
+| [`impressum-link`](docs/rules/impressum-link.de.md)                   | Seiten ohne Link zum Impressum                                                                                               |
+| [`privacy-policy-link`](docs/rules/privacy-policy-link.de.md)         | Seiten ohne Link zur Datenschutzerklärung                                                                                    |
 
 Details, Hintergründe und Lösungen stehen auf den verlinkten Regelseiten in [`docs/rules`](docs/rules).
 
