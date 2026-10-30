@@ -82,6 +82,8 @@ describe('additional third-party embeds', () => {
     ['Intercom', 'https://widget.intercom.io/widget/tx2p130c'],
     ['Tawk.to', 'https://embed.tawk.to/521727297ca1334016000005/18nms7gql'],
     ['Zendesk Web Widget', 'https://static.zdassets.com/ekr/snippet.js?key=abc'],
+    ['Zendesk Web Widget', 'https://ekr.zdassets.com/compose/abc'],
+    ['Zendesk Web Widget', 'https://v2.zopim.com/w?abc'],
     ['Trustpilot widget', 'https://widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js'],
     ['Typeform', 'https://embed.typeform.com/next/embed.js'],
     ['Typeform', 'https://form.typeform.com/to/abc123'],
@@ -102,6 +104,7 @@ describe('additional third-party embeds', () => {
     'https://www.trustpilot.com/review/example.com',
     'https://www.typeform.com/',
     'https://tawk.to.example.net/embed.js',
+    'https://static.zdassets.com/hc/theming_assets/01HZ/style.css',
   ])('does not match unrelated content or lookalike hosts: %s', (url) => {
     expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toEqual([]);
   });
