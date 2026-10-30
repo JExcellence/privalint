@@ -1,0 +1,910 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JExcellence/privalint/raw/refs/heads/main/schemas/report-1.3.0.schema.json",
+  "title": "PrivaLint scan report 1.3.0",
+  "description": "Structural contract; not a guarantee of complete observation, URL safety or legal compliance. Counter equations and page-ID references require semantic checks.",
+  "type": "object",
+  "properties": {
+    "scanId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "schemaVersion": {
+      "const": "1.3.0"
+    },
+    "scannerVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "options": {
+      "$ref": "#/$defs/options"
+    },
+    "siteUrl": {
+      "type": "string"
+    },
+    "lang": {
+      "type": "string",
+      "enum": [
+        "en",
+        "de"
+      ]
+    },
+    "region": {
+      "type": "string",
+      "enum": [
+        "de",
+        "at",
+        "ch",
+        "eu"
+      ]
+    },
+    "scannedAt": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/page"
+      }
+    },
+    "consent": {
+      "$ref": "#/$defs/consent"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    },
+    "coverage": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial"
+      ]
+    }
+  },
+  "required": [
+    "scanId",
+    "schemaVersion",
+    "scannerVersion",
+    "options",
+    "siteUrl",
+    "lang",
+    "region",
+    "scannedAt",
+    "durationMs",
+    "pages",
+    "findings",
+    "rules",
+    "coverage"
+  ],
+  "$defs": {
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "security-blocked",
+            "unsupported-method",
+            "unsupported-protocol",
+            "dns",
+            "tls",
+            "connection",
+            "timeout",
+            "resource-limit",
+            "http-error",
+            "browser-failure",
+            "skipped",
+            "aborted"
+          ]
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "before-consent",
+            "after-reject"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^(https?://[^/?#@\\s]+/\\[redacted\\]|\\[redacted\\])$"
+        },
+        "status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "limit": {
+          "type": "string",
+          "enum": [
+            "requests",
+            "response-bytes",
+            "total-bytes",
+            "redirects"
+          ]
+        },
+        "skippedReason": {
+          "type": "string",
+          "enum": [
+            "beacon",
+            "unsupported-method",
+            "unsupported-protocol",
+            "policy",
+            "cancelled-by-page"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "phase",
+        "url"
+      ]
+    },
+    "diagnostics": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "omittedRequests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "responses": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "finished": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skippedRequests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failedRequests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "securityBlockedRequests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "httpErrors": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "issueCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dropped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          }
+        }
+      },
+      "required": [
+        "requests",
+        "omittedRequests",
+        "responses",
+        "finished",
+        "failed",
+        "blocked",
+        "skippedRequests",
+        "failedRequests",
+        "securityBlockedRequests",
+        "httpErrors",
+        "bytes",
+        "issueCount",
+        "dropped",
+        "issues"
+      ]
+    },
+    "capture": {
+      "type": "object",
+      "properties": {
+        "complete": {
+          "type": "boolean"
+        },
+        "beforeConsentComplete": {
+          "type": "boolean"
+        },
+        "document": {
+          "type": "boolean"
+        },
+        "diagnostics": {
+          "$ref": "#/$defs/diagnostics"
+        }
+      },
+      "required": [
+        "complete",
+        "beforeConsentComplete",
+        "document",
+        "diagnostics"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "complete": {
+                "const": true
+              }
+            },
+            "required": [
+              "complete"
+            ]
+          },
+          "then": {
+            "properties": {
+              "document": {
+                "const": true
+              },
+              "beforeConsentComplete": {
+                "const": true
+              },
+              "diagnostics": {
+                "type": "object",
+                "properties": {
+                  "omittedRequests": {
+                    "const": 0
+                  },
+                  "failed": {
+                    "const": 0
+                  },
+                  "blocked": {
+                    "const": 0
+                  },
+                  "skippedRequests": {
+                    "const": 0
+                  },
+                  "failedRequests": {
+                    "const": 0
+                  },
+                  "securityBlockedRequests": {
+                    "const": 0
+                  },
+                  "httpErrors": {
+                    "const": 0
+                  },
+                  "issueCount": {
+                    "const": 0
+                  },
+                  "dropped": {
+                    "const": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evaluation": {
+      "type": "object",
+      "properties": {
+        "pageId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "ruleId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "executed",
+            "skipped",
+            "not-evaluable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "disabled",
+            "consent-disabled",
+            "not-start-page",
+            "missing-observation",
+            "no-consent-needed",
+            "settings-check-disabled"
+          ]
+        },
+        "partial": {
+          "type": "boolean"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "checked-no-finding",
+            "finding-detected",
+            "not-evaluable"
+          ]
+        },
+        "explanation": {
+          "type": "string",
+          "enum": [
+            "disabled",
+            "not-start-page",
+            "consent-disabled",
+            "missing-reject-observation",
+            "missing-consent-observation",
+            "incomplete-document",
+            "positive-evidence",
+            "incomplete-observation",
+            "required-observations-available",
+            "no-supported-banner",
+            "no-supported-reject-control",
+            "unsupported-banner-markup",
+            "browser-interaction-failed",
+            "reject-clicked-and-reloaded",
+            "no-consent-needed",
+            "settings-check-disabled",
+            "missing-settings-observation",
+            "no-settings-control",
+            "no-save-control",
+            "settings-saved-and-reloaded"
+          ]
+        },
+        "findingCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "pageId",
+        "ruleId",
+        "status",
+        "partial",
+        "outcome",
+        "explanation",
+        "findingCount"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "checked-no-finding"
+              }
+            },
+            "required": [
+              "outcome"
+            ]
+          },
+          "then": {
+            "properties": {
+              "findingCount": {
+                "const": 0
+              },
+              "partial": {
+                "const": false
+              },
+              "status": {
+                "const": "executed"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "finding-detected"
+              }
+            },
+            "required": [
+              "outcome"
+            ]
+          },
+          "then": {
+            "properties": {
+              "findingCount": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "status": {
+                "const": "executed"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "page": {
+      "type": "object",
+      "properties": {
+        "pageId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "url": {
+          "type": "string"
+        },
+        "finalUrl": {
+          "type": "string"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 599
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cookieCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "error": {
+          "type": "string"
+        },
+        "capture": {
+          "$ref": "#/$defs/capture"
+        },
+        "ruleEvaluations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evaluation"
+          }
+        }
+      },
+      "required": [
+        "pageId",
+        "url",
+        "finalUrl",
+        "status",
+        "requestCount",
+        "cookieCount",
+        "capture",
+        "ruleEvaluations"
+      ]
+    },
+    "finding": {
+      "type": "object",
+      "properties": {
+        "pageId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "ruleId": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "pageUrl": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fix": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "policy": {
+          "type": "object",
+          "properties": {
+            "allowed": {
+              "type": "boolean"
+            },
+            "originalSeverity": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "info"
+              ]
+            }
+          },
+          "required": [
+            "allowed",
+            "originalSeverity"
+          ]
+        }
+      },
+      "required": [
+        "pageId",
+        "ruleId",
+        "severity",
+        "message",
+        "pageUrl",
+        "evidence"
+      ]
+    },
+    "consent": {
+      "type": "object",
+      "properties": {
+        "bannerFound": {
+          "type": "boolean"
+        },
+        "rejected": {
+          "type": "boolean"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "not-detected",
+            "reject-unavailable",
+            "interaction-failed",
+            "reject-tested"
+          ]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "no-banner-detected",
+            "unsupported-banner",
+            "interaction-failed",
+            "reject-succeeded"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "no-supported-banner",
+            "no-supported-reject-control",
+            "unsupported-banner-markup",
+            "browser-interaction-failed",
+            "reject-clicked-and-reloaded"
+          ]
+        },
+        "cmp": {
+          "type": "string"
+        },
+        "acceptLabel": {
+          "type": "string"
+        },
+        "rejectLabel": {
+          "type": "string"
+        },
+        "payOrOk": {
+          "type": "boolean"
+        },
+        "afterRejectComplete": {
+          "type": "boolean"
+        },
+        "settingsControl": {
+          "type": "object",
+          "properties": {
+            "found": {
+              "type": "boolean"
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "found"
+          ]
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "no-settings-control",
+                "no-save-control",
+                "interaction-failed",
+                "saved"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "no-settings-control",
+                "no-save-control",
+                "browser-interaction-failed",
+                "settings-saved-and-reloaded"
+              ]
+            },
+            "openLabel": {
+              "type": "string"
+            },
+            "saveLabel": {
+              "type": "string"
+            },
+            "switchedOff": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "afterSaveComplete": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "outcome",
+            "reason"
+          ]
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "bannerFound",
+        "rejected",
+        "state",
+        "outcome",
+        "reason"
+      ]
+    },
+    "rule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "document",
+              "network",
+              "consent",
+              "after-reject",
+              "after-settings"
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "references"
+      ]
+    },
+    "networkLimits": {
+      "type": "object",
+      "properties": {
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxRequests": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxResponseBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxTotalBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxRedirects": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requestTimeoutMs": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "concurrency",
+        "maxRequests",
+        "maxResponseBytes",
+        "maxTotalBytes",
+        "maxRedirects",
+        "requestTimeoutMs"
+      ]
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "maxPages": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "settleMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "locale": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string",
+          "enum": [
+            "en",
+            "de"
+          ]
+        },
+        "region": {
+          "type": "string",
+          "enum": [
+            "de",
+            "at",
+            "ch",
+            "eu"
+          ]
+        },
+        "consentCheck": {
+          "type": "boolean"
+        },
+        "headed": {
+          "type": "boolean"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "captureTimeoutMs": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxDiagnostics": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failureMode": {
+          "type": "string",
+          "enum": [
+            "throw",
+            "report"
+          ]
+        },
+        "captureMode": {
+          "type": "string",
+          "enum": [
+            "native",
+            "adapter",
+            "offline-fixture"
+          ]
+        },
+        "networkLimits": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/networkLimits"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "selectedRules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "ruleSettings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info",
+              "off"
+            ]
+          }
+        },
+        "allowedVendors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sandbox": {
+          "type": "boolean"
+        },
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "settingsCheck": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "maxPages",
+        "settleMs",
+        "timeoutMs",
+        "locale",
+        "lang",
+        "region",
+        "consentCheck",
+        "headed",
+        "channel",
+        "captureTimeoutMs",
+        "maxDiagnostics",
+        "failureMode",
+        "captureMode",
+        "networkLimits",
+        "selectedRules",
+        "ruleSettings",
+        "allowedVendors"
+      ]
+    }
+  }
+}

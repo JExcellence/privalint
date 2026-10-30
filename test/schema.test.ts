@@ -13,7 +13,7 @@ const readJson = async (path: string): Promise<unknown> =>
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 const schemas = new Map(
   await Promise.all(
-    ['1.0.0', '1.1.0', '1.2.0'].map(async (version) => {
+    ['1.0.0', '1.1.0', '1.2.0', '1.3.0'].map(async (version) => {
       const report = ajv.compile(
         (await readJson(`../schemas/report-${version}.schema.json`)) as object,
       );
@@ -65,6 +65,37 @@ describe('standalone report contracts', () => {
       schemas.get(version)?.report({ ...value, schemaVersion: version });
     expect(validate('1.2.0')).toBe(true);
     expect(validate('1.1.0')).toBe(false);
+  });
+
+  it('accepts the settings-layer check only from schema 1.3.0 on', async () => {
+    const value = (await fixture('complete')) as ScanResult;
+    value.consent = {
+      ...(value.consent ?? { bannerFound: true, rejected: false }),
+      settings: {
+        outcome: 'saved',
+        reason: 'settings-saved-and-reloaded',
+        openLabel: 'Einstellungen',
+        saveLabel: 'Auswahl speichern',
+        switchedOff: 2,
+        afterSaveComplete: true,
+      },
+    };
+    value.pages[0]?.ruleEvaluations?.push({
+      ...(value.pages[0].pageId === undefined ? {} : { pageId: value.pages[0].pageId }),
+      ruleId: 'trackers-after-settings',
+      status: 'skipped',
+      reason: 'settings-check-disabled',
+      partial: false,
+      outcome: 'not-evaluable',
+      explanation: 'settings-check-disabled',
+      findingCount: 0,
+    });
+    const validate = (version: string) =>
+      schemas.get(version)?.report({ ...value, schemaVersion: version });
+    expect(validate('1.3.0')).toBe(true);
+    expect(validate('1.2.0')).toBe(false);
+    const broken = { ...value, consent: { ...value.consent, settings: { outcome: 'maybe' } } };
+    expect(schemas.get('1.3.0')?.report({ ...broken, schemaVersion: '1.3.0' })).toBe(false);
   });
 
   it('never interprets a legacy or unknown report as valid/current or complete', async () => {

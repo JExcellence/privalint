@@ -73,7 +73,13 @@ export interface LoadDiagnostics {
   issues: LoadDiagnostic[];
 }
 
-export type ObservationKind = 'document' | 'network' | 'consent' | 'after-reject';
+export type ObservationKind =
+  | 'document'
+  | 'network'
+  | 'consent'
+  | 'after-reject'
+  /** Since schema 1.3.0. */
+  | 'after-settings';
 
 export interface RuleEvaluation {
   pageId?: string;
@@ -85,7 +91,9 @@ export interface RuleEvaluation {
     | 'not-start-page'
     | 'missing-observation'
     /** No banner, and nothing that needs consent loaded before a choice. */
-    | 'no-consent-needed';
+    | 'no-consent-needed'
+    /** The settings-layer check is opt-in. Since schema 1.3.0. */
+    | 'settings-check-disabled';
   /** Executed against available positive evidence, without ruling out additional findings. */
   partial: boolean;
   outcome?: 'checked-no-finding' | 'finding-detected' | 'not-evaluable';
@@ -108,7 +116,13 @@ export type RuleExplanation =
   | 'no-supported-reject-control'
   | 'unsupported-banner-markup'
   | 'browser-interaction-failed'
-  | 'reject-clicked-and-reloaded';
+  | 'reject-clicked-and-reloaded'
+  // Since schema 1.3.0:
+  | 'settings-check-disabled'
+  | 'missing-settings-observation'
+  | 'no-settings-control'
+  | 'no-save-control'
+  | 'settings-saved-and-reloaded';
 
 export interface CaptureObservation {
   complete: boolean;
@@ -165,6 +179,32 @@ export interface ConsentObservation {
    * visible, and its label. Absent if the reject path was not tested, and in reports before 0.5.0.
    */
   settingsControl?: { found: boolean; label?: string };
+  /** Only present when the settings-layer check ran. Since schema 1.3.0. */
+  settings?: SettingsObservation;
+  error?: string;
+}
+
+/**
+ * What happened when privalint opened the banner's settings layer in a fresh browser context,
+ * switched off every optional category and saved.
+ */
+export interface SettingsObservation {
+  outcome: 'no-settings-control' | 'no-save-control' | 'interaction-failed' | 'saved';
+  reason:
+    | 'no-settings-control'
+    | 'no-save-control'
+    | 'browser-interaction-failed'
+    | 'settings-saved-and-reloaded';
+  /** Label of the control that opened the settings layer. */
+  openLabel?: string;
+  /** Label of the control that saved the selection. */
+  saveLabel?: string;
+  /** How many checked category switches privalint turned off before saving. */
+  switchedOff?: number;
+  /** Requests made and cookies newly set after saving, including the reload. */
+  afterSave?: { requests: RecordedRequest[]; cookies: RecordedCookie[] };
+  /** True only if the observation window after saving completed without load issues. */
+  afterSaveComplete?: boolean;
   error?: string;
 }
 
@@ -236,7 +276,9 @@ export interface PageSummary {
   ruleEvaluations?: RuleEvaluation[];
 }
 
-export type ConsentSummary = Omit<ConsentObservation, 'afterReject'>;
+export type ConsentSummary = Omit<ConsentObservation, 'afterReject' | 'settings'> & {
+  settings?: Omit<SettingsObservation, 'afterSave'>;
+};
 
 export interface ScanResult {
   scanId?: string;
@@ -287,6 +329,8 @@ export interface ReportOptions {
   lang: Lang;
   region: Region;
   consentCheck: boolean;
+  /** Absent in reports before schema 1.3.0. */
+  settingsCheck?: boolean;
   headed: boolean;
   channel: string;
   /** Absent in reports from scanners before 0.5.0. */

@@ -75,6 +75,26 @@ const EXPLANATIONS: Record<RuleExplanation, [string, string]> = {
     'Kein Banner, und nichts Einwilligungspflichtiges geladen',
   ],
   'missing-reject-observation': ['Reject path not observed', 'Ablehnen-Pfad nicht beobachtet'],
+  'settings-check-disabled': [
+    'Settings check not enabled (--check-settings)',
+    'Einstellungs-Prüfung nicht eingeschaltet (--check-settings)',
+  ],
+  'missing-settings-observation': [
+    'Settings path not observed',
+    'Einstellungs-Pfad nicht beobachtet',
+  ],
+  'no-settings-control': [
+    'No control found that opens the settings',
+    'Kein Bedienelement gefunden, das die Einstellungen öffnet',
+  ],
+  'no-save-control': [
+    'Settings opened, but no save button found',
+    'Einstellungen geöffnet, aber keine Speichern-Schaltfläche gefunden',
+  ],
+  'settings-saved-and-reloaded': [
+    'Settings saved with everything off and reloaded',
+    'Einstellungen ohne Auswahl gespeichert und neu geladen',
+  ],
   'missing-consent-observation': ['Consent not observed', 'Consent nicht beobachtet'],
   'incomplete-document': [
     'Document observation incomplete',
