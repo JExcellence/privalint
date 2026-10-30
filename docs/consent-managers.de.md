@@ -20,8 +20,9 @@ mehrsprachigen Beschriftungs-Heuristiken stehen in `scan()` und `observeConsent(
 | Cookie-Script      | `#cookiescript_accept`, `#cookiescript_reject`                                       |
 
 Real Cookie Banner verwendet die gemeinsame Beschriftungs-Heuristik statt geratener Selektoren
-für generierte Klassen/IDs. Es wird keine API zur erzwungenen Einwilligung aufgerufen und keine
-Einstellungsebene geöffnet. Ein erkanntes Banner ohne unterstütztes Ablehnen auf der ersten Ebene
+für generierte Klassen/IDs. Es wird keine API zur erzwungenen Einwilligung aufgerufen. Die Einstellungsebene wird nur mit
+dem optionalen `--check-settings` geöffnet, siehe
+[`trackers-after-settings`](rules/trackers-after-settings.de.md). Ein erkanntes Banner ohne unterstütztes Ablehnen auf der ersten Ebene
 liefert `unsupported-banner`. Fehlende Banner-Erkennung allein erzeugt keinen Datenschutzbefund.
 Ein erfolgreicher Klick mit Neuladen verifiziert den gespeicherten CMP-Zustand nicht unabhängig.
 

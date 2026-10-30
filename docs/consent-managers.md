@@ -22,8 +22,8 @@ Additional support:
 | Cookie-Script      | `#cookiescript_accept`, `#cookiescript_reject`                                       |
 
 Real Cookie Banner deliberately uses the shared label heuristic rather than guessed selectors
-against its generated classes/IDs. No API is invoked to force consent, and no settings layer is
-opened. A detected banner without a recognized first-layer reject control is `unsupported-banner`.
+against its generated classes/IDs. No API is invoked to force consent. The settings layer is opened only with the opt-in
+`--check-settings`; see [`trackers-after-settings`](rules/trackers-after-settings.md). A detected banner without a recognized first-layer reject control is `unsupported-banner`.
 No banner detected alone produces no privacy finding. A click/reload success does not independently
 verify the CMP's stored state; check rejection completeness and rule outcomes.
 

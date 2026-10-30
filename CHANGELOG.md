@@ -10,6 +10,13 @@ All notable changes are listed here. The format follows
 
 - Chat and review widgets in `third-party-embeds`: Intercom, Tawk.to, Zendesk Web Widget,
   Trustpilot and Typeform, with hosts from the vendors or observed on live sites (#32)
+- Opt-in check of the consent banner's settings layer (#38): with `--check-settings` (or
+  `settingsCheck: true`) privalint loads the start page again in a fresh browser, opens the
+  settings, switches off every optional category, saves and reloads. The new rule
+  `trackers-after-settings` reports trackers that still load. Without the flag the rule is
+  skipped with `settings-check-disabled`, which does not make a report partial
+- Report schema 1.3.0 with `consent.settings`, `options.settingsCheck`, the observation kind
+  `after-settings` and the matching reasons. 1.0.0 to 1.2.0 stay unchanged and supported
 
 ### Changed
 
