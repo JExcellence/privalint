@@ -43,16 +43,26 @@ Provider integration references:
 - [TikTok embedded videos](https://developers.tiktok.com/doc/embed-videos/)
 - [Calendly embed options](https://help.calendly.com/hc/en-us/articles/223147027-Embed-options-overview)
 
-Chat and review widgets (checked 2026-10-29). Only the widget hosts match, not the vendors' own
-websites:
+Chat and review widgets (hosts checked 2026-10-30). Only documented widget and Messenger service
+hosts match; marketing pages and Inbox/dashboard hosts do not. The CSP guide's generic YouTube,
+Vimeo and Wistia entries are integrations, so they stay under their own providers.
 
-| Widget             | Hosts                                                       | Source                                                                                                                                                              |
-| ------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Intercom           | `widget.intercom.io`                                        | Loaded on intercom.com                                                                                                                                              |
-| Tawk.to            | `embed.tawk.to`                                             | Loaded on tawk.to                                                                                                                                                   |
+| Widget | Hosts | Source |
+| ------ | ----- | ------ |
+| Intercom Messenger (scripts) | `app.intercom.io`, `widget.intercom.io`, `js.intercomcdn.com` | [Intercom CSP guide](https://www.intercom.com/help/en/articles/3894-using-intercom-with-content-security-policy) |
+| Intercom Messenger (API/realtime) | `via.intercom.io`, `api.intercom.io`, `api.au.intercom.io`, `api.eu.intercom.io`, `api-iam.intercom.io`, `api-iam.eu.intercom.io`, `api-iam.au.intercom.io`, `api-ping.intercom.io`, `*.intercom-messenger.com`, `nexus-websocket-a.intercom.io`, `nexus-websocket-b.intercom.io`, `nexus-europe-websocket.intercom.io`, `nexus-australia-websocket.intercom.io` | [Intercom CSP guide](https://www.intercom.com/help/en/articles/3894-using-intercom-with-content-security-policy) |
+| Intercom Messenger (uploads) | `uploads.intercomcdn.com`, `uploads.intercomcdn.eu`, `uploads.au.intercomcdn.com`, `uploads.eu.intercomcdn.com`, `uploads.intercomusercontent.com` | [Intercom CSP guide](https://www.intercom.com/help/en/articles/3894-using-intercom-with-content-security-policy) |
+| Intercom Messenger (forms/frames) | `intercom-sheets.com`, `www.intercom-reporting.com`, `intercom.help`, `fonts.intercomcdn.com` | [Intercom CSP guide](https://www.intercom.com/help/en/articles/3894-using-intercom-with-content-security-policy) |
+| Intercom Messenger (media) | `downloads.intercomcdn.com`, `downloads.intercomcdn.eu`, `downloads.au.intercomcdn.com`, `static.intercomassets.com`, `gifs.intercomcdn.com`, `video-messages.intercomcdn.com` | [Intercom CSP guide](https://www.intercom.com/help/en/articles/3894-using-intercom-with-content-security-policy) |
+| Intercom Messenger (apps/attachments) | `messenger-apps.intercom.io`, `messenger-apps.eu.intercom.io`, `messenger-apps.au.intercom.io`, `*.intercom-attachments-1.com`, `*.intercom-attachments.eu`, `*.au.intercom-attachments.com`, `*.intercom-attachments-2.com` through `*.intercom-attachments-9.com`, `static.intercomassets.eu`, `static.au.intercomassets.com` | [Intercom CSP guide](https://www.intercom.com/help/en/articles/3894-using-intercom-with-content-security-policy) |
+| Tawk.to | `embed.tawk.to` | Loaded on tawk.to |
 | Zendesk Web Widget | `static.zdassets.com/ekr/`, `ekr.zdassets.com`, `zopim.com` | [Zendesk CSP guide](https://developer.zendesk.com/documentation/zendesk-web-widget-sdks/sdks/web/csp/); help centre themes on `static.zdassets.com/hc/` don't count |
-| Trustpilot         | `widget.trustpilot.com`                                     | Bootstrap script in Trustpilot's WordPress plugin (`trustpilot-reviews` 3.16.0)                                                                                     |
-| Typeform           | `embed.typeform.com`, `form.typeform.com`                   | [`@typeform/embed` README](https://www.npmjs.com/package/@typeform/embed)                                                                                           |
+| Trustpilot | `widget.trustpilot.com` | Bootstrap script in Trustpilot's WordPress plugin (`trustpilot-reviews` 3.16.0) |
+| Typeform | `embed.typeform.com`, `form.typeform.com` | [`@typeform/embed` README](https://www.npmjs.com/package/@typeform/embed) |
+
+Intercom lists regional CDN variants for workspaces hosted in different regions. The rule includes all
+of them because a scan cannot infer the workspace region. Its Inbox firewall hosts
+(`app.intercom.com`, `app.eu.intercom.com`, `app.au.intercom.com`) are not Messenger endpoints.
 
 Legal basis:
 
