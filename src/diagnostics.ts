@@ -225,9 +225,9 @@ export class Diagnostics {
 
   private store(issue: LoadDiagnostic): void {
     this.data.issueCount++;
-    // Omitted beacons and requests the page cancelled itself hide nothing from the rules: their
-    // URL is recorded and the page never uses the response. Every other issue limits what the
-    // scanner observed.
+    // Omitted beacons, requests the page cancelled itself and skipped error reports hide nothing
+    // from the rules: their URL is recorded and the page never uses the response. Every other
+    // issue limits what the scanner observed.
     if (!isUnrestricting(issue)) {
       this.phaseIssues[issue.phase]++;
       this.restricting++;
@@ -281,6 +281,25 @@ export class Diagnostics {
   }
 }
 
+/**
+ * Error-monitoring ingest hosts. A page never acts on the response of an error report, so a
+ * skipped report hides nothing from the rules. Sentry documents `o<number>.ingest.sentry.io`,
+ * `o<number>.ingest.de.sentry.io` and `o<number>.<location>.ingest.sentry.io`
+ * (docs.sentry.io/product/security/ip-ranges).
+ */
+const ERROR_MONITORING_HOSTS = [/^o\d+\.(?:[a-z]+\.)?ingest\.(?:[a-z]+\.)?sentry\.io$/];
+
+const isErrorMonitoring = (url: string): boolean => {
+  try {
+    const host = new URL(url).hostname;
+    return ERROR_MONITORING_HOSTS.some((pattern) => pattern.test(host));
+  } catch {
+    return false;
+  }
+};
+
 const isUnrestricting = (issue: LoadDiagnostic): boolean =>
-  issue.kind === 'skipped' &&
-  (issue.skippedReason === 'beacon' || issue.skippedReason === 'cancelled-by-page');
+  (issue.kind === 'skipped' &&
+    (issue.skippedReason === 'beacon' || issue.skippedReason === 'cancelled-by-page')) ||
+  ((issue.kind === 'skipped' || issue.kind === 'unsupported-method') &&
+    isErrorMonitoring(issue.url));
