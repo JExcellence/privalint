@@ -106,9 +106,16 @@ Dasselbe gilt für Anfragen, die die Seite selbst abbricht, etwa wenn ein Framew
 Netz einen Prefetch verwirft. privalint erkennt das über Chromium (`Network.loadingFailed` mit
 `canceled`), stoppt den Adapter-Aufruf, falls er noch läuft, und erfasst die Anfrage als
 `kind: 'skipped'`, `skippedReason: 'cancelled-by-page'`. Anfragen, die der Browser wegen einer
-Navigation abbricht, etwa beim Neuladen nach dem Ablehnen, werden genauso erfasst. Alle anderen
-ausgelassenen Anfragen schränken die Beobachtung weiterhin ein, weil fehlende Ressourcen
-nachfolgendes Verhalten beeinflussen können.
+Navigation abbricht, etwa beim Neuladen nach dem Ablehnen, werden genauso erfasst.
+
+Ein Adapter, der nur lesende Anfragen ausführt, lässt die Berichte aus, die eine Seite an ein
+Fehler-Monitoring sendet. Für die Ingest-Hosts von Sentry (`o<number>.ingest.sentry.io` und
+regionale Formen wie `o<number>.ingest.de.sentry.io`) behält eine solche Anfrage den Grund des
+Adapters, schränkt die Erfassung aber ebenfalls nicht ein: Die Seite wertet die Antwort eines
+Fehlerberichts nie aus.
+
+Alle anderen ausgelassenen Anfragen schränken die Beobachtung weiterhin ein, weil fehlende
+Ressourcen nachfolgendes Verhalten beeinflussen können.
 
 ## Consent und Fortschritt
 
