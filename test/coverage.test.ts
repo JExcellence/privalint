@@ -25,6 +25,22 @@ describe('required observation coverage', () => {
     expect(allowed.findings.length).toBeGreaterThan(0);
     expect(assessCoverage(allowed).complete).toBe(true);
   });
+  it.each([
+    ['an omitted beacon', { kind: 'skipped', skippedReason: 'beacon' }],
+    ['a request the page cancelled', { kind: 'skipped', skippedReason: 'cancelled-by-page' }],
+  ] as const)('passes a complete capture that only recorded %s', async (_, issue) => {
+    const value = await report();
+    const capture = value.pages[0]?.capture;
+    if (!capture) throw new Error('Missing fixture capture');
+    const data = capture.diagnostics;
+    data.issues.push({ ...issue, phase: 'before-consent', url: 'https://example.org/[redacted]' });
+    data.issueCount++;
+    data.requests++;
+    data.failed++;
+    data.skippedRequests = (data.skippedRequests ?? 0) + 1;
+    expect(capture.complete).toBe(true);
+    expect(assessCoverage(value)).toEqual({ complete: true, issues: [] });
+  });
   it.each(['partial', 'skipped'])(
     'does not treat %s observations as passing coverage',
     async (name) => {

@@ -313,6 +313,51 @@ describe('controlled capture', () => {
   });
 });
 
+describe('skipped error-monitoring reports', () => {
+  // Read-only adapters, like public scanners, refuse every POST.
+  const readOnly =
+    (target: string): NetworkAdapter =>
+    async ({ url, method }) => {
+      if (url === `${origin}/`) {
+        return html(
+          `<script>fetch(${JSON.stringify(target)},{method:"POST",body:"{}"}).catch(()=>{})</script>`,
+        );
+      }
+      if (method === 'POST') throw new NetworkError('unsupported-method');
+      return { status: 200, body: '' };
+    };
+
+  it.each([
+    'https://o4511755310006272.ingest.us.sentry.io/api/1/envelope/',
+    'https://o42.ingest.sentry.io/api/1/envelope/',
+    'https://o42.ingest.de.sentry.io/api/1/envelope/',
+  ])('keeps the capture complete when a report to %s is skipped', async (target) => {
+    const result = await scan(origin, {
+      ...settings,
+      networkAdapter: readOnly(target),
+      consentCheck: false,
+    });
+    const capture = result.pages[0]?.capture;
+    expect(capture?.complete).toBe(true);
+    expect(capture?.diagnostics.issues).toEqual([
+      expect.objectContaining({ kind: 'unsupported-method' }),
+    ]);
+  });
+
+  it.each([
+    'https://api.example.org/graphql',
+    'https://sentry.io.evil.invalid/api/1/envelope/',
+    'https://ingest.sentry.io.evil.invalid/api/1/envelope/',
+  ])('still treats a skipped POST to %s as incomplete', async (target) => {
+    const result = await scan(origin, {
+      ...settings,
+      networkAdapter: readOnly(target),
+      consentCheck: false,
+    });
+    expect(result.pages[0]?.capture?.complete).toBe(false);
+  });
+});
+
 describe('requests the page cancels itself', () => {
   // The page starts a fetch and aborts it after 100 ms; the adapter needs 800 ms for it.
   const cancelling = html(
