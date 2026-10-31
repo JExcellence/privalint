@@ -36,7 +36,6 @@ Switching everything off is a refusal, just like the reject button, and it has t
 
 - § 25 Abs. 1 TDDDG
 - Art. 6(1)(a) GDPR
-- Art. 7(3) GDPR
 
 ## How to fix
 

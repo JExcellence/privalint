@@ -15,7 +15,6 @@ export const rejectOption: Rule = {
     'DSK-Beschluss, 22.03.2023: Bewertung von Pur-Abo-Modellen auf Websites',
     'EDPB Opinion 08/2024 on consent or pay models',
     'Art. 4(11) GDPR',
-    'Art. 7(3) GDPR',
     '§ 25 Abs. 1 TDDDG',
   ],
   check({ page, lang }) {

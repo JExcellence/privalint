@@ -11,7 +11,7 @@ export const trackersAfterReject: Rule = {
     'privalint clicks the reject button of the consent banner on the start page, reloads the ' +
     'page and records what still loads. Anything on the tracker list that loads or sets new ' +
     'cookies after that ignores the visitor’s explicit refusal.',
-  references: ['§ 25 Abs. 1 TDDDG', 'Art. 6(1)(a) GDPR', 'Art. 7(3) GDPR'],
+  references: ['§ 25 Abs. 1 TDDDG', 'Art. 6(1)(a) GDPR'],
   check({ page, lang }) {
     const after = page.consent?.afterReject;
     if (after === undefined) {

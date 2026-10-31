@@ -12,7 +12,7 @@ export const trackersAfterSettings: Rule = {
     'in a fresh browser, switches off every optional category, saves, reloads the page and ' +
     'records what still loads. Anything on the tracker list that loads or sets new cookies ' +
     'after that ignores the visitor’s choice.',
-  references: ['§ 25 Abs. 1 TDDDG', 'Art. 6(1)(a) GDPR', 'Art. 7(3) GDPR'],
+  references: ['§ 25 Abs. 1 TDDDG', 'Art. 6(1)(a) GDPR'],
   requires: ['after-settings'],
   check({ page, lang }) {
     const settings = page.consent?.settings;

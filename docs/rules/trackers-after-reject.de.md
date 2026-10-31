@@ -31,7 +31,6 @@ verweigern lässt, ist nicht freiwillig.
 
 - § 25 Abs. 1 TDDDG
 - Art. 6 Abs. 1 lit. a DSGVO
-- Art. 7 Abs. 3 DSGVO: Der Widerruf muss so einfach sein wie die Erteilung der Einwilligung
 
 ## Lösung
 

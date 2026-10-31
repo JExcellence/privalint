@@ -36,7 +36,7 @@ oder keine Speichern-Schaltfläche, ist die Regel nicht prüfbar und nennt den G
 Alles abzuwählen ist eine Ablehnung wie die Ablehnen-Schaltfläche und muss genauso wirken.
 
 - § 25 Abs. 1 TDDDG
-- Art. 7 Abs. 3 DSGVO
+- Art. 6 Abs. 1 lit. a DSGVO
 
 ## Lösung
 

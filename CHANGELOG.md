@@ -6,6 +6,14 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- Legal references in findings: `trackers-after-reject` and `trackers-after-settings` cite
+  Art. 6(1)(a) GDPR (no legal basis after a refusal) instead of Art. 7(3), which is about
+  withdrawing consent; `reject-option` no longer cites Art. 7(3) and adds EDPB Opinion 08/2024 for
+  the EU; `third-party-cdns` cites the Munich Google Fonts ruling by analogy for Germany, and
+  Planet49 carries its date. Findings and rule pages now cite the same provisions (#58)
+
 ### Fixed
 
 - A skipped report to error monitoring (Sentry's ingest hosts) no longer makes a page capture

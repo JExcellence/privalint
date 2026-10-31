@@ -44,7 +44,7 @@ stricter for large online platforms. privalint can't judge either, so it only no
 - EDPB Cookie Banner Taskforce report, 17.01.2023
 - DSK-Beschluss, 22.03.2023: Bewertung von Pur-Abo-Modellen auf Websites
 - EDPB Opinion 08/2024 on consent or pay models implemented by large online platforms
-- Art. 4(11) and Art. 7(3) GDPR, § 25 Abs. 1 TDDDG
+- Art. 4(11) GDPR, § 25 Abs. 1 TDDDG
 
 ## Limitations
 

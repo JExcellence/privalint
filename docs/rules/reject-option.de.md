@@ -50,7 +50,7 @@ vermerkt das Modell deshalb nur.
 - EDSA Cookie-Banner-Taskforce, 17.01.2023
 - DSK-Beschluss, 22.03.2023 (Pur-Abo-Modelle): Bewertung von Pur-Abo-Modellen auf Websites
 - EDSA-Stellungnahme 08/2024 zu „Consent or Pay“-Modellen großer Online-Plattformen
-- Art. 4 Nr. 11 DSGVO, Art. 7 Abs. 3 DSGVO, § 25 Abs. 1 TDDDG
+- Art. 4 Nr. 11 DSGVO, § 25 Abs. 1 TDDDG
 
 ## Grenzen
 

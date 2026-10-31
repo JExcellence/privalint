@@ -10,26 +10,42 @@ export type Region = (typeof REGIONS)[number];
  */
 const LEGAL: Record<string, Record<Region, string[]>> = {
   'pre-consent-trackers': {
-    de: ['§ 25 Abs. 1 TDDDG', 'Art. 6 Abs. 1 lit. a DSGVO', 'EuGH C-673/17 (Planet49)'],
-    at: ['§ 165 Abs. 3 TKG 2021', 'Art. 6 Abs. 1 lit. a DSGVO', 'EuGH C-673/17 (Planet49)'],
+    de: [
+      '§ 25 Abs. 1 TDDDG',
+      'Art. 6 Abs. 1 lit. a DSGVO',
+      'EuGH, 01.10.2019, C-673/17 (Planet49)',
+    ],
+    at: [
+      '§ 165 Abs. 3 TKG 2021',
+      'Art. 6 Abs. 1 lit. a DSGVO',
+      'EuGH, 01.10.2019, C-673/17 (Planet49)',
+    ],
     ch: ['Art. 45c FMG', 'Art. 6 DSG'],
-    hu: ['Eht. 155. § (4)', 'GDPR 6. cikk (1) bekezdés a) pont', 'EUB C-673/17 (Planet49)'],
-    eu: ['Art. 5(3) ePrivacy Directive', 'Art. 6(1)(a) GDPR', 'CJEU C-673/17 (Planet49)'],
+    hu: [
+      'Eht. 155. § (4)',
+      'GDPR 6. cikk (1) bekezdés a) pont',
+      'EUB, 2019. október 1., C-673/17 (Planet49)',
+    ],
+    eu: [
+      'Art. 5(3) ePrivacy Directive',
+      'Art. 6(1)(a) GDPR',
+      'CJEU, 01.10.2019, C-673/17 (Planet49)',
+    ],
   },
   'trackers-after-reject': {
-    de: ['§ 25 Abs. 1 TDDDG', 'Art. 7 Abs. 3 DSGVO'],
-    at: ['§ 165 Abs. 3 TKG 2021', 'Art. 7 Abs. 3 DSGVO'],
+    de: ['§ 25 Abs. 1 TDDDG', 'Art. 6 Abs. 1 lit. a DSGVO'],
+    at: ['§ 165 Abs. 3 TKG 2021', 'Art. 6 Abs. 1 lit. a DSGVO'],
     ch: ['Art. 45c FMG', 'Art. 30 Abs. 2 lit. b DSG'],
-    hu: ['Eht. 155. § (4)', 'GDPR 7. cikk (3) bekezdés'],
-    eu: ['Art. 5(3) ePrivacy Directive', 'Art. 7(3) GDPR'],
+    hu: ['Eht. 155. § (4)', 'GDPR 6. cikk (1) bekezdés a) pont'],
+    eu: ['Art. 5(3) ePrivacy Directive', 'Art. 6(1)(a) GDPR'],
   },
   // Switching everything off in the settings is a refusal like the reject button.
   'trackers-after-settings': {
-    de: ['§ 25 Abs. 1 TDDDG', 'Art. 7 Abs. 3 DSGVO'],
-    at: ['§ 165 Abs. 3 TKG 2021', 'Art. 7 Abs. 3 DSGVO'],
+    de: ['§ 25 Abs. 1 TDDDG', 'Art. 6 Abs. 1 lit. a DSGVO'],
+    at: ['§ 165 Abs. 3 TKG 2021', 'Art. 6 Abs. 1 lit. a DSGVO'],
     ch: ['Art. 45c FMG', 'Art. 30 Abs. 2 lit. b DSG'],
-    hu: ['Eht. 155. § (4)', 'GDPR 7. cikk (3) bekezdés'],
-    eu: ['Art. 5(3) ePrivacy Directive', 'Art. 7(3) GDPR'],
+    hu: ['Eht. 155. § (4)', 'GDPR 6. cikk (1) bekezdés a) pont'],
+    eu: ['Art. 5(3) ePrivacy Directive', 'Art. 6(1)(a) GDPR'],
   },
   'reject-option': {
     de: [
@@ -44,8 +60,12 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
       'EDSA Cookie-Banner-Taskforce, 17.01.2023',
     ],
     ch: ['Art. 45c FMG', 'EDÖB, Leitfaden zu Cookies (2025)'],
-    hu: ['Eht. 155. § (4)', 'GDPR 4. cikk 11. pont', 'GDPR 7. cikk (3) bekezdés'],
-    eu: ['Art. 4(11) GDPR', 'Art. 7(3) GDPR', 'EDPB Cookie Banner Taskforce report, 17.01.2023'],
+    hu: ['Eht. 155. § (4)', 'GDPR 4. cikk 11. pont'],
+    eu: [
+      'Art. 4(11) GDPR',
+      'EDPB Cookie Banner Taskforce report, 17.01.2023',
+      'EDPB Opinion 08/2024 (consent or pay)',
+    ],
   },
   'consent-settings-link': {
     de: ['Art. 7 Abs. 3 DSGVO', '§ 25 Abs. 1 TDDDG'],
@@ -76,7 +96,7 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     eu: ['Art. 6(1) GDPR', 'Art. 5(3) ePrivacy Directive'],
   },
   'third-party-cdns': {
-    de: ['Art. 6 Abs. 1 DSGVO'],
+    de: ['Art. 6 Abs. 1 DSGVO', 'LG München I, 20.01.2022, Az. 3 O 17493/20 (entsprechend)'],
     at: ['Art. 6 Abs. 1 DSGVO'],
     ch: ['Art. 6 DSG'],
     hu: ['GDPR 6. cikk (1) bekezdés'],

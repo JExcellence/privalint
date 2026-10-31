@@ -15,7 +15,7 @@ export const preConsentTrackers: Rule = {
     '§ 25 Abs. 1 TDDDG',
     'Art. 5(3) ePrivacy Directive',
     'Art. 6(1)(a) GDPR',
-    'CJEU C-673/17 (Planet49)',
+    'CJEU, 01.10.2019, C-673/17 (Planet49)',
   ],
   check({ page, lang }) {
     const hits = findTrackerHits(page.requests, page.cookies, lang);
