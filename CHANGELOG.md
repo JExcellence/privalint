@@ -23,6 +23,9 @@ All notable changes are listed here. The format follows
 - The coverage gate (`--fail-on-incomplete`, `assessCoverage`) no longer fails a page whose
   capture is complete but recorded an omitted beacon or a request the page cancelled. It counted
   every recorded issue, which contradicted `capture.complete`
+- The Usercentrics v3 banner (`#usercentrics-cmp-ui`) is recognised by name again, and
+  `--check-settings` uses its own settings and save buttons. Only the older v2 selectors were
+  known, so v3 banners fell back to the label heuristic (#55)
 
 ## 0.7.1 - 2026-10-30
 

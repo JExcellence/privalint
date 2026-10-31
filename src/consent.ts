@@ -39,11 +39,14 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
     save: '.save-preference-btn-handler',
   },
   {
+    // data-testid is the v2 banner; #usercentrics-cmp-ui with data-action-type is the v3 banner
+    // seen on dkb.de on 2026-10-31.
     name: 'Usercentrics',
-    accept: '[data-testid="uc-accept-all-button"]',
-    reject: '[data-testid="uc-deny-all-button"]',
-    settings: '[data-testid="uc-more-button"]',
-    save: '[data-testid="uc-save-button"]',
+    accept:
+      '[data-testid="uc-accept-all-button"], #usercentrics-cmp-ui [data-action-type="accept"]',
+    reject: '[data-testid="uc-deny-all-button"], #usercentrics-cmp-ui [data-action-type="deny"]',
+    settings: '[data-testid="uc-more-button"], #usercentrics-cmp-ui [data-action-type="more"]',
+    save: '[data-testid="uc-save-button"], #usercentrics-cmp-ui [data-action-type="save"]',
   },
   {
     name: 'Borlabs Cookie',
