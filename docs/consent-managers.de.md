@@ -18,6 +18,7 @@ mehrsprachigen Beschriftungs-Heuristiken stehen in `scan()` und `observeConsent(
 | CookieHub          | `.ch2-allow-all-btn`, `.ch2-deny-all-btn`                                            |
 | Cookie Information | `data-testid=coi-banner__accept/decline-all-categories-button`                       |
 | Cookie-Script      | `#cookiescript_accept`, `#cookiescript_reject`                                       |
+| Usercentrics v3    | `#usercentrics-cmp-ui` mit `data-action-type=accept/deny/more/save`                  |
 
 Real Cookie Banner verwendet die gemeinsame Beschriftungs-Heuristik statt geratener Selektoren
 für generierte Klassen/IDs. Es wird keine API zur erzwungenen Einwilligung aufgerufen. Die Einstellungsebene wird nur mit
@@ -42,6 +43,7 @@ Am 27.10.2026 lief privalint mit einem Headless-Chromium aus Deutschland gegen d
 | CookieHub          | tradedoubler.com      | erkannt, "Alle ablehnen" geklickt und neu geladen                         |
 | Cookie Information | cookieinformation.com | erkannt, "Decline all" geklickt und neu geladen                           |
 | Cookie-Script      | cookie-script.com     | erkannt, "Decline all" geklickt und neu geladen                           |
+| Usercentrics v3    | dkb.de                | erkannt, abgelehnt, Einstellungen geöffnet, 17 Schalter aus, gespeichert  |
 
 Bei Osano stand der Ablehnen-Selektor zuvor auf `.osano-cm-deny-all`. osano.com liefert jedoch
 `.osano-cm-denyAll`; der Selektor ist korrigiert und durch ein Fixture abgesichert.

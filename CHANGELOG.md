@@ -6,6 +6,12 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- The Usercentrics v3 banner (`#usercentrics-cmp-ui`) is recognised by name again, and
+  `--check-settings` uses its own settings and save buttons. Only the older v2 selectors were
+  known, so v3 banners fell back to the label heuristic (#55)
+
 ## 0.7.1 - 2026-10-30
 
 ### Fixed

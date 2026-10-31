@@ -20,6 +20,7 @@ Additional support:
 | CookieHub          | `.ch2-allow-all-btn`, `.ch2-deny-all-btn`                                            |
 | Cookie Information | `data-testid=coi-banner__accept/decline-all-categories-button`                       |
 | Cookie-Script      | `#cookiescript_accept`, `#cookiescript_reject`                                       |
+| Usercentrics v3    | `#usercentrics-cmp-ui` with `data-action-type=accept/deny/more/save`                 |
 
 Real Cookie Banner deliberately uses the shared label heuristic rather than guessed selectors
 against its generated classes/IDs. No API is invoked to force consent. The settings layer is opened only with the opt-in
@@ -57,6 +58,7 @@ On 2026-10-27 privalint ran in headless Chromium from Germany against these site
 | CookieHub          | tradedoubler.com      | recognized, clicked "Alle ablehnen" and reloaded                    |
 | Cookie Information | cookieinformation.com | recognized, clicked "Decline all" and reloaded                      |
 | Cookie-Script      | cookie-script.com     | recognized, clicked "Decline all" and reloaded                      |
+| Usercentrics v3    | dkb.de                | recognized, rejected, settings opened, 17 switches off and saved    |
 
 The Osano reject selector used to be `.osano-cm-deny-all`, while osano.com serves
 `.osano-cm-denyAll`. The selector is fixed and covered by a fixture.
