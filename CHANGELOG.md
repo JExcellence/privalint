@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.8.0 - 2026-10-31
+
 ### Changed
 
 - Legal references in findings: `trackers-after-reject` and `trackers-after-settings` cite
