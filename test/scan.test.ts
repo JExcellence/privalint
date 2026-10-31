@@ -229,6 +229,22 @@ describe('consent check', () => {
       expect(result.findings).toEqual([]);
     });
 
+    it('names the Usercentrics v3 banner and uses its own settings and save buttons', async () => {
+      const result = await scan(`${origin}/consent/usercentrics-v3.html`, settingsOptions);
+      expect(result.consent).toMatchObject({
+        cmp: 'Usercentrics',
+        outcome: 'reject-succeeded',
+        rejectLabel: 'Ablehnen',
+      });
+      expect(result.consent?.settings).toMatchObject({
+        outcome: 'saved',
+        openLabel: 'Cookie Einstellungen',
+        saveLabel: 'Einstellungen speichern',
+        switchedOff: 1,
+      });
+      expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
+    });
+
     it('catches trackers that load after saving with everything off', async () => {
       const result = await scan(`${origin}/consent/settings-broken.html`, settingsOptions);
       expect(ruleIds(result.findings)).toEqual(['trackers-after-settings']);

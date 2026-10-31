@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Usercentrics v3 selector fixture</title>
+    <style>
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <a href="/clean/impressum.html">Impressum</a>
+    <a href="/clean/datenschutz.html">Datenschutz</a>
+    <!-- Markup as served by the Usercentrics v3 banner on dkb.de, checked 2026-10-31. -->
+    <aside id="usercentrics-cmp-ui" data-nosnippet="1">
+      <p>Wir verwenden Cookies, um die Nutzung der Website zu analysieren.</p>
+      <button class="uc-button-link" id="uc-more-link" data-action="consent" data-action-type="more" aria-label="Cookie Einstellungen">Cookie Einstellungen</button>
+      <div id="layer" hidden>
+        <button type="button" role="switch" aria-checked="true" aria-disabled="true" disabled class="uc-switch disabled" data-action="toggle" data-action-type="categoryConsent" value="essential"></button>
+        <span>Erforderlich</span>
+        <button type="button" role="switch" aria-checked="true" class="uc-switch" data-action="toggle" data-action-type="categoryConsent" value="marketing" id="marketing"></button>
+        <span>Marketing &amp; Statistik</span>
+        <button class="save uc-save-button" id="save" data-action="consent" data-action-type="save" aria-label="Einstellungen speichern">Einstellungen speichern</button>
+      </div>
+      <button class="deny uc-deny-button" id="deny" data-action="consent" data-action-type="deny" aria-label="Ablehnen">Ablehnen</button>
+      <button class="accept uc-accept-button" id="accept" data-action="consent" data-action-type="accept" aria-label="Alles akzeptieren">Alles akzeptieren</button>
+    </aside>
+    <script>
+      const banner = document.getElementById('usercentrics-cmp-ui');
+      const stored = localStorage.getItem('uc');
+      const choice = stored ? JSON.parse(stored) : undefined;
+      if (choice?.marketing) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.googletagmanager.com/gtag/js?id=G-UC';
+        document.head.append(tag);
+      }
+      if (choice) banner.remove();
+      const store = (value) => localStorage.setItem('uc', JSON.stringify(value));
+      const marketing = document.getElementById('marketing');
+      marketing.addEventListener('click', () => {
+        marketing.setAttribute('aria-checked', String(marketing.getAttribute('aria-checked') !== 'true'));
+      });
+      document.getElementById('accept').onclick = () => {
+        store({ marketing: true });
+        location.reload();
+      };
+      document.getElementById('deny').onclick = () => {
+        store({ marketing: false });
+        banner.remove();
+      };
+      document.getElementById('uc-more-link').onclick = () => {
+        document.getElementById('layer').hidden = false;
+      };
+      document.getElementById('save').onclick = () => {
+        store({ marketing: marketing.getAttribute('aria-checked') === 'true' });
+        banner.remove();
+      };
+    </script>
+  </body>
+</html>
