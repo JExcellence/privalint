@@ -30,7 +30,6 @@ basis, and consent that can't be refused is not freely given.
 
 - § 25 Abs. 1 TDDDG
 - Art. 6(1)(a) GDPR
-- Art. 7(3) GDPR: withdrawing consent must be as easy as giving it
 
 ## How to fix
 

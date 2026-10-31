@@ -40,6 +40,27 @@ describe('legal references', () => {
   });
 });
 
+describe('withdrawal versus refusal', () => {
+  // Art. 7(3) GDPR is about withdrawing consent that was given. A refusal leaves the processing
+  // without a legal basis, so refusal rules cite Art. 6(1)(a) instead.
+  const withdrawal = /7\. cikk \(3\)|Art\. 7 Abs\. 3|Art\. 7\(3\)/;
+
+  it.each(['trackers-after-reject', 'trackers-after-settings', 'reject-option'])(
+    '%s does not cite the withdrawal provision',
+    (ruleId) => {
+      for (const region of REGIONS) {
+        expect(legalReferences(ruleId, region)?.join(' ')).not.toMatch(withdrawal);
+      }
+    },
+  );
+
+  it('keeps the withdrawal provision for reopening the settings', () => {
+    for (const region of REGIONS.filter((region) => region !== 'ch')) {
+      expect(legalReferences('consent-settings-link', region)?.join(' ')).toMatch(withdrawal);
+    }
+  });
+});
+
 describe('severity per country', () => {
   const severity = (ruleId: string, region: (typeof REGIONS)[number], start: Finding['severity']) =>
     applyRegion([finding(ruleId, start)], region)[0]?.severity;
