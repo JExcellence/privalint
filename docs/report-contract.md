@@ -90,8 +90,9 @@ evaluations, non-evaluable checks and partial results. Disabled rules, explicitl
 and consent outside the start page are intentional exclusions, and so are banner rules skipped as
 `no-consent-needed` (no banner, and nothing needing consent loaded). If something needing consent
 did load without a banner, the reject-path checks stay untested and fail this opt-in gate.
-Omitted beacons and requests the page cancelled itself (`cancelled-by-page`) do not restrict
-observation; every other skip does. Findings can coexist with complete coverage;
+Omitted beacons, requests the page cancelled itself (`cancelled-by-page`) and skipped reports to
+Sentry's ingest hosts do not restrict observation; every other skip does. The gate follows
+`capture.complete`, so such a recorded issue on its own does not fail it. Findings can coexist with complete coverage;
 allowlist annotations alone do not fail the coverage gate.
 
 Exit precedence: `2` for argument/start-page scan errors. After generating a report, `1` for

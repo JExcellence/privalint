@@ -8,6 +8,13 @@ All notable changes are listed here. The format follows
 
 ### Fixed
 
+- A skipped report to error monitoring (Sentry's ingest hosts) no longer makes a page capture
+  incomplete. Read-only adapters skip these `POST`s, and on sites using Sentry every page used to
+  end up "not checkable" because of them. The issue stays in the report with the adapter's
+  reason (#64)
+- The coverage gate (`--fail-on-incomplete`, `assessCoverage`) no longer fails a page whose
+  capture is complete but recorded an omitted beacon or a request the page cancelled. It counted
+  every recorded issue, which contradicted `capture.complete`
 - The Usercentrics v3 banner (`#usercentrics-cmp-ui`) is recognised by name again, and
   `--check-settings` uses its own settings and save buttons. Only the older v2 selectors were
   known, so v3 banners fell back to the label heuristic (#55)

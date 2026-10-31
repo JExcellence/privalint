@@ -41,7 +41,6 @@ export function assessCoverage(result: ScanResult): CoverageAssessment {
     if (
       !page.capture?.complete ||
       !page.capture.document ||
-      page.capture.diagnostics.issueCount > 0 ||
       page.error !== undefined ||
       page.status === null ||
       page.status >= 400

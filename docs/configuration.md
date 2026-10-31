@@ -106,8 +106,15 @@ The same holds for a request the page cancels itself, for example a framework dr
 when the network is slow. privalint detects it from Chromium (`Network.loadingFailed` with
 `canceled`), stops the adapter call if it is still running, and records it as `kind: 'skipped'`,
 `skippedReason: 'cancelled-by-page'`. Requests the browser cancels because the page navigates,
-such as the reload after rejecting, are recorded the same way. Every other skip still restricts
-what the scanner observed, because a missing resource can affect downstream behaviour.
+such as the reload after rejecting, are recorded the same way.
+
+An adapter that only executes read-only requests skips the reports a page sends to error
+monitoring. For Sentry's ingest hosts (`o<number>.ingest.sentry.io` and its regional forms such as
+`o<number>.ingest.de.sentry.io`) such a skip keeps the adapter's reason but does not restrict the
+capture either: the page never acts on the response of an error report.
+
+Every other skip still restricts what the scanner observed, because a missing resource can affect
+downstream behaviour.
 
 ## Consent and progress
 
