@@ -79,9 +79,11 @@ fehlenden nötigen Regelergebnissen, nicht prüfbaren Regeln und eingeschränkte
 Deaktivierte Regeln, ausdrücklich abgeschaltete Consent-Prüfungen und Consent außerhalb der
 Startseite sind bewusste Ausnahmen, ebenso Banner-Regeln mit `no-consent-needed` (kein Banner, und
 nichts Einwilligungspflichtiges geladen). Lädt ohne Banner etwas Einwilligungspflichtiges, bleiben
-die Ablehnen-Regeln ungeprüft und verfehlen die optionale Schranke. Ausgelassene Beacons und von
-der Seite selbst abgebrochene Anfragen (`cancelled-by-page`) schränken die Beobachtung nicht ein,
-alle anderen ausgelassenen Anfragen schon. Findings können bei vollständiger
+die Ablehnen-Regeln ungeprüft und verfehlen die optionale Schranke. Ausgelassene Beacons, von
+der Seite selbst abgebrochene Anfragen (`cancelled-by-page`) und ausgelassene Berichte an die
+Ingest-Hosts von Sentry schränken die Beobachtung nicht ein, alle anderen ausgelassenen Anfragen
+schon. Die Schranke folgt `capture.complete`; eine solche erfasste Diagnose allein lässt sie nicht
+scheitern. Findings können bei vollständiger
 Beobachtung vorliegen; Freigabelisten allein lassen die Coverage-Schranke nicht scheitern.
 
 Exit-Vorrang: `2` bei Argument-/Startseiten-Scanfehlern. Nach Berichtserzeugung `1` für Befunde über
