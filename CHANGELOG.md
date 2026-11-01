@@ -64,6 +64,13 @@ All notable changes are listed here. The format follows
 
 ### Fixed
 
+- Basic-auth credentials in the target URL (`https://user:pass@staging…`) no longer appear in any
+  report, SARIF upload or PR comment. They still open the site
+- A real request failure is no longer relabelled as "cancelled by the page" when two requests
+  share a URL, which could make an incomplete capture look complete
+- When the banner doesn't appear in the settings check's fresh browser, the report says
+  `banner-not-shown` instead of a browser failure
+- The SARIF rule help cites the scan's region, like each result
 - A shop cookie named `put_…` is no longer reported as Magnite advertising (#73)
 - The settings control is found when it sits in a nested shadow root (#78)
 - An open Server-Sent Events stream no longer makes a capture incomplete (#81)
