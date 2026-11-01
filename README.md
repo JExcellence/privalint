@@ -90,19 +90,24 @@ See [configuration and report APIs](docs/configuration.md) ([Deutsch](docs/confi
 Scanning a preview deployment instead of production catches problems before they ship. Pass the
 preview URL from your hosting provider's deployment event or action output as `url`.
 
-| Input                | Default           |                                                       |
-| -------------------- | ----------------- | ----------------------------------------------------- |
-| `url`                |                   | Page to scan. Required.                               |
-| `max-pages`          | `1`               | How many pages of the same site to crawl.             |
-| `concurrency`        | `1`               | Pages loaded at the same time; same report as with 1. |
-| `fail-on`            | `error`           | `error`, `warning` or `never`.                        |
-| `fail-on-incomplete` | `false`           | Fail separately for incomplete required observations. |
-| `disable`            |                   | Comma-separated rule ids to skip.                     |
-| `lang`               | `en`              | Language of the report: `en` or `de`.                 |
-| `region`             | `de`              | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.      |
-| `sarif-file`         | `privalint.sarif` | Where to write SARIF. Empty to skip.                  |
-| `job-summary`        | `true`            | Add the Markdown report to the job summary.           |
-| `pr-comment`         | `false`           | Create/update a same-repository PR report comment.    |
+Inputs left empty are not passed to privalint, so `privalint.config.json` in your workspace (or
+`config`) decides, and the CLI default applies when neither sets a value.
+
+| Input                | Default           |                                                                     |
+| -------------------- | ----------------- | ------------------------------------------------------------------- |
+| `url`                |                   | Page to scan. Required.                                             |
+| `config`             |                   | JSON config file. Empty reads `./privalint.config.json` if present. |
+| `max-pages`          | config, else `1`  | How many pages of the same site to crawl.                           |
+| `concurrency`        | config, else `1`  | Pages loaded at the same time; same report as with 1.               |
+| `fail-on`            | `error`           | `error`, `warning` or `never`.                                      |
+| `fail-on-incomplete` | config, else off  | `true` or `false`: fail separately for incomplete observations.     |
+| `check-settings`     | config, else off  | `true` also tests the banner's settings layer.                      |
+| `disable`            |                   | Comma-separated rule ids to skip.                                   |
+| `lang`               | config, else `en` | Language of the report: `en` or `de`.                               |
+| `region`             | config, else `de` | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.                    |
+| `sarif-file`         | `privalint.sarif` | Where to write SARIF. Empty to skip.                                |
+| `job-summary`        | `true`            | Add the Markdown report to the job summary.                         |
+| `pr-comment`         | `false`           | Create/update a same-repository PR report comment.                  |
 
 Outputs: `exit-code`, and `sarif-file` when a report was written.
 
