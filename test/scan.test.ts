@@ -207,6 +207,23 @@ describe('consent check', () => {
     expect(result.findings).toEqual([]);
   });
 
+  it('waits up to one more settle period for a banner that appears late', async () => {
+    const late = await scan(`${origin}/consent/late.html`, { ...options, settleMs: 1_500 });
+    expect(late.consent).toMatchObject({ bannerFound: true, rejected: true });
+    expect(late.consent?.bannerWaitMs).toBeGreaterThan(0);
+
+    // --settle 0 means no extra wait, so fast runs stay fast.
+    const quick = await scan(`${origin}/consent/late.html`, { ...options, settleMs: 0 });
+    expect(quick.consent).toMatchObject({ bannerFound: false, bannerWaitMs: 0 });
+  });
+
+  it('says how long it looked when no banner appeared', async () => {
+    const result = await scan(`${origin}/consent/not-a-banner.html`, options);
+    expect(result.consent?.bannerFound).toBe(false);
+    expect(result.consent?.bannerWaitMs).toBeGreaterThanOrEqual(400);
+    expect(result.consent?.bannerWaitMs).toBeLessThan(2_000);
+  });
+
   it('reads the IAB TCF API after rejecting too', async () => {
     const clean = await scan(`${origin}/consent/settings-tcf.html`, options);
     expect(clean.consent).toMatchObject({

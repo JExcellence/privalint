@@ -723,6 +723,10 @@
         "tcf": {
           "$ref": "#/$defs/tcf"
         },
+        "bannerWaitMs": {
+          "type": "integer",
+          "minimum": 0
+        },
         "error": {
           "type": "string"
         }

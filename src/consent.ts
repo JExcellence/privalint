@@ -214,7 +214,7 @@ export async function observeConsent(
   options: ConsentCheckOptions,
 ): Promise<ConsentObservation> {
   if (options.signal?.aborted) throw new DOMException('Consent check aborted', 'AbortError');
-  const banner = await findBanner(page);
+  const { found: banner, waitedMs } = await waitFor(page, options, () => findBanner(page));
   if (banner === undefined) {
     return {
       bannerFound: false,
@@ -222,6 +222,7 @@ export async function observeConsent(
       state: 'not-detected',
       outcome: 'no-banner-detected',
       reason: 'no-supported-banner',
+      bannerWaitMs: waitedMs,
     };
   }
 
@@ -231,6 +232,7 @@ export async function observeConsent(
     state: 'reject-unavailable',
     outcome: 'unsupported-banner',
     reason: 'no-supported-reject-control',
+    bannerWaitMs: waitedMs,
     ...(banner.cmp === undefined ? {} : { cmp: banner.cmp }),
     ...(banner.acceptLabel === undefined ? {} : { acceptLabel: banner.acceptLabel }),
     ...(banner.rejectLabel === undefined ? {} : { rejectLabel: banner.rejectLabel }),
@@ -292,7 +294,7 @@ export async function observeSettings(
   options: ConsentCheckOptions,
 ): Promise<SettingsObservation | undefined> {
   if (options.signal?.aborted) throw new DOMException('Settings check aborted', 'AbortError');
-  const entry = await findSettingsEntry(page);
+  const { found: entry } = await waitFor(page, options, () => findSettingsEntry(page));
   if (entry === undefined) return undefined;
   if (entry.open === undefined) {
     return { outcome: 'no-settings-control', reason: 'no-settings-control' };
@@ -853,6 +855,30 @@ async function nearestTo(anchor: Locator, candidates: Locator): Promise<Locator 
     .catch(() => -1);
   await handle.dispose();
   return index < 0 ? undefined : candidates.nth(index);
+}
+
+const BANNER_POLL_MS = 500;
+
+/**
+ * Some consent managers render after a geo lookup or a tag-manager rule, after the page settled.
+ * Without a result, looks again every half second for up to one more settle period, so a scan
+ * with `--settle 0` doesn't wait at all. `waitedMs` is the extra time spent.
+ */
+async function waitFor<T>(
+  page: Page,
+  options: ConsentCheckOptions,
+  find: () => Promise<T | undefined>,
+): Promise<{ found: T | undefined; waitedMs: number }> {
+  let found = await find();
+  if (found !== undefined) return { found, waitedMs: 0 };
+  const started = performance.now();
+  let left = options.settleMs;
+  while (found === undefined && left > 0 && !options.signal?.aborted) {
+    await page.waitForTimeout(Math.min(BANNER_POLL_MS, left));
+    found = await find();
+    left = options.settleMs - (performance.now() - started);
+  }
+  return { found, waitedMs: Math.round(performance.now() - started) };
 }
 
 async function firstVisible(locator: Locator): Promise<Locator | undefined> {

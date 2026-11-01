@@ -6,6 +6,11 @@ All known-CMP selectors are evaluated inside every page frame. Accept and reject
 resolved in the same frame; hidden controls are ignored. Existing selectors and multilingual
 label heuristics remain available through `scan()` and exported `observeConsent()`.
 
+Some consent managers render after a geo lookup or a tag-manager rule, after the page settled. If
+no banner is found, privalint looks again every 500 ms for up to one more settle period (`--settle`,
+default 2000 ms; `--settle 0` adds no wait). `consent.bannerWaitMs` says how long it kept looking:
+0 if the banner was there at once, about one settle period if none appeared.
+
 Additional support:
 
 | CMP                | Recognition                                                                          |

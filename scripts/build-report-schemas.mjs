@@ -330,7 +330,7 @@ function definitions(version) {
               ),
             }
           : {}),
-        ...(timed ? { tcf: ref('tcf') } : {}),
+        ...(timed ? { tcf: ref('tcf'), bannerWaitMs: count } : {}),
         error: string,
       },
       ['bannerFound', 'rejected', 'state', 'outcome', 'reason'],

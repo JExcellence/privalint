@@ -184,6 +184,11 @@ export interface ConsentObservation {
   rejectLabel?: string;
   /** The banner offers "accept" or "subscribe" instead of "reject". */
   payOrOk?: boolean;
+  /**
+   * How long privalint kept looking for a banner after the page had settled, in milliseconds:
+   * 0 if it was there at once, about one settle period if none appeared. Since schema 1.4.0.
+   */
+  bannerWaitMs?: number;
   /** True once the reject button was clicked and the page reloaded. */
   rejected: boolean;
   /** Requests made and cookies newly set after rejecting, including the reload. */

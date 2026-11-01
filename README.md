@@ -230,8 +230,9 @@ Going further:
 3. It records every request, the final cookie jar, all links and `<link>` resource hints.
 4. On the start page it looks for the consent banner, either by the selectors of common consent
    managers (OneTrust, Cookiebot, Usercentrics, Borlabs, Complianz and others) or by button labels
-   in six languages. It clicks "reject", reloads, records what still loads and checks that the
-   settings can be reopened.
+   in six languages. If none is there yet, it keeps looking for up to one more settle period,
+   since some consent managers render late. It clicks "reject", reloads, records what still loads
+   and checks that the settings can be reopened.
 5. Each rule looks at those snapshots and reports findings with evidence and a suggested fix.
 6. With `--max-pages`, links to the same site are followed breadth-first. Query strings are
    dropped, pages are deduplicated after redirects, and pages that fail to load (downloads,
