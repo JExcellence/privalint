@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { copyFile, mkdtemp, rm, symlink, unlink, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, rm, symlink, unlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -140,6 +140,39 @@ describe('JSON configuration', () => {
       }),
     );
     expect(result.options?.allowedVendors).toEqual(['Google Analytics']);
+  });
+  it('rejects an output path in a missing directory before scanning, and keeps the result when writing fails', async () => {
+    const cwd = await directory();
+    let requests = 0;
+    const server = createServer((_request, response) => {
+      requests++;
+      response
+        .writeHead(200, { 'content-type': 'text/html' })
+        .end('<a href="/impressum">Impressum</a><a href="/privacy">Privacy policy</a>');
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    try {
+      await expect(
+        promisify(execFile)(process.execPath, [cli, url, '-o', 'missing/report.sarif'], { cwd }),
+      ).rejects.toMatchObject({ code: 2, stderr: expect.stringContaining('does not exist') });
+      expect(requests).toBe(0);
+
+      // A directory as the output path passes the check but can't be written.
+      await mkdir(join(cwd, 'taken.json'));
+      const failed = await promisify(execFile)(
+        process.execPath,
+        [cli, url, '--settle', '0', '--skip-consent', '-o', 'taken.json'],
+        { cwd },
+      ).catch((error: unknown) => error as { code: number; stdout: string; stderr: string });
+      expect(failed).toMatchObject({
+        code: 2,
+        stderr: expect.stringContaining('could not write taken.json'),
+        stdout: expect.stringContaining('pre-consent-trackers: Checked'),
+      });
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   });
   it('supports config URL and applies CLI flags ahead of config', async () => {
     const cwd = await directory();
