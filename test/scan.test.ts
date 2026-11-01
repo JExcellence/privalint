@@ -356,6 +356,22 @@ describe('consent check', () => {
     );
   });
 
+  it('asks a full-screen banner to link the privacy policy and the Impressum', async () => {
+    const without = await scan(`${origin}/consent/blocking.html`, options);
+    expect(without.findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'banner-legal-links',
+        severity: 'warning',
+        message: expect.stringContaining('privacy policy and Impressum'),
+      }),
+    ]);
+    const withLinks = await scan(`${origin}/consent/blocking-links.html`, options);
+    expect(withLinks.findings).toEqual([]);
+    // A small banner leaves the footer usable, so it isn't asked for its own links.
+    const small = await scan(`${origin}/consent/good.html`, options);
+    expect(small.findings).toEqual([]);
+  });
+
   it('passes a banner whose reject button is respected', async () => {
     const result = await scan(`${origin}/consent/good.html`, options);
     expect(result.consent).toMatchObject({

@@ -117,6 +117,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 12. cikk', 'GDPR 13. cikk'],
     eu: ['Art. 12 GDPR', 'Art. 13 GDPR'],
   },
+  // Both pages must be reachable before the visitor decides, and the Impressum at all times.
+  'banner-legal-links': {
+    de: ['Art. 12 Abs. 1 DSGVO', 'Art. 13 DSGVO', '§ 5 DDG'],
+    at: ['Art. 12 Abs. 1 DSGVO', 'Art. 13 DSGVO', '§ 5 ECG'],
+    ch: ['Art. 19 DSG'],
+    hu: ['GDPR 12. cikk (1) bekezdés', 'GDPR 13. cikk', 'Ekertv. 4. §'],
+    eu: ['Art. 12(1) GDPR', 'Art. 13 GDPR', 'Art. 5 Directive 2000/31/EC (e-commerce)'],
+  },
   // Directive (EU) 2023/2673 added Art. 11a; Germany: § 356a BGB, applicable from 19.06.2026.
   'withdrawal-button': {
     de: ['§ 356a BGB'],
@@ -169,6 +177,7 @@ const SOFTER_IN_SWITZERLAND = new Set([
   'google-fonts',
   'adobe-fonts',
   'impressum-link',
+  'banner-legal-links',
   'withdrawal-button',
   'accessibility-statement',
 ]);

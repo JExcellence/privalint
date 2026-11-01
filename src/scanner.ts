@@ -316,7 +316,13 @@ async function checkSettings(
 
 function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'consent'> {
   if (start?.consent === undefined) return {};
-  const { afterReject: _afterReject, settings, ...summary } = start.consent;
+  const {
+    afterReject: _afterReject,
+    bannerLinks: _bannerLinks,
+    bannerBlocking: _bannerBlocking,
+    settings,
+    ...summary
+  } = start.consent;
   if (settings === undefined) return { consent: summary };
   const { afterSave: _afterSave, ...settingsSummary } = settings;
   return { consent: { ...summary, settings: settingsSummary } };

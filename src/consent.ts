@@ -3,6 +3,7 @@ import { classifyLoadError } from './diagnostics.js';
 import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
   ConsentObservation,
+  PageLink,
   RecordedCookie,
   RecordedRequest,
   SettingsObservation,
@@ -238,6 +239,8 @@ export async function observeConsent(
     ...(banner.acceptLabel === undefined ? {} : { acceptLabel: banner.acceptLabel }),
     ...(banner.rejectLabel === undefined ? {} : { rejectLabel: banner.rejectLabel }),
     ...(banner.payOrOk ? { payOrOk: true } : {}),
+    ...(banner.links === undefined ? {} : { bannerLinks: banner.links }),
+    ...(banner.blocking === undefined ? {} : { bannerBlocking: banner.blocking }),
   };
   if (banner.reject === undefined) {
     if (banner.acceptLabel === undefined) observation.reason = 'unsupported-banner-markup';
@@ -595,6 +598,55 @@ interface Banner {
   rejectLabel?: string;
   reject?: Locator;
   payOrOk?: boolean;
+  links?: PageLink[];
+  blocking?: boolean;
+}
+
+const MAX_BANNER_LINKS = 30;
+
+/**
+ * Runs in the page. The links inside the banner, and whether the banner keeps the visitor from the
+ * rest of the page: a modal dialog, an overlay over at least half the viewport, or a page that
+ * can't scroll while it is open. A small bar leaves the footer links reachable.
+ */
+function bannerLayout(accept: Element, max: number) {
+  const parentOf = (node: Element): Element | null => {
+    const root = node.getRootNode();
+    return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+  };
+  const isLayer = (node: Element) => {
+    const position = getComputedStyle(node).position;
+    return (
+      /^(alert)?dialog$/.test(node.getAttribute('role') ?? '') ||
+      node.getAttribute('aria-modal') === 'true' ||
+      position === 'fixed' ||
+      position === 'sticky'
+    );
+  };
+  // The outermost layer around the accept button; without one, its direct container.
+  let container: Element = accept.parentElement ?? accept;
+  for (let node: Element | null = accept; node !== null; node = parentOf(node)) {
+    if (node === document.body || node === document.documentElement) break;
+    if (isLayer(node)) container = node;
+  }
+  const box = container.getBoundingClientRect();
+  const covered =
+    (Math.min(box.width, innerWidth) * Math.min(box.height, innerHeight)) /
+    (innerWidth * innerHeight);
+  const noScroll = [document.body, document.documentElement].some(
+    (node) => getComputedStyle(node).overflow === 'hidden',
+  );
+  const blocking = container.getAttribute('aria-modal') === 'true' || covered >= 0.5 || noScroll;
+  const links = [...container.querySelectorAll('a[href]')].slice(0, max).map((a) => ({
+    href: (a as HTMLAnchorElement).href,
+    text: [a.textContent, a.getAttribute('aria-label'), a.getAttribute('title')]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 200),
+  }));
+  return { links, blocking };
 }
 
 async function findBanner(page: Page): Promise<Banner | undefined> {
@@ -700,6 +752,11 @@ async function findSettingsControl(page: Page): Promise<string | undefined> {
 
 async function describe(accept: Locator, reject: Locator | undefined, cmp?: string) {
   const banner: Banner = { acceptLabel: await label(accept) };
+  const layout = await accept.evaluate(bannerLayout, MAX_BANNER_LINKS).catch(() => undefined);
+  if (layout !== undefined) {
+    banner.links = layout.links;
+    banner.blocking = layout.blocking;
+  }
   if (reject === undefined && (await offersSubscription(accept))) {
     banner.payOrOk = true;
   }

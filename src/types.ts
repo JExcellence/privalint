@@ -199,6 +199,10 @@ export interface ConsentObservation {
    * 0 if it was there at once, about one settle period if none appeared. Since schema 1.4.0.
    */
   bannerWaitMs?: number;
+  /** Links inside the banner. Internal input for banner-legal-links, not in the report. */
+  bannerLinks?: PageLink[];
+  /** Whether the open banner keeps the visitor from the rest of the page. Internal. */
+  bannerBlocking?: boolean;
   /** True once the reject button was clicked and the page reloaded. */
   rejected: boolean;
   /** Requests made and cookies newly set after rejecting, including the reload. */
