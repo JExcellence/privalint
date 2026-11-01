@@ -96,6 +96,18 @@ describe('scan', () => {
     expect(hang.pages[0]?.capture?.complete).toBe(false);
   });
 
+  it('notes a contact form without a privacy link next to it', async () => {
+    const result = await scan(`${origin}/forms/`, { ...options, consentCheck: false });
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'form-privacy-notice',
+        severity: 'info',
+        message: expect.stringContaining('1 form(s) collecting personal data (contact or sign-up)'),
+        evidence: ['3 forms with email, phone or password fields checked'],
+      }),
+    ]);
+  });
+
   it('recognises a tracker by its localStorage key, not only by cookies', async () => {
     const result = await scan(`${origin}/storage/`, { ...options, consentCheck: false });
     expect(result.findings).toEqual([

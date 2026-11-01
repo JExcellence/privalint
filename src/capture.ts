@@ -1,6 +1,7 @@
 import type { Browser } from 'playwright';
 import { observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
+import { readForms } from './forms.js';
 import { ControlledNetwork, networkLimits, watchPageCancellations } from './network.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import { readStorageKeys } from './storage.js';
@@ -116,6 +117,7 @@ export async function capturePage(
           .slice(0, 200),
       })),
     );
+    snapshot.forms = await readForms(page);
     snapshot.resourceHints = await page.$$eval('link[rel][href]', (elements) =>
       elements.map((link) => ({
         rel: (link.getAttribute('rel') ?? '').toLowerCase(),

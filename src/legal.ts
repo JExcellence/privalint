@@ -125,6 +125,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 12. cikk (1) bekezdés', 'GDPR 13. cikk', 'Ekertv. 4. §'],
     eu: ['Art. 12(1) GDPR', 'Art. 13 GDPR', 'Art. 5 Directive 2000/31/EC (e-commerce)'],
   },
+  // Information at the time personal data is collected.
+  'form-privacy-notice': {
+    de: ['Art. 13 DSGVO'],
+    at: ['Art. 13 DSGVO'],
+    ch: ['Art. 19 DSG'],
+    hu: ['GDPR 13. cikk'],
+    eu: ['Art. 13 GDPR'],
+  },
   // Security of processing: transport encryption is the baseline measure.
   'https-transport': {
     de: ['Art. 32 DSGVO', '§ 19 Abs. 4 TDDDG'],

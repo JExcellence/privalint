@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Forms with and without a privacy notice</title>
+  </head>
+  <body>
+    <h1>Forms with and without a privacy notice</h1>
+    <section>
+      <h2>Kontakt</h2>
+      <form action="/send">
+        <input type="email" name="email" />
+        <textarea name="message"></textarea>
+        <button>Senden</button>
+      </form>
+    </section>
+    <section>
+      <h2>Newsletter</h2>
+      <form action="/subscribe">
+        <input type="email" name="email" />
+        <p>Hinweise in der <a href="/clean/datenschutz.html">Datenschutzerklärung</a>.</p>
+        <button>Anmelden</button>
+      </form>
+    </section>
+    <section>
+      <form action="/login">
+        <input type="text" name="user" />
+        <input type="password" name="password" />
+        <button>Anmelden</button>
+      </form>
+      <p><a href="/clean/datenschutz.html">Datenschutz</a></p>
+    </section>
+    <form role="search" action="/suche">
+      <input type="search" name="q" />
+    </form>
+    <footer>
+      <a href="/clean/impressum.html">Impressum</a>
+      <a href="/clean/datenschutz.html">Datenschutz</a>
+    </footer>
+  </body>
+</html>

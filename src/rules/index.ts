@@ -4,6 +4,7 @@ import { adobeFonts } from './adobe-fonts.js';
 import { bannerLegalLinks } from './banner-legal-links.js';
 import { consentBannerMissing } from './consent-banner-missing.js';
 import { consentSettingsLink } from './consent-settings-link.js';
+import { formPrivacyNotice } from './form-privacy-notice.js';
 import { googleFonts } from './google-fonts.js';
 import { httpsTransport } from './https-transport.js';
 import { impressumLink } from './impressum-link.js';
@@ -30,6 +31,7 @@ export const defaultRules: readonly Rule[] = [
   thirdPartyCdns,
   impressumLink,
   privacyPolicyLink,
+  formPrivacyNotice,
   httpsTransport,
   withdrawalButton,
   accessibilityStatement,
@@ -41,6 +43,7 @@ export {
   bannerLegalLinks,
   consentBannerMissing,
   consentSettingsLink,
+  formPrivacyNotice,
   googleFonts,
   httpsTransport,
   impressumLink,

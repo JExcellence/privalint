@@ -185,6 +185,14 @@ export interface PageLink {
   text: string;
 }
 
+/** A visible form that collects personal data. Only its structure, never its contents. */
+export interface FormObservation {
+  /** A password field makes it a login; an email or phone field a contact or sign-up form. */
+  kind: 'login' | 'contact';
+  /** A link to the privacy policy in the form or right around it. */
+  privacyNearby: boolean;
+}
+
 /** A `<link>` element such as preconnect, dns-prefetch or preload. */
 export interface ResourceHint {
   rel: string;
@@ -300,6 +308,8 @@ export interface PageSnapshot {
   /** Initial-phase request count, including records beyond the retained evidence cap. */
   requestCount?: number;
   cookies: RecordedCookie[];
+  /** Forms that collect personal data. Internal input for form-privacy-notice. */
+  forms?: FormObservation[];
   /** Start page in native scans only: how it travels. */
   transport?: TransportObservation;
   /** localStorage and sessionStorage key names of the page's origin, never values. */
