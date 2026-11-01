@@ -201,7 +201,7 @@ const LEGITIMATE_INTEREST_TAB =
  * "Alle ablehnen" could be the first layer's reject button, which closes the banner.
  */
 const OBJECT_ALL =
-  /(allen?|alles)\s+widersprechen|widerspruch\s+(gegen\s+)?alle|object\s+to\s+all|s['’]opposer\s+à\s+tout|oponerse\s+a\s+todo|opporsi\s+a\s+tutt|bezwaar\s+tegen\s+alle|tiltakozom\s+mind|mindegyik(nek|et)\s+elutasít/i;
+  /(allen?|alles)\s+widersprechen|widerspruch\s+(gegen\s+)?alle|object\s+(to\s+)?all|s['’]opposer\s+à\s+tout|oponerse\s+a\s+todo|opporsi\s+a\s+tutt|bezwaar\s+tegen\s+alle|tiltakoz(om|ás)\s+(az?\s+)?(mind|összes)|mindegyik(nek|et)\s+elutasít/i;
 
 /** Words that make an "all" label about the current selection, see isAcceptAll. */
 const SELECTION_WORD =
@@ -618,7 +618,8 @@ async function objectToLegitimateInterest(
   for (const frame of page.frames()) {
     const tab = await firstInConsentLayer(
       frame
-        .locator('[role="tab"], summary, button[aria-expanded]')
+        // Quantcast shows it as a plain button ("JOGOS ÉRDEK" on index.hu, 2026-11-01).
+        .locator(`[role="tab"], summary, ${CLICKABLE}`)
         .filter({ hasText: LEGITIMATE_INTEREST_TAB })
         .filter({ hasNotText: ACCEPT_LABEL }),
     );

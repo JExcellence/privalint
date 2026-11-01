@@ -445,6 +445,20 @@ describe('consent check', () => {
         expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
       });
 
+      it("finds a plain legitimate-interest button and Quantcast's Hungarian labels", async () => {
+        const result = await scan(
+          `${origin}/consent/settings-tcf-li.html?quantcast`,
+          settingsOptions,
+        );
+        expect(result.consent?.settings).toMatchObject({
+          legitimateInterest: {
+            openLabel: 'JOGOS ÉRDEK',
+            objectAllLabel: 'TILTAKOZÁS AZ ÖSSZES ELLEN',
+          },
+          tcf: { legitimateInterestsOn: [] },
+        });
+      });
+
       it('switches the toggles in the tab off when there is no such button', async () => {
         const result = await scan(`${origin}/consent/settings-tcf-li.html`, settingsOptions);
         expect(result.consent?.settings).toMatchObject({

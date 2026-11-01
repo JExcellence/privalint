@@ -36,7 +36,14 @@
       </div>
     </div>
     <script>
-      const objectAll = new URLSearchParams(location.search).get('object') === 'all';
+      const params = new URLSearchParams(location.search);
+      const objectAll = params.get('object') === 'all' || params.has('quantcast');
+      // ?quantcast: a plain button instead of a tab and Quantcast's Hungarian labels (index.hu).
+      if (params.has('quantcast')) {
+        const tab = document.getElementById('tab-li');
+        tab.removeAttribute('role');
+        tab.textContent = 'JOGOS ÉRDEK';
+      }
       const banner = document.getElementById('banner');
       const stored = localStorage.getItem('tcf');
       const state = stored ? JSON.parse(stored) : undefined;
@@ -62,7 +69,7 @@
       if (objectAll) {
         const button = document.createElement('button');
         button.id = 'object-all';
-        button.textContent = 'Allen widersprechen';
+        button.textContent = params.has('quantcast') ? 'TILTAKOZÁS AZ ÖSSZES ELLEN' : 'Allen widersprechen';
         button.onclick = () => panelLi.querySelectorAll('input').forEach((input) => (input.checked = false));
         panelLi.append(button);
       }
