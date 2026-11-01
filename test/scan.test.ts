@@ -99,6 +99,14 @@ describe('scan', () => {
     ]);
   });
 
+  it('never puts URL credentials into the report', async () => {
+    const withAuth = origin.replace('http://', 'http://scanner:s3cret@');
+    const result = await scan(`${withAuth}/leaky/`, options);
+    expect(JSON.stringify(result)).not.toContain('s3cret');
+    expect(result.siteUrl).toBe(`${origin}/leaky/`);
+    expect(result.findings.length).toBeGreaterThan(0);
+  });
+
   it('records the page a JavaScript redirect lands on while settling', async () => {
     const result = await scan(`${origin}/redirect/`, options);
     expect(result.pages[0]?.finalUrl).toBe(`${origin}/clean/index.html`);

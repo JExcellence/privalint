@@ -291,7 +291,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       coverage: partial ? 'partial' : 'complete',
     };
     emit({ stage: 'completed', elapsedMs: 0 });
-    return options.networkAdapter ? redactReport(result) : result;
+    const clean = withoutCredentials(result);
+    return options.networkAdapter ? redactReport(clean) : clean;
   } finally {
     await browser.close();
   }
@@ -321,6 +322,24 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
   if (settings === undefined) return { consent: summary };
   const { afterSave: _afterSave, ...settingsSummary } = settings;
   return { consent: { ...summary, settings: settingsSummary } };
+}
+
+const URL_CREDENTIALS = /(https?:\/\/)[^\s/?#@]+@/gi;
+
+/**
+ * Basic-auth credentials in the target URL (a staging site) open the site, but must never reach a
+ * report, a SARIF upload or a PR comment. Every string in the report is cleaned, so a URL in a
+ * field added later can't carry them either.
+ */
+function withoutCredentials<T>(value: T): T {
+  if (typeof value === 'string') return value.replace(URL_CREDENTIALS, '$1') as T;
+  if (Array.isArray(value)) return value.map(withoutCredentials) as T;
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, withoutCredentials(item)]),
+    ) as T;
+  }
+  return value;
 }
 
 /** Adapter reports omit URL credentials, paths, queries and fragments by default. */
