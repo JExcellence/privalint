@@ -37,7 +37,8 @@ the evidence and are in `consent.settings.tcf`.
 
 The report says what happened in `consent.settings`: which controls were used, how many switches
 were turned off, and whether the observation was complete. If the banner has no settings control or
-no save button, the rule is not evaluable and says why.
+no save button, or doesn't appear again in the fresh browser (`banner-not-shown`, common with
+geo- or A/B-dependent banners), the rule is not evaluable and says why.
 
 ## Why
 

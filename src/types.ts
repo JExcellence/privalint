@@ -140,7 +140,9 @@ export type RuleExplanation =
   | 'missing-settings-observation'
   | 'no-settings-control'
   | 'no-save-control'
-  | 'settings-saved-and-reloaded';
+  | 'settings-saved-and-reloaded'
+  // Since schema 1.4.0:
+  | 'banner-not-shown';
 
 export interface CaptureObservation {
   complete: boolean;
@@ -223,12 +225,20 @@ export interface ConsentObservation {
  * switched off every optional category and saved.
  */
 export interface SettingsObservation {
-  outcome: 'no-settings-control' | 'no-save-control' | 'interaction-failed' | 'saved';
+  /** `banner-not-shown` since schema 1.4.0. */
+  outcome:
+    | 'no-settings-control'
+    | 'no-save-control'
+    | 'interaction-failed'
+    | 'saved'
+    | 'banner-not-shown';
   reason:
     | 'no-settings-control'
     | 'no-save-control'
     | 'browser-interaction-failed'
-    | 'settings-saved-and-reloaded';
+    | 'settings-saved-and-reloaded'
+    /** The banner showed in the first browser context but not in the fresh one. */
+    | 'banner-not-shown';
   /** Label of the control that opened the settings layer. */
   openLabel?: string;
   /** Label of the control that saved the selection. */

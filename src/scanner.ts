@@ -306,14 +306,12 @@ async function checkSettings(
   options: ScanOptions,
 ): Promise<SettingsObservation> {
   const capture = await capturePage(browser, url, siteUrl, options, 'settings');
-  return (
-    capture.consent?.settings ?? {
-      outcome: 'interaction-failed',
-      reason: 'browser-interaction-failed',
-      // The banner showed in the first context but not in this one.
-      error: capture.error ?? 'browser-failure',
-    }
-  );
+  if (capture.consent?.settings !== undefined) return capture.consent.settings;
+  // The page didn't load: a browser problem. It loaded but showed no banner this time: say so,
+  // instead of calling a geo- or A/B-dependent banner a browser failure.
+  return capture.error === undefined
+    ? { outcome: 'banner-not-shown', reason: 'banner-not-shown' }
+    : { outcome: 'interaction-failed', reason: 'browser-interaction-failed', error: capture.error };
 }
 
 function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'consent'> {

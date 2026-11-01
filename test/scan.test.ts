@@ -12,6 +12,7 @@ const TYPES: Record<string, string> = { '.html': 'text/html', '.css': 'text/css'
 
 let server: Server;
 let origin: string;
+let onceServed = false;
 
 beforeAll(async () => {
   server = createServer(async (req, res) => {
@@ -24,6 +25,13 @@ beforeAll(async () => {
       // Server-Sent Events: answers at once, then stays open like a live-update or chat stream.
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
       res.write('data: hello\n\n');
+      return;
+    }
+    if (path === '/banner-once') {
+      // The banner shows only on the first request, like a geo- or A/B-dependent consent manager.
+      const file = onceServed ? 'clean/index.html' : 'consent/settings-good.html';
+      onceServed = true;
+      res.writeHead(200, { 'content-type': 'text/html' }).end(await readFile(join(FIXTURES, file)));
       return;
     }
     if (path === '/hang') {
@@ -460,6 +468,23 @@ describe('consent check', () => {
         switchedOff: 1,
       });
       expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
+    });
+
+    it('says the banner did not show in the second browser, not that the browser failed', async () => {
+      onceServed = false;
+      const result = await scan(`${origin}/banner-once`, settingsOptions);
+      expect(result.consent?.bannerFound).toBe(true);
+      expect(result.consent?.settings).toEqual({
+        outcome: 'banner-not-shown',
+        reason: 'banner-not-shown',
+      });
+      const evaluation = result.pages[0]?.ruleEvaluations?.find(
+        (rule) => rule.ruleId === 'trackers-after-settings',
+      );
+      expect(evaluation).toMatchObject({
+        outcome: 'not-evaluable',
+        explanation: 'banner-not-shown',
+      });
     });
 
     it('leaves checkboxes outside the consent layer alone', async () => {

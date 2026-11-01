@@ -208,6 +208,7 @@ function definitions(version) {
                   ...explanation.enum,
                   ...EXPLANATIONS,
                   ...(settingsAware ? SETTINGS_EXPLANATIONS : []),
+                  ...(timed ? ['banner-not-shown'] : []),
                 ],
               }
             : explanation,
@@ -313,12 +314,14 @@ function definitions(version) {
                     'no-save-control',
                     'interaction-failed',
                     'saved',
+                    ...(timed ? ['banner-not-shown'] : []),
                   ),
                   reason: choices(
                     'no-settings-control',
                     'no-save-control',
                     'browser-interaction-failed',
                     'settings-saved-and-reloaded',
+                    ...(timed ? ['banner-not-shown'] : []),
                   ),
                   openLabel: string,
                   saveLabel: string,

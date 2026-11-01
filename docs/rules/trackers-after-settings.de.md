@@ -39,7 +39,9 @@ Widerspruch meist in einen eigenen Reiter. Die Zweck-Nummern stehen als Nachweis
 
 Unter `consent.settings` steht im Bericht, welche Elemente benutzt wurden, wie viele Schalter
 ausgeschaltet wurden und ob die Beobachtung vollständig war. Hat das Banner keine Einstellungen
-oder keine Speichern-Schaltfläche, ist die Regel nicht prüfbar und nennt den Grund.
+oder keine Speichern-Schaltfläche oder erscheint es im frischen Browser nicht wieder
+(`banner-not-shown`, häufig bei Bannern, die von Standort oder A/B-Test abhängen), ist die Regel
+nicht prüfbar und nennt den Grund.
 
 ## Warum
 

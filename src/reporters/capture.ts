@@ -95,6 +95,10 @@ const EXPLANATIONS: Record<RuleExplanation, [string, string]> = {
     'Settings saved with everything off and reloaded',
     'Einstellungen ohne Auswahl gespeichert und neu geladen',
   ],
+  'banner-not-shown': [
+    'The banner did not appear in the second, fresh browser',
+    'Das Banner erschien im zweiten, frischen Browser nicht',
+  ],
   'missing-consent-observation': ['Consent not observed', 'Consent nicht beobachtet'],
   'incomplete-document': [
     'Document observation incomplete',

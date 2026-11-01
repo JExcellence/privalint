@@ -411,7 +411,8 @@
             "missing-settings-observation",
             "no-settings-control",
             "no-save-control",
-            "settings-saved-and-reloaded"
+            "settings-saved-and-reloaded",
+            "banner-not-shown"
           ]
         },
         "findingCount": {
@@ -683,7 +684,8 @@
                 "no-settings-control",
                 "no-save-control",
                 "interaction-failed",
-                "saved"
+                "saved",
+                "banner-not-shown"
               ]
             },
             "reason": {
@@ -692,7 +694,8 @@
                 "no-settings-control",
                 "no-save-control",
                 "browser-interaction-failed",
-                "settings-saved-and-reloaded"
+                "settings-saved-and-reloaded",
+                "banner-not-shown"
               ]
             },
             "openLabel": {
