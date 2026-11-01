@@ -794,7 +794,8 @@
               "consent",
               "after-reject",
               "after-settings",
-              "banner-search"
+              "banner-search",
+              "transport"
             ]
           }
         }

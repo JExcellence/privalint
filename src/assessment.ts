@@ -62,6 +62,7 @@ export function assessPage(
     // A failed interaction says nothing about whether a banner was there.
     'banner-search':
       validPage && page.consent !== undefined && page.consent.state !== 'interaction-failed',
+    transport: validPage && page.transport !== undefined,
   };
   const input: PageSnapshot = {
     ...page,

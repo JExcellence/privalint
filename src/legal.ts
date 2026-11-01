@@ -125,6 +125,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 12. cikk (1) bekezdés', 'GDPR 13. cikk', 'Ekertv. 4. §'],
     eu: ['Art. 12(1) GDPR', 'Art. 13 GDPR', 'Art. 5 Directive 2000/31/EC (e-commerce)'],
   },
+  // Security of processing: transport encryption is the baseline measure.
+  'https-transport': {
+    de: ['Art. 32 DSGVO', '§ 19 Abs. 4 TDDDG'],
+    at: ['Art. 32 DSGVO'],
+    ch: ['Art. 8 DSG'],
+    hu: ['GDPR 32. cikk'],
+    eu: ['Art. 32 GDPR'],
+  },
   // Directive (EU) 2023/2673 added Art. 11a; Germany: § 356a BGB, applicable from 19.06.2026.
   'withdrawal-button': {
     de: ['§ 356a BGB'],

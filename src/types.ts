@@ -97,7 +97,9 @@ export type ObservationKind =
   /** Since schema 1.3.0. */
   | 'after-settings'
   /** The start page was searched for a banner, found or not. Since schema 1.4.0. */
-  | 'banner-search';
+  | 'banner-search'
+  /** How the start page travels: HTTPS, HSTS, plain HTTP. Native scans only. Since 1.4.0. */
+  | 'transport';
 
 export interface RuleEvaluation {
   pageId?: string;
@@ -158,6 +160,15 @@ export interface RecordedCookie {
   path: string;
   /** Unix time in seconds, -1 for session cookies. */
   expires: number;
+}
+
+export interface TransportObservation {
+  /** The start page itself was served over HTTPS. */
+  https: boolean;
+  /** A Strict-Transport-Security header with a positive max-age. Only with https. */
+  hsts?: boolean;
+  /** http://<host>/ redirects to HTTPS or isn't served at all. Absent when it couldn't be checked. */
+  httpRedirectsToHttps?: boolean;
 }
 
 /** A Web Storage key of the page's origin; only its name is recorded. */
@@ -286,6 +297,8 @@ export interface PageSnapshot {
   /** Initial-phase request count, including records beyond the retained evidence cap. */
   requestCount?: number;
   cookies: RecordedCookie[];
+  /** Start page in native scans only: how it travels. */
+  transport?: TransportObservation;
   /** localStorage and sessionStorage key names of the page's origin, never values. */
   storage?: StorageKey[];
   links: PageLink[];

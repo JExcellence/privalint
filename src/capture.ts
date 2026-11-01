@@ -4,6 +4,7 @@ import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js'
 import { ControlledNetwork, networkLimits, watchPageCancellations } from './network.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import { readStorageKeys } from './storage.js';
+import { observeTransport } from './transport.js';
 import type { PageSnapshot } from './types.js';
 import { isFirstParty } from './url.js';
 
@@ -130,6 +131,10 @@ export async function capturePage(
       expires,
     }));
     snapshot.storage = await readStorageKeys(page);
+    // One extra request to the target, so only where privalint owns the network.
+    if (consentPath === 'reject' && !controlled && !options.offline) {
+      snapshot.transport = await observeTransport(context.request, snapshot.finalUrl, response);
+    }
     snapshot.requests = [...requests];
     snapshot.requestCount = diagnostics.data.requests;
     document = true;

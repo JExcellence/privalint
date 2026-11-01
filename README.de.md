@@ -59,6 +59,7 @@ npx privalint https://ihre-seite.at --region at --lang de --max-pages 20
 | [`third-party-cdns`](docs/rules/third-party-cdns.de.md)               | Skripte und Styles von jsDelivr, unpkg, cdnjs und anderen öffentlichen CDNs (Hinweis)                                                      |
 | [`impressum-link`](docs/rules/impressum-link.de.md)                   | Seiten ohne Link zum Impressum                                                                                                             |
 | [`privacy-policy-link`](docs/rules/privacy-policy-link.de.md)         | Seiten ohne Link zur Datenschutzerklärung                                                                                                  |
+| [`https-transport`](docs/rules/https-transport.de.md)                 | Startseite über unverschlüsseltes HTTP; HTTP ohne Weiterleitung auf HTTPS als Warnung, fehlendes HSTS als Hinweis                          |
 | [`withdrawal-button`](docs/rules/withdrawal-button.de.md)             | Onlineshops ohne Link „Vertrag widerrufen“ auf der Startseite (Pflicht seit 19.06.2026)                                                    |
 | [`accessibility-statement`](docs/rules/accessibility-statement.de.md) | Onlineshops ohne Link zu Angaben über die Barrierefreiheit (BFSG); Hinweis                                                                 |
 
