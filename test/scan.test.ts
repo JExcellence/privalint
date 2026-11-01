@@ -207,6 +207,37 @@ describe('consent check', () => {
     expect(result.findings).toEqual([]);
   });
 
+  it('reads the IAB TCF API after rejecting too', async () => {
+    const clean = await scan(`${origin}/consent/settings-tcf.html`, options);
+    expect(clean.consent).toMatchObject({
+      rejected: true,
+      tcf: { purposesOn: [], legitimateInterestsOn: [], vendorConsents: 0 },
+    });
+    expect(clean.findings.map((f) => f.ruleId)).not.toContain('trackers-after-reject');
+
+    const consent = await scan(`${origin}/consent/settings-tcf.html?keep=consent`, options);
+    expect(consent.findings).toContainEqual(
+      expect.objectContaining({
+        ruleId: 'trackers-after-reject',
+        severity: 'error',
+        subject: 'IAB TCF',
+        message: expect.stringContaining('after clicking "Alle ablehnen"'),
+      }),
+    );
+
+    const li = await scan(`${origin}/consent/settings-tcf.html?keep=li`, {
+      ...options,
+      lang: 'de',
+    });
+    expect(li.findings).toContainEqual(
+      expect.objectContaining({
+        ruleId: 'trackers-after-reject',
+        severity: 'warning',
+        message: expect.stringContaining('Obwohl „Alle ablehnen“ geklickt wurde'),
+      }),
+    );
+  });
+
   it('passes a banner whose reject button is respected', async () => {
     const result = await scan(`${origin}/consent/good.html`, options);
     expect(result.consent).toMatchObject({
@@ -269,7 +300,8 @@ describe('consent check', () => {
           settingsOptions,
         );
         expect(result.consent?.settings?.tcf).toMatchObject({ purposesOn: [1], vendorConsents: 1 });
-        expect(result.findings).toEqual([
+        // The reject path reports the same stored consent under trackers-after-reject.
+        expect(result.findings.filter((f) => f.ruleId === 'trackers-after-settings')).toEqual([
           expect.objectContaining({
             ruleId: 'trackers-after-settings',
             severity: 'error',
@@ -285,10 +317,11 @@ describe('consent check', () => {
           legitimateInterestsOn: [2, 7],
           vendorLegitimateInterests: 1,
         });
-        expect(result.findings).toEqual([
+        const settings = result.findings.filter((f) => f.ruleId === 'trackers-after-settings');
+        expect(settings).toEqual([
           expect.objectContaining({ severity: 'warning', subject: 'IAB TCF' }),
         ]);
-        expect(result.findings[0]?.message).toContain('purposes 2, 7');
+        expect(settings[0]?.message).toContain('purposes 2, 7');
       });
     });
 

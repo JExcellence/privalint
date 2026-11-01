@@ -195,6 +195,11 @@ export interface ConsentObservation {
    * visible, and its label. Absent if the reject path was not tested, and in reports before 0.5.0.
    */
   settingsControl?: { found: boolean; label?: string };
+  /**
+   * What an IAB TCF consent manager reports through `__tcfapi('getTCData')` after rejecting and
+   * reloading. Absent without a TCF API or an answer. Since schema 1.4.0.
+   */
+  tcf?: TcfObservation;
   /** Only present when the settings-layer check ran. Since schema 1.3.0. */
   settings?: SettingsObservation;
   error?: string;

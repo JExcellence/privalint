@@ -256,6 +256,7 @@ export async function observeConsent(
       .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
       .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
     const settingsLabel = await findSettingsControl(page);
+    const tcf = await readTcf(page);
 
     return {
       ...observation,
@@ -266,6 +267,7 @@ export async function observeConsent(
       afterReject: { requests: requests.slice(firstRequest), cookies },
       settingsControl:
         settingsLabel === undefined ? { found: false } : { found: true, label: settingsLabel },
+      ...(tcf === undefined ? {} : { tcf }),
     };
   } catch (error) {
     return {

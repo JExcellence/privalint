@@ -1,5 +1,6 @@
 import { say } from '../i18n.js';
 import type { Finding, Rule } from '../types.js';
+import { tcfFindings } from './tcf-findings.js';
 import { categoryLabel, findTrackerHits } from './tracker-hits.js';
 
 const ID = 'trackers-after-reject';
@@ -18,7 +19,17 @@ export const trackersAfterReject: Rule = {
       return [];
     }
     const button = page.consent?.rejectLabel ?? say(lang, { en: 'reject', de: 'Ablehnen' });
-    return findTrackerHits(after.requests, after.cookies, lang).map(
+    const tcf =
+      page.consent?.tcf === undefined
+        ? []
+        : tcfFindings({
+            tcf: page.consent.tcf,
+            ruleId: ID,
+            pageUrl: page.finalUrl,
+            lang,
+            action: { en: `clicking "${button}"`, de: `„${button}“ geklickt wurde` },
+          });
+    const trackerFindings = findTrackerHits(after.requests, after.cookies, lang).map(
       ({ tracker, evidence }): Finding => {
         const { vendor } = tracker;
         const category = categoryLabel(tracker.category, lang);
@@ -40,5 +51,6 @@ export const trackersAfterReject: Rule = {
         };
       },
     );
+    return [...trackerFindings, ...tcf];
   },
 };

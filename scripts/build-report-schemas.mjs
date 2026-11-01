@@ -96,6 +96,17 @@ function definitions(version) {
       },
       ['kind', 'phase', 'url'],
     ),
+    // What an IAB TCF consent manager reports after a refusal; under consent and consent.settings.
+    ...(timed
+      ? {
+          tcf: object({
+            purposesOn: array(positive),
+            legitimateInterestsOn: array(positive),
+            vendorConsents: count,
+            vendorLegitimateInterests: count,
+          }),
+        }
+      : {}),
     diagnostics: object(
       {
         requests: count,
@@ -312,22 +323,14 @@ function definitions(version) {
                   saveLabel: string,
                   switchedOff: count,
                   afterSaveComplete: boolean,
-                  ...(timed
-                    ? {
-                        tcf: object({
-                          purposesOn: array(positive),
-                          legitimateInterestsOn: array(positive),
-                          vendorConsents: count,
-                          vendorLegitimateInterests: count,
-                        }),
-                      }
-                    : {}),
+                  ...(timed ? { tcf: ref('tcf') } : {}),
                   error: string,
                 },
                 ['outcome', 'reason'],
               ),
             }
           : {}),
+        ...(timed ? { tcf: ref('tcf') } : {}),
         error: string,
       },
       ['bannerFound', 'rejected', 'state', 'outcome', 'reason'],

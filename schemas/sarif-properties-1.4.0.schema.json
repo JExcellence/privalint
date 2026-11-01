@@ -137,6 +137,39 @@
         "url"
       ]
     },
+    "tcf": {
+      "type": "object",
+      "properties": {
+        "purposesOn": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "legitimateInterestsOn": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "vendorConsents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "vendorLegitimateInterests": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "purposesOn",
+        "legitimateInterestsOn",
+        "vendorConsents",
+        "vendorLegitimateInterests"
+      ]
+    },
     "diagnostics": {
       "type": "object",
       "properties": {
@@ -676,37 +709,7 @@
               "type": "boolean"
             },
             "tcf": {
-              "type": "object",
-              "properties": {
-                "purposesOn": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "minimum": 1
-                  }
-                },
-                "legitimateInterestsOn": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "minimum": 1
-                  }
-                },
-                "vendorConsents": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "vendorLegitimateInterests": {
-                  "type": "integer",
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "purposesOn",
-                "legitimateInterestsOn",
-                "vendorConsents",
-                "vendorLegitimateInterests"
-              ]
+              "$ref": "#/$defs/tcf"
             },
             "error": {
               "type": "string"
@@ -716,6 +719,9 @@
             "outcome",
             "reason"
           ]
+        },
+        "tcf": {
+          "$ref": "#/$defs/tcf"
         },
         "error": {
           "type": "string"

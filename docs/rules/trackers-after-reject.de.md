@@ -20,6 +20,13 @@ Das Neuladen ist entscheidend: Viele fehlerhafte Einrichtungen respektieren den 
 aktuellen Seite, laden beim nächsten Seitenaufruf aber wieder alles. Eine typische Ursache ist
 Code, der nur prüft, ob _irgendeine_ Entscheidung gespeichert wurde, statt welche.
 
+Hat die Seite die IAB-TCF-Schnittstelle (`__tcfapi`), fragt privalint nach dem Neuladen auch dort
+ab, was gespeichert ist. Das liest nur; nichts wird angeklickt. Eine Einwilligung, die die
+Schnittstelle für einen Zweck oder Anbieter noch meldet, ist ein Fehler: Die Besucher haben
+abgelehnt, gespeichert wurde eine Einwilligung. Zwecke oder Anbieter, die über berechtigtes
+Interesse an bleiben, sind eine Warnung, weil TCF-Banner diesen Widerspruch meist in einen eigenen
+Reiter legen. Die Zahlen stehen unter `consent.tcf` und im Nachweis des Befunds.
+
 Geprüft wird nur die Startseite, weil Banner und Konfiguration auf der ganzen Website dieselben
 sind. Mit `--skip-consent` lässt sich die Prüfung überspringen.
 

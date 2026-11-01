@@ -11,7 +11,8 @@ the observation kind `after-settings`, the skip reason `settings-check-disabled`
 explanations, and the region `hu`, all of which a 1.2.0 validator would reject. 1.4.0 adds
 `capture.diagnostics.timing` (`loadMs`, `networkIdleMs` and, for adapter scans, `peakQueued`),
 the timeout `stage` (`queued` or `fetching`) on adapter diagnostics, and
-`consent.settings.tcf`, what an IAB TCF consent manager reports after everything was switched off.
+`consent.tcf` and `consent.settings.tcf`, what an IAB TCF consent manager reports after rejecting
+and after everything was switched off.
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;
 unknown versions are unsupported. Never assign a schema version to old data merely to validate it.
 
