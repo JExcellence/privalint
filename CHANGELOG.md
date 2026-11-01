@@ -6,6 +6,59 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- `--check-settings` reads the IAB TCF API (`__tcfapi('getTCData')`) after saving with
+  everything off. Consent the API still reports for a purpose or vendor is a
+  `trackers-after-settings` error; purposes left on through legitimate interest are a warning. The
+  numbers are in `consent.settings.tcf` (#60, step 1)
+- Capture timing in the diagnostics: `timing.loadMs`, `timing.networkIdleMs` and, for adapter
+  scans, `timing.peakQueued`. Adapter timeouts say whether the request was `queued` or `fetching`
+  (#70)
+- Report schema 1.4.0 with the fields above. Schemas 1.0.0 to 1.3.0 stay available
+- Trackers: Adobe Analytics, Target, Audience Manager and Experience Platform Tags, etracker,
+  INFOnline, Piwik PRO, Heap, Pendo, Optimizely, Chartbeat and Comscore, each from the vendor's own
+  documentation. The Facebook SDK (`connect.facebook.net/<locale>/sdk.js`) is reported as its own
+  vendor in the social category instead of as the Meta Pixel
+- Embeds: SoundCloud, Mapbox, Trusted Shops, Pinterest widgets and Google Calendar
+- Bugsnag, Rollbar and Datadog Browser RUM/Logs ingest hosts join Sentry: a skipped error report
+  to them no longer makes a capture incomplete (#69)
+- `--check-settings` picks the narrowest level when a banner offers consent levels as radio
+  buttons (otpbank.hu), and knows the save labels "Elfogadom a kiválasztottakat" (telekom.hu) and
+  "Elfogadom a fenti …" (#57)
+- Action inputs `config` and `check-settings`
+- The Markdown report (job summary, PR comment) shows the first two evidence items under each
+  finding
+
+### Changed
+
+- Tracker, embed and font rules count requests that got an HTTP error response. A pixel that
+  answers 403 has still received the visitor's IP address and referrer
+- Action inputs `max-pages`, `concurrency`, `lang`, `region` and `fail-on-incomplete` default to
+  empty and are then not passed, so `privalint.config.json` applies. Before, their defaults
+  silently overrode the config file
+
+### Fixed
+
+- `--check-settings` could click "Alle bestätigen", "Confirm all" or "Alle übernehmen" as the save
+  button, which switches everything on. A label covering everything only counts as saving when it
+  names the selection ("Alle Einstellungen speichern")
+- A page with "Angebot annehmen" and a privacy link in the footer, or a footer menu with
+  "Acceptable Use Policy" next to "Cookie Policy", no longer counts as a consent banner. Accept
+  buttons must sit in a dialog, an overlay or a small container about cookies, and must not lead to
+  another page
+- A known consent manager whose reject selector is out of date no longer produces a "no reject"
+  finding; the reject button next to the accept button is found by its label
+- The settings check leaves checkboxes outside the consent layer alone, such as "remember me" in a
+  login form
+- "Cookie beállítások" is recognised as a link to reopen the settings
+- A JavaScript redirect while the page settles no longer leaves the report on the old URL
+- The Markdown "How to fix" section lists each vendor's fix instead of one per rule, and escapes
+  `@` so a PR comment can't mention anyone
+- `docs/configuration.md` lists the region `hu`
+- `test/config.test.ts` builds the CLI into its own temporary directory, so a parallel build can't
+  change it mid-test (#68)
+
 ## 0.8.0 - 2026-10-31
 
 ### Changed
