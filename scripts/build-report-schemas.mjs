@@ -58,6 +58,8 @@ function definitions(version) {
   const identified = version !== '1.0.0';
   // 1.3.0 added the settings-layer check.
   const settingsAware = !['1.0.0', '1.1.0', '1.2.0'].includes(version);
+  // 1.4.0 added capture timing, the timeout stage and the TCF readout.
+  const timed = settingsAware && version !== '1.3.0';
   const observationKinds = ['document', 'network', 'consent', 'after-reject'];
   if (settingsAware) observationKinds.push('after-settings');
   const pageIdentity = identified ? { pageId: uuid } : {};
@@ -90,25 +92,52 @@ function definitions(version) {
           // New in 1.2.0: a validator holding the 1.1.0 file would reject it.
           ...(version === '1.0.0' || version === '1.1.0' ? [] : ['cancelled-by-page']),
         ),
+        ...(timed ? { stage: choices('queued', 'fetching') } : {}),
       },
       ['kind', 'phase', 'url'],
     ),
-    diagnostics: object({
-      requests: count,
-      omittedRequests: count,
-      responses: count,
-      finished: count,
-      failed: count,
-      blocked: count,
-      skippedRequests: count,
-      failedRequests: count,
-      securityBlockedRequests: count,
-      httpErrors: count,
-      bytes: count,
-      issueCount: count,
-      dropped: count,
-      issues: array(ref('diagnostic')),
-    }),
+    diagnostics: object(
+      {
+        requests: count,
+        omittedRequests: count,
+        responses: count,
+        finished: count,
+        failed: count,
+        blocked: count,
+        skippedRequests: count,
+        failedRequests: count,
+        securityBlockedRequests: count,
+        httpErrors: count,
+        bytes: count,
+        issueCount: count,
+        dropped: count,
+        issues: array(ref('diagnostic')),
+        ...(timed
+          ? {
+              timing: object({ loadMs: count, networkIdleMs: count, peakQueued: count }, [
+                'loadMs',
+                'networkIdleMs',
+              ]),
+            }
+          : {}),
+      },
+      [
+        'requests',
+        'omittedRequests',
+        'responses',
+        'finished',
+        'failed',
+        'blocked',
+        'skippedRequests',
+        'failedRequests',
+        'securityBlockedRequests',
+        'httpErrors',
+        'bytes',
+        'issueCount',
+        'dropped',
+        'issues',
+      ],
+    ),
     capture: {
       ...object({
         complete: boolean,
@@ -283,6 +312,16 @@ function definitions(version) {
                   saveLabel: string,
                   switchedOff: count,
                   afterSaveComplete: boolean,
+                  ...(timed
+                    ? {
+                        tcf: object({
+                          purposesOn: array(positive),
+                          legitimateInterestsOn: array(positive),
+                          vendorConsents: count,
+                          vendorLegitimateInterests: count,
+                        }),
+                      }
+                    : {}),
                   error: string,
                 },
                 ['outcome', 'reason'],
@@ -434,7 +473,7 @@ function sarifPropertiesSchema(version) {
 
 const directory = new URL('../schemas/', import.meta.url);
 await mkdir(directory, { recursive: true });
-for (const version of ['1.0.0', '1.1.0', '1.2.0', '1.3.0']) {
+for (const version of ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0']) {
   for (const [name, schema] of [
     ['report', reportSchema(version)],
     ['sarif-properties', sarifPropertiesSchema(version)],

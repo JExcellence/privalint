@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { VERSION } from '../src/meta.js';
 import { NetworkError } from '../src/network.js';
+import { REPORT_SCHEMA_VERSION } from '../src/report-contract.js';
 import { scan } from '../src/scanner.js';
 import type { ScanProgressEvent } from '../src/types.js';
 
@@ -104,7 +105,7 @@ describe('versioned report contract', () => {
     ).toBe(true);
     expect(JSON.stringify(events)).not.toContain('SECRET');
     expect(result).toMatchObject({
-      schemaVersion: '1.3.0',
+      schemaVersion: REPORT_SCHEMA_VERSION,
       scannerVersion: VERSION,
       options: {
         maxPages: 1,
