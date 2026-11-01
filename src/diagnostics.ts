@@ -170,12 +170,15 @@ export class Diagnostics {
       if (failure) this.settle(failure.entry, issue(failure.entry.phase));
       return;
     }
-    for (const [request, entry] of this.pending) {
-      if (request.url() === url) {
-        entry.issue = issue(entry.phase);
-        return;
-      }
+    const sameUrl = [...this.pending].filter(([request]) => request.url() === url);
+    // Never relabel a request that already has a reason: a real failure would turn into a
+    // non-restricting cancel. With two requests to one URL, the one without a reason is meant.
+    const open = sameUrl.find(([, entry]) => entry.issue === undefined);
+    if (open !== undefined) {
+      open[1].issue = issue(open[1].phase);
+      return;
     }
+    if (sameUrl.length > 0) return;
     // The cancellation can overtake Playwright's request event; apply it on arrival.
     const early = this.earlyFailures.get(url) ?? [];
     early.push(issue(this.phase));
