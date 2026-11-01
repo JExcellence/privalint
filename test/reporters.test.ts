@@ -120,11 +120,31 @@ describe('sarif', () => {
     expect(precision('google-fonts')).toBe('high');
   });
 
-  it('keeps non-ASCII page paths apart from their underscore lookalikes', () => {
-    const uri = (pageUrl: string) =>
-      JSON.parse(formatSarif(result([finding({ pageUrl })]))).runs[0].results[0].locations[0]
-        .physicalLocation.artifactLocation.uri;
-    expect(uri('https://example.de/über')).not.toBe(uri('https://example.de/_ber'));
+  it('keeps encoded page paths distinct without changing ordinary locations', () => {
+    const urls = [
+      'https://example.de/über-uns',
+      'https://example.de/_ber-uns',
+      'https://example.de/%C3%BCber-uns',
+      'https://example.de/_C3_BCber-uns',
+      'https://example.de/a%20b',
+      'https://example.de/a_20b',
+      'https://example.de/docs/',
+    ];
+    const locations = JSON.parse(
+      formatSarif(result(urls.map((pageUrl) => finding({ pageUrl })))),
+    ).runs[0].results.map(
+      (entry: { locations: { physicalLocation: { artifactLocation: { uri: string } } }[] }) =>
+        entry.locations[0]?.physicalLocation.artifactLocation.uri,
+    );
+    expect(locations).toEqual([
+      'privalint/example.de/%C3%BCber-uns',
+      'privalint/example.de/_ber-uns',
+      'privalint/example.de/%C3%BCber-uns',
+      'privalint/example.de/_C3_BCber-uns',
+      'privalint/example.de/a%20b',
+      'privalint/example.de/a_20b',
+      'privalint/example.de/docs/index',
+    ]);
   });
 
   it('maps severities and pages to stable locations', () => {

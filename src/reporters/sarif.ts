@@ -146,5 +146,7 @@ const precisionOf = (ruleId: string): 'high' | 'medium' =>
 function pseudoPath(pageUrl: string): string {
   const url = new URL(pageUrl);
   const path = url.pathname.endsWith('/') ? `${url.pathname}index` : url.pathname;
-  return `privalint/${url.host}${path}`.replace(/[^\w./-]/g, '_');
+  // URL.pathname already percent-encodes Unicode and spaces. Keeping those escapes stops
+  // /über-uns from collapsing onto a page literally named /_C3_BCber-uns.
+  return `privalint/${url.host}${path}`.replace(/[^\w./%-]/g, encodeURIComponent);
 }

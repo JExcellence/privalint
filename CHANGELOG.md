@@ -81,6 +81,8 @@ All notable changes are listed here. The format follows
 - When the banner doesn't appear in the settings check's fresh browser, the report says
   `banner-not-shown` instead of a browser failure
 - The SARIF rule help cites the scan's region, like each result
+- SARIF page locations keep percent escapes, so `/über-uns` no longer shares a location with a
+  page named `/_C3_BCber-uns`. Locations of pages with non-ASCII paths change once (#86)
 - A fetch from a worker that got its answer but wasn't read no longer makes an adapter capture
   incomplete. Requests from cross-origin iframes and workers are confirmed to go through the
   adapter (#88)
