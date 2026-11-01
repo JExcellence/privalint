@@ -59,6 +59,15 @@ ausliefert, kann deshalb anschlagen. Bitte
 [eröffnen Sie ein Issue](https://github.com/jexcellence/privalint/issues/new?template=false-positive.yml)
 mit der URL und dem Befund.
 
+Cookies werden außerdem per Name mit der Open Cookie Database abgeglichen, auf jeder Domain. Namen,
+die jede Seite für ein eigenes Cookie verwenden könnte (`session`, `token`, `put_`, …), sind beim
+Erzeugen der Liste ausgenommen; siehe `GENERIC` in `scripts/build-cookie-trackers.mjs`.
+
+Dynatrace (`dtCookie`, `dtPC`, `rxVisitor`, …) wird bewusst als Analyse gemeldet. Sein Real User
+Monitoring zeichnet Sitzungen und Nutzeraktionen je Besucher auf; das geht über das unbedingt
+Erforderliche für den Betrieb der Seite hinaus. Wer es nur serverseitig nutzt, hat diese
+Browser-Cookies nicht.
+
 ## Quellen für die Session-Replay-Hosts
 
 Geratene Domains führen zu Fehlalarmen. Deshalb stammt jeder Host vom Anbieter selbst oder von

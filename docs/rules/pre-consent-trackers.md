@@ -59,6 +59,15 @@ The list matches hostnames, so a domain that serves both tracking and harmless c
 flagged. Please [open an issue](https://github.com/jexcellence/privalint/issues/new?template=false-positive.yml)
 with the URL and the finding.
 
+Cookies are also matched against the Open Cookie Database by name, on any domain. Names that any
+site could use for its own cookie (`session`, `token`, `put_`, …) are left out of that list when it
+is generated; see `GENERIC` in `scripts/build-cookie-trackers.mjs`.
+
+Dynatrace (`dtCookie`, `dtPC`, `rxVisitor`, …) is reported as analytics on purpose. Its real user
+monitoring records sessions and user actions per visitor, which goes beyond what is strictly
+necessary to run the site. If you only use it for server-side monitoring, the browser cookies
+won't be there.
+
 ## Sources for the session-replay hosts
 
 Guessed domains cause false positives, so each host comes from the vendor or from a live site

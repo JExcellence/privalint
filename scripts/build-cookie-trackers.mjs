@@ -60,6 +60,8 @@ const GENERIC = new Set([
   'locale',
   'm_user',
   'partner-',
+  // Magnite lists put_ as a wildcard; a shop's own put_cart or put_item would match it.
+  'put_',
   'recs',
   'recs-',
   'ref-',

@@ -240,6 +240,16 @@ describe('cookies from the Open Cookie Database', () => {
     }
   });
 
+  it('does not take a shop cookie such as put_cart for Magnite', () => {
+    expect(findTrackerByCookie('put_cart')).toBeUndefined();
+    expect(findTrackerByCookie('put_item_42')).toBeUndefined();
+  });
+
+  it('keeps vendor-specific short prefixes', () => {
+    expect(findTrackerByCookie('dtPC')?.vendor).toBe('Dynatrace');
+    expect(findTrackerByCookie('CFFC123')?.vendor).toBe('Adform');
+  });
+
   it('only contains analytics and advertising cookies of a safe length', () => {
     for (const { vendor, category, names, prefixes } of openCookieDatabase) {
       expect(['analytics', 'advertising'], vendor).toContain(category);
