@@ -102,9 +102,9 @@ describe('sarif', () => {
 
   it('cites the scan region in the rule help, like in each result', () => {
     const help = (region: ScanResult['region']) =>
-      JSON.parse(formatSarif({ ...result([finding()]), region })).runs[0].tool.driver.rules.find(
-        (rule: { id: string }) => rule.id === 'google-fonts',
-      ).help.text.split('References: ')[1] as string;
+      JSON.parse(formatSarif({ ...result([finding()]), region }))
+        .runs[0].tool.driver.rules.find((rule: { id: string }) => rule.id === 'google-fonts')
+        .help.text.split('References: ')[1] as string;
     expect(help('de')).toContain('LG München I');
     expect(help('at')).toContain('Art. 6 Abs. 1 DSGVO');
     expect(help('at')).not.toContain('LG München I');
