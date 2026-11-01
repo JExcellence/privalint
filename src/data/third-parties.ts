@@ -33,6 +33,13 @@ export const embeds: readonly ThirdParty[] = [
   { vendor: 'OpenStreetMap tiles', domains: ['tile.openstreetmap.org'] },
   { vendor: 'TikTok embed', domains: ['tiktok.com'], paths: ['/embed', '/embed.js', '/player/'] },
   { vendor: 'Calendly', domains: ['calendly.com'] },
+  // Hosts from the vendors' own embed documentation, checked 2026-11-01; sources in
+  // docs/rules/third-party-embeds.md.
+  { vendor: 'SoundCloud embed', domains: ['w.soundcloud.com'], paths: ['/player/'] },
+  { vendor: 'Mapbox', domains: ['api.mapbox.com', 'events.mapbox.com', 'tiles.mapbox.com'] },
+  { vendor: 'Trusted Shops', domains: ['widgets.trustedshops.com'] },
+  { vendor: 'Pinterest widgets', domains: ['assets.pinterest.com'], paths: ['/js/'] },
+  { vendor: 'Google Calendar embed', domains: ['calendar.google.com'], paths: ['/calendar/embed'] },
   // Chat and review widgets, hosts checked 2026-10-30; sources in docs/rules/third-party-embeds.md.
   {
     vendor: 'Intercom',

@@ -71,3 +71,24 @@ einer Live-Website (geprüft am 28.10.2026):
 | Smartlook     | `web-sdk.smartlook.com`                             | Geladen auf fogbugz.com, braiins.com und pinata.cloud                                                                                                                                    |
 | Lucky Orange  | `tools.luckyorange.com`, `settings.luckyorange.com` | Geladen auf luckyorange.com                                                                                                                                                              |
 | Contentsquare | `contentsquare.net`, Cookies `_cs_*`                | Tag-, Seitenaufruf- und Aufzeichnungsanfragen sowie die Cookies auf contentsquare.com                                                                                                    |
+
+## Quellen für die am 01.11.2026 ergänzten Hosts
+
+Jeder Host steht in der Installations-, CSP- oder Allowlist-Dokumentation des Anbieters selbst.
+Manche Tools lassen sich unter einer eigenen Subdomain betreiben (CNAME); daran erkennt privalint
+sie nicht.
+
+| Anbieter                                  | Hosts                                                                                               | Quelle                                                                                                                       |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Adobe Analytics, Target, Audience Manager | `omtrdc.net` (Target: `tt.omtrdc.net`), `2o7.net`, `demdex.net`, `everesttech.net`, `everestjs.net` | [Adobe Experience Cloud ID: CSP](https://experienceleague.adobe.com/en/docs/id-service/using/reference/csp)                  |
+| Adobe Experience Platform Web SDK         | `edge.adobedc.net`                                                                                  | [Web SDK `edgeDomain`](https://experienceleague.adobe.com/en/docs/experience-platform/web-sdk/commands/configure/edgedomain) |
+| Adobe Experience Platform Tags            | `assets.adobedtm.com`                                                                               | [Adobe Experience Cloud ID: CSP](https://experienceleague.adobe.com/en/docs/id-service/using/reference/csp)                  |
+| etracker                                  | `code.etracker.com`, `etracker.de`                                                                  | [etracker basic integration](https://help.etracker.com/en/article/basic-integration/)                                        |
+| INFOnline                                 | `ioam.de`, `iocnt.net`                                                                              | [INFOnline web integration](https://docs.infonline.de/infonline-measurement/en/integration/web/)                             |
+| Piwik PRO                                 | `<org>.piwik.pro`, `<org>.containers.piwik.pro`                                                     | [Piwik PRO CSP](https://developers.piwik.pro/docs/content-security-policy-csp)                                               |
+| Heap                                      | `heap-api.com`, `cdn.heapanalytics.com`, Cookies `_hp2_*`                                           | [Heap web installation](https://developers.heap.io/docs/web)                                                                 |
+| Pendo                                     | `cdn.pendo.io`, `data.pendo.io` und ihre `eu.`-Formen                                               | [Pendo allowlist](https://support.pendo.io/hc/en-us/articles/360032209131)                                                   |
+| Optimizely                                | `cdn.optimizely.com`, `logx.optimizely.com`                                                         | [Optimizely CSP](https://support.optimizely.com/hc/en-us/articles/4410289675149)                                             |
+| Chartbeat                                 | `static.chartbeat.com`, `ping.chartbeat.net`                                                        | [Chartbeat JavaScript](https://docs.chartbeat.com/cbp/tracking/standard-websites/our-javascript)                             |
+| Comscore                                  | `scorecardresearch.com`                                                                             | [Comscore support](https://direct-support.comscore.com/hc/en-us/articles/360002578333)                                       |
+| Facebook SDK                              | `connect.facebook.net/<locale>/sdk.js` (Kategorie Social, getrennt vom Meta Pixel)                  | [Facebook JavaScript SDK quickstart](https://developers.facebook.com/docs/javascript/quickstart)                             |

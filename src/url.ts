@@ -40,9 +40,10 @@ export interface HostPattern {
   domains: string[];
   /**
    * If set, only these paths count. A path ending in `/` matches everything below it,
-   * otherwise it must match exactly or be followed by `/`.
+   * otherwise it must match exactly or be followed by `/`. A RegExp is tested against the whole
+   * pathname, for paths with a variable part such as a locale.
    */
-  paths?: string[];
+  paths?: Array<string | RegExp>;
 }
 
 /** Returns the first entry whose hosts and paths match the URL. */
@@ -63,7 +64,10 @@ export function findByUrl<T extends HostPattern>(
   );
 }
 
-function pathMatches(pathname: string, path: string): boolean {
+function pathMatches(pathname: string, path: string | RegExp): boolean {
+  if (path instanceof RegExp) {
+    return path.test(pathname);
+  }
   if (path.endsWith('/')) {
     return pathname.startsWith(path);
   }

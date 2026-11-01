@@ -145,6 +145,16 @@ describe('additional third-party embeds', () => {
     ['Trustpilot widget', 'https://widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js'],
     ['Typeform', 'https://embed.typeform.com/next/embed.js'],
     ['Typeform', 'https://form.typeform.com/to/abc123'],
+    [
+      'SoundCloud embed',
+      'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1',
+    ],
+    ['SoundCloud embed', 'https://w.soundcloud.com/player/api.js'],
+    ['Mapbox', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12'],
+    ['Mapbox', 'https://events.mapbox.com/events/v2'],
+    ['Trusted Shops', 'https://widgets.trustedshops.com/js/X0123456789.js'],
+    ['Pinterest widgets', 'https://assets.pinterest.com/js/pinit.js'],
+    ['Google Calendar embed', 'https://calendar.google.com/calendar/embed?src=x'],
   ])('recognizes %s as an observed third-party resource', (vendor, url) => {
     expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
       { subject: vendor, ruleId: 'third-party-embeds' },
