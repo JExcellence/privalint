@@ -42,6 +42,11 @@ Provider integration references:
 - [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/)
 - [TikTok embedded videos](https://developers.tiktok.com/doc/embed-videos/)
 - [Calendly embed options](https://help.calendly.com/hc/en-us/articles/223147027-Embed-options-overview)
+- [SoundCloud widget API](https://developers.soundcloud.com/docs/api/html5-widget) (`w.soundcloud.com/player/`)
+- [Mapbox GL JS security](https://docs.mapbox.com/mapbox-gl-js/guides/security-and-testing/) (`api.mapbox.com`, `events.mapbox.com`, `tiles.mapbox.com`)
+- [Trusted Shops trustbadge integration](https://help.etrusted.com/hc/en-gb/articles/29483411352338) (`widgets.trustedshops.com`)
+- [Pinterest widgets](https://developers.pinterest.com/docs/widgets/getting-started/) (`assets.pinterest.com/js/`)
+- [Google Calendar: embed a calendar](https://support.google.com/calendar/answer/41207) (`calendar.google.com/calendar/embed`)
 
 Chat and review widgets (hosts checked 2026-10-30). Only documented widget and Messenger service
 hosts match; marketing pages and Inbox/dashboard hosts do not. The CSP guide's generic YouTube,

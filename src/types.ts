@@ -44,6 +44,21 @@ export interface LoadDiagnostic {
   status?: number;
   limit?: 'requests' | 'response-bytes' | 'total-bytes' | 'redirects';
   skippedReason?: SkipReason;
+  /**
+   * Adapter scans only, on timeouts: whether the request was still waiting for an adapter slot
+   * or the adapter was fetching it. The two have separate budgets. Since schema 1.4.0.
+   */
+  stage?: 'queued' | 'fetching';
+}
+
+/** Where the time of one page capture went. Durations in milliseconds. Since schema 1.4.0. */
+export interface CaptureTiming {
+  /** From navigation start until the load event. */
+  loadMs: number;
+  /** From the load event until the network was idle, or the wait gave up. */
+  networkIdleMs: number;
+  /** Adapter scans only: most requests waiting for an adapter slot at the same time. */
+  peakQueued?: number;
 }
 
 export interface LoadDiagnostics {
@@ -71,6 +86,7 @@ export interface LoadDiagnostics {
   issueCount: number;
   dropped: number;
   issues: LoadDiagnostic[];
+  timing?: CaptureTiming;
 }
 
 export type ObservationKind =
@@ -79,7 +95,11 @@ export type ObservationKind =
   | 'consent'
   | 'after-reject'
   /** Since schema 1.3.0. */
-  | 'after-settings';
+  | 'after-settings'
+  /** The start page was searched for a banner, found or not. Since schema 1.4.0. */
+  | 'banner-search'
+  /** How the start page travels: HTTPS, HSTS, plain HTTP. Native scans only. Since 1.4.0. */
+  | 'transport';
 
 export interface RuleEvaluation {
   pageId?: string;
@@ -93,7 +113,9 @@ export interface RuleEvaluation {
     /** No banner, and nothing that needs consent loaded before a choice. */
     | 'no-consent-needed'
     /** The settings-layer check is opt-in. Since schema 1.3.0. */
-    | 'settings-check-disabled';
+    | 'settings-check-disabled'
+    /** Adapter and offline scans make no extra request to http://. Since schema 1.4.0. */
+    | 'transport-not-checked';
   /** Executed against available positive evidence, without ruling out additional findings. */
   partial: boolean;
   outcome?: 'checked-no-finding' | 'finding-detected' | 'not-evaluable';
@@ -122,7 +144,10 @@ export type RuleExplanation =
   | 'missing-settings-observation'
   | 'no-settings-control'
   | 'no-save-control'
-  | 'settings-saved-and-reloaded';
+  | 'settings-saved-and-reloaded'
+  // Since schema 1.4.0:
+  | 'banner-not-shown'
+  | 'transport-not-checked';
 
 export interface CaptureObservation {
   complete: boolean;
@@ -140,9 +165,32 @@ export interface RecordedCookie {
   expires: number;
 }
 
+export interface TransportObservation {
+  /** The start page itself was served over HTTPS. */
+  https: boolean;
+  /** A Strict-Transport-Security header with a positive max-age. Only with https. */
+  hsts?: boolean;
+  /** http://<host>/ redirects to HTTPS or isn't served at all. Absent when it couldn't be checked. */
+  httpRedirectsToHttps?: boolean;
+}
+
+/** A Web Storage key of the page's origin; only its name is recorded. */
+export interface StorageKey {
+  area: 'local' | 'session';
+  name: string;
+}
+
 export interface PageLink {
   href: string;
   text: string;
+}
+
+/** A visible form that collects personal data. Only its structure, never its contents. */
+export interface FormObservation {
+  /** A password field makes it a login; an email or phone field a contact or sign-up form. */
+  kind: 'login' | 'contact';
+  /** A link to the privacy policy in the form or right around it. */
+  privacyNearby: boolean;
 }
 
 /** A `<link>` element such as preconnect, dns-prefetch or preload. */
@@ -168,10 +216,19 @@ export interface ConsentObservation {
   rejectLabel?: string;
   /** The banner offers "accept" or "subscribe" instead of "reject". */
   payOrOk?: boolean;
+  /**
+   * How long privalint kept looking for a banner after the page had settled, in milliseconds:
+   * 0 if it was there at once, about one settle period if none appeared. Since schema 1.4.0.
+   */
+  bannerWaitMs?: number;
+  /** Links inside the banner. Internal input for banner-legal-links, not in the report. */
+  bannerLinks?: PageLink[];
+  /** Whether the open banner keeps the visitor from the rest of the page. Internal. */
+  bannerBlocking?: boolean;
   /** True once the reject button was clicked and the page reloaded. */
   rejected: boolean;
   /** Requests made and cookies newly set after rejecting, including the reload. */
-  afterReject?: { requests: RecordedRequest[]; cookies: RecordedCookie[] };
+  afterReject?: { requests: RecordedRequest[]; cookies: RecordedCookie[]; storage?: StorageKey[] };
   /** True only if the reject observation window completed without load issues. */
   afterRejectComplete?: boolean;
   /**
@@ -179,6 +236,11 @@ export interface ConsentObservation {
    * visible, and its label. Absent if the reject path was not tested, and in reports before 0.5.0.
    */
   settingsControl?: { found: boolean; label?: string };
+  /**
+   * What an IAB TCF consent manager reports through `__tcfapi('getTCData')` after rejecting and
+   * reloading. Absent without a TCF API or an answer. Since schema 1.4.0.
+   */
+  tcf?: TcfObservation;
   /** Only present when the settings-layer check ran. Since schema 1.3.0. */
   settings?: SettingsObservation;
   error?: string;
@@ -189,23 +251,53 @@ export interface ConsentObservation {
  * switched off every optional category and saved.
  */
 export interface SettingsObservation {
-  outcome: 'no-settings-control' | 'no-save-control' | 'interaction-failed' | 'saved';
+  /** `banner-not-shown` since schema 1.4.0. */
+  outcome:
+    | 'no-settings-control'
+    | 'no-save-control'
+    | 'interaction-failed'
+    | 'saved'
+    | 'banner-not-shown';
   reason:
     | 'no-settings-control'
     | 'no-save-control'
     | 'browser-interaction-failed'
-    | 'settings-saved-and-reloaded';
+    | 'settings-saved-and-reloaded'
+    /** The banner showed in the first browser context but not in the fresh one. */
+    | 'banner-not-shown';
   /** Label of the control that opened the settings layer. */
   openLabel?: string;
   /** Label of the control that saved the selection. */
   saveLabel?: string;
   /** How many checked category switches privalint turned off before saving. */
   switchedOff?: number;
+  /**
+   * The legitimate-interest tab of a TCF banner, if there was one: its label, the "object to all"
+   * button used, or how many of its switches were turned off. Since schema 1.4.0.
+   */
+  legitimateInterest?: { openLabel: string; objectAllLabel?: string; switchedOff: number };
   /** Requests made and cookies newly set after saving, including the reload. */
-  afterSave?: { requests: RecordedRequest[]; cookies: RecordedCookie[] };
+  afterSave?: { requests: RecordedRequest[]; cookies: RecordedCookie[]; storage?: StorageKey[] };
   /** True only if the observation window after saving completed without load issues. */
   afterSaveComplete?: boolean;
+  /**
+   * What an IAB TCF consent manager reports through `__tcfapi('getTCData')` after saving and
+   * reloading. Absent when the page has no TCF API or it did not answer. Since schema 1.4.0.
+   */
+  tcf?: TcfObservation;
   error?: string;
+}
+
+/** TCF purposes and vendors that are still on after switching everything off. */
+export interface TcfObservation {
+  /** Purpose ids with consent still given. */
+  purposesOn: number[];
+  /** Purpose ids still processed on the basis of legitimate interest. */
+  legitimateInterestsOn: number[];
+  /** Number of vendors with consent still given. */
+  vendorConsents: number;
+  /** Number of vendors still relying on legitimate interest. */
+  vendorLegitimateInterests: number;
 }
 
 /**
@@ -221,6 +313,12 @@ export interface PageSnapshot {
   /** Initial-phase request count, including records beyond the retained evidence cap. */
   requestCount?: number;
   cookies: RecordedCookie[];
+  /** Forms that collect personal data. Internal input for form-privacy-notice. */
+  forms?: FormObservation[];
+  /** Start page in native scans only: how it travels. */
+  transport?: TransportObservation;
+  /** localStorage and sessionStorage key names of the page's origin, never values. */
+  storage?: StorageKey[];
   links: PageLink[];
   resourceHints: ResourceHint[];
   /** Only present on the start page, unless the consent check was skipped. */

@@ -735,7 +735,7 @@ export const openCookieDatabase: readonly OpenCookieDatabaseEntry[] = [
     vendor: 'Magnite',
     category: 'advertising',
     names: ['audit_p', 'khaos', 'khaos_p', 'tvid'],
-    prefixes: ['put_', 'tv_U'],
+    prefixes: ['tv_U'],
   },
   {
     vendor: 'MailMunch',

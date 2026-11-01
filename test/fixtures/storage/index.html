@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tracker that keeps its ID in localStorage</title>
+  </head>
+  <body>
+    <h1>Tracker that keeps its ID in localStorage</h1>
+    <footer>
+      <a href="/clean/impressum.html">Impressum</a>
+      <a href="/clean/datenschutz.html">Datenschutz</a>
+    </footer>
+    <script>
+      // As Hotjar's script does on first visit; the value doesn't matter, the name gives it away.
+      localStorage.setItem('_hjSessionUser_123', '{"id":"x"}');
+      // The site's own key, which must not count.
+      sessionStorage.setItem('cartDraft', '[]');
+    </script>
+  </body>
+</html>

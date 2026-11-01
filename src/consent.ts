@@ -1,10 +1,13 @@
 import type { BrowserContext, Frame, Locator, Page } from 'playwright';
 import { classifyLoadError } from './diagnostics.js';
+import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
   ConsentObservation,
+  PageLink,
   RecordedCookie,
   RecordedRequest,
   SettingsObservation,
+  TcfObservation,
 } from './types.js';
 
 interface CmpSelectors {
@@ -124,8 +127,9 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
 
 // Unanchored on purpose: "Alle Cookies akzeptieren" and "Accept all cookies" must both match.
 // Labels that also match REJECT_LABEL ("Nur notwendige akzeptieren") are never treated as accept.
+// "Acceptable Use Policy" is a footer link, not consent.
 const ACCEPT_LABEL =
-  /akzeptieren|annehmen|zustimmen|einwilligen|einverstanden|alles? (cookies )?(zulassen|erlauben)|\baccept|\ballow all|\bagree\b|accepter|aceptar|accetta|accepteren|alles toestaan|elfogad/i;
+  /akzeptieren|annehmen|zustimmen|einwilligen|einverstanden|alles? (cookies )?(zulassen|erlauben)|\baccept(?!able)|\ballow all|\bagree\b|accepter|aceptar|accetta|accepteren|alles toestaan|elfogad/i;
 
 const REJECT_LABEL =
   /ablehnen|verweigern|nur (technisch )?(notwendige|essenzielle|erforderliche)|\breject|\bdecline|\bdeny\b|\brefuse|(only|use) (strictly )?(necessary|essential|required)|refuser|continuer sans accepter|rechazar|rifiuta|weigeren|alleen noodzakelijke|elutasít|csak a (feltétlenül )?szükséges/i;
@@ -168,7 +172,7 @@ const REOPEN_CONTROLS = [
 
 // Word boundaries keep nav links like "Consent management platform" from matching.
 const SETTINGS_LABEL =
-  /(cookie|consent|datenschutz|privatsphäre|privacy|tracking)[-\s]?(einstellungen|settings|preferences|präferenzen|optionen|options)\b|(einwilligung|zustimmung|consent)(en)?\s+(widerrufen|ändern|verwalten|anpassen|bearbeiten|withdraw|manage|change)\b|cookies?\s+(verwalten|anpassen|ändern|manage)\b|manage\s+(cookies|consent|privacy)\b|withdraw\s+(my\s+)?consent\b|paramètres des cookies|gérer (les )?cookies|süti[-\s]?beállítás|adatvédelmi beállítás|hozzájárulás (visszavonása|módosítása|kezelése)/i;
+  /(cookie|consent|datenschutz|privatsphäre|privacy|tracking)[-\s]?(einstellungen|settings|preferences|präferenzen|optionen|options|beállítások)\b|(einwilligung|zustimmung|consent)(en)?\s+(widerrufen|ändern|verwalten|anpassen|bearbeiten|withdraw|manage|change)\b|cookies?\s+(verwalten|anpassen|ändern|manage)\b|manage\s+(cookies|consent|privacy)\b|withdraw\s+(my\s+)?consent\b|paramètres des cookies|gérer (les )?cookies|süti[-\s]?beállítás|adatvédelmi beállítás|hozzájárulás (visszavonása|módosítása|kezelése)/i;
 
 /** Opens the second layer from the first: "Einstellungen", "Customize", "More options". */
 const OPEN_SETTINGS_LABEL =
@@ -176,10 +180,32 @@ const OPEN_SETTINGS_LABEL =
 
 /** Saves the selection in the second layer. "Alle akzeptieren" never counts, see isAcceptAll. */
 const SAVE_LABEL =
-  /speichern|bestätigen|übernehmen|auswahl (akzeptieren|erlauben|zulassen)|\bsave\b|confirm|(accept|allow) selection|enregistrer|guardar|salva|opslaan|mentés|megerősít|kiválasztottak (engedélyezése|elfogadása)/i;
+  /speichern|bestätigen|übernehmen|auswahl (akzeptieren|erlauben|zulassen)|\bsave\b|confirm|(accept|allow) selection|enregistrer|guardar|salva|opslaan|mentés|megerősít|kiválasztott|elfogadom a fenti/i;
 
 // No \b around the Hungarian words: \b only knows ASCII letters, so it fails next to "ö".
 const ALL_WORD = /\b(alle|alles|all|tout|tous|todo|todas|tutti|tutto)\b|összes|minden|mindet/i;
+
+/**
+ * The narrowest choice when a banner offers consent levels as radio buttons instead of switches,
+ * such as "Legszűkebb szint: Alap működés" on otpbank.hu (2026-11-01).
+ */
+const NARROWEST_LEVEL =
+  /notwendig|essenziell|erforderlich|nur technisch|necessary|essential|strictly|nécessaires|necesarias|necessari|noodzakelijk|legszűkebb|alap működés|csak (a )?(feltétlenül )?szükséges/i;
+
+/** A tab or section for purposes processed on the basis of legitimate interest (TCF banners). */
+const LEGITIMATE_INTEREST_TAB =
+  /berechtigte[nsr]?\s+interesse|legitimate\s+interest|intérêt\s+légitime|interés\s+legítimo|legittimo\s+interesse|gerechtvaardigd\s+belang|jogos\s+érdek/i;
+
+/**
+ * Objecting to every legitimate-interest purpose at once. Only objection wording counts: a plain
+ * "Alle ablehnen" could be the first layer's reject button, which closes the banner.
+ */
+const OBJECT_ALL =
+  /(allen?|alles)\s+widersprechen|widerspruch\s+(gegen\s+)?alle|object\s+(to\s+)?all|s['’]opposer\s+à\s+tout|oponerse\s+a\s+todo|opporsi\s+a\s+tutt|bezwaar\s+tegen\s+alle|tiltakoz(om|ás)\s+(az?\s+)?(mind|összes)|mindegyik(nek|et)\s+elutasít/i;
+
+/** Words that make an "all" label about the current selection, see isAcceptAll. */
+const SELECTION_WORD =
+  /auswahl|einstellungen|präferenzen|selection|settings|preferences|choices|sélection|préférences|selección|preferencias|selezione|preferenze|selectie|voorkeuren|kiválaszt|beállítás/i;
 
 export interface ConsentCheckOptions {
   settleMs: number;
@@ -201,7 +227,7 @@ export async function observeConsent(
   options: ConsentCheckOptions,
 ): Promise<ConsentObservation> {
   if (options.signal?.aborted) throw new DOMException('Consent check aborted', 'AbortError');
-  const banner = await findBanner(page);
+  const { found: banner, waitedMs } = await waitFor(page, options, () => findBanner(page));
   if (banner === undefined) {
     return {
       bannerFound: false,
@@ -209,6 +235,7 @@ export async function observeConsent(
       state: 'not-detected',
       outcome: 'no-banner-detected',
       reason: 'no-supported-banner',
+      bannerWaitMs: waitedMs,
     };
   }
 
@@ -218,10 +245,13 @@ export async function observeConsent(
     state: 'reject-unavailable',
     outcome: 'unsupported-banner',
     reason: 'no-supported-reject-control',
+    bannerWaitMs: waitedMs,
     ...(banner.cmp === undefined ? {} : { cmp: banner.cmp }),
     ...(banner.acceptLabel === undefined ? {} : { acceptLabel: banner.acceptLabel }),
     ...(banner.rejectLabel === undefined ? {} : { rejectLabel: banner.rejectLabel }),
     ...(banner.payOrOk ? { payOrOk: true } : {}),
+    ...(banner.links === undefined ? {} : { bannerLinks: banner.links }),
+    ...(banner.blocking === undefined ? {} : { bannerBlocking: banner.blocking }),
   };
   if (banner.reject === undefined) {
     if (banner.acceptLabel === undefined) observation.reason = 'unsupported-banner-markup';
@@ -230,6 +260,7 @@ export async function observeConsent(
 
   try {
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
+    const storageBefore = await readStorageKeys(page);
     const firstRequest = requests.length;
 
     options.onReject?.();
@@ -242,7 +273,9 @@ export async function observeConsent(
     const cookies: RecordedCookie[] = (await context.cookies())
       .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
       .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    const storage = newStorageKeys(storageBefore, await readStorageKeys(page));
     const settingsLabel = await findSettingsControl(page);
+    const tcf = await readTcf(page);
 
     return {
       ...observation,
@@ -250,9 +283,10 @@ export async function observeConsent(
       state: 'reject-tested',
       outcome: 'reject-succeeded',
       reason: 'reject-clicked-and-reloaded',
-      afterReject: { requests: requests.slice(firstRequest), cookies },
+      afterReject: { requests: requests.slice(firstRequest), cookies, storage },
       settingsControl:
         settingsLabel === undefined ? { found: false } : { found: true, label: settingsLabel },
+      ...(tcf === undefined ? {} : { tcf }),
     };
   } catch (error) {
     return {
@@ -277,7 +311,7 @@ export async function observeSettings(
   options: ConsentCheckOptions,
 ): Promise<SettingsObservation | undefined> {
   if (options.signal?.aborted) throw new DOMException('Settings check aborted', 'AbortError');
-  const entry = await findSettingsEntry(page);
+  const { found: entry } = await waitFor(page, options, () => findSettingsEntry(page));
   if (entry === undefined) return undefined;
   if (entry.open === undefined) {
     return { outcome: 'no-settings-control', reason: 'no-settings-control' };
@@ -291,13 +325,16 @@ export async function observeSettings(
     let switchedOff = 0;
     for (const frame of page.frames()) {
       switchedOff += await switchOffOptional(frame);
+      switchedOff += await selectNarrowestLevel(frame);
     }
+    const legitimateInterest = await objectToLegitimateInterest(page, options);
     const save = await findSaveControl(page, entry.cmp);
     if (save === undefined) {
       return { outcome: 'no-save-control', reason: 'no-save-control', openLabel, switchedOff };
     }
     const saveLabel = await label(save);
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
+    const storageBefore = await readStorageKeys(page);
     const firstRequest = requests.length;
 
     options.onReject?.();
@@ -310,13 +347,17 @@ export async function observeSettings(
     const cookies: RecordedCookie[] = (await context.cookies())
       .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
       .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    const storage = newStorageKeys(storageBefore, await readStorageKeys(page));
+    const tcf = await readTcf(page);
     return {
       outcome: 'saved',
       reason: 'settings-saved-and-reloaded',
       openLabel,
       saveLabel,
       switchedOff,
-      afterSave: { requests: requests.slice(firstRequest), cookies },
+      ...(legitimateInterest === undefined ? {} : { legitimateInterest }),
+      afterSave: { requests: requests.slice(firstRequest), cookies, storage },
+      ...(tcf === undefined ? {} : { tcf }),
     };
   } catch (error) {
     return {
@@ -325,6 +366,60 @@ export async function observeSettings(
       error: classifyLoadError(error),
     };
   }
+}
+
+const TCF_TIMEOUT_MS = 2_000;
+
+/**
+ * Asks an IAB TCF consent manager what it stored. Every TCF banner answers `getTCData` the same
+ * way, so this sees switches in collapsed sections or a "Legitimate interest" tab whether or not
+ * privalint found them, and it reads only: nothing on the page is clicked.
+ */
+async function readTcf(page: Page): Promise<TcfObservation | undefined> {
+  const data = await page
+    .evaluate(
+      (timeoutMs) =>
+        new Promise<unknown>((resolve) => {
+          const api = (window as { __tcfapi?: unknown }).__tcfapi;
+          if (typeof api !== 'function') {
+            resolve(undefined);
+            return;
+          }
+          const timer = setTimeout(() => resolve(undefined), timeoutMs);
+          try {
+            api('getTCData', 2, (tcData: unknown, success: boolean) => {
+              clearTimeout(timer);
+              resolve(success ? tcData : undefined);
+            });
+          } catch {
+            clearTimeout(timer);
+            resolve(undefined);
+          }
+        }),
+      TCF_TIMEOUT_MS,
+    )
+    .catch(() => undefined);
+  return data === undefined || data === null ? undefined : summarizeTcf(data);
+}
+
+/** Keeps the ids that are switched on. The page's own data is untrusted, so only numbers pass. */
+export function summarizeTcf(data: unknown): TcfObservation {
+  const section = (name: string, key: string): Record<string, unknown> => {
+    const outer = (data as Record<string, unknown>)[name];
+    const inner = typeof outer === 'object' && outer !== null ? Reflect.get(outer, key) : undefined;
+    return typeof inner === 'object' && inner !== null ? (inner as Record<string, unknown>) : {};
+  };
+  const on = (map: Record<string, unknown>) =>
+    Object.entries(map)
+      .filter(([id, value]) => value === true && /^\d{1,5}$/.test(id))
+      .map(([id]) => Number(id))
+      .sort((a, b) => a - b);
+  return {
+    purposesOn: on(section('purpose', 'consents')).slice(0, 50),
+    legitimateInterestsOn: on(section('purpose', 'legitimateInterests')).slice(0, 50),
+    vendorConsents: on(section('vendor', 'consents')).length,
+    vendorLegitimateInterests: on(section('vendor', 'legitimateInterests')).length,
+  };
 }
 
 interface SettingsEntry {
@@ -359,49 +454,24 @@ async function findSettingsEntry(page: Page): Promise<SettingsEntry | undefined>
   return undefined;
 }
 
-/** Undefined without an accept button; `{}` when there is one but nothing opens settings. */
+/**
+ * Undefined without an accept button; `{}` when there is one but nothing opens settings. The
+ * settings control closest to the accept button wins, across shadow roots too (see nearestTo).
+ */
 async function nearestOpenControl(frame: Frame): Promise<SettingsEntry | undefined> {
   const clickable = frame.locator(CLICKABLE);
-  const accept = await firstVisible(
+  const accept = await firstInConsentLayer(
     clickable.filter({ hasText: ACCEPT_LABEL }).filter({ hasNotText: REJECT_LABEL }),
   );
   if (accept === undefined) return undefined;
-  const handle = await accept.elementHandle({ timeout: 1_000 }).catch(() => null);
-  if (handle === null) return {};
-  const index = await clickable
-    .evaluateAll(
-      (elements, [acceptElement, open, accepting, rejecting]) => {
-        const patterns = [open, accepting, rejecting].map((source) => new RegExp(source, 'i'));
-        const [isOpen, isAccept, isReject] = patterns as [RegExp, RegExp, RegExp];
-        const depth = (node: Node | null) => {
-          let levels = 0;
-          for (let current = node; current !== null; current = current.parentNode) levels++;
-          return levels;
-        };
-        let best = -1;
-        let bestDepth = 0;
-        (elements as HTMLElement[]).forEach((element, position) => {
-          const name = element.innerText ?? '';
-          if (!isOpen.test(name) || isAccept.test(name) || isReject.test(name)) return;
-          if (element.getClientRects().length === 0) return;
-          // Depth of the deepest element containing both: higher means closer to the banner.
-          let shared: Node | null = element;
-          while (shared !== null && !shared.contains(acceptElement as Node)) {
-            shared = shared.parentNode;
-          }
-          const sharedDepth = depth(shared);
-          if (shared !== document.body && sharedDepth > bestDepth) {
-            best = position;
-            bestDepth = sharedDepth;
-          }
-        });
-        return best;
-      },
-      [handle, OPEN_SETTINGS_LABEL.source, ACCEPT_LABEL.source, REJECT_LABEL.source] as const,
-    )
-    .catch(() => -1);
-  await handle.dispose();
-  return index < 0 ? {} : { open: clickable.nth(index) };
+  const open = await nearestTo(
+    accept,
+    clickable
+      .filter({ hasText: OPEN_SETTINGS_LABEL })
+      .filter({ hasNotText: ACCEPT_LABEL })
+      .filter({ hasNotText: REJECT_LABEL }),
+  );
+  return open === undefined ? {} : { open };
 }
 
 async function findSaveControl(page: Page, cmp?: CmpSelectors): Promise<Locator | undefined> {
@@ -426,9 +496,15 @@ async function findSaveControl(page: Page, cmp?: CmpSelectors): Promise<Locator 
   return undefined;
 }
 
-/** "Alle akzeptieren" saves too, but it is the opposite of what the settings check tests. */
+/**
+ * "Alle akzeptieren" saves too, but it is the opposite of what the settings check tests. The
+ * verb alone is not enough: "Alle bestätigen", "Confirm all" and "Alle übernehmen" also switch
+ * everything on. A label with "all" only counts as saving when it names the selection, as in
+ * "Alle Einstellungen speichern", and never when it also accepts.
+ */
 function isAcceptAll(text: string): boolean {
-  return ACCEPT_LABEL.test(text) && ALL_WORD.test(text);
+  if (!ALL_WORD.test(text)) return false;
+  return ACCEPT_LABEL.test(text) || !SELECTION_WORD.test(text);
 }
 
 /**
@@ -458,19 +534,114 @@ async function switchOffOptional(frame: Frame): Promise<number> {
         );
       })
       .catch(() => false);
-    // A real click, not `.checked = false`: consent managers listen for click and change events.
-    if (shown) await handle.click({ force: true, timeout: 2_000 }).catch(() => undefined);
-    const off = await handle
-      .evaluate((element) =>
-        element instanceof HTMLInputElement
-          ? !element.checked
-          : (element as Element).getAttribute('aria-checked') !== 'true',
-      )
-      .catch(() => false);
-    if (off) changed++;
+    // A login form's "remember me" or a newsletter box is not a consent category.
+    const inLayer =
+      shown && (await handle.evaluate(inConsentLayer, CONSENT_CONTEXT.source).catch(() => false));
+    if (inLayer) {
+      // A real click, not `.checked = false`: consent managers listen for click and change events.
+      await handle.click({ force: true, timeout: 2_000 }).catch(() => undefined);
+      const off = await handle
+        .evaluate((element) =>
+          element instanceof HTMLInputElement
+            ? !element.checked
+            : (element as Element).getAttribute('aria-checked') !== 'true',
+        )
+        .catch(() => false);
+      if (off) changed++;
+    }
     await handle.dispose();
   }
   return changed;
+}
+
+/**
+ * Selects the narrowest level in each radio group of the consent layer and returns how many
+ * groups it changed. A group without a radio labelled as necessary-only is left as it is: picking
+ * by position could just as well pick "everything".
+ */
+async function selectNarrowestLevel(frame: Frame): Promise<number> {
+  const handles = await frame
+    .locator('input[type="radio"]:not(:disabled)')
+    .elementHandles()
+    .catch(() => []);
+  const groups = new Map<string, { narrowest?: (typeof handles)[number]; checked: boolean }>();
+  for (const handle of handles.slice(0, 50)) {
+    const radio = await handle
+      .evaluate((node) => {
+        const input = node as HTMLInputElement;
+        const texts = [
+          ...[...(input.labels ?? [])].map((label) => label.innerText),
+          input.getAttribute('aria-label'),
+          input.getAttribute('title'),
+        ];
+        return { name: input.name, checked: input.checked, text: texts.filter(Boolean).join(' ') };
+      })
+      .catch(() => undefined);
+    const inLayer =
+      radio !== undefined &&
+      radio.name !== '' &&
+      (await handle.evaluate(inConsentLayer, CONSENT_CONTEXT.source).catch(() => false));
+    if (inLayer) {
+      const group = groups.get(radio.name) ?? { checked: false };
+      if (group.narrowest === undefined && NARROWEST_LEVEL.test(radio.text)) {
+        group.narrowest = handle;
+        group.checked = radio.checked;
+      }
+      groups.set(radio.name, group);
+    }
+  }
+  let changed = 0;
+  for (const { narrowest, checked } of groups.values()) {
+    if (narrowest !== undefined && !checked) {
+      // Styled radios hide the input; a forced click still fires the events the banner listens to.
+      await narrowest.click({ force: true, timeout: 2_000 }).catch(() => undefined);
+      const selected = await narrowest
+        .evaluate((node) => (node as HTMLInputElement).checked)
+        .catch(() => false);
+      if (selected) changed++;
+    }
+  }
+  await Promise.all(handles.map((handle) => handle.dispose()));
+  return changed;
+}
+
+/**
+ * TCF banners keep legitimate-interest purposes in a tab of their own, switched on by default.
+ * Opens that tab inside the consent layer and objects: with an "object to all" button if there is
+ * one, otherwise by switching off the toggles the tab shows. Never clicks anything that accepts.
+ * Undefined when there is no such tab. The TCF readout after saving shows whether it worked.
+ */
+async function objectToLegitimateInterest(
+  page: Page,
+  options: ConsentCheckOptions,
+): Promise<SettingsObservation['legitimateInterest']> {
+  for (const frame of page.frames()) {
+    const tab = await firstInConsentLayer(
+      frame
+        // Quantcast shows it as a plain button ("JOGOS ÉRDEK" on index.hu, 2026-11-01).
+        .locator(`[role="tab"], summary, ${CLICKABLE}`)
+        .filter({ hasText: LEGITIMATE_INTEREST_TAB })
+        .filter({ hasNotText: ACCEPT_LABEL }),
+    );
+    if (tab !== undefined) {
+      const openLabel = await label(tab);
+      await tab.click({ timeout: Math.min(5_000, options.timeoutMs) }).catch(() => undefined);
+      await page.waitForTimeout(Math.min(500, options.settleMs));
+      const objectAll = await firstInConsentLayer(
+        frame
+          .locator(CLICKABLE)
+          .filter({ hasText: OBJECT_ALL })
+          .filter({ hasNotText: ACCEPT_LABEL }),
+      );
+      if (objectAll !== undefined) {
+        const objectAllLabel = await label(objectAll);
+        await objectAll.click({ timeout: Math.min(5_000, options.timeoutMs) });
+        return { openLabel, objectAllLabel, switchedOff: 0 };
+      }
+      return { openLabel, switchedOff: await switchOffOptional(frame) };
+    }
+  }
+  return undefined;
 }
 
 interface Banner {
@@ -479,6 +650,55 @@ interface Banner {
   rejectLabel?: string;
   reject?: Locator;
   payOrOk?: boolean;
+  links?: PageLink[];
+  blocking?: boolean;
+}
+
+const MAX_BANNER_LINKS = 30;
+
+/**
+ * Runs in the page. The links inside the banner, and whether the banner keeps the visitor from the
+ * rest of the page: a modal dialog, an overlay over at least half the viewport, or a page that
+ * can't scroll while it is open. A small bar leaves the footer links reachable.
+ */
+function bannerLayout(accept: Element, max: number) {
+  const parentOf = (node: Element): Element | null => {
+    const root = node.getRootNode();
+    return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+  };
+  const isLayer = (node: Element) => {
+    const position = getComputedStyle(node).position;
+    return (
+      /^(alert)?dialog$/.test(node.getAttribute('role') ?? '') ||
+      node.getAttribute('aria-modal') === 'true' ||
+      position === 'fixed' ||
+      position === 'sticky'
+    );
+  };
+  // The outermost layer around the accept button; without one, its direct container.
+  let container: Element = accept.parentElement ?? accept;
+  for (let node: Element | null = accept; node !== null; node = parentOf(node)) {
+    if (node === document.body || node === document.documentElement) break;
+    if (isLayer(node)) container = node;
+  }
+  const box = container.getBoundingClientRect();
+  const covered =
+    (Math.min(box.width, innerWidth) * Math.min(box.height, innerHeight)) /
+    (innerWidth * innerHeight);
+  const noScroll = [document.body, document.documentElement].some(
+    (node) => getComputedStyle(node).overflow === 'hidden',
+  );
+  const blocking = container.getAttribute('aria-modal') === 'true' || covered >= 0.5 || noScroll;
+  const links = [...container.querySelectorAll('a[href]')].slice(0, max).map((a) => ({
+    href: (a as HTMLAnchorElement).href,
+    text: [a.textContent, a.getAttribute('aria-label'), a.getAttribute('title')]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 200),
+  }));
+  return { links, blocking };
 }
 
 async function findBanner(page: Page): Promise<Banner | undefined> {
@@ -486,7 +706,11 @@ async function findBanner(page: Page): Promise<Banner | undefined> {
     for (const cmp of KNOWN_CMPS) {
       const accept = await firstVisible(frame.locator(cmp.accept));
       if (accept !== undefined) {
-        const reject = await firstVisible(frame.locator(cmp.reject));
+        // An outdated reject selector must not turn into a "no reject" finding: try the labels
+        // next to the accept button before concluding that.
+        const reject =
+          (await firstVisible(frame.locator(cmp.reject))) ??
+          (await nearestTo(accept, frame.locator(CLICKABLE).filter({ hasText: REJECT_LABEL })));
         return describe(accept, reject, cmp.name);
       }
     }
@@ -502,11 +726,11 @@ async function findBanner(page: Page): Promise<Banner | undefined> {
       continue;
     }
     const clickable = frame.locator(CLICKABLE);
-    const accept = await firstVisible(
+    const accept = await firstInConsentLayer(
       clickable.filter({ hasText: ACCEPT_LABEL }).filter({ hasNotText: REJECT_LABEL }),
     );
     if (accept !== undefined) {
-      const reject = await firstVisible(clickable.filter({ hasText: REJECT_LABEL }));
+      const reject = await nearestTo(accept, clickable.filter({ hasText: REJECT_LABEL }));
       const realCookieBanner = await frame
         .locator('script')
         .evaluateAll((elements) =>
@@ -580,6 +804,11 @@ async function findSettingsControl(page: Page): Promise<string | undefined> {
 
 async function describe(accept: Locator, reject: Locator | undefined, cmp?: string) {
   const banner: Banner = { acceptLabel: await label(accept) };
+  const layout = await accept.evaluate(bannerLayout, MAX_BANNER_LINKS).catch(() => undefined);
+  if (layout !== undefined) {
+    banner.links = layout.links;
+    banner.blocking = layout.blocking;
+  }
   if (reject === undefined && (await offersSubscription(accept))) {
     banner.payOrOk = true;
   }
@@ -619,6 +848,126 @@ async function offersSubscription(accept: Locator): Promise<boolean> {
       );
     }, SUBSCRIBE.source)
     .catch(() => false);
+}
+
+/**
+ * Runs in the page. True when the element sits in something that looks like a consent layer:
+ * a dialog, a fixed or sticky overlay, or a small container that talks about cookies or consent.
+ * A shop's "Angebot annehmen" or a login form's "Angemeldet bleiben" box is in none of these.
+ * Self-contained, because Playwright sends its source text to the browser.
+ */
+function inConsentLayer(element: Element, contextSource: string): boolean {
+  const context = new RegExp(contextSource, 'i');
+  const parentOf = (node: Element): Element | null => {
+    const root = node.getRootNode();
+    return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+  };
+  for (let node: Element | null = element; node !== null; node = parentOf(node)) {
+    if (node === document.body || node === document.documentElement) return false;
+    const style = getComputedStyle(node);
+    const text = (node as HTMLElement).innerText ?? '';
+    if (
+      /^(alert)?dialog$/.test(node.getAttribute('role') ?? '') ||
+      node.getAttribute('aria-modal') === 'true' ||
+      style.position === 'fixed' ||
+      style.position === 'sticky' ||
+      (text.length <= 5_000 && context.test(text))
+    )
+      return true;
+  }
+  return false;
+}
+
+/**
+ * Runs in the page. True for a link to another page, such as "Accept our terms" in a footer menu.
+ * A banner's buttons stay on the page; links to "#" or `javascript:` count as buttons.
+ */
+function leavesPage(element: Element): boolean {
+  const href = element.tagName === 'A' ? element.getAttribute('href') : null;
+  if (href === null || href === '' || href.startsWith('#') || /^javascript:/i.test(href)) {
+    return false;
+  }
+  const target = new URL(href, location.href);
+  return target.pathname + target.search !== location.pathname + location.search;
+}
+
+/** First visible match that sits in a consent layer, see inConsentLayer. */
+async function firstInConsentLayer(locator: Locator): Promise<Locator | undefined> {
+  const count = await locator.count().catch(() => 0);
+  for (let i = 0; i < Math.min(count, 10); i++) {
+    const candidate = locator.nth(i);
+    if (
+      (await candidate.isVisible().catch(() => false)) &&
+      !(await candidate.evaluate(leavesPage).catch(() => true)) &&
+      (await candidate.evaluate(inConsentLayer, CONSENT_CONTEXT.source).catch(() => false))
+    ) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The visible candidate that shares the deepest container with `anchor`, below <body>. A reject
+ * button elsewhere on the page shares only <body> with the banner's accept button and never wins.
+ */
+async function nearestTo(anchor: Locator, candidates: Locator): Promise<Locator | undefined> {
+  const handle = await anchor.elementHandle({ timeout: 1_000 }).catch(() => null);
+  if (handle === null) return undefined;
+  const index = await candidates
+    .evaluateAll((elements, anchorElement) => {
+      const parentOf = (node: Element): Element | null => {
+        const root = node.getRootNode();
+        return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+      };
+      // Every container of the anchor, with its depth counted from <html>.
+      const chain: Element[] = [];
+      for (let node: Element | null = anchorElement; node !== null; node = parentOf(node)) {
+        chain.unshift(node);
+      }
+      let best = -1;
+      let bestDepth = -1;
+      elements.forEach((element, position) => {
+        if (element.getClientRects().length === 0) return;
+        let shared: Element | null = element;
+        while (shared !== null && !chain.includes(shared)) shared = parentOf(shared);
+        const depth = shared === null ? -1 : chain.indexOf(shared);
+        const belowBody =
+          shared !== null && shared !== document.body && shared !== document.documentElement;
+        if (belowBody && depth > bestDepth) {
+          best = position;
+          bestDepth = depth;
+        }
+      });
+      return best;
+    }, handle)
+    .catch(() => -1);
+  await handle.dispose();
+  return index < 0 ? undefined : candidates.nth(index);
+}
+
+const BANNER_POLL_MS = 500;
+
+/**
+ * Some consent managers render after a geo lookup or a tag-manager rule, after the page settled.
+ * Without a result, looks again every half second for up to one more settle period, so a scan
+ * with `--settle 0` doesn't wait at all. `waitedMs` is the extra time spent.
+ */
+async function waitFor<T>(
+  page: Page,
+  options: ConsentCheckOptions,
+  find: () => Promise<T | undefined>,
+): Promise<{ found: T | undefined; waitedMs: number }> {
+  let found = await find();
+  if (found !== undefined) return { found, waitedMs: 0 };
+  const started = performance.now();
+  let left = options.settleMs;
+  while (found === undefined && left > 0 && !options.signal?.aborted) {
+    await page.waitForTimeout(Math.min(BANNER_POLL_MS, left));
+    found = await find();
+    left = options.settleMs - (performance.now() - started);
+  }
+  return { found, waitedMs: Math.round(performance.now() - started) };
 }
 
 async function firstVisible(locator: Locator): Promise<Locator | undefined> {

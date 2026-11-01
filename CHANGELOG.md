@@ -6,6 +6,106 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- `--check-settings` reads the IAB TCF API (`__tcfapi('getTCData')`) after saving with
+  everything off. Consent the API still reports for a purpose or vendor is a
+  `trackers-after-settings` error; purposes left on through legitimate interest are a warning. The
+  numbers are in `consent.settings.tcf` (#60, step 1)
+- Capture timing in the diagnostics: `timing.loadMs`, `timing.networkIdleMs` and, for adapter
+  scans, `timing.peakQueued`. Adapter timeouts say whether the request was `queued` or `fetching`
+  (#70)
+- Report schema 1.4.0 with the fields above. Schemas 1.0.0 to 1.3.0 stay available
+- Trackers: Adobe Analytics, Target, Audience Manager and Experience Platform Tags, etracker,
+  INFOnline, Piwik PRO, Heap, Pendo, Optimizely, Chartbeat and Comscore, each from the vendor's own
+  documentation. The Facebook SDK (`connect.facebook.net/<locale>/sdk.js`) is reported as its own
+  vendor in the social category instead of as the Meta Pixel
+- Embeds: SoundCloud, Mapbox, Trusted Shops, Pinterest widgets and Google Calendar
+- Bugsnag, Rollbar and Datadog Browser RUM/Logs ingest hosts join Sentry: a skipped error report
+  to them no longer makes a capture incomplete (#69)
+- `--check-settings` picks the narrowest level when a banner offers consent levels as radio
+  buttons (otpbank.hu), and knows the save labels "Elfogadom a kiválasztottakat" (telekom.hu) and
+  "Elfogadom a fenti …" (#57)
+- Action inputs `config` and `check-settings`
+- The Markdown report (job summary, PR comment) shows the first two evidence items under each
+  finding
+- `trackers-after-reject` reads the IAB TCF API after "Reject all" too, stored as `consent.tcf`
+  (#79)
+- Consent banners that appear late are found: without a result, privalint looks again for up to
+  one more settle period. `consent.bannerWaitMs` says how long (#77)
+- With `--max-pages`, pages selected by a query parameter (`/?page_id=2`, `/index.php?id=7`) are
+  crawled as separate pages (#75)
+- New rule `consent-banner-missing` (warning): trackers run on the start page and no consent
+  banner was found at all. New observation kind `banner-search` (#82)
+- New rules for online shops, checked on the start page of sites with a cart, checkout or shop
+  system: `withdrawal-button` (warning, § 356a BGB / Art. 11a Directive 2011/83/EU, since
+  19.06.2026) and `accessibility-statement` (info, § 14 BFSG / European Accessibility Act) (#83,
+  #84)
+- Trackers are recognised by their localStorage and sessionStorage key names too, before consent
+  and after a refusal. Only names are read, never values (#80)
+- New rule `banner-legal-links` (warning): a banner that blocks the page (modal, half the viewport
+  or no scrolling) and doesn't link the privacy policy or the Impressum (#89)
+- New rule `https-transport`: start page over plain HTTP (error), `http://` without a redirect to
+  HTTPS (warning), no HSTS (info). Native scans only; adapter and offline scans skip it by design
+  with `transport-not-checked` (#90)
+- `--check-settings` objects to legitimate interest on TCF banners: it opens a "Berechtigtes
+  Interesse" / "Legitimate interest" tab and uses its "object to all" button, or switches off the
+  toggles there. `consent.settings.legitimateInterest` says what it did (#60)
+- New rule `form-privacy-notice` (info): forms with an email, phone or password field and no
+  privacy-policy link next to them, while the page links it elsewhere (#91)
+
+### Changed
+
+- `google-fonts` and `adobe-fonts` drop one level with `--region ch`, like the other third-party
+  rules (#85)
+- `impressum-link` notes vague legal links ("Rechtliche Hinweise", "Rechtliches", "Legal", "Jogi
+  tudnivalók") as info instead of warning that there is no Impressum (#72)
+
+- SARIF declares the label-based rules (`reject-option`, `consent-settings-link`,
+  `impressum-link`, `privacy-policy-link`) with precision `medium` (#76)
+- An `--output` path in a missing directory fails before the scan starts. If writing fails after
+  the scan, the report is still printed and the exit code is 2 (#74)
+
+- Tracker, embed and font rules count requests that got an HTTP error response. A pixel that
+  answers 403 has still received the visitor's IP address and referrer
+- Action inputs `max-pages`, `concurrency`, `lang`, `region` and `fail-on-incomplete` default to
+  empty and are then not passed, so `privalint.config.json` applies. Before, their defaults
+  silently overrode the config file
+
+### Fixed
+
+- Basic-auth credentials in the target URL (`https://user:pass@staging…`) no longer appear in any
+  report, SARIF upload or PR comment. They still open the site
+- A real request failure is no longer relabelled as "cancelled by the page" when two requests
+  share a URL, which could make an incomplete capture look complete
+- When the banner doesn't appear in the settings check's fresh browser, the report says
+  `banner-not-shown` instead of a browser failure
+- The SARIF rule help cites the scan's region, like each result
+- A fetch from a worker that got its answer but wasn't read no longer makes an adapter capture
+  incomplete. Requests from cross-origin iframes and workers are confirmed to go through the
+  adapter (#88)
+- A shop cookie named `put_…` is no longer reported as Magnite advertising (#73)
+- The settings control is found when it sits in a nested shadow root (#78)
+- An open Server-Sent Events stream no longer makes a capture incomplete (#81)
+- `--check-settings` could click "Alle bestätigen", "Confirm all" or "Alle übernehmen" as the save
+  button, which switches everything on. A label covering everything only counts as saving when it
+  names the selection ("Alle Einstellungen speichern")
+- A page with "Angebot annehmen" and a privacy link in the footer, or a footer menu with
+  "Acceptable Use Policy" next to "Cookie Policy", no longer counts as a consent banner. Accept
+  buttons must sit in a dialog, an overlay or a small container about cookies, and must not lead to
+  another page
+- A known consent manager whose reject selector is out of date no longer produces a "no reject"
+  finding; the reject button next to the accept button is found by its label
+- The settings check leaves checkboxes outside the consent layer alone, such as "remember me" in a
+  login form
+- "Cookie beállítások" is recognised as a link to reopen the settings
+- A JavaScript redirect while the page settles no longer leaves the report on the old URL
+- The Markdown "How to fix" section lists each vendor's fix instead of one per rule, and escapes
+  `@` so a PR comment can't mention anyone
+- `docs/configuration.md` lists the region `hu`
+- `test/config.test.ts` builds the CLI into its own temporary directory, so a parallel build can't
+  change it mid-test (#68)
+
 ## 0.8.0 - 2026-10-31
 
 ### Changed

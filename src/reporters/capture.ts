@@ -79,6 +79,10 @@ const EXPLANATIONS: Record<RuleExplanation, [string, string]> = {
     'Settings check not enabled (--check-settings)',
     'Einstellungs-Prüfung nicht eingeschaltet (--check-settings)',
   ],
+  'transport-not-checked': [
+    'Not checked with a network adapter or offline',
+    'Mit Netzwerk-Adapter oder offline nicht geprüft',
+  ],
   'missing-settings-observation': [
     'Settings path not observed',
     'Einstellungs-Pfad nicht beobachtet',
@@ -94,6 +98,10 @@ const EXPLANATIONS: Record<RuleExplanation, [string, string]> = {
   'settings-saved-and-reloaded': [
     'Settings saved with everything off and reloaded',
     'Einstellungen ohne Auswahl gespeichert und neu geladen',
+  ],
+  'banner-not-shown': [
+    'The banner did not appear in the second, fresh browser',
+    'Das Banner erschien im zweiten, frischen Browser nicht',
   ],
   'missing-consent-observation': ['Consent not observed', 'Consent nicht beobachtet'],
   'incomplete-document': [

@@ -59,6 +59,16 @@ The list matches hostnames, so a domain that serves both tracking and harmless c
 flagged. Please [open an issue](https://github.com/jexcellence/privalint/issues/new?template=false-positive.yml)
 with the URL and the finding.
 
+Cookies and the key names in localStorage and sessionStorage (never their values) are also matched
+against the Open Cookie Database by name, on any domain. Names that any
+site could use for its own cookie (`session`, `token`, `put_`, …) are left out of that list when it
+is generated; see `GENERIC` in `scripts/build-cookie-trackers.mjs`.
+
+Dynatrace (`dtCookie`, `dtPC`, `rxVisitor`, …) is reported as analytics on purpose. Its real user
+monitoring records sessions and user actions per visitor, which goes beyond what is strictly
+necessary to run the site. If you only use it for server-side monitoring, the browser cookies
+won't be there.
+
 ## Sources for the session-replay hosts
 
 Guessed domains cause false positives, so each host comes from the vendor or from a live site
@@ -71,3 +81,23 @@ Guessed domains cause false positives, so each host comes from the vendor or fro
 | Smartlook     | `web-sdk.smartlook.com`                             | Loaded on fogbugz.com, braiins.com and pinata.cloud                                                                                                                         |
 | Lucky Orange  | `tools.luckyorange.com`, `settings.luckyorange.com` | Loaded on luckyorange.com                                                                                                                                                   |
 | Contentsquare | `contentsquare.net`, cookies `_cs_*`                | Tag, page view and recording requests and the cookies on contentsquare.com                                                                                                  |
+
+## Sources for the hosts added on 2026-11-01
+
+Each host is named in the vendor's own install, CSP or allowlist documentation. Customers can run
+some of these tools on their own subdomain (CNAME); privalint can't recognise those by host.
+
+| Vendor                                    | Hosts                                                                                               | Source                                                                                                                       |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Adobe Analytics, Target, Audience Manager | `omtrdc.net` (Target: `tt.omtrdc.net`), `2o7.net`, `demdex.net`, `everesttech.net`, `everestjs.net` | [Adobe Experience Cloud ID: CSP](https://experienceleague.adobe.com/en/docs/id-service/using/reference/csp)                  |
+| Adobe Experience Platform Web SDK         | `edge.adobedc.net`                                                                                  | [Web SDK `edgeDomain`](https://experienceleague.adobe.com/en/docs/experience-platform/web-sdk/commands/configure/edgedomain) |
+| Adobe Experience Platform Tags            | `assets.adobedtm.com`                                                                               | [Adobe Experience Cloud ID: CSP](https://experienceleague.adobe.com/en/docs/id-service/using/reference/csp)                  |
+| etracker                                  | `code.etracker.com`, `etracker.de`                                                                  | [etracker basic integration](https://help.etracker.com/en/article/basic-integration/)                                        |
+| INFOnline                                 | `ioam.de`, `iocnt.net`                                                                              | [INFOnline web integration](https://docs.infonline.de/infonline-measurement/en/integration/web/)                             |
+| Piwik PRO                                 | `<org>.piwik.pro`, `<org>.containers.piwik.pro`                                                     | [Piwik PRO CSP](https://developers.piwik.pro/docs/content-security-policy-csp)                                               |
+| Heap                                      | `heap-api.com`, `cdn.heapanalytics.com`, cookies `_hp2_*`                                           | [Heap web installation](https://developers.heap.io/docs/web)                                                                 |
+| Pendo                                     | `cdn.pendo.io`, `data.pendo.io` and their `eu.` forms                                               | [Pendo allowlist](https://support.pendo.io/hc/en-us/articles/360032209131)                                                   |
+| Optimizely                                | `cdn.optimizely.com`, `logx.optimizely.com`                                                         | [Optimizely CSP](https://support.optimizely.com/hc/en-us/articles/4410289675149)                                             |
+| Chartbeat                                 | `static.chartbeat.com`, `ping.chartbeat.net`                                                        | [Chartbeat JavaScript](https://docs.chartbeat.com/cbp/tracking/standard-websites/our-javascript)                             |
+| Comscore                                  | `scorecardresearch.com`                                                                             | [Comscore support](https://direct-support.comscore.com/hc/en-us/articles/360002578333)                                       |
+| Facebook SDK                              | `connect.facebook.net/<locale>/sdk.js` (category social, apart from the Meta Pixel)                 | [Facebook JavaScript SDK quickstart](https://developers.facebook.com/docs/javascript/quickstart)                             |

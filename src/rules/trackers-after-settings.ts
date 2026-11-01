@@ -1,5 +1,6 @@
 import { say } from '../i18n.js';
 import type { Finding, Rule } from '../types.js';
+import { tcfFindings } from './tcf-findings.js';
 import { categoryLabel, findTrackerHits } from './tracker-hits.js';
 
 const ID = 'trackers-after-settings';
@@ -21,7 +22,20 @@ export const trackersAfterSettings: Rule = {
       return [];
     }
     const button = settings?.saveLabel ?? say(lang, { en: 'save', de: 'Speichern' });
-    return findTrackerHits(after.requests, after.cookies, lang).map(
+    const tcf =
+      settings?.tcf === undefined
+        ? []
+        : tcfFindings({
+            tcf: settings.tcf,
+            ruleId: ID,
+            pageUrl: page.finalUrl,
+            lang,
+            action: {
+              en: `switching off all categories and clicking "${button}"`,
+              de: `alle Kategorien abgewählt und „${button}“ geklickt wurde`,
+            },
+          });
+    const trackerFindings = findTrackerHits(after.requests, after.cookies, lang, after.storage).map(
       ({ tracker, evidence }): Finding => {
         const { vendor } = tracker;
         const category = categoryLabel(tracker.category, lang);
@@ -43,5 +57,6 @@ export const trackersAfterSettings: Rule = {
         };
       },
     );
+    return [...trackerFindings, ...tcf];
   },
 };

@@ -39,6 +39,8 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 | [`trackers-after-reject`](docs/rules/trackers-after-reject.md)     | error    | Trackers that still load after clicking "reject" on the consent banner and reloading.                                       |
 | [`trackers-after-settings`](docs/rules/trackers-after-settings.md) | error    | Opt-in (`--check-settings`): trackers that still load after switching off every category in the banner settings and saving. |
 | [`reject-option`](docs/rules/reject-option.md)                     | warning  | A banner with "accept" but no "reject" on its first layer. Pay-or-OK banners are noted as info.                             |
+| [`consent-banner-missing`](docs/rules/consent-banner-missing.md)   | warning  | Trackers run and no consent banner was found at all, so visitors can't give or refuse consent.                              |
+| [`banner-legal-links`](docs/rules/banner-legal-links.md)           | warning  | A banner that blocks the page and links neither the privacy policy nor the Impressum.                                       |
 | [`consent-settings-link`](docs/rules/consent-settings-link.md)     | warning  | No visible link or button to reopen the cookie settings after rejecting.                                                    |
 | [`google-fonts`](docs/rules/google-fonts.md)                       | error    | Fonts fetched from `fonts.googleapis.com` / `fonts.gstatic.com`. Leftover preconnects are a warning.                        |
 | [`adobe-fonts`](docs/rules/adobe-fonts.md)                         | error    | Fonts fetched from Adobe Fonts (`use.typekit.net` / `p.typekit.net`). Leftover preconnects are a warning.                   |
@@ -46,6 +48,10 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 | [`third-party-cdns`](docs/rules/third-party-cdns.md)               | info     | Scripts and styles from jsDelivr, unpkg, cdnjs and other public CDNs.                                                       |
 | [`impressum-link`](docs/rules/impressum-link.md)                   | warning  | Pages without a link to an Impressum. A contact link alone is noted as info.                                                |
 | [`privacy-policy-link`](docs/rules/privacy-policy-link.md)         | warning  | Pages without a link to a privacy policy.                                                                                   |
+| [`form-privacy-notice`](docs/rules/form-privacy-notice.md)         | info     | Contact, sign-up or login forms without a privacy-policy link next to them.                                                 |
+| [`https-transport`](docs/rules/https-transport.md)                 | error    | The start page over plain HTTP; HTTP without a redirect to HTTPS is a warning, no HSTS is info.                             |
+| [`withdrawal-button`](docs/rules/withdrawal-button.md)             | warning  | Online shops without a "withdraw from contract here" link on the start page (required since 19.06.2026).                    |
+| [`accessibility-statement`](docs/rules/accessibility-statement.md) | info     | Online shops without a link to accessibility information (European Accessibility Act).                                      |
 
 Each rule is a small file with tests. Missing a check? See [Contributing](#contributing).
 
@@ -90,19 +96,24 @@ See [configuration and report APIs](docs/configuration.md) ([Deutsch](docs/confi
 Scanning a preview deployment instead of production catches problems before they ship. Pass the
 preview URL from your hosting provider's deployment event or action output as `url`.
 
-| Input                | Default           |                                                       |
-| -------------------- | ----------------- | ----------------------------------------------------- |
-| `url`                |                   | Page to scan. Required.                               |
-| `max-pages`          | `1`               | How many pages of the same site to crawl.             |
-| `concurrency`        | `1`               | Pages loaded at the same time; same report as with 1. |
-| `fail-on`            | `error`           | `error`, `warning` or `never`.                        |
-| `fail-on-incomplete` | `false`           | Fail separately for incomplete required observations. |
-| `disable`            |                   | Comma-separated rule ids to skip.                     |
-| `lang`               | `en`              | Language of the report: `en` or `de`.                 |
-| `region`             | `de`              | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.      |
-| `sarif-file`         | `privalint.sarif` | Where to write SARIF. Empty to skip.                  |
-| `job-summary`        | `true`            | Add the Markdown report to the job summary.           |
-| `pr-comment`         | `false`           | Create/update a same-repository PR report comment.    |
+Inputs left empty are not passed to privalint, so `privalint.config.json` in your workspace (or
+`config`) decides, and the CLI default applies when neither sets a value.
+
+| Input                | Default           |                                                                     |
+| -------------------- | ----------------- | ------------------------------------------------------------------- |
+| `url`                |                   | Page to scan. Required.                                             |
+| `config`             |                   | JSON config file. Empty reads `./privalint.config.json` if present. |
+| `max-pages`          | config, else `1`  | How many pages of the same site to crawl.                           |
+| `concurrency`        | config, else `1`  | Pages loaded at the same time; same report as with 1.               |
+| `fail-on`            | `error`           | `error`, `warning` or `never`.                                      |
+| `fail-on-incomplete` | config, else off  | `true` or `false`: fail separately for incomplete observations.     |
+| `check-settings`     | config, else off  | `true` also tests the banner's settings layer.                      |
+| `disable`            |                   | Comma-separated rule ids to skip.                                   |
+| `lang`               | config, else `en` | Language of the report: `en` or `de`.                               |
+| `region`             | config, else `de` | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.                    |
+| `sarif-file`         | `privalint.sarif` | Where to write SARIF. Empty to skip.                                |
+| `job-summary`        | `true`            | Add the Markdown report to the job summary.                         |
+| `pr-comment`         | `false`           | Create/update a same-repository PR report comment.                  |
 
 Outputs: `exit-code`, and `sarif-file` when a report was written.
 
@@ -162,13 +173,13 @@ npx playwright install chromium
 `--region` selects the references and severity profile used by the tool. It does not determine
 which law applies to a website, and findings are not legal determinations:
 
-| Region         | Cookies and tracking                 | Imprint                               | Changes                                                                          |
-| -------------- | ------------------------------------ | ------------------------------------- | -------------------------------------------------------------------------------- |
-| `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                               | none                                                                             |
-| `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                 | none                                                                             |
-| `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce) | `pre-consent-trackers`, `third-party-embeds` and `impressum-link` drop one level |
-| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                          | none                                                                             |
-| `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC           | none                                                                             |
+| Region         | Cookies and tracking                 | Imprint                               | Changes                                                     |
+| -------------- | ------------------------------------ | ------------------------------------- | ----------------------------------------------------------- |
+| `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                               | none                                                        |
+| `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                 | none                                                        |
+| `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce) | trackers, embeds, fonts and `impressum-link` drop one level |
+| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                          | none                                                        |
+| `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC           | none                                                        |
 
 Every finding lists its legal basis for the chosen country. Trackers that run after an explicit
 "reject" stay an error everywhere, Switzerland included (Art. 30 Abs. 2 lit. b DSG). If a Swiss
@@ -225,12 +236,15 @@ Going further:
 3. It records every request, the final cookie jar, all links and `<link>` resource hints.
 4. On the start page it looks for the consent banner, either by the selectors of common consent
    managers (OneTrust, Cookiebot, Usercentrics, Borlabs, Complianz and others) or by button labels
-   in six languages. It clicks "reject", reloads, records what still loads and checks that the
-   settings can be reopened.
+   in six languages. If none is there yet, it keeps looking for up to one more settle period,
+   since some consent managers render late. It clicks "reject", reloads, records what still loads
+   and checks that the settings can be reopened.
 5. Each rule looks at those snapshots and reports findings with evidence and a suggested fix.
 6. With `--max-pages`, links to the same site are followed breadth-first. Query strings are
-   dropped, pages are deduplicated after redirects, and pages that fail to load (downloads,
-   timeouts) are listed but don't stop the crawl.
+   dropped, except the parameters that select a page on `/` and `*.php` (`page_id`, `p`, `id`,
+   `cat`, `page`, `lang`, as on WordPress without pretty permalinks). Pages are deduplicated after
+   redirects, and pages that fail to load (downloads, timeouts) are listed but don't stop the
+   crawl.
    "Same site" means the same registrable domain from the
    [public suffix list](https://publicsuffix.org/), so `shop.example.co.uk` belongs to
    `example.co.uk`, but `a.github.io` and `b.github.io` are different sites. IP addresses and

@@ -1,6 +1,7 @@
 import type { BrowserContext, Request } from 'playwright';
 import type {
   CapturePhase,
+  CaptureTiming,
   LoadDiagnostic,
   LoadDiagnostics,
   LoadIssueKind,
@@ -42,6 +43,26 @@ interface PendingRequest {
   issue?: LoadDiagnostic;
 }
 
+/**
+ * A fetch or XHR that got its full answer and was aborted while the page's code read it, or never
+ * read it. Only that code sees such a response, so nothing the rules look at is missing. A script
+ * or stylesheet aborted mid-download is different: the page may lack it, so it still counts.
+ */
+const isReadAborted = (entry: PendingRequest): boolean =>
+  (entry.record.resourceType === 'fetch' || entry.record.resourceType === 'xhr') &&
+  entry.record.outcome === 'response' &&
+  (entry.record.status ?? 0) < 400;
+
+/**
+ * An event stream that answered without error and is still open when observation ends. A
+ * request still waiting for its first answer (long polling, a stuck backend) is not one.
+ */
+const isOpenStream = (entry: PendingRequest): boolean =>
+  entry.issue === undefined &&
+  entry.record.resourceType === 'eventsource' &&
+  entry.record.outcome === 'response' &&
+  (entry.record.status ?? 0) < 400;
+
 export class Diagnostics {
   readonly data: LoadDiagnostics = {
     requests: 0,
@@ -66,6 +87,11 @@ export class Diagnostics {
   private readonly unexplained: { url: string; entry: PendingRequest; issue: LoadDiagnostic }[] =
     [];
   private stopped = false;
+  /**
+   * Set by an adapter network: where a request still open at the end of the capture was waiting.
+   * Requests open at stop() become timeouts, and this tells a queue wait from a slow fetch.
+   */
+  stageOf?: (url: string) => LoadDiagnostic['stage'];
   private readonly phaseIssues = { 'before-consent': 0, 'after-reject': 0 };
   private restricting = 0;
 
@@ -117,6 +143,12 @@ export class Diagnostics {
         url: diagnosticUrl(request.url()),
         phase: entry.phase,
       };
+      if (entry.issue === undefined && errorText === 'net::ERR_ABORTED' && isReadAborted(entry)) {
+        // The answer arrived; the page's code just stopped reading it. Workers and other
+        // targets send no cancel signal to this page, so it would otherwise count as a failure.
+        this.data.finished++;
+        return;
+      }
       // Chromium reports a request the page cancelled as ERR_ABORTED, but so does teardown. The
       // text only defers the decision; cancelledByPage() or stop() settles it.
       if (entry.issue === undefined && errorText === 'net::ERR_ABORTED') {
@@ -154,12 +186,15 @@ export class Diagnostics {
       if (failure) this.settle(failure.entry, issue(failure.entry.phase));
       return;
     }
-    for (const [request, entry] of this.pending) {
-      if (request.url() === url) {
-        entry.issue = issue(entry.phase);
-        return;
-      }
+    const sameUrl = [...this.pending].filter(([request]) => request.url() === url);
+    // Never relabel a request that already has a reason: a real failure would turn into a
+    // non-restricting cancel. With two requests to one URL, the one without a reason is meant.
+    const open = sameUrl.find(([, entry]) => entry.issue === undefined);
+    if (open !== undefined) {
+      open[1].issue = issue(open[1].phase);
+      return;
     }
+    if (sameUrl.length > 0) return;
     // The cancellation can overtake Playwright's request event; apply it on arrival.
     const early = this.earlyFailures.get(url) ?? [];
     early.push(issue(this.phase));
@@ -177,6 +212,7 @@ export class Diagnostics {
     kind: LoadIssueKind,
     limit?: LoadDiagnostic['limit'],
     skippedReason?: SkipReason,
+    stage?: LoadDiagnostic['stage'],
   ): void {
     const entry = this.pending.get(request);
     if (entry === undefined) return;
@@ -186,6 +222,7 @@ export class Diagnostics {
       url: diagnosticUrl(request.url()),
       ...(limit === undefined ? {} : { limit }),
       ...(skippedReason === undefined ? {} : { skippedReason }),
+      ...(stage === undefined ? {} : { stage }),
     };
   }
 
@@ -194,11 +231,12 @@ export class Diagnostics {
     kind: LoadIssueKind,
     limit?: LoadDiagnostic['limit'],
     skippedReason?: SkipReason,
+    stage?: LoadDiagnostic['stage'],
   ): void {
     if (this.stopped) return;
     for (const [request, entry] of this.pending) {
       if (request.url() === url && entry.issue === undefined) {
-        this.fail(request, kind, limit, skippedReason);
+        this.fail(request, kind, limit, skippedReason, stage);
         return;
       }
     }
@@ -210,6 +248,7 @@ export class Diagnostics {
       phase: this.phase,
       ...(limit === undefined ? {} : { limit }),
       ...(skippedReason === undefined ? {} : { skippedReason }),
+      ...(stage === undefined ? {} : { stage }),
     });
     this.earlyFailures.set(url, early);
   }
@@ -236,6 +275,12 @@ export class Diagnostics {
     else this.data.dropped++;
   }
 
+  /** Timing of this capture, created on first use. */
+  get timing(): CaptureTiming {
+    this.data.timing ??= { loadMs: 0, networkIdleMs: 0 };
+    return this.data.timing;
+  }
+
   hasIssues(phase: CapturePhase): boolean {
     return this.phaseIssues[phase] > 0;
   }
@@ -251,15 +296,22 @@ export class Diagnostics {
     // No cancel signal arrived for these, so they stay what Chromium reported.
     for (const failure of this.unexplained.splice(0)) this.settle(failure.entry, failure.issue);
     for (const [request, entry] of this.pending) {
-      entry.record.outcome = 'failed';
-      const issue = entry.issue ?? {
-        kind: 'timeout',
-        phase: entry.phase,
-        url: diagnosticUrl(request.url()),
-      };
-      this.terminalFailure(issue.kind);
-      this.store(issue);
-      this.data.failed++;
+      if (isOpenStream(entry)) {
+        // Server-Sent Events answer once and stay open by design; the page has what it asked for.
+        this.data.finished++;
+      } else {
+        entry.record.outcome = 'failed';
+        const stage = this.stageOf?.(request.url());
+        const issue = entry.issue ?? {
+          kind: 'timeout',
+          phase: entry.phase,
+          url: diagnosticUrl(request.url()),
+          ...(stage === undefined ? {} : { stage }),
+        };
+        this.terminalFailure(issue.kind);
+        this.store(issue);
+        this.data.failed++;
+      }
     }
     this.pending.clear();
     for (const issues of this.earlyFailures.values()) {
@@ -286,8 +338,27 @@ export class Diagnostics {
  * skipped report hides nothing from the rules. Sentry documents `o<number>.ingest.sentry.io`,
  * `o<number>.ingest.de.sentry.io` and `o<number>.<location>.ingest.sentry.io`
  * (docs.sentry.io/product/security/ip-ranges).
+ *
+ * Bugsnag sends to `notify.` and `sessions.bugsnag.com`, and to the same names under
+ * `bugsnag.smartbear.com` for some organisations (defaults in bugsnag-js packages/core/config.js
+ * and client.js; docs.bugsnag.com/platforms/javascript/legacy/faq names both domains).
+ *
+ * Rollbar posts to `api.rollbar.com` (default `endpoint`,
+ * docs.rollbar.com/docs/rollbarjs-configuration-reference).
+ *
+ * Datadog Browser RUM and Browser Logs post to `browser-intake-<site with dashes>.<tld>`, sometimes
+ * with one more label in front, for the sites datadoghq.com, us3/us5/ap1/ap2.datadoghq.com,
+ * datadoghq.eu, ddog-gov.com and us2.ddog-gov.com (DataDog/browser-sdk,
+ * packages/js-core/src/transport/endpointBuilder.ts and intakeSites.ts).
  */
-const ERROR_MONITORING_HOSTS = [/^o\d+\.(?:[a-z]+\.)?ingest\.(?:[a-z]+\.)?sentry\.io$/];
+const ERROR_MONITORING_HOSTS = [
+  /^o\d+\.(?:[a-z]+\.)?ingest\.(?:[a-z]+\.)?sentry\.io$/,
+  /^(?:notify|sessions)\.bugsnag\.(?:smartbear\.)?com$/,
+  /^api\.rollbar\.com$/,
+  /^(?:[a-z\d-]+\.)?browser-intake-(?:(?:us3|us5|ap1|ap2)-)?datadoghq\.com$/,
+  /^(?:[a-z\d-]+\.)?browser-intake-datadoghq\.eu$/,
+  /^(?:[a-z\d-]+\.)?browser-intake-(?:us2-)?ddog-gov\.com$/,
+];
 
 const isErrorMonitoring = (url: string): boolean => {
   try {

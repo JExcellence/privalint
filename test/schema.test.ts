@@ -13,7 +13,7 @@ const readJson = async (path: string): Promise<unknown> =>
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 const schemas = new Map(
   await Promise.all(
-    ['1.0.0', '1.1.0', '1.2.0', '1.3.0'].map(async (version) => {
+    ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0'].map(async (version) => {
       const report = ajv.compile(
         (await readJson(`../schemas/report-${version}.schema.json`)) as object,
       );
@@ -96,6 +96,46 @@ describe('standalone report contracts', () => {
     expect(validate('1.2.0')).toBe(false);
     const broken = { ...value, consent: { ...value.consent, settings: { outcome: 'maybe' } } };
     expect(schemas.get('1.3.0')?.report({ ...broken, schemaVersion: '1.3.0' })).toBe(false);
+  });
+
+  it('accepts capture timing, timeout stages and the TCF readout only from schema 1.4.0 on', async () => {
+    const value = (await fixture('complete')) as ScanResult;
+    const page = value.pages[0];
+    if (page?.capture === undefined) throw new Error('fixture without capture');
+    page.capture.diagnostics.timing = { loadMs: 120, networkIdleMs: 900, peakQueued: 4 };
+    value.consent = {
+      ...(value.consent ?? { bannerFound: true, rejected: false }),
+      settings: {
+        outcome: 'saved',
+        reason: 'settings-saved-and-reloaded',
+        tcf: {
+          purposesOn: [1],
+          legitimateInterestsOn: [2, 7],
+          vendorConsents: 1,
+          vendorLegitimateInterests: 0,
+        },
+      },
+    };
+    const validate = (version: string) =>
+      schemas.get(version)?.report({ ...value, schemaVersion: version });
+    expect(validate('1.4.0')).toBe(true);
+    // Earlier schemas don't forbid unknown fields, but an issue's `stage` value is checked.
+    page.capture.diagnostics.issues = [
+      { kind: 'timeout', phase: 'before-consent', url: '[redacted]', stage: 'queued' },
+    ];
+    expect(validate('1.4.0')).toBe(true);
+    page.capture.diagnostics.issues = [
+      {
+        kind: 'timeout',
+        phase: 'before-consent',
+        url: '[redacted]',
+        stage: 'sleeping' as 'queued',
+      },
+    ];
+    expect(validate('1.4.0')).toBe(false);
+    const broken = structuredClone(value);
+    if (broken.consent?.settings?.tcf) broken.consent.settings.tcf.purposesOn = [0];
+    expect(schemas.get('1.4.0')?.report({ ...broken, schemaVersion: '1.4.0' })).toBe(false);
   });
 
   it('accepts the Hungary region only from schema 1.3.0 on', async () => {

@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirects with JavaScript after load</title>
+  </head>
+  <body>
+    <script>
+      window.addEventListener('load', () => setTimeout(() => location.replace('/clean/index.html'), 50));
+    </script>
+  </body>
+</html>

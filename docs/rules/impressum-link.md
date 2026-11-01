@@ -12,11 +12,15 @@ Mentions légales, Aviso legal, Note legali, Colofon and Informacje prawne.
 
 The rule runs on every crawled page, because the notice has to be reachable from all of them.
 
-| Situation                                      | Severity |
-| ---------------------------------------------- | -------- |
-| A link matching one of the names above         | passes   |
-| No such link, but a "Kontakt" / "Contact" link | info     |
-| Neither                                        | warning  |
+| Situation                                                                            | Severity |
+| ------------------------------------------------------------------------------------ | -------- |
+| A link matching one of the names above                                               | passes   |
+| No such link, but "Rechtliche Hinweise", "Rechtliches", "Legal" or "Jogi tudnivalók" | info     |
+| No such link, but a "Kontakt" / "Contact" link                                       | info     |
+| None of these                                                                        | warning  |
+
+A vague legal link is only noted: the page behind it may hold the provider information or just a
+disclaimer, and the label alone can't tell. Check it, or label the link "Impressum".
 
 privalint does not follow the contact link, so it cannot tell whether the Impressum is linked
 from there.

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import { describe, expect, it } from 'vitest';
+import { assessCoverage } from '../src/coverage.js';
 import { classifyLoadError, diagnosticUrl } from '../src/diagnostics.js';
 import { type NetworkAdapter, NetworkError } from '../src/network.js';
 import type { ScanOptions } from '../src/scanner.js';
@@ -14,6 +15,65 @@ const html = (body = '') => ({
   body: `<!doctype html>${links}${body}`,
 });
 const settings: ScanOptions = { settleMs: 0, timeoutMs: 3_000, captureTimeoutMs: 10_000 };
+
+describe('https-transport in adapter scans', () => {
+  it('is skipped by design and keeps the coverage complete', async () => {
+    const result = await scan(origin, { ...settings, networkAdapter: async () => html() });
+    expect(result.pages[0]?.ruleEvaluations).toContainEqual(
+      expect.objectContaining({ ruleId: 'https-transport', reason: 'transport-not-checked' }),
+    );
+    expect(result.coverage).toBe('complete');
+    expect(assessCoverage(result).complete).toBe(true);
+  });
+});
+
+describe('requests from iframes and workers', () => {
+  // A cross-origin iframe runs in its own renderer process (site isolation) and a worker is its own
+  // target; both must still go through the adapter, never around it.
+  const frameOrigin = 'https://frame.invalid';
+  const pages: Record<
+    string,
+    ReturnType<typeof html> | { status: number; headers: Record<string, string>; body: string }
+  > = {
+    [`${origin}/`]: html(
+      `<iframe src="${frameOrigin}/"></iframe>` + '<script>new Worker("/worker.js")</script>',
+    ),
+    [`${frameOrigin}/`]: html(`<script src="${frameOrigin}/inner.js"></script>`),
+    [`${frameOrigin}/inner.js`]: {
+      status: 200,
+      headers: { 'content-type': 'text/javascript' },
+      body: '',
+    },
+    [`${origin}/worker.js`]: {
+      status: 200,
+      headers: { 'content-type': 'text/javascript' },
+      body: 'fetch("/from-worker")',
+    },
+    [`${origin}/from-worker`]: { status: 200, headers: { 'content-type': 'text/plain' }, body: '' },
+  };
+
+  it('sends every iframe and worker request through the adapter', async () => {
+    const seen: string[] = [];
+    const result = await scan(origin, {
+      ...settings,
+      settleMs: 500,
+      consentCheck: false,
+      networkAdapter: async ({ url }) => {
+        seen.push(url);
+        return pages[url] ?? { status: 404, body: '' };
+      },
+    });
+    expect(seen).toEqual(
+      expect.arrayContaining([
+        `${frameOrigin}/`,
+        `${frameOrigin}/inner.js`,
+        `${origin}/worker.js`,
+        `${origin}/from-worker`,
+      ]),
+    );
+    expect(result.pages[0]?.capture?.diagnostics.issues).toEqual([]);
+  });
+});
 
 describe('controlled capture', () => {
   it('queues a burst of 48 requests instead of rejecting busy slots', async () => {
@@ -215,6 +275,32 @@ describe('controlled capture', () => {
     );
   });
 
+  it('says where the time went: load, network idle, queue peak and timeout stage', async () => {
+    const result = await scan(origin, {
+      ...settings,
+      captureTimeoutMs: 1_500,
+      networkLimits: { concurrency: 1 },
+      networkAdapter: async ({ url, signal }) => {
+        if (url === `${origin}/`) {
+          return html('<script>for (let i = 0; i < 4; i++) fetch("/slow" + i)</script>');
+        }
+        await delay(10_000, undefined, { signal });
+        return { status: 200, body: '' };
+      },
+    });
+    const diagnostics = result.pages[0]?.capture?.diagnostics;
+    expect(diagnostics?.timing).toMatchObject({
+      loadMs: expect.any(Number),
+      networkIdleMs: expect.any(Number),
+    });
+    expect(diagnostics?.timing?.peakQueued).toBeGreaterThanOrEqual(3);
+    const stages = diagnostics?.issues
+      .filter((issue) => issue.kind === 'timeout')
+      .map((issue) => issue.stage);
+    expect(stages).toContain('fetching');
+    expect(stages).toContain('queued');
+  });
+
   it('bounds streamed response bytes and cancels the adapter signal', async () => {
     let signal: AbortSignal | undefined;
     let returned = false;
@@ -331,6 +417,17 @@ describe('skipped error-monitoring reports', () => {
     'https://o4511755310006272.ingest.us.sentry.io/api/1/envelope/',
     'https://o42.ingest.sentry.io/api/1/envelope/',
     'https://o42.ingest.de.sentry.io/api/1/envelope/',
+    'https://notify.bugsnag.com/',
+    'https://sessions.bugsnag.com/',
+    'https://notify.bugsnag.smartbear.com/',
+    'https://sessions.bugsnag.smartbear.com/',
+    'https://api.rollbar.com/api/1/item/',
+    'https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser',
+    'https://browser-intake-us5-datadoghq.com/api/v2/logs?ddsource=browser',
+    'https://browser-intake-ap1-datadoghq.com/api/v2/rum?ddsource=browser',
+    'https://browser-intake-datadoghq.eu/api/v2/rum?ddsource=browser',
+    'https://browser-intake-us2-ddog-gov.com/api/v2/rum?ddsource=browser',
+    'https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota',
   ])('keeps the capture complete when a report to %s is skipped', async (target) => {
     const result = await scan(origin, {
       ...settings,
@@ -348,6 +445,13 @@ describe('skipped error-monitoring reports', () => {
     'https://api.example.org/graphql',
     'https://sentry.io.evil.invalid/api/1/envelope/',
     'https://ingest.sentry.io.evil.invalid/api/1/envelope/',
+    'https://app.bugsnag.com/api',
+    'https://notify.bugsnag.com.evil.invalid/',
+    'https://rollbar.com/api/1/item/',
+    'https://api.rollbar.com.evil.invalid/api/1/item/',
+    'https://app.datadoghq.com/api/v2/rum',
+    'https://browser-intake-datadoghq.com.evil.invalid/api/v2/rum',
+    'https://browser-intake-evil-datadoghq.com/api/v2/rum',
   ])('still treats a skipped POST to %s as incomplete', async (target) => {
     const result = await scan(origin, {
       ...settings,

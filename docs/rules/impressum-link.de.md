@@ -13,11 +13,16 @@ Anbieterkennzeichnung, Mentions légales, Aviso legal, Note legali, Colofon und 
 Die Regel läuft auf jeder gecrawlten Seite, weil das Impressum von jeder Seite aus erreichbar sein
 muss.
 
-| Situation                                              | Schweregrad |
-| ------------------------------------------------------ | ----------- |
-| Ein Link mit einer der oben genannten Bezeichnungen    | bestanden   |
-| Kein solcher Link, aber ein Link „Kontakt“ / „Contact“ | `info`      |
-| Keines von beidem                                      | `warning`   |
+| Situation                                                                                    | Schweregrad |
+| -------------------------------------------------------------------------------------------- | ----------- |
+| Ein Link mit einer der oben genannten Bezeichnungen                                          | bestanden   |
+| Kein solcher Link, aber „Rechtliche Hinweise“, „Rechtliches“, „Legal“ oder „Jogi tudnivalók“ | `info`      |
+| Kein solcher Link, aber ein Link „Kontakt“ / „Contact“                                       | `info`      |
+| Nichts davon                                                                                 | `warning`   |
+
+Ein unklarer Rechts-Link wird nur notiert: Die Seite dahinter kann die Anbieterangaben enthalten
+oder nur einen Haftungsausschluss, das verrät die Beschriftung nicht. Prüfen oder den Link
+„Impressum“ nennen.
 
 privalint folgt dem Kontaktlink nicht und kann daher nicht feststellen, ob das Impressum von dort
 aus verlinkt ist.

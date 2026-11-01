@@ -6,6 +6,12 @@ Bekannte CMP-Selektoren werden in jedem Frame geprüft. Zustimmen und Ablehnen w
 Frame gesucht; versteckte Steuerelemente werden ignoriert. Die bisherigen Selektoren und
 mehrsprachigen Beschriftungs-Heuristiken stehen in `scan()` und `observeConsent()` bereit.
 
+Manche Consent-Manager erscheinen erst nach einer Geo-Abfrage oder einer Tag-Manager-Regel, also
+nachdem die Seite zur Ruhe gekommen ist. Findet privalint kein Banner, sucht es alle 500 ms erneut,
+höchstens eine weitere Settle-Zeit lang (`--settle`, Standard 2000 ms; `--settle 0` wartet nicht).
+`consent.bannerWaitMs` gibt an, wie lange es gesucht hat: 0, wenn das Banner sofort da war, etwa
+eine Settle-Zeit, wenn keines erschien.
+
 | CMP                | Erkennung                                                                            |
 | ------------------ | ------------------------------------------------------------------------------------ |
 | CookieFirst        | `data-cookiefirst-action=accept/reject`, v3 `data-testid=actionButton-accept/reject` |

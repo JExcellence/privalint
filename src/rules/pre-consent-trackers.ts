@@ -18,7 +18,7 @@ export const preConsentTrackers: Rule = {
     'CJEU, 01.10.2019, C-673/17 (Planet49)',
   ],
   check({ page, lang }) {
-    const hits = findTrackerHits(page.requests, page.cookies, lang);
+    const hits = findTrackerHits(page.requests, page.cookies, lang, page.storage);
     return hits.map(({ tracker, evidence }): Finding => {
       const { vendor } = tracker;
       const isTagManager = tracker.category === 'tag-manager';

@@ -3,35 +3,36 @@ import type { Finding, Severity } from './types.js';
 export const REGIONS = ['de', 'at', 'ch', 'hu', 'eu'] as const;
 export type Region = (typeof REGIONS)[number];
 
+/** Trackers need prior consent; also the basis when there is no banner to give it. */
+const TRACKER_CONSENT: Record<Region, string[]> = {
+  de: ['§ 25 Abs. 1 TDDDG', 'Art. 6 Abs. 1 lit. a DSGVO', 'EuGH, 01.10.2019, C-673/17 (Planet49)'],
+  at: [
+    '§ 165 Abs. 3 TKG 2021',
+    'Art. 6 Abs. 1 lit. a DSGVO',
+    'EuGH, 01.10.2019, C-673/17 (Planet49)',
+  ],
+  ch: ['Art. 45c FMG', 'Art. 6 DSG'],
+  hu: [
+    'Eht. 155. § (4)',
+    'GDPR 6. cikk (1) bekezdés a) pont',
+    'EUB, 2019. október 1., C-673/17 (Planet49)',
+  ],
+  eu: [
+    'Art. 5(3) ePrivacy Directive',
+    'Art. 6(1)(a) GDPR',
+    'CJEU, 01.10.2019, C-673/17 (Planet49)',
+  ],
+};
+
 /**
  * Legal basis per rule and country, cited the way lawyers in that country
  * would cite it. `eu` is for sites outside Germany, Austria, Switzerland and
  * Hungary and refers to the EU instruments directly.
  */
 const LEGAL: Record<string, Record<Region, string[]>> = {
-  'pre-consent-trackers': {
-    de: [
-      '§ 25 Abs. 1 TDDDG',
-      'Art. 6 Abs. 1 lit. a DSGVO',
-      'EuGH, 01.10.2019, C-673/17 (Planet49)',
-    ],
-    at: [
-      '§ 165 Abs. 3 TKG 2021',
-      'Art. 6 Abs. 1 lit. a DSGVO',
-      'EuGH, 01.10.2019, C-673/17 (Planet49)',
-    ],
-    ch: ['Art. 45c FMG', 'Art. 6 DSG'],
-    hu: [
-      'Eht. 155. § (4)',
-      'GDPR 6. cikk (1) bekezdés a) pont',
-      'EUB, 2019. október 1., C-673/17 (Planet49)',
-    ],
-    eu: [
-      'Art. 5(3) ePrivacy Directive',
-      'Art. 6(1)(a) GDPR',
-      'CJEU, 01.10.2019, C-673/17 (Planet49)',
-    ],
-  },
+  'pre-consent-trackers': TRACKER_CONSENT,
+  // No banner means no way to consent: the same basis as the trackers that run without it.
+  'consent-banner-missing': TRACKER_CONSENT,
   'trackers-after-reject': {
     de: ['§ 25 Abs. 1 TDDDG', 'Art. 6 Abs. 1 lit. a DSGVO'],
     at: ['§ 165 Abs. 3 TKG 2021', 'Art. 6 Abs. 1 lit. a DSGVO'],
@@ -116,6 +117,46 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 12. cikk', 'GDPR 13. cikk'],
     eu: ['Art. 12 GDPR', 'Art. 13 GDPR'],
   },
+  // Both pages must be reachable before the visitor decides, and the Impressum at all times.
+  'banner-legal-links': {
+    de: ['Art. 12 Abs. 1 DSGVO', 'Art. 13 DSGVO', '§ 5 DDG'],
+    at: ['Art. 12 Abs. 1 DSGVO', 'Art. 13 DSGVO', '§ 5 ECG'],
+    ch: ['Art. 19 DSG'],
+    hu: ['GDPR 12. cikk (1) bekezdés', 'GDPR 13. cikk', 'Ekertv. 4. §'],
+    eu: ['Art. 12(1) GDPR', 'Art. 13 GDPR', 'Art. 5 Directive 2000/31/EC (e-commerce)'],
+  },
+  // Information at the time personal data is collected.
+  'form-privacy-notice': {
+    de: ['Art. 13 DSGVO'],
+    at: ['Art. 13 DSGVO'],
+    ch: ['Art. 19 DSG'],
+    hu: ['GDPR 13. cikk'],
+    eu: ['Art. 13 GDPR'],
+  },
+  // Security of processing: transport encryption is the baseline measure.
+  'https-transport': {
+    de: ['Art. 32 DSGVO', '§ 19 Abs. 4 TDDDG'],
+    at: ['Art. 32 DSGVO'],
+    ch: ['Art. 8 DSG'],
+    hu: ['GDPR 32. cikk'],
+    eu: ['Art. 32 GDPR'],
+  },
+  // Directive (EU) 2023/2673 added Art. 11a; Germany: § 356a BGB, applicable from 19.06.2026.
+  'withdrawal-button': {
+    de: ['§ 356a BGB'],
+    at: ['Art. 11a Richtlinie 2011/83/EU'],
+    ch: ['Art. 11a Richtlinie 2011/83/EU (bei Verkauf an Verbraucher in der EU)'],
+    hu: ['2011/83/EU irányelv 11a. cikk'],
+    eu: ['Art. 11a Directive 2011/83/EU'],
+  },
+  // European Accessibility Act; Germany and Austria since 28.06.2025.
+  'accessibility-statement': {
+    de: ['§ 14 BFSG', 'Anlage 3 BFSG'],
+    at: ['§ 14 BaFG'],
+    ch: ['Art. 13 Richtlinie (EU) 2019/882 (bei Angeboten in der EU)'],
+    hu: ['(EU) 2019/882 irányelv 13. cikk'],
+    eu: ['Art. 13 and Annex V Directive (EU) 2019/882'],
+  },
 };
 
 export const legalReferences = (ruleId: string, region: Region): string[] | undefined =>
@@ -140,13 +181,21 @@ export function applyRegion(findings: readonly Finding[], region: Region): Findi
 /**
  * Switzerland uses an opt-out model for cookies and tracking (Art. 45c FMG) and
  * requires an imprint only for offers in electronic commerce, so those findings
- * drop one level there. Ignoring an explicit refusal stays as serious as anywhere.
+ * drop one level there. Fonts from Google or Adobe are a third-party request like an
+ * embed, and the Munich Google Fonts ruling is German law, so they drop too. Ignoring
+ * an explicit refusal stays as serious as anywhere.
  */
 const SOFTER_IN_SWITZERLAND = new Set([
   'pre-consent-trackers',
+  'consent-banner-missing',
   'consent-settings-link',
   'third-party-embeds',
+  'google-fonts',
+  'adobe-fonts',
   'impressum-link',
+  'banner-legal-links',
+  'withdrawal-button',
+  'accessibility-statement',
 ]);
 
 function severityFor(finding: Finding, region: Region): Severity {

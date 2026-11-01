@@ -224,6 +224,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         options.consentCheck !== false,
         configuredRules,
         options.settingsCheck === true,
+        !options.networkAdapter && !options.offline,
       );
     });
     const partial =
@@ -291,7 +292,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       coverage: partial ? 'partial' : 'complete',
     };
     emit({ stage: 'completed', elapsedMs: 0 });
-    return options.networkAdapter ? redactReport(result) : result;
+    const clean = withoutCredentials(result);
+    return options.networkAdapter ? redactReport(clean) : clean;
   } finally {
     await browser.close();
   }
@@ -305,22 +307,44 @@ async function checkSettings(
   options: ScanOptions,
 ): Promise<SettingsObservation> {
   const capture = await capturePage(browser, url, siteUrl, options, 'settings');
-  return (
-    capture.consent?.settings ?? {
-      outcome: 'interaction-failed',
-      reason: 'browser-interaction-failed',
-      // The banner showed in the first context but not in this one.
-      error: capture.error ?? 'browser-failure',
-    }
-  );
+  if (capture.consent?.settings !== undefined) return capture.consent.settings;
+  // The page didn't load: a browser problem. It loaded but showed no banner this time: say so,
+  // instead of calling a geo- or A/B-dependent banner a browser failure.
+  return capture.error === undefined
+    ? { outcome: 'banner-not-shown', reason: 'banner-not-shown' }
+    : { outcome: 'interaction-failed', reason: 'browser-interaction-failed', error: capture.error };
 }
 
 function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'consent'> {
   if (start?.consent === undefined) return {};
-  const { afterReject: _afterReject, settings, ...summary } = start.consent;
+  const {
+    afterReject: _afterReject,
+    bannerLinks: _bannerLinks,
+    bannerBlocking: _bannerBlocking,
+    settings,
+    ...summary
+  } = start.consent;
   if (settings === undefined) return { consent: summary };
   const { afterSave: _afterSave, ...settingsSummary } = settings;
   return { consent: { ...summary, settings: settingsSummary } };
+}
+
+const URL_CREDENTIALS = /(https?:\/\/)[^\s/?#@]+@/gi;
+
+/**
+ * Basic-auth credentials in the target URL (a staging site) open the site, but must never reach a
+ * report, a SARIF upload or a PR comment. Every string in the report is cleaned, so a URL in a
+ * field added later can't carry them either.
+ */
+function withoutCredentials<T>(value: T): T {
+  if (typeof value === 'string') return value.replace(URL_CREDENTIALS, '$1') as T;
+  if (Array.isArray(value)) return value.map(withoutCredentials) as T;
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, withoutCredentials(item)]),
+    ) as T;
+  }
+  return value;
 }
 
 /** Adapter reports omit URL credentials, paths, queries and fragments by default. */

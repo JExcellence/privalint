@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Lang } from '../src/i18n.js';
 import {
+  accessibilityStatement,
   adobeFonts,
+  consentBannerMissing,
   consentSettingsLink,
   googleFonts,
   impressumLink,
@@ -9,12 +11,123 @@ import {
   privacyPolicyLink,
   thirdPartyCdns,
   thirdPartyEmbeds,
+  trackersAfterReject,
+  withdrawalButton,
 } from '../src/rules/index.js';
+import { newStorageKeys } from '../src/storage.js';
 import type { Rule } from '../src/types.js';
 import { cookie, request, SITE, snapshot } from './helpers.js';
 
 const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
   rule.check({ siteUrl: SITE, page, lang });
+
+describe('shop duties', () => {
+  const cart = { text: 'Warenkorb', href: 'https://example.de/warenkorb' };
+  const shop = (...links: { text: string; href: string }[]) =>
+    snapshot({ links: [cart, ...links] });
+
+  it('asks a shop for a withdrawal function, not other sites', () => {
+    expect(run(withdrawalButton, shop())).toMatchObject([{ severity: 'warning' }]);
+    expect(run(withdrawalButton, snapshot({ links: [] }))).toEqual([]);
+  });
+
+  it.each([
+    ['Vertrag widerrufen', 'https://example.de/widerruf'],
+    ['Withdraw from contract here', 'https://example.com/withdraw'],
+    ['Vertrag hier widerrufen', 'https://example.de/w'],
+  ])('accepts %j', (text, href) => {
+    expect(run(withdrawalButton, shop({ text, href }))).toEqual([]);
+  });
+
+  it('does not take the cancellation policy for the withdrawal function', () => {
+    const policy = { text: 'Widerrufsbelehrung', href: 'https://example.de/widerrufsbelehrung' };
+    expect(run(withdrawalButton, shop(policy))).toHaveLength(1);
+  });
+
+  it('recognises a Shopify store by its scripts', () => {
+    const page = snapshot({ requests: [request('https://cdn.shopify.com/s/files/1/theme.js')] });
+    expect(run(withdrawalButton, page)).toHaveLength(1);
+  });
+
+  it('only checks the start page', () => {
+    const page = snapshot({ links: [cart], finalUrl: 'https://example.de/produkte' });
+    expect(run(withdrawalButton, page)).toEqual([]);
+  });
+
+  it('notes missing accessibility information as info, since the AGB may hold it', () => {
+    expect(run(accessibilityStatement, shop())).toMatchObject([{ severity: 'info' }]);
+    const statement = { text: 'Barrierefreiheitserklärung', href: 'https://example.de/b' };
+    expect(run(accessibilityStatement, shop(statement))).toEqual([]);
+    expect(run(accessibilityStatement, snapshot())).toEqual([]);
+  });
+});
+
+describe('Web Storage keys', () => {
+  it('reports a tracker key that appears after rejecting', () => {
+    const page = snapshot({
+      consent: {
+        bannerFound: true,
+        rejected: true,
+        state: 'reject-tested',
+        outcome: 'reject-succeeded',
+        reason: 'reject-clicked-and-reloaded',
+        rejectLabel: 'Alle ablehnen',
+        afterReject: {
+          requests: [],
+          cookies: [],
+          storage: [
+            { area: 'local', name: 'ajs_anonymous_id' },
+            { area: 'local', name: 'consent' },
+          ],
+        },
+      },
+    });
+    expect(run(trackersAfterReject, page)).toEqual([
+      expect.objectContaining({ subject: 'Segment', evidence: ['localStorage ajs_anonymous_id'] }),
+    ]);
+  });
+
+  it('only counts keys that were not there before', () => {
+    const before = [{ area: 'local', name: 'a' }] as const;
+    const after = [
+      { area: 'local', name: 'a' },
+      { area: 'session', name: 'a' },
+    ] as const;
+    expect(newStorageKeys(before, after)).toEqual([{ area: 'session', name: 'a' }]);
+  });
+});
+
+describe('consent-banner-missing', () => {
+  const noBanner = {
+    bannerFound: false,
+    rejected: false,
+    state: 'not-detected',
+    outcome: 'no-banner-detected',
+    reason: 'no-supported-banner',
+    bannerWaitMs: 2000,
+  } as const;
+
+  it('names the missing banner when trackers run', () => {
+    const page = snapshot({
+      requests: [request('https://www.google-analytics.com/g/collect')],
+      cookies: [cookie('_hjSessionUser_1')],
+      consent: noBanner,
+    });
+    const [finding] = run(consentBannerMissing, page);
+    expect(finding).toMatchObject({ severity: 'warning', ruleId: 'consent-banner-missing' });
+    expect(finding?.message).toContain('Google Analytics, Hotjar');
+    expect(finding?.evidence[0]).toContain('2000 ms');
+  });
+
+  it('stays quiet with a banner, without trackers, or with a tag manager alone', () => {
+    const tracker = [request('https://www.google-analytics.com/g/collect')];
+    const banner = { ...noBanner, bannerFound: true, state: 'reject-tested' } as const;
+    expect(run(consentBannerMissing, snapshot({ requests: tracker, consent: banner }))).toEqual([]);
+    expect(run(consentBannerMissing, snapshot({ consent: noBanner }))).toEqual([]);
+    const gtm = [request('https://www.googletagmanager.com/gtm.js?id=GTM-1')];
+    expect(run(consentBannerMissing, snapshot({ requests: gtm, consent: noBanner }))).toEqual([]);
+  });
+});
 
 describe('pre-consent-trackers', () => {
   it('does not turn failed requests into evidence in direct rule API calls', () => {
@@ -22,13 +135,22 @@ describe('pre-consent-trackers', () => {
       requests: [
         { ...request('https://fonts.googleapis.com/css2'), outcome: 'failed' },
         { ...request('https://www.google-analytics.com/g/collect'), outcome: 'failed' },
-        { ...request('https://cdn.jsdelivr.net/npm/x'), outcome: 'response', status: 503 },
         { ...request('https://www.youtube.com/embed/x'), outcome: 'pending' },
       ],
     });
     for (const rule of [preConsentTrackers, googleFonts, thirdPartyCdns, thirdPartyEmbeds]) {
       expect(run(rule, page)).toEqual([]);
     }
+  });
+  it('counts HTTP error responses: the vendor still received the request', () => {
+    const page = snapshot({
+      requests: [
+        { ...request('https://www.facebook.com/tr?id=1'), outcome: 'response', status: 403 },
+        { ...request('https://cdn.jsdelivr.net/npm/x'), outcome: 'response', status: 503 },
+      ],
+    });
+    expect(run(preConsentTrackers, page)[0]?.message).toContain('Meta');
+    expect(run(thirdPartyCdns, page)).toHaveLength(1);
   });
   it('passes a clean page', () => {
     const page = snapshot({ requests: [request('https://example.de/app.js')] });
@@ -136,6 +258,16 @@ describe('additional third-party embeds', () => {
     ['Trustpilot widget', 'https://widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js'],
     ['Typeform', 'https://embed.typeform.com/next/embed.js'],
     ['Typeform', 'https://form.typeform.com/to/abc123'],
+    [
+      'SoundCloud embed',
+      'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1',
+    ],
+    ['SoundCloud embed', 'https://w.soundcloud.com/player/api.js'],
+    ['Mapbox', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12'],
+    ['Mapbox', 'https://events.mapbox.com/events/v2'],
+    ['Trusted Shops', 'https://widgets.trustedshops.com/js/X0123456789.js'],
+    ['Pinterest widgets', 'https://assets.pinterest.com/js/pinit.js'],
+    ['Google Calendar embed', 'https://calendar.google.com/calendar/embed?src=x'],
   ])('recognizes %s as an observed third-party resource', (vendor, url) => {
     expect(run(thirdPartyEmbeds, snapshot({ requests: [request(url)] }))).toMatchObject([
       { subject: vendor, ruleId: 'third-party-embeds' },
@@ -298,6 +430,21 @@ describe('impressum-link', () => {
     const page = snapshot({
       links: [{ text: 'Start', href: 'https://impressum-agentur.de/' }],
     });
+    expect(run(impressumLink, page)[0]?.severity).toBe('warning');
+  });
+
+  it.each([
+    ['Jogi tudnivalók', 'https://www.telekom.hu/jogi-tudnivalok'],
+    ['Rechtliche Hinweise', 'https://example.de/rechtliches'],
+    ['Legal', 'https://example.com/legal'],
+  ])('notes a vague legal link %j as info, not as a missing Impressum', (text, href) => {
+    const [finding] = run(impressumLink, snapshot({ links: [{ text, href }] }));
+    expect(finding?.severity).toBe('info');
+    expect(finding?.message).toContain(text);
+  });
+
+  it('does not take "legally" or "Paralegal" for a legal page', () => {
+    const page = snapshot({ links: [{ text: 'Paralegal jobs', href: 'https://example.de/jobs' }] });
     expect(run(impressumLink, page)[0]?.severity).toBe('warning');
   });
 

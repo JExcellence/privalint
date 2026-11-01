@@ -12,7 +12,7 @@ werden abgelehnt.
 
 Unterstützt sind `url` (absolute HTTP(S)-URL), `maxPages` (positive Ganzzahl), `concurrency`
 (positive Ganzzahl, gleichzeitig geladene Seiten), `settleMs` (ab 0),
-`timeoutMs` (positiv), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`eu`),
+`timeoutMs` (positiv), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`hu`/`eu`),
 `consentCheck`, `settingsCheck` und `failOnIncomplete` (Boolean), `rules` (bekannte IDs mit `off`/`error`/`warning`/`info`) und
 `allow: { vendors: string[] }` (exakte, groß-/kleinschreibungsabhängige `subject`-Anbieternamen).
 
@@ -110,9 +110,11 @@ Navigation abbricht, etwa beim Neuladen nach dem Ablehnen, werden genauso erfass
 
 Ein Adapter, der nur lesende Anfragen ausführt, lässt die Berichte aus, die eine Seite an ein
 Fehler-Monitoring sendet. Für die Ingest-Hosts von Sentry (`o<number>.ingest.sentry.io` und
-regionale Formen wie `o<number>.ingest.de.sentry.io`) behält eine solche Anfrage den Grund des
-Adapters, schränkt die Erfassung aber ebenfalls nicht ein: Die Seite wertet die Antwort eines
-Fehlerberichts nie aus.
+regionale Formen wie `o<number>.ingest.de.sentry.io`), Bugsnag (`notify.` und
+`sessions.bugsnag.com`, auch unter `bugsnag.smartbear.com`), Rollbar (`api.rollbar.com`) und
+Datadog Browser RUM und Logs (`browser-intake-*` je Datadog-Site) behält eine solche Anfrage den
+Grund des Adapters, schränkt die Erfassung aber ebenfalls nicht ein: Die Seite wertet die Antwort
+eines Fehlerberichts nie aus.
 
 Alle anderen ausgelassenen Anfragen schränken die Beobachtung weiterhin ein, weil fehlende
 Ressourcen nachfolgendes Verhalten beeinflussen können.

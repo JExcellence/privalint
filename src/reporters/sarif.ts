@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { legalReferences } from '../legal.js';
 import { REPOSITORY_URL, ruleDocsUrl, VERSION } from '../meta.js';
 import type { Finding, ScanResult, Severity } from '../types.js';
 import { coverageMessage, isPartial } from './capture.js';
@@ -28,18 +29,24 @@ export function formatSarif(result: ScanResult): string {
             name: 'privalint',
             semanticVersion: result.scannerVersion ?? VERSION,
             informationUri: REPOSITORY_URL,
-            rules: result.rules.map((rule) => ({
-              id: rule.id,
-              name: rule.id,
-              shortDescription: { text: rule.title },
-              fullDescription: { text: rule.description },
-              help: {
-                text: `${rule.description}\n\nReferences: ${rule.references.join('; ')}`,
-                markdown: `${rule.description}\n\n**References:** ${rule.references.join('; ')}`,
-              },
-              helpUri: ruleDocsUrl(rule.id),
-              properties: { tags: ['privacy', 'gdpr'], precision: 'high' },
-            })),
+            rules: result.rules.map((rule) => {
+              // The scan's region, as on each result; the rule's own list is the German one.
+              const references = (legalReferences(rule.id, result.region) ?? rule.references).join(
+                '; ',
+              );
+              return {
+                id: rule.id,
+                name: rule.id,
+                shortDescription: { text: rule.title },
+                fullDescription: { text: rule.description },
+                help: {
+                  text: `${rule.description}\n\nReferences: ${references}`,
+                  markdown: `${rule.description}\n\n**References:** ${references}`,
+                },
+                helpUri: ruleDocsUrl(rule.id),
+                properties: { tags: ['privacy', 'gdpr'], precision: precisionOf(rule.id) },
+              };
+            }),
           },
         },
         results: result.findings.map((finding) =>
@@ -121,6 +128,20 @@ function toResult(finding: Finding, redacted: boolean) {
         }),
   };
 }
+
+/**
+ * Rules that decide from button and link labels can be wrong on unusual markup; code scanning
+ * ranks and filters alerts by precision. Host, cookie and API matches stay `high`.
+ */
+const LABEL_RULES = new Set([
+  'reject-option',
+  'consent-settings-link',
+  'impressum-link',
+  'privacy-policy-link',
+]);
+
+const precisionOf = (ruleId: string): 'high' | 'medium' =>
+  LABEL_RULES.has(ruleId) ? 'medium' : 'high';
 
 function pseudoPath(pageUrl: string): string {
   const url = new URL(pageUrl);

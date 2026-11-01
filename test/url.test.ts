@@ -47,6 +47,19 @@ describe('crawlTarget', () => {
     expect(crawlTarget('/about?ref=nav#team', SITE)).toBe('https://example.de/about');
   });
 
+  it('keeps the parameters that route pages on / and *.php', () => {
+    expect(crawlTarget('/?page_id=2', SITE)).toBe('https://example.de/?page_id=2');
+    expect(crawlTarget('/index.php?id=7&utm_source=x', SITE)).toBe(
+      'https://example.de/index.php?id=7',
+    );
+    expect(crawlTarget('/?lang=de&p=5', SITE)).toBe(crawlTarget('/?p=5&lang=de', SITE));
+  });
+
+  it('drops tracking parameters and queries on ordinary paths', () => {
+    expect(crawlTarget('/?utm_source=newsletter&fbclid=1', SITE)).toBe('https://example.de/');
+    expect(crawlTarget('/shop?page=2', SITE)).toBe('https://example.de/shop');
+  });
+
   it('follows links to other hosts of the same site', () => {
     expect(crawlTarget('https://www.example.de/blog', SITE)).toBe('https://www.example.de/blog');
   });

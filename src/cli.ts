@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { writeFile } from 'node:fs/promises';
-import { extname } from 'node:path';
+import { stat, writeFile } from 'node:fs/promises';
+import { dirname, extname, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { loadConfig } from './config.js';
 import { assessCoverage } from './coverage.js';
@@ -133,6 +133,10 @@ async function main(argv: string[]): Promise<number> {
     throw new Error('Use either --consent or --skip-consent, not both.');
   }
 
+  const outputs = values.output ?? [];
+  // A scan can take minutes; a bad output path fails now, not after it.
+  await checkOutputDirectories(outputs);
+
   const result = await scan(target.href, {
     rules,
     ...(config.rules === undefined ? {} : { ruleSettings: config.rules }),
@@ -163,15 +167,24 @@ async function main(argv: string[]): Promise<number> {
       ),
   });
 
-  const outputs = values.output ?? [];
+  const written: string[] = [];
+  const unwritten: string[] = [];
   for (const file of outputs) {
     const kind = FORMAT_BY_EXTENSION[extname(file).toLowerCase()] ?? reportFormat;
-    await writeFile(file, format(result, kind));
+    try {
+      await writeFile(file, format(result, kind));
+      written.push(file);
+    } catch (error) {
+      // Keep the scan: name the file, print the result below and exit 2 at the end.
+      const reason = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`privalint: could not write ${file}: ${reason}\n`);
+      unwritten.push(file);
+    }
   }
 
   if (outputs.length > 0) {
     process.stdout.write(`${formatText(result, process.stdout.isTTY)}\n`);
-    process.stdout.write(`\nReport written to ${outputs.join(', ')}\n`);
+    if (written.length > 0) process.stdout.write(`\nReport written to ${written.join(', ')}\n`);
   } else {
     process.stdout.write(format(result, reportFormat, { color: process.stdout.isTTY }));
     if (reportFormat === 'text') {
@@ -179,12 +192,23 @@ async function main(argv: string[]): Promise<number> {
     }
   }
 
+  if (unwritten.length > 0) return EXIT_ERROR;
   if (shouldFail(result.findings, failOn)) return EXIT_FINDINGS;
   if (failOnIncomplete && !assessCoverage(result).complete) {
     process.stderr.write('privalint: required observation coverage is incomplete (exit 3).\n');
     return EXIT_INCOMPLETE;
   }
   return EXIT_OK;
+}
+
+async function checkOutputDirectories(files: readonly string[]): Promise<void> {
+  for (const file of files) {
+    const directory = dirname(resolve(file));
+    const info = await stat(directory).catch(() => undefined);
+    if (!info?.isDirectory()) {
+      throw new Error(`--output ${file}: the directory ${directory} does not exist.`);
+    }
+  }
 }
 
 function parseTarget(positionals: string[]): URL {

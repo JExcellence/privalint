@@ -19,16 +19,31 @@ stored by the reject test doesn't hide the banner. Then it
    and CookieConsent, otherwise by label ("Einstellungen", "Customize", "More options", …), picking
    the control closest to the banner's accept button so a footer link doesn't count,
 2. switches off every checked category switch that can be switched (checkboxes and
-   `role="switch"` elements; disabled ones are the necessary category and stay on),
-3. clicks the save button ("Auswahl speichern", "Save", "Confirm my choices", …; never "Accept all"),
-4. waits for the network to settle, reloads the page and waits again.
+   `role="switch"` elements; disabled ones are the necessary category and stay on). Only switches
+   inside the consent layer count, so a login form's "remember me" box stays as it is,
+   and on banners that offer levels as radio buttons the narrowest level is chosen,
+3. opens a "Legitimate interest" / "Berechtigtes Interesse" tab if the banner has one, and objects:
+   with an "object to all" button ("Allen widersprechen", "Object to all") if there is one,
+   otherwise by switching off the toggles in the tab. A plain "reject all" is never used there, since
+   it could be the first layer's button,
+4. clicks the save button ("Auswahl speichern", "Save", "Confirm my choices", …). A button that
+   covers everything, such as "Accept all", "Alle bestätigen" or "Confirm all", is never used,
+5. waits for the network to settle, reloads the page and waits again,
+6. if the page has the IAB TCF API (`__tcfapi`), asks it what it stored. This only reads; nothing
+   is clicked.
 
 Every request and every cookie that is new since the save is matched against the tracker list, with
 the same severities as `trackers-after-reject`.
 
+For TCF banners, consent that the API still reports for a purpose or vendor is an error: the
+visitor refused, and a consent was stored. Purposes or vendors still on through legitimate interest
+are a warning: TCF banners usually keep that objection in a separate tab. The purpose numbers are
+the evidence and are in `consent.settings.tcf`.
+
 The report says what happened in `consent.settings`: which controls were used, how many switches
 were turned off, and whether the observation was complete. If the banner has no settings control or
-no save button, the rule is not evaluable and says why.
+no save button, or doesn't appear again in the fresh browser (`banner-not-shown`, common with
+geo- or A/B-dependent banners), the rule is not evaluable and says why.
 
 ## Why
 
@@ -49,9 +64,10 @@ Switching everything off is a refusal, just like the reject button, and it has t
 - On 2026-10-30 the settings path opened, switched and saved on cookiebot.com ("Anpassen" /
   "Auswahl erlauben"), onetrust.com ("Meine Einstellungen anpassen" / "Meine Auswahl bestätigen"),
   cookieyes.com ("Customise" / "Save My Preferences") and complianz.io ("View preferences" /
-  "Save preferences"). usercentrics.com and the CookieConsent playground showed no banner to
-  headless Chromium, so those two selectors are unchecked. If a selector doesn't match, the label
-  fallback takes over.
+  "Save preferences"), and on 2026-10-31 on dkb.de (Usercentrics v3). The CookieConsent playground
+  showed no banner to headless Chromium, so that selector is unchecked. If a selector doesn't
+  match, the label fallback takes over.
 - Vendor-level switches inside collapsed sections are left alone; switching off their category is
-  expected to cover them.
+  expected to cover them. On TCF banners the API readout shows whether it did, including the
+  legitimate-interest purposes after the objection step.
 - The check adds one more load and reload of the start page.

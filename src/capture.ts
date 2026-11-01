@@ -1,8 +1,11 @@
 import type { Browser } from 'playwright';
 import { observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
+import { readForms } from './forms.js';
 import { ControlledNetwork, networkLimits, watchPageCancellations } from './network.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
+import { readStorageKeys } from './storage.js';
+import { observeTransport } from './transport.js';
 import type { PageSnapshot } from './types.js';
 import { isFirstParty } from './url.js';
 
@@ -85,10 +88,13 @@ export async function capturePage(
         diagnostics.cancelledByPage(cancelled),
       );
     }
+    const navigationStart = performance.now();
     const response = await page.goto(url, {
       waitUntil: 'load',
       timeout: options.timeoutMs ?? DEFAULTS.timeoutMs,
     });
+    const loaded = performance.now();
+    diagnostics.timing.loadMs = Math.round(loaded - navigationStart);
     snapshot.finalUrl = page.url();
     snapshot.status = response?.status() ?? null;
     await page
@@ -96,7 +102,10 @@ export async function capturePage(
         timeout: options.timeoutMs ?? DEFAULTS.timeoutMs,
       })
       .catch(() => diagnostics.add('timeout', page.url()));
+    diagnostics.timing.networkIdleMs = Math.round(performance.now() - loaded);
     await page.waitForTimeout(options.settleMs ?? DEFAULTS.settleMs);
+    // A script may have redirected while the page settled; links and rules belong to where it went.
+    snapshot.finalUrl = page.url();
     snapshot.links = await page.$$eval('a[href]', (anchors) =>
       anchors.map((a) => ({
         href: (a as HTMLAnchorElement).href,
@@ -108,6 +117,7 @@ export async function capturePage(
           .slice(0, 200),
       })),
     );
+    snapshot.forms = await readForms(page);
     snapshot.resourceHints = await page.$$eval('link[rel][href]', (elements) =>
       elements.map((link) => ({
         rel: (link.getAttribute('rel') ?? '').toLowerCase(),
@@ -122,6 +132,11 @@ export async function capturePage(
       path,
       expires,
     }));
+    snapshot.storage = await readStorageKeys(page);
+    // One extra request to the target, so only where privalint owns the network.
+    if (consentPath === 'reject' && !controlled && !options.offline) {
+      snapshot.transport = await observeTransport(context.request, snapshot.finalUrl, response);
+    }
     snapshot.requests = [...requests];
     snapshot.requestCount = diagnostics.data.requests;
     document = true;

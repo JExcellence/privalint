@@ -27,6 +27,9 @@ ruling on Adobe Fonts that we know of.
 - Art. 6(1) GDPR
 - LG München I, 20.01.2022, Az. 3 O 17493/20 (by analogy)
 
+With `--region ch` the finding drops one level: the Munich ruling is German law, and Switzerland
+treats such third-party requests under Art. 6 DSG like embeds.
+
 ## How to fix
 
 Unlike Google Fonts, Adobe Fonts cannot simply be downloaded and self-hosted. Adobe's licence

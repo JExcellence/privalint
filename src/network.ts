@@ -140,13 +140,27 @@ export class ControlledNetwork {
   private active = 0;
   private admitted = 0;
   private closed = false;
+  /** URLs the adapter is fetching right now, with how many of each. */
+  private readonly fetching = new Map<string, number>();
 
   constructor(
     private readonly adapter: NetworkAdapter,
     private readonly limits: Required<NetworkLimits>,
     private readonly diagnostics: Diagnostics,
     private readonly signal: AbortSignal,
-  ) {}
+  ) {
+    diagnostics.stageOf = (url) => {
+      if (this.fetching.has(url)) return 'fetching';
+      return this.queue.some((queued) => queued.event.request.url === url) ? 'queued' : undefined;
+    };
+  }
+
+  private enqueue(request: InterceptedRequest): void {
+    this.queue.push(request);
+    const timing = this.diagnostics.timing;
+    timing.peakQueued = Math.max(timing.peakQueued ?? 0, this.queue.length);
+    this.pump();
+  }
 
   async attach(context: BrowserContext): Promise<void> {
     context.on('page', (page) => {
@@ -184,8 +198,7 @@ export class ControlledNetwork {
         void this.abort(request, 'resource-limit', 'requests');
         return;
       }
-      this.queue.push(request);
-      this.pump();
+      this.enqueue(request);
     });
     await watchPageCancellations(session, (networkId, url) => {
       this.diagnostics.cancelledByPage(url);
@@ -229,6 +242,7 @@ export class ControlledNetwork {
     const signal = AbortSignal.any([this.signal, timeout, controller.signal]);
     let response: NetworkResponse;
     let body: Buffer;
+    this.fetching.set(request.url, (this.fetching.get(request.url) ?? 0) + 1);
     try {
       if (!/^https?:$/.test(new URL(request.url).protocol))
         throw new NetworkError('unsupported-protocol');
@@ -261,12 +275,16 @@ export class ControlledNetwork {
           kind,
           error instanceof NetworkError ? error.limit : undefined,
           error instanceof NetworkError ? error.skippedReason : undefined,
+          kind === 'timeout' ? 'fetching' : undefined,
         );
       }
       return;
     } finally {
       controller.abort();
       if (event.networkId !== undefined) this.inflight.delete(event.networkId);
+      const left = (this.fetching.get(request.url) ?? 1) - 1;
+      if (left > 0) this.fetching.set(request.url, left);
+      else this.fetching.delete(request.url);
     }
     if ([301, 302, 303, 307, 308].includes(response.status))
       redirectCounts.set(event.requestId, redirects);
@@ -332,8 +350,9 @@ export class ControlledNetwork {
     kind: LoadIssueKind,
     limit?: LoadDiagnostic['limit'],
     skippedReason?: SkipReason,
+    stage?: LoadDiagnostic['stage'],
   ): Promise<void> {
-    this.diagnostics.failUrl(request.event.request.url, kind, limit, skippedReason);
+    this.diagnostics.failUrl(request.event.request.url, kind, limit, skippedReason, stage);
     await request.session
       .send('Fetch.failRequest', {
         requestId: request.event.requestId,

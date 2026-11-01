@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Full-screen banner with legal links</title>
+  </head>
+  <body>
+    <h1>Full-screen banner with legal links</h1>
+    <footer>
+      <a href="/clean/impressum.html">Impressum</a>
+      <a href="/clean/datenschutz.html">Datenschutz</a>
+      <button type="button">Cookie-Einstellungen</button>
+    </footer>
+    <div id="banner" role="dialog" aria-modal="true" aria-label="Cookie-Einstellungen" style="position: fixed; inset: 0; background: #fff">
+      <p>Wir verwenden Cookies, um die Nutzung der Website zu analysieren. <a href="/clean/datenschutz.html">Datenschutzerklärung</a> · <a href="/clean/impressum.html">Impressum</a></p>
+      <button id="accept">Alle akzeptieren</button>
+      <button id="reject">Alle ablehnen</button>
+    </div>
+    <script>
+      const banner = document.getElementById('banner');
+      const choice = localStorage.getItem('consent');
+      if (choice === 'accepted') {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.googletagmanager.com/gtag/js?id=G-CONSENT';
+        document.head.append(tag);
+      }
+      if (choice) {
+        banner.remove();
+      }
+      document.getElementById('accept').onclick = () => {
+        localStorage.setItem('consent', 'accepted');
+        location.reload();
+      };
+      document.getElementById('reject')?.addEventListener('click', () => {
+        localStorage.setItem('consent', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>

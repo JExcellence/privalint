@@ -12,12 +12,30 @@ const TYPES: Record<string, string> = { '.html': 'text/html', '.css': 'text/css'
 
 let server: Server;
 let origin: string;
+let onceServed = false;
 
 beforeAll(async () => {
   server = createServer(async (req, res) => {
     const path = new URL(req.url ?? '/', 'http://localhost').pathname;
     if (path === '/old-about') {
       res.writeHead(301, { location: '/clean/about.html' }).end();
+      return;
+    }
+    if (path === '/events') {
+      // Server-Sent Events: answers at once, then stays open like a live-update or chat stream.
+      res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
+      res.write('data: hello\n\n');
+      return;
+    }
+    if (path === '/banner-once') {
+      // The banner shows only on the first request, like a geo- or A/B-dependent consent manager.
+      const file = onceServed ? 'clean/index.html' : 'consent/settings-good.html';
+      onceServed = true;
+      res.writeHead(200, { 'content-type': 'text/html' }).end(await readFile(join(FIXTURES, file)));
+      return;
+    }
+    if (path === '/hang') {
+      // Never answers, like a stuck backend.
       return;
     }
     if (path === '/download') {
@@ -41,7 +59,14 @@ beforeAll(async () => {
   origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
 
-afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
+afterAll(
+  () =>
+    new Promise<void>((resolve) => {
+      server.close(() => resolve());
+      // The event stream and the hanging request keep their connections open.
+      server.closeAllConnections();
+    }),
+);
 
 const options = { offline: true, settleMs: 500 };
 
@@ -50,6 +75,62 @@ describe('scan', () => {
     const result = await scan(`${origin}/clean/`, options);
     expect(result.findings).toEqual([]);
     expect(result.pages).toHaveLength(1);
+  });
+
+  it('keeps a capture complete while a Server-Sent Events stream stays open', async () => {
+    const stream = await scan(`${origin}/stream/`, {
+      ...options,
+      consentCheck: false,
+      timeoutMs: 3_000,
+    });
+    const capture = stream.pages[0]?.capture;
+    expect(capture?.diagnostics.issues).toEqual([]);
+    expect(capture?.complete).toBe(true);
+
+    // A request that never answers can't be told apart from a stuck backend: still incomplete.
+    const hang = await scan(`${origin}/stream/hang.html`, {
+      ...options,
+      consentCheck: false,
+      timeoutMs: 3_000,
+    });
+    expect(hang.pages[0]?.capture?.complete).toBe(false);
+  });
+
+  it('notes a contact form without a privacy link next to it', async () => {
+    const result = await scan(`${origin}/forms/`, { ...options, consentCheck: false });
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'form-privacy-notice',
+        severity: 'info',
+        message: expect.stringContaining('1 form(s) collecting personal data (contact or sign-up)'),
+        evidence: ['3 forms with email, phone or password fields checked'],
+      }),
+    ]);
+  });
+
+  it('recognises a tracker by its localStorage key, not only by cookies', async () => {
+    const result = await scan(`${origin}/storage/`, { ...options, consentCheck: false });
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'pre-consent-trackers',
+        subject: 'Hotjar',
+        evidence: ['localStorage _hjSessionUser_123'],
+      }),
+    ]);
+  });
+
+  it('never puts URL credentials into the report', async () => {
+    const withAuth = origin.replace('http://', 'http://scanner:s3cret@');
+    const result = await scan(`${withAuth}/leaky/`, options);
+    expect(JSON.stringify(result)).not.toContain('s3cret');
+    expect(result.siteUrl).toBe(`${origin}/leaky/`);
+    expect(result.findings.length).toBeGreaterThan(0);
+  });
+
+  it('records the page a JavaScript redirect lands on while settling', async () => {
+    const result = await scan(`${origin}/redirect/`, options);
+    expect(result.pages[0]?.finalUrl).toBe(`${origin}/clean/index.html`);
+    expect(result.findings).toEqual([]);
   });
 
   it('crawls same-host links up to maxPages and checks each page', async () => {
@@ -114,6 +195,13 @@ describe('scan', () => {
   it('catches fonts, trackers, cookies and delayed pixels on a leaky page', async () => {
     const result = await scan(`${origin}/leaky/`, options);
     const summary = result.findings.map(({ ruleId, severity }) => `${ruleId}:${severity}`);
+    // Trackers run and there is no banner at all: named once, next to the per-tracker errors.
+    expect(result.findings.filter((f) => f.ruleId === 'consent-banner-missing')).toEqual([
+      expect.objectContaining({
+        severity: 'warning',
+        message: expect.stringContaining('No consent banner was found'),
+      }),
+    ]);
 
     expect(summary).toEqual(
       expect.arrayContaining([
@@ -185,6 +273,117 @@ describe('consent check', () => {
     ]);
   });
 
+  it('does not mistake accept and reject buttons outside a banner for consent', async () => {
+    const result = await scan(`${origin}/consent/not-a-banner.html`, options);
+    expect(result.consent).toMatchObject({ bannerFound: false });
+    expect(result.findings).toEqual([]);
+  });
+
+  it('finds the reject button by label when a known selector is out of date', async () => {
+    const result = await scan(`${origin}/consent/stale-reject-selector.html`, options);
+    expect(result.consent).toMatchObject({
+      cmp: 'OneTrust',
+      rejected: true,
+      rejectLabel: 'Alle ablehnen',
+    });
+    expect(result.findings).toEqual([]);
+  });
+
+  it('waits up to one more settle period for a banner that appears late', async () => {
+    const late = await scan(`${origin}/consent/late.html`, { ...options, settleMs: 1_500 });
+    expect(late.consent).toMatchObject({ bannerFound: true, rejected: true });
+    expect(late.consent?.bannerWaitMs).toBeGreaterThan(0);
+
+    // --settle 0 means no extra wait, so fast runs stay fast.
+    const quick = await scan(`${origin}/consent/late.html`, { ...options, settleMs: 0 });
+    expect(quick.consent).toMatchObject({ bannerFound: false, bannerWaitMs: 0 });
+  });
+
+  it('says how long it looked when no banner appeared', async () => {
+    const result = await scan(`${origin}/consent/not-a-banner.html`, options);
+    expect(result.consent?.bannerFound).toBe(false);
+    expect(result.consent?.bannerWaitMs).toBeGreaterThanOrEqual(400);
+    expect(result.consent?.bannerWaitMs).toBeLessThan(2_000);
+  });
+
+  it('handles a self-built banner inside an open shadow root', async () => {
+    const result = await scan(`${origin}/consent/shadow-banner.html`, {
+      ...options,
+      settingsCheck: true,
+    });
+    expect(result.consent).toMatchObject({
+      bannerFound: true,
+      rejected: true,
+      acceptLabel: 'Alle akzeptieren',
+      rejectLabel: 'Alle ablehnen',
+      settings: {
+        outcome: 'saved',
+        openLabel: 'Einstellungen',
+        saveLabel: 'Auswahl speichern',
+        switchedOff: 2,
+      },
+    });
+    expect(result.findings).toEqual([]);
+
+    // The words that tell a consent banner from other buttons are only inside the shadow root.
+    const hidden = await scan(`${origin}/consent/shadow-banner-only.html`, {
+      ...options,
+      settingsCheck: true,
+    });
+    expect(hidden.consent).toMatchObject({
+      bannerFound: true,
+      rejected: true,
+      settings: { outcome: 'saved', switchedOff: 2 },
+    });
+  });
+
+  it('reads the IAB TCF API after rejecting too', async () => {
+    const clean = await scan(`${origin}/consent/settings-tcf.html`, options);
+    expect(clean.consent).toMatchObject({
+      rejected: true,
+      tcf: { purposesOn: [], legitimateInterestsOn: [], vendorConsents: 0 },
+    });
+    expect(clean.findings.map((f) => f.ruleId)).not.toContain('trackers-after-reject');
+
+    const consent = await scan(`${origin}/consent/settings-tcf.html?keep=consent`, options);
+    expect(consent.findings).toContainEqual(
+      expect.objectContaining({
+        ruleId: 'trackers-after-reject',
+        severity: 'error',
+        subject: 'IAB TCF',
+        message: expect.stringContaining('after clicking "Alle ablehnen"'),
+      }),
+    );
+
+    const li = await scan(`${origin}/consent/settings-tcf.html?keep=li`, {
+      ...options,
+      lang: 'de',
+    });
+    expect(li.findings).toContainEqual(
+      expect.objectContaining({
+        ruleId: 'trackers-after-reject',
+        severity: 'warning',
+        message: expect.stringContaining('Obwohl „Alle ablehnen“ geklickt wurde'),
+      }),
+    );
+  });
+
+  it('asks a full-screen banner to link the privacy policy and the Impressum', async () => {
+    const without = await scan(`${origin}/consent/blocking.html`, options);
+    expect(without.findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'banner-legal-links',
+        severity: 'warning',
+        message: expect.stringContaining('privacy policy and Impressum'),
+      }),
+    ]);
+    const withLinks = await scan(`${origin}/consent/blocking-links.html`, options);
+    expect(withLinks.findings).toEqual([]);
+    // A small banner leaves the footer usable, so it isn't asked for its own links.
+    const small = await scan(`${origin}/consent/good.html`, options);
+    expect(small.findings).toEqual([]);
+  });
+
   it('passes a banner whose reject button is respected', async () => {
     const result = await scan(`${origin}/consent/good.html`, options);
     expect(result.consent).toMatchObject({
@@ -225,6 +424,151 @@ describe('consent check', () => {
         saveLabel: 'Auswahl speichern',
         switchedOff: 2,
         afterSaveComplete: true,
+      });
+      expect(result.findings).toEqual([]);
+    });
+
+    describe('objecting to legitimate interest', () => {
+      it('uses the "object to all" button in the legitimate-interest tab', async () => {
+        const result = await scan(
+          `${origin}/consent/settings-tcf-li.html?object=all`,
+          settingsOptions,
+        );
+        expect(result.consent?.settings).toMatchObject({
+          outcome: 'saved',
+          legitimateInterest: {
+            openLabel: 'Berechtigtes Interesse',
+            objectAllLabel: 'Allen widersprechen',
+          },
+          tcf: { purposesOn: [], legitimateInterestsOn: [] },
+        });
+        expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
+      });
+
+      it("finds a plain legitimate-interest button and Quantcast's Hungarian labels", async () => {
+        const result = await scan(
+          `${origin}/consent/settings-tcf-li.html?quantcast`,
+          settingsOptions,
+        );
+        expect(result.consent?.settings).toMatchObject({
+          legitimateInterest: {
+            openLabel: 'JOGOS ÉRDEK',
+            objectAllLabel: 'TILTAKOZÁS AZ ÖSSZES ELLEN',
+          },
+          tcf: { legitimateInterestsOn: [] },
+        });
+      });
+
+      it('switches the toggles in the tab off when there is no such button', async () => {
+        const result = await scan(`${origin}/consent/settings-tcf-li.html`, settingsOptions);
+        expect(result.consent?.settings).toMatchObject({
+          outcome: 'saved',
+          legitimateInterest: { openLabel: 'Berechtigtes Interesse', switchedOff: 2 },
+          tcf: { legitimateInterestsOn: [] },
+        });
+        expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
+      });
+    });
+
+    describe('IAB TCF readout', () => {
+      it('records an empty TCF state and passes when everything is off', async () => {
+        const result = await scan(`${origin}/consent/settings-tcf.html`, settingsOptions);
+        expect(result.consent?.settings?.tcf).toEqual({
+          purposesOn: [],
+          legitimateInterestsOn: [],
+          vendorConsents: 0,
+          vendorLegitimateInterests: 0,
+        });
+        expect(result.findings).toEqual([]);
+      });
+
+      it('reports consent the TCF API still holds as an error', async () => {
+        const result = await scan(
+          `${origin}/consent/settings-tcf.html?keep=consent`,
+          settingsOptions,
+        );
+        expect(result.consent?.settings?.tcf).toMatchObject({ purposesOn: [1], vendorConsents: 1 });
+        // The reject path reports the same stored consent under trackers-after-reject.
+        expect(result.findings.filter((f) => f.ruleId === 'trackers-after-settings')).toEqual([
+          expect.objectContaining({
+            ruleId: 'trackers-after-settings',
+            severity: 'error',
+            subject: 'IAB TCF',
+            evidence: expect.arrayContaining(['TCF purpose consents: 1']),
+          }),
+        ]);
+      });
+
+      it('reports legitimate interest left on as a warning', async () => {
+        const result = await scan(`${origin}/consent/settings-tcf.html?keep=li`, settingsOptions);
+        expect(result.consent?.settings?.tcf).toMatchObject({
+          legitimateInterestsOn: [2, 7],
+          vendorLegitimateInterests: 1,
+        });
+        const settings = result.findings.filter((f) => f.ruleId === 'trackers-after-settings');
+        expect(settings).toEqual([
+          expect.objectContaining({ severity: 'warning', subject: 'IAB TCF' }),
+        ]);
+        expect(settings[0]?.message).toContain('purposes 2, 7');
+      });
+    });
+
+    it('saves with "Elfogadom a kiválasztottakat" (telekom.hu)', async () => {
+      const result = await scan(`${origin}/consent/settings-hu-selected.html`, {
+        ...settingsOptions,
+        region: 'hu',
+      });
+      expect(result.consent?.settings).toMatchObject({
+        outcome: 'saved',
+        openLabel: 'Testreszabás',
+        saveLabel: 'Elfogadom a kiválasztottakat',
+        switchedOff: 2,
+      });
+      expect(result.findings).toEqual([]);
+    });
+
+    it('picks the narrowest level when categories are radio buttons (otpbank.hu)', async () => {
+      const result = await scan(`${origin}/consent/settings-radio-levels.html`, {
+        ...settingsOptions,
+        region: 'hu',
+      });
+      expect(result.consent?.settings).toMatchObject({
+        outcome: 'saved',
+        saveLabel: 'Elfogadom a fenti sütibeállítások használatát',
+        switchedOff: 1,
+      });
+      expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
+    });
+
+    it('says the banner did not show in the second browser, not that the browser failed', async () => {
+      onceServed = false;
+      const result = await scan(`${origin}/banner-once`, settingsOptions);
+      expect(result.consent?.bannerFound).toBe(true);
+      expect(result.consent?.settings).toEqual({
+        outcome: 'banner-not-shown',
+        reason: 'banner-not-shown',
+      });
+      const evaluation = result.pages[0]?.ruleEvaluations?.find(
+        (rule) => rule.ruleId === 'trackers-after-settings',
+      );
+      expect(evaluation).toMatchObject({
+        outcome: 'not-evaluable',
+        explanation: 'banner-not-shown',
+      });
+    });
+
+    it('leaves checkboxes outside the consent layer alone', async () => {
+      const result = await scan(`${origin}/consent/settings-with-login.html`, settingsOptions);
+      expect(result.consent?.settings).toMatchObject({ outcome: 'saved', switchedOff: 2 });
+      expect(result.findings).toEqual([]);
+    });
+
+    it('never saves with a button that confirms all, whatever its verb', async () => {
+      const result = await scan(`${origin}/consent/settings-confirm-all.html`, settingsOptions);
+      expect(result.consent?.settings).toMatchObject({
+        outcome: 'saved',
+        saveLabel: 'Auswahl bestätigen',
+        switchedOff: 2,
       });
       expect(result.findings).toEqual([]);
     });

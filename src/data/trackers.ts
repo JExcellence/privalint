@@ -55,6 +55,14 @@ export const trackers: readonly Tracker[] = [
     cookies: ['_gcl_'],
   },
   {
+    // The JavaScript SDK for Like, Share and Login comes from the same host as the Pixel; only
+    // the path tells them apart (developers.facebook.com/docs/javascript/quickstart).
+    vendor: 'Facebook SDK',
+    category: 'social',
+    domains: ['connect.facebook.net'],
+    paths: [/^\/[a-z]{2}_[A-Z]{2}\/(sdk|all)\.js$/, /^\/[a-z]{2}_[A-Z]{2}\/sdk\//],
+  },
+  {
     vendor: 'Meta Pixel',
     category: 'advertising',
     domains: ['connect.facebook.net'],
@@ -148,6 +156,73 @@ export const trackers: readonly Tracker[] = [
     category: 'analytics',
     domains: ['matomo.cloud'],
     cookies: ['_pk_'],
+  },
+  // Vendors below come from the vendors' own install, CSP or allowlist documentation, checked on
+  // 2026-11-01; the sources are listed in docs/rules/pre-consent-trackers.md.
+  {
+    // Adobe Target shares omtrdc.net with Analytics, so it comes first.
+    vendor: 'Adobe Target',
+    category: 'analytics',
+    domains: ['tt.omtrdc.net'],
+  },
+  {
+    vendor: 'Adobe Analytics',
+    category: 'analytics',
+    domains: ['omtrdc.net', '2o7.net', 'edge.adobedc.net'],
+  },
+  {
+    vendor: 'Adobe Audience Manager',
+    category: 'advertising',
+    domains: ['demdex.net', 'everesttech.net', 'everestjs.net'],
+  },
+  {
+    vendor: 'Adobe Experience Platform Tags',
+    category: 'tag-manager',
+    domains: ['assets.adobedtm.com'],
+  },
+  {
+    vendor: 'etracker',
+    category: 'analytics',
+    domains: ['code.etracker.com', 'etracker.de'],
+  },
+  {
+    // The pseudonymous measurement; the census variant runs on the site's own subdomain.
+    vendor: 'INFOnline',
+    category: 'analytics',
+    domains: ['ioam.de', 'iocnt.net'],
+  },
+  {
+    // Tracking and tag manager run on <organisation>.piwik.pro and
+    // <organisation>.containers.piwik.pro. _pk_ cookies are matched as Matomo above.
+    vendor: 'Piwik PRO',
+    category: 'analytics',
+    domains: ['piwik.pro'],
+  },
+  {
+    vendor: 'Heap',
+    category: 'analytics',
+    domains: ['heap-api.com', 'cdn.heapanalytics.com'],
+    cookies: ['_hp2_'],
+  },
+  {
+    vendor: 'Pendo',
+    category: 'analytics',
+    domains: ['cdn.pendo.io', 'data.pendo.io', 'cdn.eu.pendo.io', 'data.eu.pendo.io'],
+  },
+  {
+    vendor: 'Optimizely',
+    category: 'analytics',
+    domains: ['cdn.optimizely.com', 'logx.optimizely.com'],
+  },
+  {
+    vendor: 'Chartbeat',
+    category: 'analytics',
+    domains: ['static.chartbeat.com', 'ping.chartbeat.net'],
+  },
+  {
+    vendor: 'Comscore',
+    category: 'analytics',
+    domains: ['scorecardresearch.com'],
   },
   // Ad-tech vendors below were observed on welt.de, spiegel.de, focus.de, n-tv.de, bild.de,
   // independent.co.uk and usatoday.com on 2026-10-27, after accepting their consent banners.

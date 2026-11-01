@@ -28,6 +28,9 @@ entsprechend an. Ein Urteil zu Adobe Fonts ist uns nicht bekannt.
 - Art. 6 Abs. 1 DSGVO
 - LG München I, 20.01.2022, Az. 3 O 17493/20 (entsprechend)
 
+Mit `--region ch` sinkt der Befund um eine Stufe: Das Münchner Urteil ist deutsches Recht, und die
+Schweiz behandelt solche Drittanfragen nach Art. 6 DSG wie Einbindungen.
+
 ## Lösung
 
 Anders als Google Fonts lassen sich Adobe Fonts nicht einfach herunterladen und selbst hosten.

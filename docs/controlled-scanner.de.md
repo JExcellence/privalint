@@ -102,6 +102,13 @@ HTTP-Status bzw. betroffenes Limit.
 - `responses`: empfangene HTTP-Antworten einschließlich Fehlerantworten und Redirects. Eine
   Anfrage kann nach Empfang einer Antwort noch fehlschlagen.
 - `finished`: Browser-`requestfinished`-Ereignisse, gegebenenfalls einschließlich HTTP-Fehlern.
+  Ein Server-Sent-Events-Stream, der geantwortet hat und bei Erfassungsende noch offen ist, zählt
+  ebenfalls als abgeschlossen: Er bleibt planmäßig offen, und die Seite hat, was sie angefragt hat.
+  Ebenso ein Fetch oder XHR, der seine vollständige Antwort hatte, bevor der Code der Seite aufhörte,
+  sie zu lesen (`ERR_ABORTED`), etwa in einem Worker.
+
+Anfragen aus fremden iframes, die Chromium in einem eigenen Prozess ausführt, und aus Workern laufen
+wie die eigenen Anfragen der Seite über den Adapter; `test/controlled-scan.test.ts` prüft beides.
 - `failed` (alter Sammelwert): `requestfailed` plus bei Erfassungsende noch offene Anfragen, jede genau einmal.
   Nach Abschluss gilt `requests = finished + failed`.
 - `blocked`: Teilmenge von `failed`, explizit durch die Sicherheits-Policy abgelehnt.
@@ -112,6 +119,15 @@ HTTP-Status bzw. betroffenes Limit.
 - `issueCount`: sämtliche technischen Probleme. Eine Anfrage kann HTTP-Fehler und anschließenden
   Browserfehler erzeugen; dieser Wert ist kein Zähler fehlgeschlagener Anfragen.
 - `issues` enthält maximal `maxDiagnostics` Details; `dropped` zählt ausgelassene Details.
+  Ein `timeout` aus einem Adapter-Scan trägt `stage`: `queued`, wenn die Anfrage noch auf einen
+  freien Adapter-Platz wartete, `fetching`, wenn der Adapter sie gerade abrief. Beides hat ein
+  eigenes Budget (`captureTimeoutMs` bzw. `networkLimits.requestTimeoutMs`).
+- `timing`: wohin die Zeit der Erfassung ging, in Millisekunden. `loadMs` reicht vom Start der
+  Navigation bis zum Load-Event, `networkIdleMs` von dort, bis das Netzwerk ruhig war oder das
+  Warten aufgab. Adapter-Scans ergänzen `peakQueued`, die meisten gleichzeitig auf einen
+  Adapter-Platz wartenden Anfragen. Viele `queued`-Timeouts bei hohem `peakQueued` sprechen für
+  zu wenig Adapter-Parallelität, `fetching`-Timeouts für das Ziel, ein CDN-Limit oder den
+  Transport des Adapters.
 
 `PageSummary.requestCount` zählt wie bisher nur die initiale Phase, der neue Diagnosezähler beide
 Phasen. Gespeicherte Anfrage-Evidenz ist im Adapter-Modus durch das Anfragebudget begrenzt

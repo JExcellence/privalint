@@ -53,6 +53,33 @@ describe('markdown', () => {
     expect(output).toContain('a \\| b');
   });
 
+  it('lists the fix of every vendor, once per fix text', () => {
+    const tracker = (subject: string) =>
+      finding({
+        ruleId: 'pre-consent-trackers',
+        subject,
+        fix: `Only load ${subject} after opt-in.`,
+      });
+    const output = formatMarkdown(
+      result([tracker('Google Analytics'), tracker('Hotjar'), tracker('Hotjar')]),
+    );
+    expect(output).toContain('Only load Google Analytics after opt-in.');
+    expect(output.match(/Only load Hotjar after opt-in\./g)).toHaveLength(1);
+  });
+
+  it('shows the first evidence items without breaking the table', () => {
+    const evidence = ['https://a.example/x?a|b', 'cookie _ga', 'third', 'fourth'];
+    const output = formatMarkdown(result([finding({ evidence })]));
+    const row = output.split('\n').find((line) => line.includes('Fonts are loaded'));
+    expect(row).toContain('<br>`https://a.example/x?a\\|b`<br>`cookie _ga` (+2)');
+    expect(row?.split(/(?<!\\)\|/)).toHaveLength(5);
+  });
+
+  it('cannot mention GitHub users', () => {
+    const output = formatMarkdown(result([finding({ message: 'see @octocat' })]));
+    expect(output).toContain('see \\@octocat');
+  });
+
   it('keeps Markdown in page URLs from rendering', () => {
     const pageUrl = 'https://example.de/x?![pwn](https://evil.example/p.png)';
     const output = formatMarkdown(result([finding({ pageUrl })]));
@@ -71,6 +98,33 @@ describe('sarif', () => {
       expect(rule.fullDescription.text).toBeTruthy();
       expect(rule.help.text).toBeTruthy();
     }
+  });
+
+  it('cites the scan region in the rule help, like in each result', () => {
+    const help = (region: ScanResult['region']) =>
+      JSON.parse(formatSarif({ ...result([finding()]), region }))
+        .runs[0].tool.driver.rules.find((rule: { id: string }) => rule.id === 'google-fonts')
+        .help.text.split('References: ')[1] as string;
+    expect(help('de')).toContain('LG München I');
+    expect(help('at')).toContain('Art. 6 Abs. 1 DSGVO');
+    expect(help('at')).not.toContain('LG München I');
+    expect(help('ch')).toContain('Art. 6 DSG');
+  });
+
+  it('marks label-based rules as medium precision and host matches as high', () => {
+    const precision = (id: string) =>
+      run.tool.driver.rules.find((rule: { id: string }) => rule.id === id)?.properties.precision;
+    expect(precision('reject-option')).toBe('medium');
+    expect(precision('impressum-link')).toBe('medium');
+    expect(precision('pre-consent-trackers')).toBe('high');
+    expect(precision('google-fonts')).toBe('high');
+  });
+
+  it('keeps non-ASCII page paths apart from their underscore lookalikes', () => {
+    const uri = (pageUrl: string) =>
+      JSON.parse(formatSarif(result([finding({ pageUrl })]))).runs[0].results[0].locations[0]
+        .physicalLocation.artifactLocation.uri;
+    expect(uri('https://example.de/über')).not.toBe(uri('https://example.de/_ber'));
   });
 
   it('maps severities and pages to stable locations', () => {

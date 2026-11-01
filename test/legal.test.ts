@@ -76,6 +76,13 @@ describe('severity per country', () => {
     expect(severity('pre-consent-trackers', 'ch', 'warning')).toBe('info');
     expect(severity('third-party-embeds', 'ch', 'warning')).toBe('info');
     expect(severity('impressum-link', 'ch', 'warning')).toBe('info');
+    expect(severity('consent-banner-missing', 'ch', 'warning')).toBe('info');
+  });
+
+  it('treats fonts in Switzerland like the other third-party requests', () => {
+    expect(severity('google-fonts', 'ch', 'error')).toBe('warning');
+    expect(severity('adobe-fonts', 'ch', 'error')).toBe('warning');
+    expect(severity('google-fonts', 'de', 'error')).toBe('error');
   });
 
   it('never goes below info and keeps an ignored refusal serious', () => {

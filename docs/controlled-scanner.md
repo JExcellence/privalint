@@ -106,6 +106,13 @@ and limit name. They are technical observations, not findings.
 - `responses`: received HTTP responses, including redirects and errors. An HTTP response may
   subsequently fail, so this counter can overlap `failed`.
 - `finished`: browser `requestfinished` events, including HTTP errors if the browser finishes them.
+  A Server-Sent Events stream that answered and is still open when observation ends counts as
+  finished too: it stays open by design, and the page has what it asked for. So does a fetch or
+  XHR that got its full answer before the page's code stopped reading it (`ERR_ABORTED`), for
+  example in a worker.
+
+Requests from cross-origin iframes, which Chromium runs in their own process, and from workers go
+through the adapter like the page's own requests; `test/controlled-scan.test.ts` covers both.
 - `failed` (legacy aggregate): `requestfailed` events plus requests still pending at observation end. Each request
   contributes once; `requests = finished + failed` in a finalized capture.
 - `blocked`: subset of failed requests explicitly denied as `security-blocked`.
@@ -116,6 +123,14 @@ and limit name. They are technical observations, not findings.
 - `issueCount`: all technical issues, including non-request waits/protocol denials. One request
   can have an HTTP error response and a later browser failure; do not use issueCount as failed count.
 - `issues`: at most `maxDiagnostics` entries; `dropped` counts omitted details, not requests.
+  A `timeout` issue from an adapter scan carries `stage`: `queued` if the request was still
+  waiting for an adapter slot, `fetching` if the adapter was working on it. The two have separate
+  budgets (`captureTimeoutMs` versus `networkLimits.requestTimeoutMs`).
+- `timing`: where the time of the capture went, in milliseconds. `loadMs` runs from navigation start
+  to the load event, `networkIdleMs` from there until the network was idle or the wait gave up.
+  Adapter scans add `peakQueued`, the most requests that waited for an adapter slot at once. Many
+  `queued` timeouts with a high `peakQueued` point to adapter concurrency; `fetching` timeouts
+  point to the target, a CDN rate limit or the adapter's transport.
 
 Legacy `PageSummary.requestCount` counts initial-phase requests. It does not include rejection;
 use `capture.diagnostics.requests` for the combined count. Evidence arrays may be bounded while
