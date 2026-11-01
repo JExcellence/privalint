@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { legalReferences } from '../legal.js';
 import { REPOSITORY_URL, ruleDocsUrl, VERSION } from '../meta.js';
 import type { Finding, ScanResult, Severity } from '../types.js';
 import { coverageMessage, isPartial } from './capture.js';
@@ -28,18 +29,24 @@ export function formatSarif(result: ScanResult): string {
             name: 'privalint',
             semanticVersion: result.scannerVersion ?? VERSION,
             informationUri: REPOSITORY_URL,
-            rules: result.rules.map((rule) => ({
-              id: rule.id,
-              name: rule.id,
-              shortDescription: { text: rule.title },
-              fullDescription: { text: rule.description },
-              help: {
-                text: `${rule.description}\n\nReferences: ${rule.references.join('; ')}`,
-                markdown: `${rule.description}\n\n**References:** ${rule.references.join('; ')}`,
-              },
-              helpUri: ruleDocsUrl(rule.id),
-              properties: { tags: ['privacy', 'gdpr'], precision: precisionOf(rule.id) },
-            })),
+            rules: result.rules.map((rule) => {
+              // The scan's region, as on each result; the rule's own list is the German one.
+              const references = (legalReferences(rule.id, result.region) ?? rule.references).join(
+                '; ',
+              );
+              return {
+                id: rule.id,
+                name: rule.id,
+                shortDescription: { text: rule.title },
+                fullDescription: { text: rule.description },
+                help: {
+                  text: `${rule.description}\n\nReferences: ${references}`,
+                  markdown: `${rule.description}\n\n**References:** ${references}`,
+                },
+                helpUri: ruleDocsUrl(rule.id),
+                properties: { tags: ['privacy', 'gdpr'], precision: precisionOf(rule.id) },
+              };
+            }),
           },
         },
         results: result.findings.map((finding) =>
