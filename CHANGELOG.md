@@ -29,8 +29,19 @@ All notable changes are listed here. The format follows
 - Action inputs `config` and `check-settings`
 - The Markdown report (job summary, PR comment) shows the first two evidence items under each
   finding
+- `trackers-after-reject` reads the IAB TCF API after "Reject all" too, stored as `consent.tcf`
+  (#79)
+- Consent banners that appear late are found: without a result, privalint looks again for up to
+  one more settle period. `consent.bannerWaitMs` says how long (#77)
+- With `--max-pages`, pages selected by a query parameter (`/?page_id=2`, `/index.php?id=7`) are
+  crawled as separate pages (#75)
 
 ### Changed
+
+- SARIF declares the label-based rules (`reject-option`, `consent-settings-link`,
+  `impressum-link`, `privacy-policy-link`) with precision `medium` (#76)
+- An `--output` path in a missing directory fails before the scan starts. If writing fails after
+  the scan, the report is still printed and the exit code is 2 (#74)
 
 - Tracker, embed and font rules count requests that got an HTTP error response. A pixel that
   answers 403 has still received the visitor's IP address and referrer
@@ -40,6 +51,9 @@ All notable changes are listed here. The format follows
 
 ### Fixed
 
+- A shop cookie named `put_…` is no longer reported as Magnite advertising (#73)
+- The settings control is found when it sits in a nested shadow root (#78)
+- An open Server-Sent Events stream no longer makes a capture incomplete (#81)
 - `--check-settings` could click "Alle bestätigen", "Confirm all" or "Alle übernehmen" as the save
   button, which switches everything on. A label covering everything only counts as saving when it
   names the selection ("Alle Einstellungen speichern")
