@@ -102,6 +102,8 @@ HTTP-Status bzw. betroffenes Limit.
 - `responses`: empfangene HTTP-Antworten einschließlich Fehlerantworten und Redirects. Eine
   Anfrage kann nach Empfang einer Antwort noch fehlschlagen.
 - `finished`: Browser-`requestfinished`-Ereignisse, gegebenenfalls einschließlich HTTP-Fehlern.
+  Ein Server-Sent-Events-Stream, der geantwortet hat und bei Erfassungsende noch offen ist, zählt
+  ebenfalls als abgeschlossen: Er bleibt planmäßig offen, und die Seite hat, was sie angefragt hat.
 - `failed` (alter Sammelwert): `requestfailed` plus bei Erfassungsende noch offene Anfragen, jede genau einmal.
   Nach Abschluss gilt `requests = finished + failed`.
 - `blocked`: Teilmenge von `failed`, explizit durch die Sicherheits-Policy abgelehnt.

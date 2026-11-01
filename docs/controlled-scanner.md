@@ -106,6 +106,8 @@ and limit name. They are technical observations, not findings.
 - `responses`: received HTTP responses, including redirects and errors. An HTTP response may
   subsequently fail, so this counter can overlap `failed`.
 - `finished`: browser `requestfinished` events, including HTTP errors if the browser finishes them.
+  A Server-Sent Events stream that answered and is still open when observation ends counts as
+  finished too: it stays open by design, and the page has what it asked for.
 - `failed` (legacy aggregate): `requestfailed` events plus requests still pending at observation end. Each request
   contributes once; `requests = finished + failed` in a finalized capture.
 - `blocked`: subset of failed requests explicitly denied as `security-blocked`.

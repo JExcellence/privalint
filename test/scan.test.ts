@@ -20,6 +20,16 @@ beforeAll(async () => {
       res.writeHead(301, { location: '/clean/about.html' }).end();
       return;
     }
+    if (path === '/events') {
+      // Server-Sent Events: answers at once, then stays open like a live-update or chat stream.
+      res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
+      res.write('data: hello\n\n');
+      return;
+    }
+    if (path === '/hang') {
+      // Never answers, like a stuck backend.
+      return;
+    }
     if (path === '/download') {
       res.writeHead(200, {
         'content-type': 'application/octet-stream',
@@ -41,7 +51,14 @@ beforeAll(async () => {
   origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
 
-afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
+afterAll(
+  () =>
+    new Promise<void>((resolve) => {
+      server.close(() => resolve());
+      // The event stream and the hanging request keep their connections open.
+      server.closeAllConnections();
+    }),
+);
 
 const options = { offline: true, settleMs: 500 };
 
@@ -50,6 +67,25 @@ describe('scan', () => {
     const result = await scan(`${origin}/clean/`, options);
     expect(result.findings).toEqual([]);
     expect(result.pages).toHaveLength(1);
+  });
+
+  it('keeps a capture complete while a Server-Sent Events stream stays open', async () => {
+    const stream = await scan(`${origin}/stream/`, {
+      ...options,
+      consentCheck: false,
+      timeoutMs: 3_000,
+    });
+    const capture = stream.pages[0]?.capture;
+    expect(capture?.diagnostics.issues).toEqual([]);
+    expect(capture?.complete).toBe(true);
+
+    // A request that never answers can't be told apart from a stuck backend: still incomplete.
+    const hang = await scan(`${origin}/stream/hang.html`, {
+      ...options,
+      consentCheck: false,
+      timeoutMs: 3_000,
+    });
+    expect(hang.pages[0]?.capture?.complete).toBe(false);
   });
 
   it('records the page a JavaScript redirect lands on while settling', async () => {

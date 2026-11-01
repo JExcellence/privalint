@@ -43,6 +43,16 @@ interface PendingRequest {
   issue?: LoadDiagnostic;
 }
 
+/**
+ * An event stream that answered without error and is still open when observation ends. A
+ * request still waiting for its first answer (long polling, a stuck backend) is not one.
+ */
+const isOpenStream = (entry: PendingRequest): boolean =>
+  entry.issue === undefined &&
+  entry.record.resourceType === 'eventsource' &&
+  entry.record.outcome === 'response' &&
+  (entry.record.status ?? 0) < 400;
+
 export class Diagnostics {
   readonly data: LoadDiagnostics = {
     requests: 0,
@@ -267,17 +277,22 @@ export class Diagnostics {
     // No cancel signal arrived for these, so they stay what Chromium reported.
     for (const failure of this.unexplained.splice(0)) this.settle(failure.entry, failure.issue);
     for (const [request, entry] of this.pending) {
-      entry.record.outcome = 'failed';
-      const stage = this.stageOf?.(request.url());
-      const issue = entry.issue ?? {
-        kind: 'timeout',
-        phase: entry.phase,
-        url: diagnosticUrl(request.url()),
-        ...(stage === undefined ? {} : { stage }),
-      };
-      this.terminalFailure(issue.kind);
-      this.store(issue);
-      this.data.failed++;
+      if (isOpenStream(entry)) {
+        // Server-Sent Events answer once and stay open by design; the page has what it asked for.
+        this.data.finished++;
+      } else {
+        entry.record.outcome = 'failed';
+        const stage = this.stageOf?.(request.url());
+        const issue = entry.issue ?? {
+          kind: 'timeout',
+          phase: entry.phase,
+          url: diagnosticUrl(request.url()),
+          ...(stage === undefined ? {} : { stage }),
+        };
+        this.terminalFailure(issue.kind);
+        this.store(issue);
+        this.data.failed++;
+      }
     }
     this.pending.clear();
     for (const issues of this.earlyFailures.values()) {
