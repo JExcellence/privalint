@@ -331,6 +331,17 @@ describe('skipped error-monitoring reports', () => {
     'https://o4511755310006272.ingest.us.sentry.io/api/1/envelope/',
     'https://o42.ingest.sentry.io/api/1/envelope/',
     'https://o42.ingest.de.sentry.io/api/1/envelope/',
+    'https://notify.bugsnag.com/',
+    'https://sessions.bugsnag.com/',
+    'https://notify.bugsnag.smartbear.com/',
+    'https://sessions.bugsnag.smartbear.com/',
+    'https://api.rollbar.com/api/1/item/',
+    'https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser',
+    'https://browser-intake-us5-datadoghq.com/api/v2/logs?ddsource=browser',
+    'https://browser-intake-ap1-datadoghq.com/api/v2/rum?ddsource=browser',
+    'https://browser-intake-datadoghq.eu/api/v2/rum?ddsource=browser',
+    'https://browser-intake-us2-ddog-gov.com/api/v2/rum?ddsource=browser',
+    'https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota',
   ])('keeps the capture complete when a report to %s is skipped', async (target) => {
     const result = await scan(origin, {
       ...settings,
@@ -348,6 +359,13 @@ describe('skipped error-monitoring reports', () => {
     'https://api.example.org/graphql',
     'https://sentry.io.evil.invalid/api/1/envelope/',
     'https://ingest.sentry.io.evil.invalid/api/1/envelope/',
+    'https://app.bugsnag.com/api',
+    'https://notify.bugsnag.com.evil.invalid/',
+    'https://rollbar.com/api/1/item/',
+    'https://api.rollbar.com.evil.invalid/api/1/item/',
+    'https://app.datadoghq.com/api/v2/rum',
+    'https://browser-intake-datadoghq.com.evil.invalid/api/v2/rum',
+    'https://browser-intake-evil-datadoghq.com/api/v2/rum',
   ])('still treats a skipped POST to %s as incomplete', async (target) => {
     const result = await scan(origin, {
       ...settings,

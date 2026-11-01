@@ -286,8 +286,27 @@ export class Diagnostics {
  * skipped report hides nothing from the rules. Sentry documents `o<number>.ingest.sentry.io`,
  * `o<number>.ingest.de.sentry.io` and `o<number>.<location>.ingest.sentry.io`
  * (docs.sentry.io/product/security/ip-ranges).
+ *
+ * Bugsnag sends to `notify.` and `sessions.bugsnag.com`, and to the same names under
+ * `bugsnag.smartbear.com` for some organisations (defaults in bugsnag-js packages/core/config.js
+ * and client.js; docs.bugsnag.com/platforms/javascript/legacy/faq names both domains).
+ *
+ * Rollbar posts to `api.rollbar.com` (default `endpoint`,
+ * docs.rollbar.com/docs/rollbarjs-configuration-reference).
+ *
+ * Datadog Browser RUM and Browser Logs post to `browser-intake-<site with dashes>.<tld>`, sometimes
+ * with one more label in front, for the sites datadoghq.com, us3/us5/ap1/ap2.datadoghq.com,
+ * datadoghq.eu, ddog-gov.com and us2.ddog-gov.com (DataDog/browser-sdk,
+ * packages/js-core/src/transport/endpointBuilder.ts and intakeSites.ts).
  */
-const ERROR_MONITORING_HOSTS = [/^o\d+\.(?:[a-z]+\.)?ingest\.(?:[a-z]+\.)?sentry\.io$/];
+const ERROR_MONITORING_HOSTS = [
+  /^o\d+\.(?:[a-z]+\.)?ingest\.(?:[a-z]+\.)?sentry\.io$/,
+  /^(?:notify|sessions)\.bugsnag\.(?:smartbear\.)?com$/,
+  /^api\.rollbar\.com$/,
+  /^(?:[a-z\d-]+\.)?browser-intake-(?:(?:us3|us5|ap1|ap2)-)?datadoghq\.com$/,
+  /^(?:[a-z\d-]+\.)?browser-intake-datadoghq\.eu$/,
+  /^(?:[a-z\d-]+\.)?browser-intake-(?:us2-)?ddog-gov\.com$/,
+];
 
 const isErrorMonitoring = (url: string): boolean => {
   try {

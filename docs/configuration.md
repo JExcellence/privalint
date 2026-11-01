@@ -11,7 +11,7 @@ Files are limited to 64 KiB. Do not store credentials in config; URL credentials
 
 Supported fields: `url` (absolute HTTP(S)), `maxPages` (positive integer), `concurrency`
 (positive integer, pages loaded at the same time), `settleMs` (nonnegative),
-`timeoutMs` (positive), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`eu`),
+`timeoutMs` (positive), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`hu`/`eu`),
 `consentCheck`, `settingsCheck` and `failOnIncomplete` (booleans), `rules` (known IDs to `off`/`error`/`warning`/`info`) and
 `allow: { vendors: string[] }` (exact, case-sensitive finding `subject` names).
 
@@ -109,9 +109,11 @@ when the network is slow. privalint detects it from Chromium (`Network.loadingFa
 such as the reload after rejecting, are recorded the same way.
 
 An adapter that only executes read-only requests skips the reports a page sends to error
-monitoring. For Sentry's ingest hosts (`o<number>.ingest.sentry.io` and its regional forms such as
-`o<number>.ingest.de.sentry.io`) such a skip keeps the adapter's reason but does not restrict the
-capture either: the page never acts on the response of an error report.
+monitoring. For the ingest hosts of Sentry (`o<number>.ingest.sentry.io` and its regional forms
+such as `o<number>.ingest.de.sentry.io`), Bugsnag (`notify.` and `sessions.bugsnag.com`, also under
+`bugsnag.smartbear.com`), Rollbar (`api.rollbar.com`) and Datadog Browser RUM and Logs
+(`browser-intake-*` for each Datadog site) such a skip keeps the adapter's reason but does not
+restrict the capture either: the page never acts on the response of an error report.
 
 Every other skip still restricts what the scanner observed, because a missing resource can affect
 downstream behaviour.
