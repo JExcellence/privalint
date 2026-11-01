@@ -37,6 +37,12 @@ All notable changes are listed here. The format follows
   crawled as separate pages (#75)
 - New rule `consent-banner-missing` (warning): trackers run on the start page and no consent
   banner was found at all. New observation kind `banner-search` (#82)
+- New rules for online shops, checked on the start page of sites with a cart, checkout or shop
+  system: `withdrawal-button` (warning, § 356a BGB / Art. 11a Directive 2011/83/EU, since
+  19.06.2026) and `accessibility-statement` (info, § 14 BFSG / European Accessibility Act) (#83,
+  #84)
+- Trackers are recognised by their localStorage and sessionStorage key names too, before consent
+  and after a refusal. Only names are read, never values (#80)
 
 ### Changed
 
