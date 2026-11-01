@@ -3,6 +3,8 @@ import { REPOSITORY_URL, ruleDocsUrl, VERSION } from '../meta.js';
 import type { Finding, ScanResult, Severity } from '../types.js';
 import { coverageMessage, isPartial } from './capture.js';
 
+const HEURISTIC_RULES = new Set(['reject-option', 'consent-settings-link', 'impressum-link']);
+
 const LEVELS: Record<Severity, 'error' | 'warning' | 'note'> = {
   error: 'error',
   warning: 'warning',
@@ -38,7 +40,10 @@ export function formatSarif(result: ScanResult): string {
                 markdown: `${rule.description}\n\n**References:** ${rule.references.join('; ')}`,
               },
               helpUri: ruleDocsUrl(rule.id),
-              properties: { tags: ['privacy', 'gdpr'], precision: 'high' },
+              properties: {
+                tags: ['privacy', 'gdpr'],
+                precision: HEURISTIC_RULES.has(rule.id) ? 'medium' : 'high',
+              },
             })),
           },
         },
@@ -125,5 +130,7 @@ function toResult(finding: Finding, redacted: boolean) {
 function pseudoPath(pageUrl: string): string {
   const url = new URL(pageUrl);
   const path = url.pathname.endsWith('/') ? `${url.pathname}index` : url.pathname;
-  return `privalint/${url.host}${path}`.replace(/[^\w./-]/g, '_');
+  // URL.pathname already percent-encodes Unicode and spaces. Preserve those
+  // escapes so distinct paths cannot collapse onto an underscore spelling.
+  return `privalint/${url.host}${path}`.replace(/[^\w./%-]/g, encodeURIComponent);
 }

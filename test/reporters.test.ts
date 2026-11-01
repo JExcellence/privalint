@@ -73,6 +73,46 @@ describe('sarif', () => {
     }
   });
 
+  it('marks label-based heuristics as medium precision', () => {
+    const precision = Object.fromEntries(
+      run.tool.driver.rules.map((rule: { id: string; properties: { precision: string } }) => [
+        rule.id,
+        rule.properties.precision,
+      ]),
+    );
+    for (const id of ['reject-option', 'consent-settings-link', 'impressum-link']) {
+      expect(precision[id]).toBe('medium');
+    }
+    expect(precision['google-fonts']).toBe('high');
+  });
+
+  it('keeps encoded page paths distinct without changing ordinary locations', () => {
+    const urls = [
+      'https://example.de/über-uns',
+      'https://example.de/_ber-uns',
+      'https://example.de/%C3%BCber-uns',
+      'https://example.de/_C3_BCber-uns',
+      'https://example.de/a%20b',
+      'https://example.de/a_20b',
+      'https://example.de/docs/',
+    ];
+    const locations = JSON.parse(
+      formatSarif(result(urls.map((pageUrl) => finding({ pageUrl })))),
+    ).runs[0].results.map(
+      (entry: { locations: { physicalLocation: { artifactLocation: { uri: string } } }[] }) =>
+        entry.locations[0]?.physicalLocation.artifactLocation.uri,
+    );
+    expect(locations).toEqual([
+      'privalint/example.de/%C3%BCber-uns',
+      'privalint/example.de/_ber-uns',
+      'privalint/example.de/%C3%BCber-uns',
+      'privalint/example.de/_C3_BCber-uns',
+      'privalint/example.de/a%20b',
+      'privalint/example.de/a_20b',
+      'privalint/example.de/docs/index',
+    ]);
+  });
+
   it('maps severities and pages to stable locations', () => {
     expect(run.results.map((r: { level: string }) => r.level)).toEqual(['error', 'note']);
     expect(run.results[0].locations[0].physicalLocation.artifactLocation.uri).toBe(

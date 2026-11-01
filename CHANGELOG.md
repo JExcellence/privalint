@@ -6,6 +6,11 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- SARIF reports use medium precision for label-based heuristic rules and preserve
+  percent-encoded page paths instead of merging them with underscore spellings (#76).
+
 ## 0.8.0 - 2026-10-31
 
 ### Changed
