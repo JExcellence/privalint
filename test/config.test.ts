@@ -1,11 +1,11 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdtemp, rm, symlink, unlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { loadConfig, parseConfig } from '../src/config.js';
 import { applyPolicy } from '../src/policy.js';
 import { defaultRules } from '../src/rules/index.js';
@@ -13,12 +13,29 @@ import { scan } from '../src/scanner.js';
 import type { Finding } from '../src/types.js';
 
 const temporary: string[] = [];
+// The CLI is built into a private directory, not the shared dist/, so a parallel `npm run build`
+// or another test run can't swap files under it. meta.ts reads ../package.json and the CLI imports
+// playwright, so the directory gets a copy of package.json and a link to node_modules.
+let build = '';
+let cli = '';
 beforeAll(async () => {
+  build = await mkdtemp(join(tmpdir(), 'privalint-cli-'));
   await promisify(execFile)(process.execPath, [
     'node_modules/typescript/bin/tsc',
     '-p',
     'tsconfig.build.json',
+    '--outDir',
+    join(build, 'dist'),
   ]);
+  await copyFile('package.json', join(build, 'package.json'));
+  await symlink(resolve('node_modules'), join(build, 'node_modules'), 'junction');
+  cli = join(build, 'dist', 'cli.js');
+});
+afterAll(async () => {
+  if (!build) return;
+  // Remove the link on its own first so the recursive delete never walks into the real node_modules.
+  await unlink(join(build, 'node_modules')).catch(() => undefined);
+  await rm(build, { recursive: true, force: true });
 });
 afterEach(async () => {
   await Promise.all(temporary.splice(0).map((path) => rm(path, { recursive: true, force: true })));
@@ -144,7 +161,6 @@ describe('JSON configuration', () => {
       }),
     );
     try {
-      const cli = resolve('dist/cli.js');
       const { stdout } = await promisify(execFile)(
         process.execPath,
         [
@@ -197,7 +213,6 @@ describe('JSON configuration', () => {
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     const origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
     const configPath = join(cwd, 'privalint.config.json');
-    const cli = resolve('dist/cli.js');
     async function run(path: string, ...args: string[]) {
       try {
         const output = await promisify(execFile)(
