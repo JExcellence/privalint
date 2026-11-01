@@ -97,6 +97,8 @@ export async function capturePage(
       })
       .catch(() => diagnostics.add('timeout', page.url()));
     await page.waitForTimeout(options.settleMs ?? DEFAULTS.settleMs);
+    // A script may have redirected while the page settled; links and rules belong to where it went.
+    snapshot.finalUrl = page.url();
     snapshot.links = await page.$$eval('a[href]', (anchors) =>
       anchors.map((a) => ({
         href: (a as HTMLAnchorElement).href,

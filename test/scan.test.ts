@@ -52,6 +52,12 @@ describe('scan', () => {
     expect(result.pages).toHaveLength(1);
   });
 
+  it('records the page a JavaScript redirect lands on while settling', async () => {
+    const result = await scan(`${origin}/redirect/`, options);
+    expect(result.pages[0]?.finalUrl).toBe(`${origin}/clean/index.html`);
+    expect(result.findings).toEqual([]);
+  });
+
   it('crawls same-host links up to maxPages and checks each page', async () => {
     const result = await scan(`${origin}/clean/`, { ...options, maxPages: 5 });
     const visited = result.pages.map((page) => new URL(page.url).pathname);
