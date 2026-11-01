@@ -107,7 +107,12 @@ and limit name. They are technical observations, not findings.
   subsequently fail, so this counter can overlap `failed`.
 - `finished`: browser `requestfinished` events, including HTTP errors if the browser finishes them.
   A Server-Sent Events stream that answered and is still open when observation ends counts as
-  finished too: it stays open by design, and the page has what it asked for.
+  finished too: it stays open by design, and the page has what it asked for. So does a fetch or
+  XHR that got its full answer before the page's code stopped reading it (`ERR_ABORTED`), for
+  example in a worker.
+
+Requests from cross-origin iframes, which Chromium runs in their own process, and from workers go
+through the adapter like the page's own requests; `test/controlled-scan.test.ts` covers both.
 - `failed` (legacy aggregate): `requestfailed` events plus requests still pending at observation end. Each request
   contributes once; `requests = finished + failed` in a finalized capture.
 - `blocked`: subset of failed requests explicitly denied as `security-blocked`.

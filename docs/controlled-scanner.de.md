@@ -104,6 +104,11 @@ HTTP-Status bzw. betroffenes Limit.
 - `finished`: Browser-`requestfinished`-Ereignisse, gegebenenfalls einschließlich HTTP-Fehlern.
   Ein Server-Sent-Events-Stream, der geantwortet hat und bei Erfassungsende noch offen ist, zählt
   ebenfalls als abgeschlossen: Er bleibt planmäßig offen, und die Seite hat, was sie angefragt hat.
+  Ebenso ein Fetch oder XHR, der seine vollständige Antwort hatte, bevor der Code der Seite aufhörte,
+  sie zu lesen (`ERR_ABORTED`), etwa in einem Worker.
+
+Anfragen aus fremden iframes, die Chromium in einem eigenen Prozess ausführt, und aus Workern laufen
+wie die eigenen Anfragen der Seite über den Adapter; `test/controlled-scan.test.ts` prüft beides.
 - `failed` (alter Sammelwert): `requestfailed` plus bei Erfassungsende noch offene Anfragen, jede genau einmal.
   Nach Abschluss gilt `requests = finished + failed`.
 - `blocked`: Teilmenge von `failed`, explizit durch die Sicherheits-Policy abgelehnt.

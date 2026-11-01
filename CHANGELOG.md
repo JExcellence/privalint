@@ -71,6 +71,9 @@ All notable changes are listed here. The format follows
 - When the banner doesn't appear in the settings check's fresh browser, the report says
   `banner-not-shown` instead of a browser failure
 - The SARIF rule help cites the scan's region, like each result
+- A fetch from a worker that got its answer but wasn't read no longer makes an adapter capture
+  incomplete. Requests from cross-origin iframes and workers are confirmed to go through the
+  adapter (#88)
 - A shop cookie named `put_…` is no longer reported as Magnite advertising (#73)
 - The settings control is found when it sits in a nested shadow root (#78)
 - An open Server-Sent Events stream no longer makes a capture incomplete (#81)

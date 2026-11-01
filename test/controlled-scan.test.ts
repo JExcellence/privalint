@@ -15,6 +15,54 @@ const html = (body = '') => ({
 });
 const settings: ScanOptions = { settleMs: 0, timeoutMs: 3_000, captureTimeoutMs: 10_000 };
 
+describe('requests from iframes and workers', () => {
+  // A cross-origin iframe runs in its own renderer process (site isolation) and a worker is its own
+  // target; both must still go through the adapter, never around it.
+  const frameOrigin = 'https://frame.invalid';
+  const pages: Record<
+    string,
+    ReturnType<typeof html> | { status: number; headers: Record<string, string>; body: string }
+  > = {
+    [`${origin}/`]: html(
+      `<iframe src="${frameOrigin}/"></iframe>` + '<script>new Worker("/worker.js")</script>',
+    ),
+    [`${frameOrigin}/`]: html(`<script src="${frameOrigin}/inner.js"></script>`),
+    [`${frameOrigin}/inner.js`]: {
+      status: 200,
+      headers: { 'content-type': 'text/javascript' },
+      body: '',
+    },
+    [`${origin}/worker.js`]: {
+      status: 200,
+      headers: { 'content-type': 'text/javascript' },
+      body: 'fetch("/from-worker")',
+    },
+    [`${origin}/from-worker`]: { status: 200, headers: { 'content-type': 'text/plain' }, body: '' },
+  };
+
+  it('sends every iframe and worker request through the adapter', async () => {
+    const seen: string[] = [];
+    const result = await scan(origin, {
+      ...settings,
+      settleMs: 500,
+      consentCheck: false,
+      networkAdapter: async ({ url }) => {
+        seen.push(url);
+        return pages[url] ?? { status: 404, body: '' };
+      },
+    });
+    expect(seen).toEqual(
+      expect.arrayContaining([
+        `${frameOrigin}/`,
+        `${frameOrigin}/inner.js`,
+        `${origin}/worker.js`,
+        `${origin}/from-worker`,
+      ]),
+    );
+    expect(result.pages[0]?.capture?.diagnostics.issues).toEqual([]);
+  });
+});
+
 describe('controlled capture', () => {
   it('queues a burst of 48 requests instead of rejecting busy slots', async () => {
     let active = 0;

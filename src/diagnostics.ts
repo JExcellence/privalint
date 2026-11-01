@@ -44,6 +44,16 @@ interface PendingRequest {
 }
 
 /**
+ * A fetch or XHR that got its full answer and was aborted while the page's code read it, or never
+ * read it. Only that code sees such a response, so nothing the rules look at is missing. A script
+ * or stylesheet aborted mid-download is different: the page may lack it, so it still counts.
+ */
+const isReadAborted = (entry: PendingRequest): boolean =>
+  (entry.record.resourceType === 'fetch' || entry.record.resourceType === 'xhr') &&
+  entry.record.outcome === 'response' &&
+  (entry.record.status ?? 0) < 400;
+
+/**
  * An event stream that answered without error and is still open when observation ends. A
  * request still waiting for its first answer (long polling, a stuck backend) is not one.
  */
@@ -133,6 +143,12 @@ export class Diagnostics {
         url: diagnosticUrl(request.url()),
         phase: entry.phase,
       };
+      if (entry.issue === undefined && errorText === 'net::ERR_ABORTED' && isReadAborted(entry)) {
+        // The answer arrived; the page's code just stopped reading it. Workers and other
+        // targets send no cancel signal to this page, so it would otherwise count as a failure.
+        this.data.finished++;
+        return;
+      }
       // Chromium reports a request the page cancelled as ERR_ABORTED, but so does teardown. The
       // text only defers the decision; cancelledByPage() or stop() settles it.
       if (entry.issue === undefined && errorText === 'net::ERR_ABORTED') {
