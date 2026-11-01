@@ -221,7 +221,24 @@ export interface SettingsObservation {
   afterSave?: { requests: RecordedRequest[]; cookies: RecordedCookie[] };
   /** True only if the observation window after saving completed without load issues. */
   afterSaveComplete?: boolean;
+  /**
+   * What an IAB TCF consent manager reports through `__tcfapi('getTCData')` after saving and
+   * reloading. Absent when the page has no TCF API or it did not answer. Since schema 1.4.0.
+   */
+  tcf?: TcfObservation;
   error?: string;
+}
+
+/** TCF purposes and vendors that are still on after switching everything off. */
+export interface TcfObservation {
+  /** Purpose ids with consent still given. */
+  purposesOn: number[];
+  /** Purpose ids still processed on the basis of legitimate interest. */
+  legitimateInterestsOn: number[];
+  /** Number of vendors with consent still given. */
+  vendorConsents: number;
+  /** Number of vendors still relying on legitimate interest. */
+  vendorLegitimateInterests: number;
 }
 
 /**

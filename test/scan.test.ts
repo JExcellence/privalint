@@ -251,6 +251,47 @@ describe('consent check', () => {
       expect(result.findings).toEqual([]);
     });
 
+    describe('IAB TCF readout', () => {
+      it('records an empty TCF state and passes when everything is off', async () => {
+        const result = await scan(`${origin}/consent/settings-tcf.html`, settingsOptions);
+        expect(result.consent?.settings?.tcf).toEqual({
+          purposesOn: [],
+          legitimateInterestsOn: [],
+          vendorConsents: 0,
+          vendorLegitimateInterests: 0,
+        });
+        expect(result.findings).toEqual([]);
+      });
+
+      it('reports consent the TCF API still holds as an error', async () => {
+        const result = await scan(
+          `${origin}/consent/settings-tcf.html?keep=consent`,
+          settingsOptions,
+        );
+        expect(result.consent?.settings?.tcf).toMatchObject({ purposesOn: [1], vendorConsents: 1 });
+        expect(result.findings).toEqual([
+          expect.objectContaining({
+            ruleId: 'trackers-after-settings',
+            severity: 'error',
+            subject: 'IAB TCF',
+            evidence: expect.arrayContaining(['TCF purpose consents: 1']),
+          }),
+        ]);
+      });
+
+      it('reports legitimate interest left on as a warning', async () => {
+        const result = await scan(`${origin}/consent/settings-tcf.html?keep=li`, settingsOptions);
+        expect(result.consent?.settings?.tcf).toMatchObject({
+          legitimateInterestsOn: [2, 7],
+          vendorLegitimateInterests: 1,
+        });
+        expect(result.findings).toEqual([
+          expect.objectContaining({ severity: 'warning', subject: 'IAB TCF' }),
+        ]);
+        expect(result.findings[0]?.message).toContain('purposes 2, 7');
+      });
+    });
+
     it('saves with "Elfogadom a kiválasztottakat" (telekom.hu)', async () => {
       const result = await scan(`${origin}/consent/settings-hu-selected.html`, {
         ...settingsOptions,

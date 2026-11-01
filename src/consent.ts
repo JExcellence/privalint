@@ -5,6 +5,7 @@ import type {
   RecordedCookie,
   RecordedRequest,
   SettingsObservation,
+  TcfObservation,
 } from './types.js';
 
 interface CmpSelectors {
@@ -323,6 +324,7 @@ export async function observeSettings(
     const cookies: RecordedCookie[] = (await context.cookies())
       .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
       .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    const tcf = await readTcf(page);
     return {
       outcome: 'saved',
       reason: 'settings-saved-and-reloaded',
@@ -330,6 +332,7 @@ export async function observeSettings(
       saveLabel,
       switchedOff,
       afterSave: { requests: requests.slice(firstRequest), cookies },
+      ...(tcf === undefined ? {} : { tcf }),
     };
   } catch (error) {
     return {
@@ -338,6 +341,60 @@ export async function observeSettings(
       error: classifyLoadError(error),
     };
   }
+}
+
+const TCF_TIMEOUT_MS = 2_000;
+
+/**
+ * Asks an IAB TCF consent manager what it stored. Every TCF banner answers `getTCData` the same
+ * way, so this sees switches in collapsed sections or a "Legitimate interest" tab whether or not
+ * privalint found them, and it reads only: nothing on the page is clicked.
+ */
+async function readTcf(page: Page): Promise<TcfObservation | undefined> {
+  const data = await page
+    .evaluate(
+      (timeoutMs) =>
+        new Promise<unknown>((resolve) => {
+          const api = (window as { __tcfapi?: unknown }).__tcfapi;
+          if (typeof api !== 'function') {
+            resolve(undefined);
+            return;
+          }
+          const timer = setTimeout(() => resolve(undefined), timeoutMs);
+          try {
+            api('getTCData', 2, (tcData: unknown, success: boolean) => {
+              clearTimeout(timer);
+              resolve(success ? tcData : undefined);
+            });
+          } catch {
+            clearTimeout(timer);
+            resolve(undefined);
+          }
+        }),
+      TCF_TIMEOUT_MS,
+    )
+    .catch(() => undefined);
+  return data === undefined || data === null ? undefined : summarizeTcf(data);
+}
+
+/** Keeps the ids that are switched on. The page's own data is untrusted, so only numbers pass. */
+export function summarizeTcf(data: unknown): TcfObservation {
+  const section = (name: string, key: string): Record<string, unknown> => {
+    const outer = (data as Record<string, unknown>)[name];
+    const inner = typeof outer === 'object' && outer !== null ? Reflect.get(outer, key) : undefined;
+    return typeof inner === 'object' && inner !== null ? (inner as Record<string, unknown>) : {};
+  };
+  const on = (map: Record<string, unknown>) =>
+    Object.entries(map)
+      .filter(([id, value]) => value === true && /^\d{1,5}$/.test(id))
+      .map(([id]) => Number(id))
+      .sort((a, b) => a - b);
+  return {
+    purposesOn: on(section('purpose', 'consents')).slice(0, 50),
+    legitimateInterestsOn: on(section('purpose', 'legitimateInterests')).slice(0, 50),
+    vendorConsents: on(section('vendor', 'consents')).length,
+    vendorLegitimateInterests: on(section('vendor', 'legitimateInterests')).length,
+  };
 }
 
 interface SettingsEntry {
