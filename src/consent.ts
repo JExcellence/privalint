@@ -1,5 +1,6 @@
 import type { BrowserContext, Frame, Locator, Page } from 'playwright';
 import { classifyLoadError } from './diagnostics.js';
+import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
   ConsentObservation,
   RecordedCookie,
@@ -245,6 +246,7 @@ export async function observeConsent(
 
   try {
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
+    const storageBefore = await readStorageKeys(page);
     const firstRequest = requests.length;
 
     options.onReject?.();
@@ -257,6 +259,7 @@ export async function observeConsent(
     const cookies: RecordedCookie[] = (await context.cookies())
       .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
       .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    const storage = newStorageKeys(storageBefore, await readStorageKeys(page));
     const settingsLabel = await findSettingsControl(page);
     const tcf = await readTcf(page);
 
@@ -266,7 +269,7 @@ export async function observeConsent(
       state: 'reject-tested',
       outcome: 'reject-succeeded',
       reason: 'reject-clicked-and-reloaded',
-      afterReject: { requests: requests.slice(firstRequest), cookies },
+      afterReject: { requests: requests.slice(firstRequest), cookies, storage },
       settingsControl:
         settingsLabel === undefined ? { found: false } : { found: true, label: settingsLabel },
       ...(tcf === undefined ? {} : { tcf }),
@@ -316,6 +319,7 @@ export async function observeSettings(
     }
     const saveLabel = await label(save);
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
+    const storageBefore = await readStorageKeys(page);
     const firstRequest = requests.length;
 
     options.onReject?.();
@@ -328,6 +332,7 @@ export async function observeSettings(
     const cookies: RecordedCookie[] = (await context.cookies())
       .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
       .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    const storage = newStorageKeys(storageBefore, await readStorageKeys(page));
     const tcf = await readTcf(page);
     return {
       outcome: 'saved',
@@ -335,7 +340,7 @@ export async function observeSettings(
       openLabel,
       saveLabel,
       switchedOff,
-      afterSave: { requests: requests.slice(firstRequest), cookies },
+      afterSave: { requests: requests.slice(firstRequest), cookies, storage },
       ...(tcf === undefined ? {} : { tcf }),
     };
   } catch (error) {

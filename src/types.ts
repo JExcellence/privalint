@@ -158,6 +158,12 @@ export interface RecordedCookie {
   expires: number;
 }
 
+/** A Web Storage key of the page's origin; only its name is recorded. */
+export interface StorageKey {
+  area: 'local' | 'session';
+  name: string;
+}
+
 export interface PageLink {
   href: string;
   text: string;
@@ -194,7 +200,7 @@ export interface ConsentObservation {
   /** True once the reject button was clicked and the page reloaded. */
   rejected: boolean;
   /** Requests made and cookies newly set after rejecting, including the reload. */
-  afterReject?: { requests: RecordedRequest[]; cookies: RecordedCookie[] };
+  afterReject?: { requests: RecordedRequest[]; cookies: RecordedCookie[]; storage?: StorageKey[] };
   /** True only if the reject observation window completed without load issues. */
   afterRejectComplete?: boolean;
   /**
@@ -230,7 +236,7 @@ export interface SettingsObservation {
   /** How many checked category switches privalint turned off before saving. */
   switchedOff?: number;
   /** Requests made and cookies newly set after saving, including the reload. */
-  afterSave?: { requests: RecordedRequest[]; cookies: RecordedCookie[] };
+  afterSave?: { requests: RecordedRequest[]; cookies: RecordedCookie[]; storage?: StorageKey[] };
   /** True only if the observation window after saving completed without load issues. */
   afterSaveComplete?: boolean;
   /**
@@ -266,6 +272,8 @@ export interface PageSnapshot {
   /** Initial-phase request count, including records beyond the retained evidence cap. */
   requestCount?: number;
   cookies: RecordedCookie[];
+  /** localStorage and sessionStorage key names of the page's origin, never values. */
+  storage?: StorageKey[];
   links: PageLink[];
   resourceHints: ResourceHint[];
   /** Only present on the start page, unless the consent check was skipped. */

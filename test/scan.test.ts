@@ -88,6 +88,17 @@ describe('scan', () => {
     expect(hang.pages[0]?.capture?.complete).toBe(false);
   });
 
+  it('recognises a tracker by its localStorage key, not only by cookies', async () => {
+    const result = await scan(`${origin}/storage/`, { ...options, consentCheck: false });
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'pre-consent-trackers',
+        subject: 'Hotjar',
+        evidence: ['localStorage _hjSessionUser_123'],
+      }),
+    ]);
+  });
+
   it('records the page a JavaScript redirect lands on while settling', async () => {
     const result = await scan(`${origin}/redirect/`, options);
     expect(result.pages[0]?.finalUrl).toBe(`${origin}/clean/index.html`);

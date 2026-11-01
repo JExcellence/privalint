@@ -10,12 +10,49 @@ import {
   privacyPolicyLink,
   thirdPartyCdns,
   thirdPartyEmbeds,
+  trackersAfterReject,
 } from '../src/rules/index.js';
+import { newStorageKeys } from '../src/storage.js';
 import type { Rule } from '../src/types.js';
 import { cookie, request, SITE, snapshot } from './helpers.js';
 
 const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
   rule.check({ siteUrl: SITE, page, lang });
+
+describe('Web Storage keys', () => {
+  it('reports a tracker key that appears after rejecting', () => {
+    const page = snapshot({
+      consent: {
+        bannerFound: true,
+        rejected: true,
+        state: 'reject-tested',
+        outcome: 'reject-succeeded',
+        reason: 'reject-clicked-and-reloaded',
+        rejectLabel: 'Alle ablehnen',
+        afterReject: {
+          requests: [],
+          cookies: [],
+          storage: [
+            { area: 'local', name: 'ajs_anonymous_id' },
+            { area: 'local', name: 'consent' },
+          ],
+        },
+      },
+    });
+    expect(run(trackersAfterReject, page)).toEqual([
+      expect.objectContaining({ subject: 'Segment', evidence: ['localStorage ajs_anonymous_id'] }),
+    ]);
+  });
+
+  it('only counts keys that were not there before', () => {
+    const before = [{ area: 'local', name: 'a' }] as const;
+    const after = [
+      { area: 'local', name: 'a' },
+      { area: 'session', name: 'a' },
+    ] as const;
+    expect(newStorageKeys(before, after)).toEqual([{ area: 'session', name: 'a' }]);
+  });
+});
 
 describe('consent-banner-missing', () => {
   const noBanner = {

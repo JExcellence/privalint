@@ -6,22 +6,27 @@ import {
 } from '../data/trackers.js';
 import { type Lang, say, type Text } from '../i18n.js';
 import { observedRequests } from '../observations.js';
-import type { RecordedCookie, RecordedRequest } from '../types.js';
+import type { RecordedCookie, RecordedRequest, StorageKey } from '../types.js';
 
 const MAX_EVIDENCE = 5;
 
 export interface TrackerHit {
   /** A full tracker for host matches; cookie matches from the generated list have no hosts. */
   tracker: CookieTracker;
-  /** Up to five request URLs and cookie names, deduplicated. */
+  /** Up to five request URLs, cookie names and storage keys, deduplicated. */
   evidence: string[];
 }
 
-/** Matches requests and cookies against the tracker list, grouped by vendor. */
+/**
+ * Matches requests, cookies and Web Storage keys against the tracker list, grouped by vendor.
+ * Storage keys are looked up like first-party cookies: the vendors and the Open Cookie Database
+ * use the same names for both ("cookie / data key").
+ */
 export function findTrackerHits(
   requests: readonly RecordedRequest[],
   cookies: readonly RecordedCookie[],
   lang: Lang,
+  storage: readonly StorageKey[] = [],
 ): TrackerHit[] {
   const requestLabel = say(lang, { en: 'request', de: 'Anfrage' });
   const hits = new Map<string, { tracker: CookieTracker; evidence: Set<string> }>();
@@ -41,6 +46,12 @@ export function findTrackerHits(
     const tracker = findTrackerByCookie(cookie.name, cookie.domain);
     if (tracker !== undefined) {
       record(tracker, `cookie ${cookie.name} (${cookie.domain})`);
+    }
+  }
+  for (const { area, name } of storage) {
+    const tracker = findTrackerByCookie(name);
+    if (tracker !== undefined) {
+      record(tracker, `${area === 'local' ? 'localStorage' : 'sessionStorage'} ${name}`);
     }
   }
 

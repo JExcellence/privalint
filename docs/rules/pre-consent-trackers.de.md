@@ -59,7 +59,8 @@ ausliefert, kann deshalb anschlagen. Bitte
 [eröffnen Sie ein Issue](https://github.com/jexcellence/privalint/issues/new?template=false-positive.yml)
 mit der URL und dem Befund.
 
-Cookies werden außerdem per Name mit der Open Cookie Database abgeglichen, auf jeder Domain. Namen,
+Cookies und die Schlüsselnamen in localStorage und sessionStorage (nie deren Werte) werden außerdem
+per Name mit der Open Cookie Database abgeglichen, auf jeder Domain. Namen,
 die jede Seite für ein eigenes Cookie verwenden könnte (`session`, `token`, `put_`, …), sind beim
 Erzeugen der Liste ausgenommen; siehe `GENERIC` in `scripts/build-cookie-trackers.mjs`.
 

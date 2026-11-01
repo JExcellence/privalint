@@ -29,7 +29,7 @@ export const trackersAfterReject: Rule = {
             lang,
             action: { en: `clicking "${button}"`, de: `„${button}“ geklickt wurde` },
           });
-    const trackerFindings = findTrackerHits(after.requests, after.cookies, lang).map(
+    const trackerFindings = findTrackerHits(after.requests, after.cookies, lang, after.storage).map(
       ({ tracker, evidence }): Finding => {
         const { vendor } = tracker;
         const category = categoryLabel(tracker.category, lang);

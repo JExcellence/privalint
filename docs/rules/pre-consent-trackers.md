@@ -59,7 +59,8 @@ The list matches hostnames, so a domain that serves both tracking and harmless c
 flagged. Please [open an issue](https://github.com/jexcellence/privalint/issues/new?template=false-positive.yml)
 with the URL and the finding.
 
-Cookies are also matched against the Open Cookie Database by name, on any domain. Names that any
+Cookies and the key names in localStorage and sessionStorage (never their values) are also matched
+against the Open Cookie Database by name, on any domain. Names that any
 site could use for its own cookie (`session`, `token`, `put_`, …) are left out of that list when it
 is generated; see `GENERIC` in `scripts/build-cookie-trackers.mjs`.
 
