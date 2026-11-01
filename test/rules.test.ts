@@ -22,13 +22,22 @@ describe('pre-consent-trackers', () => {
       requests: [
         { ...request('https://fonts.googleapis.com/css2'), outcome: 'failed' },
         { ...request('https://www.google-analytics.com/g/collect'), outcome: 'failed' },
-        { ...request('https://cdn.jsdelivr.net/npm/x'), outcome: 'response', status: 503 },
         { ...request('https://www.youtube.com/embed/x'), outcome: 'pending' },
       ],
     });
     for (const rule of [preConsentTrackers, googleFonts, thirdPartyCdns, thirdPartyEmbeds]) {
       expect(run(rule, page)).toEqual([]);
     }
+  });
+  it('counts HTTP error responses: the vendor still received the request', () => {
+    const page = snapshot({
+      requests: [
+        { ...request('https://www.facebook.com/tr?id=1'), outcome: 'response', status: 403 },
+        { ...request('https://cdn.jsdelivr.net/npm/x'), outcome: 'response', status: 503 },
+      ],
+    });
+    expect(run(preConsentTrackers, page)[0]?.message).toContain('Meta');
+    expect(run(thirdPartyCdns, page)).toHaveLength(1);
   });
   it('passes a clean page', () => {
     const page = snapshot({ requests: [request('https://example.de/app.js')] });
