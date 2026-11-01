@@ -47,6 +47,8 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 | [`third-party-cdns`](docs/rules/third-party-cdns.md)               | info     | Scripts and styles from jsDelivr, unpkg, cdnjs and other public CDNs.                                                       |
 | [`impressum-link`](docs/rules/impressum-link.md)                   | warning  | Pages without a link to an Impressum. A contact link alone is noted as info.                                                |
 | [`privacy-policy-link`](docs/rules/privacy-policy-link.md)         | warning  | Pages without a link to a privacy policy.                                                                                   |
+| [`withdrawal-button`](docs/rules/withdrawal-button.md)             | warning  | Online shops without a "withdraw from contract here" link on the start page (required since 19.06.2026).                    |
+| [`accessibility-statement`](docs/rules/accessibility-statement.md) | info     | Online shops without a link to accessibility information (European Accessibility Act).                                      |
 
 Each rule is a small file with tests. Missing a check? See [Contributing](#contributing).
 

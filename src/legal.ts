@@ -117,6 +117,22 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 12. cikk', 'GDPR 13. cikk'],
     eu: ['Art. 12 GDPR', 'Art. 13 GDPR'],
   },
+  // Directive (EU) 2023/2673 added Art. 11a; Germany: § 356a BGB, applicable from 19.06.2026.
+  'withdrawal-button': {
+    de: ['§ 356a BGB'],
+    at: ['Art. 11a Richtlinie 2011/83/EU'],
+    ch: ['Art. 11a Richtlinie 2011/83/EU (bei Verkauf an Verbraucher in der EU)'],
+    hu: ['2011/83/EU irányelv 11a. cikk'],
+    eu: ['Art. 11a Directive 2011/83/EU'],
+  },
+  // European Accessibility Act; Germany and Austria since 28.06.2025.
+  'accessibility-statement': {
+    de: ['§ 14 BFSG', 'Anlage 3 BFSG'],
+    at: ['§ 14 BaFG'],
+    ch: ['Art. 13 Richtlinie (EU) 2019/882 (bei Angeboten in der EU)'],
+    hu: ['(EU) 2019/882 irányelv 13. cikk'],
+    eu: ['Art. 13 and Annex V Directive (EU) 2019/882'],
+  },
 };
 
 export const legalReferences = (ruleId: string, region: Region): string[] | undefined =>
@@ -153,6 +169,8 @@ const SOFTER_IN_SWITZERLAND = new Set([
   'google-fonts',
   'adobe-fonts',
   'impressum-link',
+  'withdrawal-button',
+  'accessibility-statement',
 ]);
 
 function severityFor(finding: Finding, region: Region): Severity {

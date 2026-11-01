@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Lang } from '../src/i18n.js';
 import {
+  accessibilityStatement,
   adobeFonts,
   consentBannerMissing,
   consentSettingsLink,
@@ -11,6 +12,7 @@ import {
   thirdPartyCdns,
   thirdPartyEmbeds,
   trackersAfterReject,
+  withdrawalButton,
 } from '../src/rules/index.js';
 import { newStorageKeys } from '../src/storage.js';
 import type { Rule } from '../src/types.js';
@@ -18,6 +20,47 @@ import { cookie, request, SITE, snapshot } from './helpers.js';
 
 const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
   rule.check({ siteUrl: SITE, page, lang });
+
+describe('shop duties', () => {
+  const cart = { text: 'Warenkorb', href: 'https://example.de/warenkorb' };
+  const shop = (...links: { text: string; href: string }[]) =>
+    snapshot({ links: [cart, ...links] });
+
+  it('asks a shop for a withdrawal function, not other sites', () => {
+    expect(run(withdrawalButton, shop())).toMatchObject([{ severity: 'warning' }]);
+    expect(run(withdrawalButton, snapshot({ links: [] }))).toEqual([]);
+  });
+
+  it.each([
+    ['Vertrag widerrufen', 'https://example.de/widerruf'],
+    ['Withdraw from contract here', 'https://example.com/withdraw'],
+    ['Vertrag hier widerrufen', 'https://example.de/w'],
+  ])('accepts %j', (text, href) => {
+    expect(run(withdrawalButton, shop({ text, href }))).toEqual([]);
+  });
+
+  it('does not take the cancellation policy for the withdrawal function', () => {
+    const policy = { text: 'Widerrufsbelehrung', href: 'https://example.de/widerrufsbelehrung' };
+    expect(run(withdrawalButton, shop(policy))).toHaveLength(1);
+  });
+
+  it('recognises a Shopify store by its scripts', () => {
+    const page = snapshot({ requests: [request('https://cdn.shopify.com/s/files/1/theme.js')] });
+    expect(run(withdrawalButton, page)).toHaveLength(1);
+  });
+
+  it('only checks the start page', () => {
+    const page = snapshot({ links: [cart], finalUrl: 'https://example.de/produkte' });
+    expect(run(withdrawalButton, page)).toEqual([]);
+  });
+
+  it('notes missing accessibility information as info, since the AGB may hold it', () => {
+    expect(run(accessibilityStatement, shop())).toMatchObject([{ severity: 'info' }]);
+    const statement = { text: 'Barrierefreiheitserklärung', href: 'https://example.de/b' };
+    expect(run(accessibilityStatement, shop(statement))).toEqual([]);
+    expect(run(accessibilityStatement, snapshot())).toEqual([]);
+  });
+});
 
 describe('Web Storage keys', () => {
   it('reports a tracker key that appears after rejecting', () => {
