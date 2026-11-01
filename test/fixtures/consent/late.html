@@ -28,7 +28,9 @@
         banner.remove();
       } else {
         // Like a consent manager that waits for a geo lookup before it shows anything.
-        window.addEventListener('load', () => setTimeout(() => (banner.hidden = false), 2500));
+        // ?delay=<ms> sets the delay; 2500 by default.
+        const delay = Number(new URLSearchParams(location.search).get('delay') ?? 2500);
+        window.addEventListener('load', () => setTimeout(() => (banner.hidden = false), delay));
       }
       document.getElementById('accept').onclick = () => {
         localStorage.setItem('consent', 'accepted');
