@@ -3,35 +3,36 @@ import type { Finding, Severity } from './types.js';
 export const REGIONS = ['de', 'at', 'ch', 'hu', 'eu'] as const;
 export type Region = (typeof REGIONS)[number];
 
+/** Trackers need prior consent; also the basis when there is no banner to give it. */
+const TRACKER_CONSENT: Record<Region, string[]> = {
+  de: ['§ 25 Abs. 1 TDDDG', 'Art. 6 Abs. 1 lit. a DSGVO', 'EuGH, 01.10.2019, C-673/17 (Planet49)'],
+  at: [
+    '§ 165 Abs. 3 TKG 2021',
+    'Art. 6 Abs. 1 lit. a DSGVO',
+    'EuGH, 01.10.2019, C-673/17 (Planet49)',
+  ],
+  ch: ['Art. 45c FMG', 'Art. 6 DSG'],
+  hu: [
+    'Eht. 155. § (4)',
+    'GDPR 6. cikk (1) bekezdés a) pont',
+    'EUB, 2019. október 1., C-673/17 (Planet49)',
+  ],
+  eu: [
+    'Art. 5(3) ePrivacy Directive',
+    'Art. 6(1)(a) GDPR',
+    'CJEU, 01.10.2019, C-673/17 (Planet49)',
+  ],
+};
+
 /**
  * Legal basis per rule and country, cited the way lawyers in that country
  * would cite it. `eu` is for sites outside Germany, Austria, Switzerland and
  * Hungary and refers to the EU instruments directly.
  */
 const LEGAL: Record<string, Record<Region, string[]>> = {
-  'pre-consent-trackers': {
-    de: [
-      '§ 25 Abs. 1 TDDDG',
-      'Art. 6 Abs. 1 lit. a DSGVO',
-      'EuGH, 01.10.2019, C-673/17 (Planet49)',
-    ],
-    at: [
-      '§ 165 Abs. 3 TKG 2021',
-      'Art. 6 Abs. 1 lit. a DSGVO',
-      'EuGH, 01.10.2019, C-673/17 (Planet49)',
-    ],
-    ch: ['Art. 45c FMG', 'Art. 6 DSG'],
-    hu: [
-      'Eht. 155. § (4)',
-      'GDPR 6. cikk (1) bekezdés a) pont',
-      'EUB, 2019. október 1., C-673/17 (Planet49)',
-    ],
-    eu: [
-      'Art. 5(3) ePrivacy Directive',
-      'Art. 6(1)(a) GDPR',
-      'CJEU, 01.10.2019, C-673/17 (Planet49)',
-    ],
-  },
+  'pre-consent-trackers': TRACKER_CONSENT,
+  // No banner means no way to consent: the same basis as the trackers that run without it.
+  'consent-banner-missing': TRACKER_CONSENT,
   'trackers-after-reject': {
     de: ['§ 25 Abs. 1 TDDDG', 'Art. 6 Abs. 1 lit. a DSGVO'],
     at: ['§ 165 Abs. 3 TKG 2021', 'Art. 6 Abs. 1 lit. a DSGVO'],
@@ -144,6 +145,7 @@ export function applyRegion(findings: readonly Finding[], region: Region): Findi
  */
 const SOFTER_IN_SWITZERLAND = new Set([
   'pre-consent-trackers',
+  'consent-banner-missing',
   'consent-settings-link',
   'third-party-embeds',
   'impressum-link',

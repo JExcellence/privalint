@@ -39,6 +39,7 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 | [`trackers-after-reject`](docs/rules/trackers-after-reject.md)     | error    | Trackers that still load after clicking "reject" on the consent banner and reloading.                                       |
 | [`trackers-after-settings`](docs/rules/trackers-after-settings.md) | error    | Opt-in (`--check-settings`): trackers that still load after switching off every category in the banner settings and saving. |
 | [`reject-option`](docs/rules/reject-option.md)                     | warning  | A banner with "accept" but no "reject" on its first layer. Pay-or-OK banners are noted as info.                             |
+| [`consent-banner-missing`](docs/rules/consent-banner-missing.md)   | warning  | Trackers run and no consent banner was found at all, so visitors can't give or refuse consent.                              |
 | [`consent-settings-link`](docs/rules/consent-settings-link.md)     | warning  | No visible link or button to reopen the cookie settings after rejecting.                                                    |
 | [`google-fonts`](docs/rules/google-fonts.md)                       | error    | Fonts fetched from `fonts.googleapis.com` / `fonts.gstatic.com`. Leftover preconnects are a warning.                        |
 | [`adobe-fonts`](docs/rules/adobe-fonts.md)                         | error    | Fonts fetched from Adobe Fonts (`use.typekit.net` / `p.typekit.net`). Leftover preconnects are a warning.                   |

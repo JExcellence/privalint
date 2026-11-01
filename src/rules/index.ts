@@ -1,5 +1,6 @@
 import type { Rule } from '../types.js';
 import { adobeFonts } from './adobe-fonts.js';
+import { consentBannerMissing } from './consent-banner-missing.js';
 import { consentSettingsLink } from './consent-settings-link.js';
 import { googleFonts } from './google-fonts.js';
 import { impressumLink } from './impressum-link.js';
@@ -17,6 +18,7 @@ export const defaultRules: readonly Rule[] = [
   trackersAfterSettings,
   rejectOption,
   consentSettingsLink,
+  consentBannerMissing,
   googleFonts,
   adobeFonts,
   thirdPartyEmbeds,
@@ -27,6 +29,7 @@ export const defaultRules: readonly Rule[] = [
 
 export {
   adobeFonts,
+  consentBannerMissing,
   consentSettingsLink,
   googleFonts,
   impressumLink,

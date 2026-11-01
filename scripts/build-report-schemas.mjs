@@ -62,6 +62,7 @@ function definitions(version) {
   const timed = settingsAware && version !== '1.3.0';
   const observationKinds = ['document', 'network', 'consent', 'after-reject'];
   if (settingsAware) observationKinds.push('after-settings');
+  if (timed) observationKinds.push('banner-search');
   const pageIdentity = identified ? { pageId: uuid } : {};
   return {
     diagnostic: object(

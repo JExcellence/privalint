@@ -156,6 +156,13 @@ describe('scan', () => {
   it('catches fonts, trackers, cookies and delayed pixels on a leaky page', async () => {
     const result = await scan(`${origin}/leaky/`, options);
     const summary = result.findings.map(({ ruleId, severity }) => `${ruleId}:${severity}`);
+    // Trackers run and there is no banner at all: named once, next to the per-tracker errors.
+    expect(result.findings.filter((f) => f.ruleId === 'consent-banner-missing')).toEqual([
+      expect.objectContaining({
+        severity: 'warning',
+        message: expect.stringContaining('No consent banner was found'),
+      }),
+    ]);
 
     expect(summary).toEqual(
       expect.arrayContaining([

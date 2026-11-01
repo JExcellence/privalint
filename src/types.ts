@@ -95,7 +95,9 @@ export type ObservationKind =
   | 'consent'
   | 'after-reject'
   /** Since schema 1.3.0. */
-  | 'after-settings';
+  | 'after-settings'
+  /** The start page was searched for a banner, found or not. Since schema 1.4.0. */
+  | 'banner-search';
 
 export interface RuleEvaluation {
   pageId?: string;

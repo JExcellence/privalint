@@ -29,6 +29,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'trackers-after-reject': ['after-reject'],
   'consent-settings-link': ['after-reject'],
   'trackers-after-settings': ['after-settings'],
+  'consent-banner-missing': ['network', 'banner-search'],
 };
 
 export function assessPage(
@@ -58,6 +59,9 @@ export function assessPage(
       validPage && page.consent?.bannerFound === true && page.consent.acceptLabel !== undefined,
     'after-reject': validPage && page.consent?.rejected === true,
     'after-settings': validPage && page.consent?.settings?.afterSave !== undefined,
+    // A failed interaction says nothing about whether a banner was there.
+    'banner-search':
+      validPage && page.consent !== undefined && page.consent.state !== 'interaction-failed',
   };
   const input: PageSnapshot = {
     ...page,
@@ -69,7 +73,11 @@ export function assessPage(
   const requirementsOf = (rule: Rule) => rule.requires ?? REQUIREMENTS[rule.id] ?? ['document'];
   const needsConsent = (rule: Rule) =>
     requirementsOf(rule).some(
-      (kind) => kind === 'consent' || kind === 'after-reject' || kind === 'after-settings',
+      (kind) =>
+        kind === 'consent' ||
+        kind === 'after-reject' ||
+        kind === 'after-settings' ||
+        kind === 'banner-search',
     );
   const detectedBy = new Map<string, Finding[]>();
   const evaluate = (rule: Rule, noConsentNeeded: boolean): RuleEvaluation => {
@@ -130,7 +138,7 @@ export function assessPage(
           ? (page.consent?.settings?.reason ?? 'missing-settings-observation')
           : requirements.includes('after-reject')
             ? (page.consent?.reason ?? 'missing-reject-observation')
-            : requirements.includes('consent')
+            : requirements.includes('consent') || requirements.includes('banner-search')
               ? (page.consent?.reason ?? 'missing-consent-observation')
               : 'incomplete-document',
         findingCount: 0,

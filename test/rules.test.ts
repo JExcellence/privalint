@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Lang } from '../src/i18n.js';
 import {
   adobeFonts,
+  consentBannerMissing,
   consentSettingsLink,
   googleFonts,
   impressumLink,
@@ -15,6 +16,38 @@ import { cookie, request, SITE, snapshot } from './helpers.js';
 
 const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
   rule.check({ siteUrl: SITE, page, lang });
+
+describe('consent-banner-missing', () => {
+  const noBanner = {
+    bannerFound: false,
+    rejected: false,
+    state: 'not-detected',
+    outcome: 'no-banner-detected',
+    reason: 'no-supported-banner',
+    bannerWaitMs: 2000,
+  } as const;
+
+  it('names the missing banner when trackers run', () => {
+    const page = snapshot({
+      requests: [request('https://www.google-analytics.com/g/collect')],
+      cookies: [cookie('_hjSessionUser_1')],
+      consent: noBanner,
+    });
+    const [finding] = run(consentBannerMissing, page);
+    expect(finding).toMatchObject({ severity: 'warning', ruleId: 'consent-banner-missing' });
+    expect(finding?.message).toContain('Google Analytics, Hotjar');
+    expect(finding?.evidence[0]).toContain('2000 ms');
+  });
+
+  it('stays quiet with a banner, without trackers, or with a tag manager alone', () => {
+    const tracker = [request('https://www.google-analytics.com/g/collect')];
+    const banner = { ...noBanner, bannerFound: true, state: 'reject-tested' } as const;
+    expect(run(consentBannerMissing, snapshot({ requests: tracker, consent: banner }))).toEqual([]);
+    expect(run(consentBannerMissing, snapshot({ consent: noBanner }))).toEqual([]);
+    const gtm = [request('https://www.googletagmanager.com/gtm.js?id=GTM-1')];
+    expect(run(consentBannerMissing, snapshot({ requests: gtm, consent: noBanner }))).toEqual([]);
+  });
+});
 
 describe('pre-consent-trackers', () => {
   it('does not turn failed requests into evidence in direct rule API calls', () => {

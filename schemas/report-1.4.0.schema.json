@@ -790,7 +790,8 @@
               "network",
               "consent",
               "after-reject",
-              "after-settings"
+              "after-settings",
+              "banner-search"
             ]
           }
         }
