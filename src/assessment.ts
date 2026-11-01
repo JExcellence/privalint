@@ -41,6 +41,7 @@ export function assessPage(
   consentEnabled: boolean,
   catalog: readonly Rule[] = rules,
   settingsEnabled = false,
+  transportEnabled = false,
 ): { findings: Finding[]; evaluations: RuleEvaluation[] } {
   const findings: Finding[] = [];
   const allRules = new Map([...defaultRules, ...catalog].map((rule) => [rule.id, rule]));
@@ -114,6 +115,19 @@ export function assessPage(
         partial: false,
         outcome: 'not-evaluable',
         explanation: 'settings-check-disabled',
+        findingCount: 0,
+      };
+    }
+    if (requirements.includes('transport') && (!isStart || !transportEnabled)) {
+      // Checked on the start page of native scans only, by design: not a gap in coverage.
+      const reason = isStart ? 'transport-not-checked' : 'not-start-page';
+      return {
+        ruleId: rule.id,
+        status: 'skipped',
+        reason,
+        partial: false,
+        outcome: 'not-evaluable',
+        explanation: reason,
         findingCount: 0,
       };
     }

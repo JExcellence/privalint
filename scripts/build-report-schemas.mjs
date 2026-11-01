@@ -198,6 +198,7 @@ function definitions(version) {
             'missing-observation',
             ...(identified ? EXPLANATIONS : []),
             ...(settingsAware ? ['settings-check-disabled'] : []),
+            ...(timed ? ['transport-not-checked'] : []),
           ),
           partial: boolean,
           outcome: choices('checked-no-finding', 'finding-detected', 'not-evaluable'),
@@ -208,7 +209,7 @@ function definitions(version) {
                   ...explanation.enum,
                   ...EXPLANATIONS,
                   ...(settingsAware ? SETTINGS_EXPLANATIONS : []),
-                  ...(timed ? ['banner-not-shown'] : []),
+                  ...(timed ? ['banner-not-shown', 'transport-not-checked'] : []),
                 ],
               }
             : explanation,

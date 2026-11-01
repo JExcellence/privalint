@@ -399,7 +399,8 @@
             "not-start-page",
             "missing-observation",
             "no-consent-needed",
-            "settings-check-disabled"
+            "settings-check-disabled",
+            "transport-not-checked"
           ]
         },
         "partial": {
@@ -436,7 +437,8 @@
             "no-settings-control",
             "no-save-control",
             "settings-saved-and-reloaded",
-            "banner-not-shown"
+            "banner-not-shown",
+            "transport-not-checked"
           ]
         },
         "findingCount": {

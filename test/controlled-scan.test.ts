@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import { describe, expect, it } from 'vitest';
+import { assessCoverage } from '../src/coverage.js';
 import { classifyLoadError, diagnosticUrl } from '../src/diagnostics.js';
 import { type NetworkAdapter, NetworkError } from '../src/network.js';
 import type { ScanOptions } from '../src/scanner.js';
@@ -14,6 +15,17 @@ const html = (body = '') => ({
   body: `<!doctype html>${links}${body}`,
 });
 const settings: ScanOptions = { settleMs: 0, timeoutMs: 3_000, captureTimeoutMs: 10_000 };
+
+describe('https-transport in adapter scans', () => {
+  it('is skipped by design and keeps the coverage complete', async () => {
+    const result = await scan(origin, { ...settings, networkAdapter: async () => html() });
+    expect(result.pages[0]?.ruleEvaluations).toContainEqual(
+      expect.objectContaining({ ruleId: 'https-transport', reason: 'transport-not-checked' }),
+    );
+    expect(result.coverage).toBe('complete');
+    expect(assessCoverage(result).complete).toBe(true);
+  });
+});
 
 describe('requests from iframes and workers', () => {
   // A cross-origin iframe runs in its own renderer process (site isolation) and a worker is its own

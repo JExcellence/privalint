@@ -113,7 +113,9 @@ export interface RuleEvaluation {
     /** No banner, and nothing that needs consent loaded before a choice. */
     | 'no-consent-needed'
     /** The settings-layer check is opt-in. Since schema 1.3.0. */
-    | 'settings-check-disabled';
+    | 'settings-check-disabled'
+    /** Adapter and offline scans make no extra request to http://. Since schema 1.4.0. */
+    | 'transport-not-checked';
   /** Executed against available positive evidence, without ruling out additional findings. */
   partial: boolean;
   outcome?: 'checked-no-finding' | 'finding-detected' | 'not-evaluable';
@@ -144,7 +146,8 @@ export type RuleExplanation =
   | 'no-save-control'
   | 'settings-saved-and-reloaded'
   // Since schema 1.4.0:
-  | 'banner-not-shown';
+  | 'banner-not-shown'
+  | 'transport-not-checked';
 
 export interface CaptureObservation {
   complete: boolean;

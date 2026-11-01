@@ -224,6 +224,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         options.consentCheck !== false,
         configuredRules,
         options.settingsCheck === true,
+        !options.networkAdapter && !options.offline,
       );
     });
     const partial =

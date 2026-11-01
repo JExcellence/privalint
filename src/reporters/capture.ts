@@ -79,6 +79,10 @@ const EXPLANATIONS: Record<RuleExplanation, [string, string]> = {
     'Settings check not enabled (--check-settings)',
     'Einstellungs-Prüfung nicht eingeschaltet (--check-settings)',
   ],
+  'transport-not-checked': [
+    'Not checked with a network adapter or offline',
+    'Mit Netzwerk-Adapter oder offline nicht geprüft',
+  ],
   'missing-settings-observation': [
     'Settings path not observed',
     'Einstellungs-Pfad nicht beobachtet',
