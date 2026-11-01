@@ -1,6 +1,7 @@
 import type { BrowserContext, Request } from 'playwright';
 import type {
   CapturePhase,
+  CaptureTiming,
   LoadDiagnostic,
   LoadDiagnostics,
   LoadIssueKind,
@@ -66,6 +67,11 @@ export class Diagnostics {
   private readonly unexplained: { url: string; entry: PendingRequest; issue: LoadDiagnostic }[] =
     [];
   private stopped = false;
+  /**
+   * Set by an adapter network: where a request still open at the end of the capture was waiting.
+   * Requests open at stop() become timeouts, and this tells a queue wait from a slow fetch.
+   */
+  stageOf?: (url: string) => LoadDiagnostic['stage'];
   private readonly phaseIssues = { 'before-consent': 0, 'after-reject': 0 };
   private restricting = 0;
 
@@ -177,6 +183,7 @@ export class Diagnostics {
     kind: LoadIssueKind,
     limit?: LoadDiagnostic['limit'],
     skippedReason?: SkipReason,
+    stage?: LoadDiagnostic['stage'],
   ): void {
     const entry = this.pending.get(request);
     if (entry === undefined) return;
@@ -186,6 +193,7 @@ export class Diagnostics {
       url: diagnosticUrl(request.url()),
       ...(limit === undefined ? {} : { limit }),
       ...(skippedReason === undefined ? {} : { skippedReason }),
+      ...(stage === undefined ? {} : { stage }),
     };
   }
 
@@ -194,11 +202,12 @@ export class Diagnostics {
     kind: LoadIssueKind,
     limit?: LoadDiagnostic['limit'],
     skippedReason?: SkipReason,
+    stage?: LoadDiagnostic['stage'],
   ): void {
     if (this.stopped) return;
     for (const [request, entry] of this.pending) {
       if (request.url() === url && entry.issue === undefined) {
-        this.fail(request, kind, limit, skippedReason);
+        this.fail(request, kind, limit, skippedReason, stage);
         return;
       }
     }
@@ -210,6 +219,7 @@ export class Diagnostics {
       phase: this.phase,
       ...(limit === undefined ? {} : { limit }),
       ...(skippedReason === undefined ? {} : { skippedReason }),
+      ...(stage === undefined ? {} : { stage }),
     });
     this.earlyFailures.set(url, early);
   }
@@ -236,6 +246,12 @@ export class Diagnostics {
     else this.data.dropped++;
   }
 
+  /** Timing of this capture, created on first use. */
+  get timing(): CaptureTiming {
+    this.data.timing ??= { loadMs: 0, networkIdleMs: 0 };
+    return this.data.timing;
+  }
+
   hasIssues(phase: CapturePhase): boolean {
     return this.phaseIssues[phase] > 0;
   }
@@ -252,10 +268,12 @@ export class Diagnostics {
     for (const failure of this.unexplained.splice(0)) this.settle(failure.entry, failure.issue);
     for (const [request, entry] of this.pending) {
       entry.record.outcome = 'failed';
+      const stage = this.stageOf?.(request.url());
       const issue = entry.issue ?? {
         kind: 'timeout',
         phase: entry.phase,
         url: diagnosticUrl(request.url()),
+        ...(stage === undefined ? {} : { stage }),
       };
       this.terminalFailure(issue.kind);
       this.store(issue);

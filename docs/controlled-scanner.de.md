@@ -112,6 +112,15 @@ HTTP-Status bzw. betroffenes Limit.
 - `issueCount`: sämtliche technischen Probleme. Eine Anfrage kann HTTP-Fehler und anschließenden
   Browserfehler erzeugen; dieser Wert ist kein Zähler fehlgeschlagener Anfragen.
 - `issues` enthält maximal `maxDiagnostics` Details; `dropped` zählt ausgelassene Details.
+  Ein `timeout` aus einem Adapter-Scan trägt `stage`: `queued`, wenn die Anfrage noch auf einen
+  freien Adapter-Platz wartete, `fetching`, wenn der Adapter sie gerade abrief. Beides hat ein
+  eigenes Budget (`captureTimeoutMs` bzw. `networkLimits.requestTimeoutMs`).
+- `timing`: wohin die Zeit der Erfassung ging, in Millisekunden. `loadMs` reicht vom Start der
+  Navigation bis zum Load-Event, `networkIdleMs` von dort, bis das Netzwerk ruhig war oder das
+  Warten aufgab. Adapter-Scans ergänzen `peakQueued`, die meisten gleichzeitig auf einen
+  Adapter-Platz wartenden Anfragen. Viele `queued`-Timeouts bei hohem `peakQueued` sprechen für
+  zu wenig Adapter-Parallelität, `fetching`-Timeouts für das Ziel, ein CDN-Limit oder den
+  Transport des Adapters.
 
 `PageSummary.requestCount` zählt wie bisher nur die initiale Phase, der neue Diagnosezähler beide
 Phasen. Gespeicherte Anfrage-Evidenz ist im Adapter-Modus durch das Anfragebudget begrenzt

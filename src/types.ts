@@ -44,6 +44,21 @@ export interface LoadDiagnostic {
   status?: number;
   limit?: 'requests' | 'response-bytes' | 'total-bytes' | 'redirects';
   skippedReason?: SkipReason;
+  /**
+   * Adapter scans only, on timeouts: whether the request was still waiting for an adapter slot
+   * or the adapter was fetching it. The two have separate budgets. Since schema 1.4.0.
+   */
+  stage?: 'queued' | 'fetching';
+}
+
+/** Where the time of one page capture went. Durations in milliseconds. Since schema 1.4.0. */
+export interface CaptureTiming {
+  /** From navigation start until the load event. */
+  loadMs: number;
+  /** From the load event until the network was idle, or the wait gave up. */
+  networkIdleMs: number;
+  /** Adapter scans only: most requests waiting for an adapter slot at the same time. */
+  peakQueued?: number;
 }
 
 export interface LoadDiagnostics {
@@ -71,6 +86,7 @@ export interface LoadDiagnostics {
   issueCount: number;
   dropped: number;
   issues: LoadDiagnostic[];
+  timing?: CaptureTiming;
 }
 
 export type ObservationKind =

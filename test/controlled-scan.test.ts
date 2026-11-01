@@ -215,6 +215,32 @@ describe('controlled capture', () => {
     );
   });
 
+  it('says where the time went: load, network idle, queue peak and timeout stage', async () => {
+    const result = await scan(origin, {
+      ...settings,
+      captureTimeoutMs: 1_500,
+      networkLimits: { concurrency: 1 },
+      networkAdapter: async ({ url, signal }) => {
+        if (url === `${origin}/`) {
+          return html('<script>for (let i = 0; i < 4; i++) fetch("/slow" + i)</script>');
+        }
+        await delay(10_000, undefined, { signal });
+        return { status: 200, body: '' };
+      },
+    });
+    const diagnostics = result.pages[0]?.capture?.diagnostics;
+    expect(diagnostics?.timing).toMatchObject({
+      loadMs: expect.any(Number),
+      networkIdleMs: expect.any(Number),
+    });
+    expect(diagnostics?.timing?.peakQueued).toBeGreaterThanOrEqual(3);
+    const stages = diagnostics?.issues
+      .filter((issue) => issue.kind === 'timeout')
+      .map((issue) => issue.stage);
+    expect(stages).toContain('fetching');
+    expect(stages).toContain('queued');
+  });
+
   it('bounds streamed response bytes and cancels the adapter signal', async () => {
     let signal: AbortSignal | undefined;
     let returned = false;

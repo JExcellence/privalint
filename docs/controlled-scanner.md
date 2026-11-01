@@ -116,6 +116,14 @@ and limit name. They are technical observations, not findings.
 - `issueCount`: all technical issues, including non-request waits/protocol denials. One request
   can have an HTTP error response and a later browser failure; do not use issueCount as failed count.
 - `issues`: at most `maxDiagnostics` entries; `dropped` counts omitted details, not requests.
+  A `timeout` issue from an adapter scan carries `stage`: `queued` if the request was still
+  waiting for an adapter slot, `fetching` if the adapter was working on it. The two have separate
+  budgets (`captureTimeoutMs` versus `networkLimits.requestTimeoutMs`).
+- `timing`: where the time of the capture went, in milliseconds. `loadMs` runs from navigation start
+  to the load event, `networkIdleMs` from there until the network was idle or the wait gave up.
+  Adapter scans add `peakQueued`, the most requests that waited for an adapter slot at once. Many
+  `queued` timeouts with a high `peakQueued` point to adapter concurrency; `fetching` timeouts
+  point to the target, a CDN rate limit or the adapter's transport.
 
 Legacy `PageSummary.requestCount` counts initial-phase requests. It does not include rejection;
 use `capture.diagnostics.requests` for the combined count. Evidence arrays may be bounded while

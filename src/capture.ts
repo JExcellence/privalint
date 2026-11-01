@@ -85,10 +85,13 @@ export async function capturePage(
         diagnostics.cancelledByPage(cancelled),
       );
     }
+    const navigationStart = performance.now();
     const response = await page.goto(url, {
       waitUntil: 'load',
       timeout: options.timeoutMs ?? DEFAULTS.timeoutMs,
     });
+    const loaded = performance.now();
+    diagnostics.timing.loadMs = Math.round(loaded - navigationStart);
     snapshot.finalUrl = page.url();
     snapshot.status = response?.status() ?? null;
     await page
@@ -96,6 +99,7 @@ export async function capturePage(
         timeout: options.timeoutMs ?? DEFAULTS.timeoutMs,
       })
       .catch(() => diagnostics.add('timeout', page.url()));
+    diagnostics.timing.networkIdleMs = Math.round(performance.now() - loaded);
     await page.waitForTimeout(options.settleMs ?? DEFAULTS.settleMs);
     // A script may have redirected while the page settled; links and rules belong to where it went.
     snapshot.finalUrl = page.url();
