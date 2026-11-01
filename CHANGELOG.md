@@ -43,6 +43,13 @@ All notable changes are listed here. The format follows
   #84)
 - Trackers are recognised by their localStorage and sessionStorage key names too, before consent
   and after a refusal. Only names are read, never values (#80)
+- New rule `banner-legal-links` (warning): a banner that blocks the page (modal, half the viewport
+  or no scrolling) and doesn't link the privacy policy or the Impressum (#89)
+- New rule `https-transport`: start page over plain HTTP (error), `http://` without a redirect to
+  HTTPS (warning), no HSTS (info). Native scans only; adapter and offline scans skip it by design
+  with `transport-not-checked` (#90)
+- New rule `form-privacy-notice` (info): forms with an email, phone or password field and no
+  privacy-policy link next to them, while the page links it elsewhere (#91)
 
 ### Changed
 
