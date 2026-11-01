@@ -106,6 +106,21 @@ export function crawlTarget(href: string, siteUrl: URL): string | undefined {
     return undefined;
   }
   url.hash = '';
-  url.search = '';
+  url.search = routingQuery(url);
   return url.href;
+}
+
+/**
+ * Query parameters that select the page on sites without pretty URLs, such as WordPress's
+ * `/?page_id=2` or `/index.php?id=7`. Everything else (tracking, sorting, sessions) is dropped.
+ */
+const ROUTING_PARAMS = new Set(['page_id', 'p', 'id', 'cat', 'page', 'lang']);
+
+/** Keeps routing parameters on `/` and `*.php` only, sorted so one page isn't queued twice. */
+function routingQuery(url: URL): string {
+  if (url.pathname !== '/' && !url.pathname.endsWith('.php')) return '';
+  const kept = [...url.searchParams]
+    .filter(([name]) => ROUTING_PARAMS.has(name))
+    .sort(([a], [b]) => a.localeCompare(b));
+  return kept.length === 0 ? '' : `?${new URLSearchParams(kept)}`;
 }

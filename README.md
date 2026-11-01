@@ -235,8 +235,10 @@ Going further:
    and checks that the settings can be reopened.
 5. Each rule looks at those snapshots and reports findings with evidence and a suggested fix.
 6. With `--max-pages`, links to the same site are followed breadth-first. Query strings are
-   dropped, pages are deduplicated after redirects, and pages that fail to load (downloads,
-   timeouts) are listed but don't stop the crawl.
+   dropped, except the parameters that select a page on `/` and `*.php` (`page_id`, `p`, `id`,
+   `cat`, `page`, `lang`, as on WordPress without pretty permalinks). Pages are deduplicated after
+   redirects, and pages that fail to load (downloads, timeouts) are listed but don't stop the
+   crawl.
    "Same site" means the same registrable domain from the
    [public suffix list](https://publicsuffix.org/), so `shop.example.co.uk` belongs to
    `example.co.uk`, but `a.github.io` and `b.github.io` are different sites. IP addresses and
