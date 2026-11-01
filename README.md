@@ -168,13 +168,13 @@ npx playwright install chromium
 `--region` selects the references and severity profile used by the tool. It does not determine
 which law applies to a website, and findings are not legal determinations:
 
-| Region         | Cookies and tracking                 | Imprint                               | Changes                                                                          |
-| -------------- | ------------------------------------ | ------------------------------------- | -------------------------------------------------------------------------------- |
-| `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                               | none                                                                             |
-| `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                 | none                                                                             |
-| `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce) | `pre-consent-trackers`, `third-party-embeds` and `impressum-link` drop one level |
-| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                          | none                                                                             |
-| `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC           | none                                                                             |
+| Region         | Cookies and tracking                 | Imprint                               | Changes                                                     |
+| -------------- | ------------------------------------ | ------------------------------------- | ----------------------------------------------------------- |
+| `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                               | none                                                        |
+| `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                 | none                                                        |
+| `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce) | trackers, embeds, fonts and `impressum-link` drop one level |
+| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                          | none                                                        |
+| `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC           | none                                                        |
 
 Every finding lists its legal basis for the chosen country. Trackers that run after an explicit
 "reject" stay an error everywhere, Switzerland included (Art. 30 Abs. 2 lit. b DSG). If a Swiss

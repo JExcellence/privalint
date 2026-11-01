@@ -26,13 +26,13 @@ npx privalint https://ihre-seite.de --lang de
 Mit `--region` wählen Sie das Referenz- und Einstufungsprofil des Tools. Das Profil bestimmt
 nicht, welches Recht für eine Website anwendbar ist. Befunde sind keine rechtliche Beurteilung.
 
-| Region          | Cookies und Tracking                      | Impressum                                       | Besonderheit                                          |
-| --------------- | ----------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
-| `de` (Standard) | Opt-in, § 25 TDDDG                        | § 5 DDG                                         | –                                                     |
-| `at`            | Opt-in, § 165 Abs. 3 TKG 2021             | § 5 ECG, § 25 MedienG                           | –                                                     |
-| `ch`            | Opt-out, Art. 45c FMG                     | Art. 3 Abs. 1 lit. s UWG (bei Online-Angeboten) | Tracker, Einbindungen und Impressum eine Stufe milder |
-| `hu`            | Opt-in, Eht. 155. § (4)                   | Ekertv. 4. §                                    | –                                                     |
-| `eu`            | Opt-in, Art. 5 Abs. 3 ePrivacy-Richtlinie | Art. 5 E-Commerce-Richtlinie                    | –                                                     |
+| Region          | Cookies und Tracking                      | Impressum                                       | Besonderheit                                                     |
+| --------------- | ----------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
+| `de` (Standard) | Opt-in, § 25 TDDDG                        | § 5 DDG                                         | –                                                                |
+| `at`            | Opt-in, § 165 Abs. 3 TKG 2021             | § 5 ECG, § 25 MedienG                           | –                                                                |
+| `ch`            | Opt-out, Art. 45c FMG                     | Art. 3 Abs. 1 lit. s UWG (bei Online-Angeboten) | Tracker, Einbindungen, Schriften und Impressum eine Stufe milder |
+| `hu`            | Opt-in, Eht. 155. § (4)                   | Ekertv. 4. §                                    | –                                                                |
+| `eu`            | Opt-in, Art. 5 Abs. 3 ePrivacy-Richtlinie | Art. 5 E-Commerce-Richtlinie                    | –                                                                |
 
 Tracker, die nach einem ausdrücklichen „Ablehnen“ weiterlaufen, bleiben überall ein Fehler, auch in
 der Schweiz (Art. 30 Abs. 2 lit. b DSG). Richtet sich eine Schweizer Website auch an Besucher aus

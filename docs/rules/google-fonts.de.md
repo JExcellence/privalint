@@ -26,6 +26,9 @@ Das Urteil löste eine Abmahnwelle gegen deutsche Website-Betreiber aus.
 - Art. 6 Abs. 1 DSGVO
 - LG München I, 20.01.2022, Az. 3 O 17493/20
 
+Mit `--region ch` sinkt der Befund um eine Stufe: Das Münchner Urteil ist deutsches Recht, und die
+Schweiz behandelt solche Drittanfragen nach Art. 6 DSG wie Einbindungen.
+
 ## Lösung
 
 Hosten Sie die Schriftdateien selbst:

@@ -141,13 +141,17 @@ export function applyRegion(findings: readonly Finding[], region: Region): Findi
 /**
  * Switzerland uses an opt-out model for cookies and tracking (Art. 45c FMG) and
  * requires an imprint only for offers in electronic commerce, so those findings
- * drop one level there. Ignoring an explicit refusal stays as serious as anywhere.
+ * drop one level there. Fonts from Google or Adobe are a third-party request like an
+ * embed, and the Munich Google Fonts ruling is German law, so they drop too. Ignoring
+ * an explicit refusal stays as serious as anywhere.
  */
 const SOFTER_IN_SWITZERLAND = new Set([
   'pre-consent-trackers',
   'consent-banner-missing',
   'consent-settings-link',
   'third-party-embeds',
+  'google-fonts',
+  'adobe-fonts',
   'impressum-link',
 ]);
 
