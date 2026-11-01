@@ -191,6 +191,22 @@ describe('consent check', () => {
     ]);
   });
 
+  it('does not mistake accept and reject buttons outside a banner for consent', async () => {
+    const result = await scan(`${origin}/consent/not-a-banner.html`, options);
+    expect(result.consent).toMatchObject({ bannerFound: false });
+    expect(result.findings).toEqual([]);
+  });
+
+  it('finds the reject button by label when a known selector is out of date', async () => {
+    const result = await scan(`${origin}/consent/stale-reject-selector.html`, options);
+    expect(result.consent).toMatchObject({
+      cmp: 'OneTrust',
+      rejected: true,
+      rejectLabel: 'Alle ablehnen',
+    });
+    expect(result.findings).toEqual([]);
+  });
+
   it('passes a banner whose reject button is respected', async () => {
     const result = await scan(`${origin}/consent/good.html`, options);
     expect(result.consent).toMatchObject({
@@ -231,6 +247,49 @@ describe('consent check', () => {
         saveLabel: 'Auswahl speichern',
         switchedOff: 2,
         afterSaveComplete: true,
+      });
+      expect(result.findings).toEqual([]);
+    });
+
+    it('saves with "Elfogadom a kiválasztottakat" (telekom.hu)', async () => {
+      const result = await scan(`${origin}/consent/settings-hu-selected.html`, {
+        ...settingsOptions,
+        region: 'hu',
+      });
+      expect(result.consent?.settings).toMatchObject({
+        outcome: 'saved',
+        openLabel: 'Testreszabás',
+        saveLabel: 'Elfogadom a kiválasztottakat',
+        switchedOff: 2,
+      });
+      expect(result.findings).toEqual([]);
+    });
+
+    it('picks the narrowest level when categories are radio buttons (otpbank.hu)', async () => {
+      const result = await scan(`${origin}/consent/settings-radio-levels.html`, {
+        ...settingsOptions,
+        region: 'hu',
+      });
+      expect(result.consent?.settings).toMatchObject({
+        outcome: 'saved',
+        saveLabel: 'Elfogadom a fenti sütibeállítások használatát',
+        switchedOff: 1,
+      });
+      expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
+    });
+
+    it('leaves checkboxes outside the consent layer alone', async () => {
+      const result = await scan(`${origin}/consent/settings-with-login.html`, settingsOptions);
+      expect(result.consent?.settings).toMatchObject({ outcome: 'saved', switchedOff: 2 });
+      expect(result.findings).toEqual([]);
+    });
+
+    it('never saves with a button that confirms all, whatever its verb', async () => {
+      const result = await scan(`${origin}/consent/settings-confirm-all.html`, settingsOptions);
+      expect(result.consent?.settings).toMatchObject({
+        outcome: 'saved',
+        saveLabel: 'Auswahl bestätigen',
+        switchedOff: 2,
       });
       expect(result.findings).toEqual([]);
     });

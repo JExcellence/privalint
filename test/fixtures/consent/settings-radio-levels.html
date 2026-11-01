@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <title>Consent levels as radio buttons (as on otpbank.hu, 2026-11-01)</title>
+    <style>
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <h1>Consent levels as radio buttons</h1>
+    <footer>
+      <a href="/clean/impressum.html">Impresszum</a>
+      <a href="/clean/datenschutz.html">Adatvédelem</a>
+      <a href="#" id="reopen">Süti beállítások</a>
+    </footer>
+    <div id="banner" role="dialog" aria-label="Sütik">
+      <p>Weboldalunk sütiket használ.</p>
+      <button id="accept">Elfogadom a javasolt sütibeállításokat</button>
+      <button id="open">Süti beállítások módosítása</button>
+      <div id="layer" hidden>
+        <fieldset>
+          <legend>Kérjük, engedélyezze az Önnek megfelelő szintet</legend>
+          <label><input class="sr-only" type="radio" name="level" value="1" />Legszűkebb szint: Alap működés</label>
+          <label><input class="sr-only" type="radio" name="level" value="2" />Közepes szint: Statisztikai sütik</label>
+          <label><input class="sr-only" type="radio" name="level" value="3" checked />Legbővebb szint: Statisztikai és reklám célú sütik</label>
+        </fieldset>
+        <button id="save">Elfogadom a fenti sütibeállítások használatát</button>
+      </div>
+    </div>
+    <script>
+      const banner = document.getElementById('banner');
+      const level = Number(localStorage.getItem('level') ?? 0);
+      const load = (src) => {
+        const tag = document.createElement('script');
+        tag.src = src;
+        document.head.append(tag);
+      };
+      if (level >= 2) load('https://www.googletagmanager.com/gtag/js?id=G-LEVELS');
+      if (level >= 3) load('https://connect.facebook.net/en_US/fbevents.js');
+      if (level) banner.remove();
+      document.getElementById('accept').onclick = () => {
+        localStorage.setItem('level', '3');
+        location.reload();
+      };
+      document.getElementById('open').onclick = () => {
+        document.getElementById('layer').hidden = false;
+      };
+      document.getElementById('save').onclick = () => {
+        localStorage.setItem('level', document.querySelector('[name="level"]:checked').value);
+        banner.remove();
+      };
+    </script>
+  </body>
+</html>

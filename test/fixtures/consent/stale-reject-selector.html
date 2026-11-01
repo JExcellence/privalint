@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Known consent manager with a renamed reject button</title>
+  </head>
+  <body>
+    <h1>Known consent manager with a renamed reject button</h1>
+    <footer>
+      <a href="/clean/impressum.html">Impressum</a>
+      <a href="/clean/datenschutz.html">Datenschutz</a>
+      <a class="ot-sdk-show-settings" href="#">Cookie-Einstellungen</a>
+    </footer>
+    <div id="onetrust-banner-sdk" role="dialog" aria-label="Cookie-Hinweis">
+      <p>Wir verwenden Cookies, um die Nutzung der Website zu analysieren.</p>
+      <button id="onetrust-accept-btn-handler">Alle akzeptieren</button>
+      <button id="onetrust-reject-v2">Alle ablehnen</button>
+    </div>
+    <script>
+      const banner = document.getElementById('onetrust-banner-sdk');
+      const choice = localStorage.getItem('consent');
+      if (choice === 'accepted') {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.googletagmanager.com/gtag/js?id=G-STALE';
+        document.head.append(tag);
+      }
+      if (choice) banner.remove();
+      document.getElementById('onetrust-accept-btn-handler').onclick = () => {
+        localStorage.setItem('consent', 'accepted');
+        banner.remove();
+      };
+      document.getElementById('onetrust-reject-v2').onclick = () => {
+        localStorage.setItem('consent', 'rejected');
+        banner.remove();
+      };
+    </script>
+  </body>
+</html>
