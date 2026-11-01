@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shadow-root banner, no consent words outside it</title>
+  </head>
+  <body>
+    <h1>Shadow-root banner, no consent words outside it</h1>
+    <footer>
+      <a href="/clean/impressum.html">Impressum</a>
+    </footer>
+    <consent-banner></consent-banner>
+    <script>
+      const stored = localStorage.getItem('consent');
+      const choice = stored ? JSON.parse(stored) : undefined;
+      const load = (src) => {
+        const tag = document.createElement('script');
+        tag.src = src;
+        document.head.append(tag);
+      };
+      if (choice?.statistics) load('https://www.googletagmanager.com/gtag/js?id=G-SHADOW');
+      if (choice?.marketing) load('https://connect.facebook.net/en_US/fbevents.js');
+      const store = (value) => localStorage.setItem('consent', JSON.stringify(value));
+
+      // The settings button is its own component with its own shadow root, nested in the banner's.
+      customElements.define(
+        'settings-button',
+        class extends HTMLElement {
+          connectedCallback() {
+            const root = this.attachShadow({ mode: 'open' });
+            root.innerHTML = '<button>Einstellungen</button>';
+            root.querySelector('button').onclick = () =>
+              this.dispatchEvent(new CustomEvent('open-settings', { bubbles: true, composed: true }));
+          }
+        },
+      );
+      customElements.define(
+        'consent-banner',
+        class extends HTMLElement {
+          connectedCallback() {
+            if (choice) return;
+            const root = this.attachShadow({ mode: 'open' });
+            root.innerHTML = `
+              <style>
+                .box { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; }
+                [hidden] { display: none; }
+              </style>
+              <div class="box">
+                <p>Wir verwenden Cookies, um die Nutzung der Website zu analysieren.</p>
+                <button id="accept">Alle akzeptieren</button>
+                <button id="reject">Alle ablehnen</button>
+                <settings-button></settings-button>
+                <div id="layer" hidden>
+                  <label><input type="checkbox" name="statistics" checked /> Statistik</label>
+                  <label><input type="checkbox" name="marketing" checked /> Marketing</label>
+                  <button id="save">Auswahl speichern</button>
+                </div>
+              </div>`;
+            const box = root.querySelector('.box');
+            root.getElementById('accept').onclick = () => {
+              store({ statistics: true, marketing: true });
+              location.reload();
+            };
+            root.getElementById('reject').onclick = () => {
+              store({ statistics: false, marketing: false });
+              box.remove();
+            };
+            root.addEventListener('open-settings', () => {
+              root.getElementById('layer').hidden = false;
+            });
+            root.getElementById('save').onclick = () => {
+              store({
+                statistics: root.querySelector('[name="statistics"]').checked,
+                marketing: root.querySelector('[name="marketing"]').checked,
+              });
+              box.remove();
+            };
+          }
+        },
+      );
+    </script>
+  </body>
+</html>

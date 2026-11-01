@@ -224,6 +224,37 @@ describe('consent check', () => {
     expect(result.consent?.bannerWaitMs).toBeLessThan(2_000);
   });
 
+  it('handles a self-built banner inside an open shadow root', async () => {
+    const result = await scan(`${origin}/consent/shadow-banner.html`, {
+      ...options,
+      settingsCheck: true,
+    });
+    expect(result.consent).toMatchObject({
+      bannerFound: true,
+      rejected: true,
+      acceptLabel: 'Alle akzeptieren',
+      rejectLabel: 'Alle ablehnen',
+      settings: {
+        outcome: 'saved',
+        openLabel: 'Einstellungen',
+        saveLabel: 'Auswahl speichern',
+        switchedOff: 2,
+      },
+    });
+    expect(result.findings).toEqual([]);
+
+    // The words that tell a consent banner from other buttons are only inside the shadow root.
+    const hidden = await scan(`${origin}/consent/shadow-banner-only.html`, {
+      ...options,
+      settingsCheck: true,
+    });
+    expect(hidden.consent).toMatchObject({
+      bannerFound: true,
+      rejected: true,
+      settings: { outcome: 'saved', switchedOff: 2 },
+    });
+  });
+
   it('reads the IAB TCF API after rejecting too', async () => {
     const clean = await scan(`${origin}/consent/settings-tcf.html`, options);
     expect(clean.consent).toMatchObject({

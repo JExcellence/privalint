@@ -433,49 +433,24 @@ async function findSettingsEntry(page: Page): Promise<SettingsEntry | undefined>
   return undefined;
 }
 
-/** Undefined without an accept button; `{}` when there is one but nothing opens settings. */
+/**
+ * Undefined without an accept button; `{}` when there is one but nothing opens settings. The
+ * settings control closest to the accept button wins, across shadow roots too (see nearestTo).
+ */
 async function nearestOpenControl(frame: Frame): Promise<SettingsEntry | undefined> {
   const clickable = frame.locator(CLICKABLE);
-  const accept = await firstVisible(
+  const accept = await firstInConsentLayer(
     clickable.filter({ hasText: ACCEPT_LABEL }).filter({ hasNotText: REJECT_LABEL }),
   );
   if (accept === undefined) return undefined;
-  const handle = await accept.elementHandle({ timeout: 1_000 }).catch(() => null);
-  if (handle === null) return {};
-  const index = await clickable
-    .evaluateAll(
-      (elements, [acceptElement, open, accepting, rejecting]) => {
-        const patterns = [open, accepting, rejecting].map((source) => new RegExp(source, 'i'));
-        const [isOpen, isAccept, isReject] = patterns as [RegExp, RegExp, RegExp];
-        const depth = (node: Node | null) => {
-          let levels = 0;
-          for (let current = node; current !== null; current = current.parentNode) levels++;
-          return levels;
-        };
-        let best = -1;
-        let bestDepth = 0;
-        (elements as HTMLElement[]).forEach((element, position) => {
-          const name = element.innerText ?? '';
-          if (!isOpen.test(name) || isAccept.test(name) || isReject.test(name)) return;
-          if (element.getClientRects().length === 0) return;
-          // Depth of the deepest element containing both: higher means closer to the banner.
-          let shared: Node | null = element;
-          while (shared !== null && !shared.contains(acceptElement as Node)) {
-            shared = shared.parentNode;
-          }
-          const sharedDepth = depth(shared);
-          if (shared !== document.body && sharedDepth > bestDepth) {
-            best = position;
-            bestDepth = sharedDepth;
-          }
-        });
-        return best;
-      },
-      [handle, OPEN_SETTINGS_LABEL.source, ACCEPT_LABEL.source, REJECT_LABEL.source] as const,
-    )
-    .catch(() => -1);
-  await handle.dispose();
-  return index < 0 ? {} : { open: clickable.nth(index) };
+  const open = await nearestTo(
+    accept,
+    clickable
+      .filter({ hasText: OPEN_SETTINGS_LABEL })
+      .filter({ hasNotText: ACCEPT_LABEL })
+      .filter({ hasNotText: REJECT_LABEL }),
+  );
+  return open === undefined ? {} : { open };
 }
 
 async function findSaveControl(page: Page, cmp?: CmpSelectors): Promise<Locator | undefined> {
