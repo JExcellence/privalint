@@ -35,8 +35,15 @@ All notable changes are listed here. The format follows
   one more settle period. `consent.bannerWaitMs` says how long (#77)
 - With `--max-pages`, pages selected by a query parameter (`/?page_id=2`, `/index.php?id=7`) are
   crawled as separate pages (#75)
+- New rule `consent-banner-missing` (warning): trackers run on the start page and no consent
+  banner was found at all. New observation kind `banner-search` (#82)
 
 ### Changed
+
+- `google-fonts` and `adobe-fonts` drop one level with `--region ch`, like the other third-party
+  rules (#85)
+- `impressum-link` notes vague legal links ("Rechtliche Hinweise", "Rechtliches", "Legal", "Jogi
+  tudnivalók") as info instead of warning that there is no Impressum (#72)
 
 - SARIF declares the label-based rules (`reject-option`, `consent-settings-link`,
   `impressum-link`, `privacy-policy-link`) with precision `medium` (#76)
