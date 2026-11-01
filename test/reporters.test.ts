@@ -53,6 +53,33 @@ describe('markdown', () => {
     expect(output).toContain('a \\| b');
   });
 
+  it('lists the fix of every vendor, once per fix text', () => {
+    const tracker = (subject: string) =>
+      finding({
+        ruleId: 'pre-consent-trackers',
+        subject,
+        fix: `Only load ${subject} after opt-in.`,
+      });
+    const output = formatMarkdown(
+      result([tracker('Google Analytics'), tracker('Hotjar'), tracker('Hotjar')]),
+    );
+    expect(output).toContain('Only load Google Analytics after opt-in.');
+    expect(output.match(/Only load Hotjar after opt-in\./g)).toHaveLength(1);
+  });
+
+  it('shows the first evidence items without breaking the table', () => {
+    const evidence = ['https://a.example/x?a|b', 'cookie _ga', 'third', 'fourth'];
+    const output = formatMarkdown(result([finding({ evidence })]));
+    const row = output.split('\n').find((line) => line.includes('Fonts are loaded'));
+    expect(row).toContain('<br>`https://a.example/x?a\\|b`<br>`cookie _ga` (+2)');
+    expect(row?.split(/(?<!\\)\|/)).toHaveLength(5);
+  });
+
+  it('cannot mention GitHub users', () => {
+    const output = formatMarkdown(result([finding({ message: 'see @octocat' })]));
+    expect(output).toContain('see \\@octocat');
+  });
+
   it('keeps Markdown in page URLs from rendering', () => {
     const pageUrl = 'https://example.de/x?![pwn](https://evil.example/p.png)';
     const output = formatMarkdown(result([finding({ pageUrl })]));

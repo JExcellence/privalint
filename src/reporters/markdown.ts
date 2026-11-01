@@ -38,7 +38,7 @@ export function formatMarkdown(result: ScanResult): string {
         ? ` [${m.policy(finding.policy.allowed, finding.policy.originalSeverity)}]`
         : '';
       lines.push(
-        `| ${ICONS[finding.severity]} | \`${finding.ruleId}\` | ${escapeText(finding.message + policy)} |`,
+        `| ${ICONS[finding.severity]} | \`${finding.ruleId}\` | ${escapeText(finding.message + policy)}${evidenceCell(finding.evidence)} |`,
       );
     }
   }
@@ -51,12 +51,14 @@ export function formatMarkdown(result: ScanResult): string {
     }
   }
 
+  // Keyed by rule and fix text: the tracker rules give each vendor its own fix, and the same
+  // fix found on several pages is listed once.
   const fixes = new Map(
-    result.findings.filter((f) => f.fix !== undefined).map((f) => [f.ruleId, f]),
+    result.findings.filter((f) => f.fix !== undefined).map((f) => [`${f.ruleId}\n${f.fix}`, f]),
   );
   if (fixes.size > 0) {
     lines.push('', `<details><summary>${m.howToFix}</summary>`, '');
-    for (const [ruleId, { fix, references }] of fixes) {
+    for (const { ruleId, fix, references } of fixes.values()) {
       const legal = references?.length ? ` (${m.legalBasis} ${references.join('; ')})` : '';
       lines.push(`- **${ruleId}**: ${escapeText(`${fix ?? ''}${legal}`)}`);
     }
@@ -69,5 +71,22 @@ export function formatMarkdown(result: ScanResult): string {
 
 const code = (text: string) => `\`${text.replaceAll('`', '%60').replaceAll('\n', ' ')}\``;
 
+const EVIDENCE_SHOWN = 2;
+const EVIDENCE_LENGTH = 120;
+
+/**
+ * The first evidence items under a finding, so a PR reader sees which request or cookie to fix.
+ * GitHub tables end a cell at "|" even inside code spans, unless it is escaped.
+ */
+function evidenceCell(evidence: readonly string[]): string {
+  const shown = evidence.slice(0, EVIDENCE_SHOWN).map((item) => {
+    const short = item.length > EVIDENCE_LENGTH ? `${item.slice(0, EVIDENCE_LENGTH - 1)}…` : item;
+    return `<br>${code(short).replaceAll('|', '\\|')}`;
+  });
+  const rest = evidence.length - EVIDENCE_SHOWN;
+  return shown.join('') + (rest > 0 ? ` (+${rest})` : '');
+}
+
+// "@" is escaped so a page error or vendor name can't mention a GitHub user in a PR comment.
 const escapeText = (text: string) =>
-  text.replace(/[\\`*_[\]()!<>|#~]/g, '\\$&').replaceAll('\n', ' ');
+  text.replace(/[\\`*_[\]()!<>|#~@]/g, '\\$&').replaceAll('\n', ' ');
