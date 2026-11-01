@@ -100,6 +100,22 @@ describe('sarif', () => {
     }
   });
 
+  it('marks label-based rules as medium precision and host matches as high', () => {
+    const precision = (id: string) =>
+      run.tool.driver.rules.find((rule: { id: string }) => rule.id === id)?.properties.precision;
+    expect(precision('reject-option')).toBe('medium');
+    expect(precision('impressum-link')).toBe('medium');
+    expect(precision('pre-consent-trackers')).toBe('high');
+    expect(precision('google-fonts')).toBe('high');
+  });
+
+  it('keeps non-ASCII page paths apart from their underscore lookalikes', () => {
+    const uri = (pageUrl: string) =>
+      JSON.parse(formatSarif(result([finding({ pageUrl })]))).runs[0].results[0].locations[0]
+        .physicalLocation.artifactLocation.uri;
+    expect(uri('https://example.de/über')).not.toBe(uri('https://example.de/_ber'));
+  });
+
   it('maps severities and pages to stable locations', () => {
     expect(run.results.map((r: { level: string }) => r.level)).toEqual(['error', 'note']);
     expect(run.results[0].locations[0].physicalLocation.artifactLocation.uri).toBe(

@@ -38,7 +38,7 @@ export function formatSarif(result: ScanResult): string {
                 markdown: `${rule.description}\n\n**References:** ${rule.references.join('; ')}`,
               },
               helpUri: ruleDocsUrl(rule.id),
-              properties: { tags: ['privacy', 'gdpr'], precision: 'high' },
+              properties: { tags: ['privacy', 'gdpr'], precision: precisionOf(rule.id) },
             })),
           },
         },
@@ -121,6 +121,20 @@ function toResult(finding: Finding, redacted: boolean) {
         }),
   };
 }
+
+/**
+ * Rules that decide from button and link labels can be wrong on unusual markup; code scanning
+ * ranks and filters alerts by precision. Host, cookie and API matches stay `high`.
+ */
+const LABEL_RULES = new Set([
+  'reject-option',
+  'consent-settings-link',
+  'impressum-link',
+  'privacy-policy-link',
+]);
+
+const precisionOf = (ruleId: string): 'high' | 'medium' =>
+  LABEL_RULES.has(ruleId) ? 'medium' : 'high';
 
 function pseudoPath(pageUrl: string): string {
   const url = new URL(pageUrl);
