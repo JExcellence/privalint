@@ -740,6 +740,25 @@
             "tcf": {
               "$ref": "#/$defs/tcf"
             },
+            "legitimateInterest": {
+              "type": "object",
+              "properties": {
+                "openLabel": {
+                  "type": "string"
+                },
+                "objectAllLabel": {
+                  "type": "string"
+                },
+                "switchedOff": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "openLabel",
+                "switchedOff"
+              ]
+            },
             "error": {
               "type": "string"
             }

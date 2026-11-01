@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>TCF banner with a legitimate-interest tab</title>
+    <style>
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <h1>TCF banner with a legitimate-interest tab</h1>
+    <footer>
+      <a href="/clean/impressum.html">Impressum</a>
+      <a href="/clean/datenschutz.html">Datenschutz</a>
+      <button type="button">Cookie-Einstellungen</button>
+    </footer>
+    <div id="banner" role="dialog" aria-label="Cookie-Hinweis">
+      <p>Wir und unsere Partner verwenden Cookies. <a href="/clean/datenschutz.html">Datenschutz</a></p>
+      <button id="accept">Alle akzeptieren</button>
+      <button id="reject">Alle ablehnen</button>
+      <button id="open">Einstellungen</button>
+      <div id="layer" hidden>
+        <div role="tablist">
+          <button role="tab" id="tab-purposes" aria-selected="true">Zwecke</button>
+          <button role="tab" id="tab-li" aria-selected="false">Berechtigtes Interesse</button>
+        </div>
+        <div id="panel-purposes" role="tabpanel">
+          <label><input type="checkbox" name="purpose-1" checked /> Informationen auf einem Gerät speichern</label>
+        </div>
+        <div id="panel-li" role="tabpanel" hidden>
+          <label><input type="checkbox" name="li-2" checked /> Begrenzte Daten zur Auswahl der Werbung</label>
+          <label><input type="checkbox" name="li-7" checked /> Messung der Werbeleistung</label>
+          <!-- ?object=all adds the "object to all" button; without it only the switches exist. -->
+        </div>
+        <button id="save">Auswahl speichern</button>
+      </div>
+    </div>
+    <script>
+      const objectAll = new URLSearchParams(location.search).get('object') === 'all';
+      const banner = document.getElementById('banner');
+      const stored = localStorage.getItem('tcf');
+      const state = stored ? JSON.parse(stored) : undefined;
+      if (state) banner.remove();
+      // Minimal IAB TCF v2 API over the stored choice.
+      window.__tcfapi = (command, version, callback) => {
+        if (command !== 'getTCData') return;
+        const on = (ids) => Object.fromEntries(ids.map((id) => [id, true]));
+        callback(
+          {
+            tcString: 'stub',
+            gdprApplies: true,
+            purpose: {
+              consents: state ? on(state.consents) : {},
+              legitimateInterests: state ? on(state.li) : {},
+            },
+            vendor: { consents: {}, legitimateInterests: {} },
+          },
+          true,
+        );
+      };
+      const panelLi = document.getElementById('panel-li');
+      if (objectAll) {
+        const button = document.createElement('button');
+        button.id = 'object-all';
+        button.textContent = 'Allen widersprechen';
+        button.onclick = () => panelLi.querySelectorAll('input').forEach((input) => (input.checked = false));
+        panelLi.append(button);
+      }
+      document.getElementById('tab-li').onclick = () => {
+        panelLi.hidden = false;
+        document.getElementById('panel-purposes').hidden = true;
+      };
+      document.getElementById('tab-purposes').onclick = () => {
+        panelLi.hidden = true;
+        document.getElementById('panel-purposes').hidden = false;
+      };
+      const checked = (prefix) =>
+        [...document.querySelectorAll(`input[name^="${prefix}"]`)]
+          .filter((input) => input.checked)
+          .map((input) => Number(input.name.split('-')[1]));
+      const store = (value) => localStorage.setItem('tcf', JSON.stringify(value));
+      document.getElementById('accept').onclick = () => {
+        store({ consents: [1], li: [2, 7] });
+        location.reload();
+      };
+      document.getElementById('reject').onclick = () => {
+        // Like many TCF banners: reject withdraws consent but keeps legitimate interest.
+        store({ consents: [], li: [2, 7] });
+        banner.remove();
+      };
+      document.getElementById('open').onclick = () => {
+        document.getElementById('layer').hidden = false;
+      };
+      document.getElementById('save').onclick = () => {
+        store({ consents: checked('purpose'), li: checked('li') });
+        banner.remove();
+      };
+    </script>
+  </body>
+</html>

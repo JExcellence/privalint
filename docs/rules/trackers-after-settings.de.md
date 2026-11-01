@@ -22,10 +22,15 @@ Browser, damit die beim Ablehnen gespeicherte Wahl das Banner nicht verbirgt. Da
 2. schaltet jeden aktiven, umschaltbaren Kategorie-Schalter aus (Checkboxen und Elemente mit
    `role="switch"`; deaktivierte gehören zur notwendigen Kategorie und bleiben an). Es zählen nur
    Schalter in der Consent-Ebene; das Häkchen „Angemeldet bleiben“ eines Login-Formulars bleibt,
-3. klickt auf Speichern („Auswahl speichern“, „Speichern“, „Save“, …). Eine Schaltfläche für
+   und bei Bannern mit Stufen als Radio-Buttons wird die engste Stufe gewählt,
+3. öffnet einen Reiter „Berechtigtes Interesse“ / „Legitimate interest“, falls es einen gibt, und
+   widerspricht: über eine Schaltfläche „Allen widersprechen“ / „Object to all“, wenn vorhanden,
+   sonst durch Abschalten der Schalter im Reiter. Ein einfaches „Alle ablehnen“ wird dort nie
+   benutzt, weil es die Schaltfläche der ersten Ebene sein könnte,
+4. klickt auf Speichern („Auswahl speichern“, „Speichern“, „Save“, …). Eine Schaltfläche für
    alles, etwa „Alle akzeptieren“, „Alle bestätigen“ oder „Confirm all“, wird nie benutzt,
-4. wartet, bis das Netzwerk ruhig ist, lädt die Seite neu und wartet erneut,
-5. fragt, wenn die Seite die IAB-TCF-Schnittstelle (`__tcfapi`) hat, ab, was dort gespeichert ist.
+5. wartet, bis das Netzwerk ruhig ist, lädt die Seite neu und wartet erneut,
+6. fragt, wenn die Seite die IAB-TCF-Schnittstelle (`__tcfapi`) hat, ab, was dort gespeichert ist.
    Das liest nur; nichts wird angeklickt.
 
 Jede Anfrage und jedes Cookie seit dem Speichern wird mit der Tracker-Liste abgeglichen, mit
@@ -65,5 +70,5 @@ Alles abzuwählen ist eine Ablehnung wie die Ablehnen-Schaltfläche und muss gen
   Passt ein Selektor nicht, greift die Erkennung über die Beschriftung.
 - Schalter für einzelne Anbieter in zugeklappten Abschnitten bleiben unverändert; das Abwählen ihrer
   Kategorie soll sie mit abdecken. Bei TCF-Bannern zeigt die Abfrage der Schnittstelle, ob das
-  geklappt hat.
+  geklappt hat, auch für die Zwecke mit berechtigtem Interesse nach dem Widerspruch.
 - Die Prüfung lädt die Startseite ein weiteres Mal und lädt sie danach neu.

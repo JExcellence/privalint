@@ -271,6 +271,11 @@ export interface SettingsObservation {
   saveLabel?: string;
   /** How many checked category switches privalint turned off before saving. */
   switchedOff?: number;
+  /**
+   * The legitimate-interest tab of a TCF banner, if there was one: its label, the "object to all"
+   * button used, or how many of its switches were turned off. Since schema 1.4.0.
+   */
+  legitimateInterest?: { openLabel: string; objectAllLabel?: string; switchedOff: number };
   /** Requests made and cookies newly set after saving, including the reload. */
   afterSave?: { requests: RecordedRequest[]; cookies: RecordedCookie[]; storage?: StorageKey[] };
   /** True only if the observation window after saving completed without load issues. */

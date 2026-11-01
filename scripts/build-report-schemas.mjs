@@ -328,7 +328,15 @@ function definitions(version) {
                   saveLabel: string,
                   switchedOff: count,
                   afterSaveComplete: boolean,
-                  ...(timed ? { tcf: ref('tcf') } : {}),
+                  ...(timed
+                    ? {
+                        tcf: ref('tcf'),
+                        legitimateInterest: object(
+                          { openLabel: string, objectAllLabel: string, switchedOff: count },
+                          ['openLabel', 'switchedOff'],
+                        ),
+                      }
+                    : {}),
                   error: string,
                 },
                 ['outcome', 'reason'],

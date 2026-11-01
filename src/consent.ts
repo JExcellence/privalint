@@ -192,6 +192,17 @@ const ALL_WORD = /\b(alle|alles|all|tout|tous|todo|todas|tutti|tutto)\b|összes|
 const NARROWEST_LEVEL =
   /notwendig|essenziell|erforderlich|nur technisch|necessary|essential|strictly|nécessaires|necesarias|necessari|noodzakelijk|legszűkebb|alap működés|csak (a )?(feltétlenül )?szükséges/i;
 
+/** A tab or section for purposes processed on the basis of legitimate interest (TCF banners). */
+const LEGITIMATE_INTEREST_TAB =
+  /berechtigte[nsr]?\s+interesse|legitimate\s+interest|intérêt\s+légitime|interés\s+legítimo|legittimo\s+interesse|gerechtvaardigd\s+belang|jogos\s+érdek/i;
+
+/**
+ * Objecting to every legitimate-interest purpose at once. Only objection wording counts: a plain
+ * "Alle ablehnen" could be the first layer's reject button, which closes the banner.
+ */
+const OBJECT_ALL =
+  /(allen?|alles)\s+widersprechen|widerspruch\s+(gegen\s+)?alle|object\s+to\s+all|s['’]opposer\s+à\s+tout|oponerse\s+a\s+todo|opporsi\s+a\s+tutt|bezwaar\s+tegen\s+alle|tiltakozom\s+mind|mindegyik(nek|et)\s+elutasít/i;
+
 /** Words that make an "all" label about the current selection, see isAcceptAll. */
 const SELECTION_WORD =
   /auswahl|einstellungen|präferenzen|selection|settings|preferences|choices|sélection|préférences|selección|preferencias|selezione|preferenze|selectie|voorkeuren|kiválaszt|beállítás/i;
@@ -316,6 +327,7 @@ export async function observeSettings(
       switchedOff += await switchOffOptional(frame);
       switchedOff += await selectNarrowestLevel(frame);
     }
+    const legitimateInterest = await objectToLegitimateInterest(page, options);
     const save = await findSaveControl(page, entry.cmp);
     if (save === undefined) {
       return { outcome: 'no-save-control', reason: 'no-save-control', openLabel, switchedOff };
@@ -343,6 +355,7 @@ export async function observeSettings(
       openLabel,
       saveLabel,
       switchedOff,
+      ...(legitimateInterest === undefined ? {} : { legitimateInterest }),
       afterSave: { requests: requests.slice(firstRequest), cookies, storage },
       ...(tcf === undefined ? {} : { tcf }),
     };
@@ -590,6 +603,44 @@ async function selectNarrowestLevel(frame: Frame): Promise<number> {
   }
   await Promise.all(handles.map((handle) => handle.dispose()));
   return changed;
+}
+
+/**
+ * TCF banners keep legitimate-interest purposes in a tab of their own, switched on by default.
+ * Opens that tab inside the consent layer and objects: with an "object to all" button if there is
+ * one, otherwise by switching off the toggles the tab shows. Never clicks anything that accepts.
+ * Undefined when there is no such tab. The TCF readout after saving shows whether it worked.
+ */
+async function objectToLegitimateInterest(
+  page: Page,
+  options: ConsentCheckOptions,
+): Promise<SettingsObservation['legitimateInterest']> {
+  for (const frame of page.frames()) {
+    const tab = await firstInConsentLayer(
+      frame
+        .locator('[role="tab"], summary, button[aria-expanded]')
+        .filter({ hasText: LEGITIMATE_INTEREST_TAB })
+        .filter({ hasNotText: ACCEPT_LABEL }),
+    );
+    if (tab !== undefined) {
+      const openLabel = await label(tab);
+      await tab.click({ timeout: Math.min(5_000, options.timeoutMs) }).catch(() => undefined);
+      await page.waitForTimeout(Math.min(500, options.settleMs));
+      const objectAll = await firstInConsentLayer(
+        frame
+          .locator(CLICKABLE)
+          .filter({ hasText: OBJECT_ALL })
+          .filter({ hasNotText: ACCEPT_LABEL }),
+      );
+      if (objectAll !== undefined) {
+        const objectAllLabel = await label(objectAll);
+        await objectAll.click({ timeout: Math.min(5_000, options.timeoutMs) });
+        return { openLabel, objectAllLabel, switchedOff: 0 };
+      }
+      return { openLabel, switchedOff: await switchOffOptional(frame) };
+    }
+  }
+  return undefined;
 }
 
 interface Banner {

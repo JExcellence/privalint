@@ -48,6 +48,9 @@ All notable changes are listed here. The format follows
 - New rule `https-transport`: start page over plain HTTP (error), `http://` without a redirect to
   HTTPS (warning), no HSTS (info). Native scans only; adapter and offline scans skip it by design
   with `transport-not-checked` (#90)
+- `--check-settings` objects to legitimate interest on TCF banners: it opens a "Berechtigtes
+  Interesse" / "Legitimate interest" tab and uses its "object to all" button, or switches off the
+  toggles there. `consent.settings.legitimateInterest` says what it did (#60)
 - New rule `form-privacy-notice` (info): forms with an email, phone or password field and no
   privacy-policy link next to them, while the page links it elsewhere (#91)
 

@@ -428,6 +428,34 @@ describe('consent check', () => {
       expect(result.findings).toEqual([]);
     });
 
+    describe('objecting to legitimate interest', () => {
+      it('uses the "object to all" button in the legitimate-interest tab', async () => {
+        const result = await scan(
+          `${origin}/consent/settings-tcf-li.html?object=all`,
+          settingsOptions,
+        );
+        expect(result.consent?.settings).toMatchObject({
+          outcome: 'saved',
+          legitimateInterest: {
+            openLabel: 'Berechtigtes Interesse',
+            objectAllLabel: 'Allen widersprechen',
+          },
+          tcf: { purposesOn: [], legitimateInterestsOn: [] },
+        });
+        expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
+      });
+
+      it('switches the toggles in the tab off when there is no such button', async () => {
+        const result = await scan(`${origin}/consent/settings-tcf-li.html`, settingsOptions);
+        expect(result.consent?.settings).toMatchObject({
+          outcome: 'saved',
+          legitimateInterest: { openLabel: 'Berechtigtes Interesse', switchedOff: 2 },
+          tcf: { legitimateInterestsOn: [] },
+        });
+        expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
+      });
+    });
+
     describe('IAB TCF readout', () => {
       it('records an empty TCF state and passes when everything is off', async () => {
         const result = await scan(`${origin}/consent/settings-tcf.html`, settingsOptions);

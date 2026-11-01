@@ -21,10 +21,15 @@ stored by the reject test doesn't hide the banner. Then it
 2. switches off every checked category switch that can be switched (checkboxes and
    `role="switch"` elements; disabled ones are the necessary category and stay on). Only switches
    inside the consent layer count, so a login form's "remember me" box stays as it is,
-3. clicks the save button ("Auswahl speichern", "Save", "Confirm my choices", …). A button that
+   and on banners that offer levels as radio buttons the narrowest level is chosen,
+3. opens a "Legitimate interest" / "Berechtigtes Interesse" tab if the banner has one, and objects:
+   with an "object to all" button ("Allen widersprechen", "Object to all") if there is one,
+   otherwise by switching off the toggles in the tab. A plain "reject all" is never used there, since
+   it could be the first layer's button,
+4. clicks the save button ("Auswahl speichern", "Save", "Confirm my choices", …). A button that
    covers everything, such as "Accept all", "Alle bestätigen" or "Confirm all", is never used,
-4. waits for the network to settle, reloads the page and waits again,
-5. if the page has the IAB TCF API (`__tcfapi`), asks it what it stored. This only reads; nothing
+5. waits for the network to settle, reloads the page and waits again,
+6. if the page has the IAB TCF API (`__tcfapi`), asks it what it stored. This only reads; nothing
    is clicked.
 
 Every request and every cookie that is new since the save is matched against the tracker list, with
@@ -63,5 +68,6 @@ Switching everything off is a refusal, just like the reject button, and it has t
   showed no banner to headless Chromium, so that selector is unchecked. If a selector doesn't
   match, the label fallback takes over.
 - Vendor-level switches inside collapsed sections are left alone; switching off their category is
-  expected to cover them. On TCF banners the API readout shows whether it did.
+  expected to cover them. On TCF banners the API readout shows whether it did, including the
+  legitimate-interest purposes after the objection step.
 - The check adds one more load and reload of the start page.
