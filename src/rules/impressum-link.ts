@@ -12,6 +12,13 @@ const ID = 'impressum-link';
 const LEGAL_NOTICE =
   /impressum|imprint|legal[\s_-]?notice|site[\s_-]?notice|anbieterkennzeichnung|mentions[\s_-]?l[eé]gales|aviso[\s_-]?legal|note[\s_-]?legali|colofon|informacje[\s_-]?prawne|impresszum/i;
 
+/**
+ * Labels for a legal page that may hold the provider information or only a disclaimer, such as
+ * "Rechtliche Hinweise", "Rechtliches" or "Jogi tudnivalók" (telekom.hu). They can't be told
+ * apart by the label, so they are noted, not trusted.
+ */
+const VAGUE_LEGAL = /rechtliche[\s_-]?hinweise|rechtliches|jogi[\s_-]?tudnival|\blegal\b/i;
+
 const CONTACT = /kontakt|contact/i;
 
 export const impressumLink: Rule = {
@@ -25,6 +32,26 @@ export const impressumLink: Rule = {
   check({ page, lang }) {
     if (page.links.some(linkMatches(LEGAL_NOTICE))) {
       return [];
+    }
+
+    const legal = page.links.find(linkMatches(VAGUE_LEGAL));
+    if (legal !== undefined) {
+      return [
+        {
+          ruleId: ID,
+          severity: 'info',
+          message: say(lang, {
+            en: `No link labelled "Impressum", but "${legal.text}" may lead to the provider information.`,
+            de: `Kein Link „Impressum“, aber „${legal.text}“ führt möglicherweise zu den Anbieterangaben.`,
+          }),
+          pageUrl: page.finalUrl,
+          evidence: [say(lang, { en: 'legal link: ', de: 'Rechts-Link: ' }) + legal.href],
+          fix: say(lang, {
+            en: 'Check that this page holds the full provider information (name, address, e-mail, register entry). Labelling the link "Impressum" makes it easy to recognise.',
+            de: 'Prüfen, ob diese Seite die vollständigen Anbieterangaben enthält (Name, Anschrift, E-Mail, Registereintrag). Die Beschriftung „Impressum“ macht den Link leicht erkennbar.',
+          }),
+        },
+      ];
     }
 
     const contact = page.links.find(linkMatches(CONTACT));

@@ -353,6 +353,21 @@ describe('impressum-link', () => {
     expect(run(impressumLink, page)[0]?.severity).toBe('warning');
   });
 
+  it.each([
+    ['Jogi tudnivalók', 'https://www.telekom.hu/jogi-tudnivalok'],
+    ['Rechtliche Hinweise', 'https://example.de/rechtliches'],
+    ['Legal', 'https://example.com/legal'],
+  ])('notes a vague legal link %j as info, not as a missing Impressum', (text, href) => {
+    const [finding] = run(impressumLink, snapshot({ links: [{ text, href }] }));
+    expect(finding?.severity).toBe('info');
+    expect(finding?.message).toContain(text);
+  });
+
+  it('does not take "legally" or "Paralegal" for a legal page', () => {
+    const page = snapshot({ links: [{ text: 'Paralegal jobs', href: 'https://example.de/jobs' }] });
+    expect(run(impressumLink, page)[0]?.severity).toBe('warning');
+  });
+
   it('only notes a contact link, which can be enough within two clicks', () => {
     const page = snapshot({
       links: [{ text: 'Kontakt', href: 'https://example.de/kontakt' }],
