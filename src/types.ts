@@ -59,6 +59,30 @@ export interface CaptureTiming {
   networkIdleMs: number;
   /** Adapter scans only: most requests waiting for an adapter slot at the same time. */
   peakQueued?: number;
+  /** Adapter scans only: how long the adapter took. Since scanner 0.10.0. */
+  adapter?: AdapterTiming;
+}
+
+/** How long the network adapter took for the requests of one capture, in milliseconds. */
+export interface AdapterTiming {
+  /** Requests the adapter was asked for. */
+  requests: number;
+  /** Median and 95th percentile time from asking the adapter to its response headers. */
+  headersP50Ms?: number;
+  headersP95Ms?: number;
+  /** The slowest requests, by time from being queued until done or given up. At most 5. */
+  slowest: AdapterRequestTiming[];
+}
+
+export interface AdapterRequestTiming {
+  /** Origin only, like issue URLs. */
+  url: string;
+  /** Waiting for one of the adapter slots (`networkLimits.concurrency`). */
+  queuedMs: number;
+  /** Until the adapter returned status and headers. Absent when it never did. */
+  headersMs?: number;
+  /** Reading the body after the headers. Absent when it never finished. */
+  bodyMs?: number;
 }
 
 export interface LoadDiagnostics {

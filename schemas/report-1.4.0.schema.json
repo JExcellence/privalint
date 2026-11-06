@@ -287,6 +287,54 @@
             "peakQueued": {
               "type": "integer",
               "minimum": 0
+            },
+            "adapter": {
+              "type": "object",
+              "properties": {
+                "requests": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "headersP50Ms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "headersP95Ms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "slowest": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string"
+                      },
+                      "queuedMs": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "headersMs": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "bodyMs": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "url",
+                      "queuedMs"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "requests",
+                "slowest"
+              ]
             }
           },
           "required": [

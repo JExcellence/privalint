@@ -1,5 +1,6 @@
 import type { BrowserContext, Request } from 'playwright';
 import type {
+  AdapterRequestTiming,
   CapturePhase,
   CaptureTiming,
   LoadDiagnostic,
@@ -273,6 +274,34 @@ export class Diagnostics {
     }
     if (this.data.issues.length < this.maxIssues) this.data.issues.push(issue);
     else this.data.dropped++;
+  }
+
+  private readonly headerTimes: number[] = [];
+
+  /** Records how long the adapter took for one request; keeps percentiles and the slowest five. */
+  adapterRequest(url: string, timing: Omit<AdapterRequestTiming, 'url'>): void {
+    if (this.stopped) return;
+    const adapter = (this.timing.adapter ??= { requests: 0, slowest: [] });
+    adapter.requests++;
+    if (timing.headersMs !== undefined) {
+      this.headerTimes.push(timing.headersMs);
+      const sorted = [...this.headerTimes].sort((a, b) => a - b);
+      const at = (share: number) =>
+        sorted[Math.min(sorted.length - 1, Math.ceil(share * sorted.length) - 1)] ?? 0;
+      adapter.headersP50Ms = at(0.5);
+      adapter.headersP95Ms = at(0.95);
+    }
+    // Unfinished requests rank first, those without headers before those whose body stalled:
+    // they are the ones that time out.
+    const total = (entry: Omit<AdapterRequestTiming, 'url'>) =>
+      entry.headersMs === undefined
+        ? 2e12 + entry.queuedMs
+        : entry.bodyMs === undefined
+          ? 1e12 + entry.queuedMs + entry.headersMs
+          : entry.queuedMs + entry.headersMs + entry.bodyMs;
+    adapter.slowest.push({ url: diagnosticUrl(url), ...timing });
+    adapter.slowest.sort((a, b) => total(b) - total(a));
+    adapter.slowest.length = Math.min(adapter.slowest.length, 5);
   }
 
   /** Timing of this capture, created on first use. */

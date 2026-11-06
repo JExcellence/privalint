@@ -82,6 +82,8 @@ interface InterceptedRequest {
   session: CDPSession;
   redirects: number;
   redirectCounts: Map<string, number>;
+  /** performance.now() when the request joined the queue. */
+  queuedAt?: number;
 }
 
 function requestBody(request: PausedRequest['request']): Uint8Array | null {
@@ -156,6 +158,7 @@ export class ControlledNetwork {
   }
 
   private enqueue(request: InterceptedRequest): void {
+    request.queuedAt = performance.now();
     this.queue.push(request);
     const timing = this.diagnostics.timing;
     timing.peakQueued = Math.max(timing.peakQueued ?? 0, this.queue.length);
@@ -242,6 +245,11 @@ export class ControlledNetwork {
     const signal = AbortSignal.any([this.signal, timeout, controller.signal]);
     let response: NetworkResponse;
     let body: Buffer;
+    const started = performance.now();
+    let headersAt: number | undefined;
+    let bodyDoneAt: number | undefined;
+    // Only requests the adapter was asked for count; refusals before that took no adapter time.
+    let asked = false;
     this.fetching.set(request.url, (this.fetching.get(request.url) ?? 0) + 1);
     try {
       if (!/^https?:$/.test(new URL(request.url).protocol))
@@ -250,18 +258,22 @@ export class ControlledNetwork {
         throw new NetworkError('resource-limit', 'redirects');
       if (this.diagnostics.data.bytes >= this.limits.maxTotalBytes)
         throw new NetworkError('resource-limit', 'total-bytes');
+      const requestBytes = requestBody(request);
+      asked = true;
       response = await withSignal(
         this.adapter({
           url: request.url,
           method: request.method,
           headers: request.headers,
-          body: requestBody(request),
+          body: requestBytes,
           resourceType: event.resourceType.toLowerCase(),
           signal,
         }),
         signal,
       );
+      headersAt = performance.now();
       body = await this.readBody(response.body, signal);
+      bodyDoneAt = performance.now();
       signal.throwIfAborted();
       if (!Number.isInteger(response.status) || response.status < 200 || response.status > 599)
         throw new NetworkError('browser-failure');
@@ -280,6 +292,14 @@ export class ControlledNetwork {
       }
       return;
     } finally {
+      if (asked)
+        this.diagnostics.adapterRequest(request.url, {
+          queuedMs: Math.round(started - (intercepted.queuedAt ?? started)),
+          ...(headersAt === undefined ? {} : { headersMs: Math.round(headersAt - started) }),
+          ...(headersAt === undefined || bodyDoneAt === undefined
+            ? {}
+            : { bodyMs: Math.round(bodyDoneAt - headersAt) }),
+        });
       controller.abort();
       if (event.networkId !== undefined) this.inflight.delete(event.networkId);
       const left = (this.fetching.get(request.url) ?? 1) - 1;

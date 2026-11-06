@@ -11,7 +11,8 @@ würde. 1.3.0 ergänzt die optionale Prüfung der Einstellungsebene: `consent.se
 `settings-check-disabled` mit den zugehörigen Erklärungen sowie die Region `hu`, die ein
 1.2.0-Validator alle ablehnen würde. 1.4.0 ergänzt `capture.diagnostics.timing` (`loadMs`,
 `networkIdleMs` und bei Adapter-Scans `peakQueued`), die Timeout-Phase `stage` (`queued` oder
-`fetching`) in Adapter-Diagnosen sowie `consent.tcf` und `consent.settings.tcf`: was ein
+`fetching`) in Adapter-Diagnosen, die optionalen Felder `capture.diagnostics.timing.adapter` und
+`offSiteRedirects` (mit Scanner 0.9.1 und 0.10.0 ergänzt, ohne 1.4.0-Validatoren zu brechen) sowie `consent.tcf` und `consent.settings.tcf`: was ein
 IAB-TCF-Consent-Tool nach dem Ablehnen und nach dem Abwählen von allem meldet.
 Paket-/Scanner-Version und Schemaversion sind unabhängig. Ohne `schemaVersion` ist ein Bericht
 Legacy; unbekannte Versionen müssen ausdrücklich unterstützt werden. Alte Daten bekommen nicht

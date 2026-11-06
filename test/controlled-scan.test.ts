@@ -16,6 +16,44 @@ const html = (body = '') => ({
 });
 const settings: ScanOptions = { settleMs: 0, timeoutMs: 3_000, captureTimeoutMs: 10_000 };
 
+describe('adapter timing', () => {
+  const timed = (adapter: NetworkAdapter) =>
+    scan(origin, {
+      ...settings,
+      maxPages: 1,
+      consentCheck: false,
+      networkLimits: { requestTimeoutMs: 500 },
+      networkAdapter: adapter,
+    });
+
+  it('shows a request whose headers never came as the slowest, with its queue time', async () => {
+    const result = await timed(async ({ url, signal }) => {
+      if (url.endsWith('/slow.js')) await delay(5_000, undefined, { signal });
+      return html('<script src="/slow.js"></script>');
+    });
+    const adapter = result.pages[0]?.capture?.diagnostics.timing?.adapter;
+    expect(adapter?.requests).toBeGreaterThanOrEqual(2);
+    expect(adapter?.slowest[0]).toMatchObject({ url: `${origin}/[redacted]` });
+    expect(adapter?.slowest[0]?.headersMs).toBeUndefined();
+    expect(adapter?.slowest[0]?.queuedMs).toBeLessThan(400);
+    expect(adapter?.headersP50Ms).toBeLessThan(400);
+  });
+
+  it('separates fast headers from a body that stalls', async () => {
+    const result = await timed(async ({ url, signal }) => {
+      if (!url.endsWith('/stall.png')) return html('<img src="/stall.png">');
+      async function* stalled() {
+        yield new Uint8Array([1]);
+        await delay(5_000, undefined, { signal });
+      }
+      return { status: 200, headers: { 'content-type': 'image/png' }, body: stalled() };
+    });
+    const slowest = result.pages[0]?.capture?.diagnostics.timing?.adapter?.slowest[0];
+    expect(slowest?.headersMs).toBeLessThan(400);
+    expect(slowest?.bodyMs).toBeUndefined();
+  });
+});
+
 describe('https-transport in adapter scans', () => {
   it('is skipped by design and keeps the coverage complete', async () => {
     const result = await scan(origin, { ...settings, networkAdapter: async () => html() });

@@ -138,6 +138,12 @@ wie die eigenen Anfragen der Seite über den Adapter; `test/controlled-scan.test
   Adapter-Platz wartenden Anfragen. Viele `queued`-Timeouts bei hohem `peakQueued` sprechen für
   zu wenig Adapter-Parallelität, `fetching`-Timeouts für das Ziel, ein CDN-Limit oder den
   Transport des Adapters.
+- `timing.adapter` (Adapter-Scans): wie viele Anfragen der Adapter bekam, Median und
+  95-%-Perzentil der Zeit bis zum Antwortkopf und die fünf langsamsten Anfragen mit `queuedMs`
+  (Warten auf einen Platz), `headersMs` (bis zum Antwortkopf) und `bodyMs` (Lesen des Bodys).
+  Fehlt `headersMs` oder `bodyMs`, wurde dieser Teil nie fertig. Laden dieselben Seiten in einem
+  nativen Scan schnell, sprechen ein hohes 95-%-Perzentil oder langsame Antwortköpfe für die
+  Umgebung des Adapters. Text- und Markdown-Bericht zeigen das auf Seiten mit Timeouts.
 
 `PageSummary.requestCount` zählt wie bisher nur die initiale Phase, der neue Diagnosezähler beide
 Phasen. Gespeicherte Anfrage-Evidenz ist im Adapter-Modus durch das Anfragebudget begrenzt
