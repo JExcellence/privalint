@@ -6,7 +6,8 @@ import {
 } from '../data/trackers.js';
 import { huArticle, type Lang, say, type Text } from '../i18n.js';
 import { observedRequests } from '../observations.js';
-import type { RecordedCookie, RecordedRequest, StorageKey } from '../types.js';
+import type { CnameCloak, RecordedCookie, RecordedRequest, StorageKey } from '../types.js';
+import { safeHost } from '../url.js';
 
 const MAX_EVIDENCE = 5;
 
@@ -27,6 +28,7 @@ export function findTrackerHits(
   cookies: readonly RecordedCookie[],
   lang: Lang,
   storage: readonly StorageKey[] = [],
+  cloaks: readonly CnameCloak[] = [],
 ): TrackerHit[] {
   const requestLabel = say(lang, { en: 'request', de: 'Anfrage', hu: 'kérés' });
   const hits = new Map<string, { tracker: CookieTracker; evidence: Set<string> }>();
@@ -37,6 +39,15 @@ export function findTrackerHits(
   };
 
   for (const request of observedRequests(requests)) {
+    const cloak = cloaks.find((entry) => entry.host === safeHost(request.url));
+    if (cloak !== undefined) {
+      // A first-party subdomain that is a CNAME to a tracker: the tracker, behind the site's name.
+      record(
+        { vendor: cloak.vendor, category: cloak.category },
+        `${requestLabel} ${request.url} (CNAME ${[cloak.host, ...cloak.chain].join(' → ')})`,
+      );
+      continue;
+    }
     const tracker = findTrackerByUrl(request.url);
     if (tracker !== undefined) {
       const proxied = tracker.proxied

@@ -43,6 +43,19 @@ Der Beleg nennt dann den Host, über den die Anfragen liefen („über metrics.e
 weitergeleitet“). Auch ein serverseitiger Container braucht für das Weitergeleitete eine
 Einwilligung.
 
+### Per CNAME getarnte Tracker
+
+Eine Subdomain wie `metrics.example.com` kann ein CNAME auf einen Tracker sein; ihre Anfragen und
+Cookies wirken dann wie eigene. In nativen Scans löst privalint die CNAME-Kette (bis zu fünf
+Schritte) jeder eigenen Subdomain außer dem gescannten Host auf, an die eine Anfrage ging, und meldet
+eine Kette, die eine Tracker-Domain erreicht, als diesen Tracker, mit der Kette als Beleg.
+
+Die Ziele stammen aus der Tracker-Liste und aus AdGuards MIT-lizenzierter
+[cname-trackers-Liste](https://github.com/AdguardTeam/cname-trackers) (Adobe Experience Cloud,
+Eulerian, Criteo, Keyade, AT Internet, Commanders Act, Oracle Eloqua, Wizaly, Ingenious
+Technologies, Pardot). Scans über einen Netzwerk-Adapter und Offline-Fixtures stellen keine
+DNS-Anfragen. Höchstens 20 Subdomains werden aufgelöst, jede Anfrage auf drei Sekunden begrenzt.
+
 ## Warum
 
 Einwilligungspflichtig sind hier zwei Dinge, und ein Tracker tut meist beides:

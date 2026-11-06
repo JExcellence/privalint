@@ -921,3 +921,20 @@ describe('fingerprinting before consent', () => {
     expect(findings[0]?.evidence).toContain('canvas readback');
   });
 });
+
+describe('CNAME lookups', () => {
+  it('never resolves DNS through a network adapter scan', async () => {
+    let lookups = 0;
+    await scan(origin, {
+      ...settings,
+      maxPages: 1,
+      consentCheck: false,
+      resolveCname: async () => {
+        lookups++;
+        return [];
+      },
+      networkAdapter: async () => html('<img src="https://metrics.scanner.invalid/p.gif">'),
+    });
+    expect(lookups).toBe(0);
+  });
+});
