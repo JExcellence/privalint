@@ -2,7 +2,7 @@
 
 [English](cookiebot.md)
 
-So behebst du privalint-Befunde im Cookiebot-Banner. Jeder Schritt nennt die Einstellung und
+So beheben Sie privalint-Befunde im Cookiebot-Banner. Jeder Schritt nennt die Einstellung und
 verlinkt die Cookiebot-Seite, aus der er stammt. Die Seiten sind englisch. Das Hilfecenter
 beschreibt zwei Oberflächen: ältere Artikel nutzen „Settings“ mit Reitern, neuere „Configuration“
 mit Abschnitten (Compliance, Design, Privacy trigger). Beide sind genannt, wo die Seiten sie
