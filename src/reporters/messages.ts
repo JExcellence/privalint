@@ -12,6 +12,8 @@ export interface ReportMessages {
   scanned(pages: string): string;
   couldNotScan(count: number): string;
   offSite(count: number): string;
+  severalPages: string;
+  onPages(count: number, total: number): string;
   fix: string;
   legalBasis: string;
   rule: string;
@@ -33,6 +35,8 @@ const en: ReportMessages = {
   on: 'on',
   scanned: (pages) => `${pages} scanned`,
   couldNotScan: (n) => `Could not scan ${count(n, 'page', 'pages')}:`,
+  severalPages: 'On several pages',
+  onPages: (n, total) => `on ${n} of ${count(total, 'page', 'pages')}:`,
   offSite: (n) =>
     `Not scanned, ${n === 1 ? 'this link redirects' : 'these links redirect'} to another site:`,
   fix: 'fix:',
@@ -73,6 +77,8 @@ const de: ReportMessages = {
   scanned: (pages) => `${pages} geprüft`,
   couldNotScan: (n) =>
     `${count(n, 'Seite', 'Seiten')} ${n === 1 ? 'konnte' : 'konnten'} nicht geprüft werden:`,
+  severalPages: 'Auf mehreren Seiten',
+  onPages: (n, total) => `auf ${n} von ${count(total, 'Seite', 'Seiten')}:`,
   offSite: (n) =>
     `Nicht geprüft, ${n === 1 ? 'dieser Link leitet' : 'diese Links leiten'} auf eine andere Website um:`,
   fix: 'Lösung:',

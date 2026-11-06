@@ -6,6 +6,12 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- Text and Markdown reports show an `impressum-link` or `privacy-policy-link` finding that repeats
+  on several pages once, under "On several pages", with the pages listed. JSON and SARIF still
+  have one finding per page. The messages no longer say "on this page" (#102)
+
 ### Added
 
 - Adapter scans record how long the adapter took: `capture.diagnostics.timing.adapter` has the

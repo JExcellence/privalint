@@ -87,6 +87,57 @@ describe('markdown', () => {
   });
 });
 
+describe('footer findings on several pages', () => {
+  const missing = (pageUrl: string) =>
+    finding({
+      ruleId: 'impressum-link',
+      severity: 'warning',
+      message: 'No link to an Impressum or legal notice was found.',
+      pageUrl,
+      evidence: ['2 links checked'],
+      fix: 'Add a link labelled "Legal notice".',
+    });
+  const pages = ['https://example.de/auth', 'https://example.de/404', 'https://example.de/docs'];
+  const grouped: ScanResult = {
+    ...result([...pages.map(missing), finding()]),
+    pages: [...pages, 'https://example.de/'].map((url) => ({
+      url,
+      finalUrl: url,
+      status: 200,
+      requestCount: 1,
+      cookieCount: 0,
+    })),
+  };
+
+  it('are shown once in the text report, with the pages', () => {
+    const output = formatText(grouped);
+    expect(output.match(/No link to an Impressum/g)).toHaveLength(1);
+    expect(output).toContain('On several pages');
+    expect(output).toContain('on 3 of 4 pages:');
+    for (const page of pages) expect(output).toContain(page);
+  });
+
+  it('take one Markdown row, and other findings keep their page', () => {
+    const output = formatMarkdown(grouped);
+    const rows = output.split('\n').filter((line) => line.includes('impressum-link`'));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toContain('on 3 of 4 pages:');
+    expect(output).toContain('#### `https://example.de/`');
+  });
+
+  it('stay separate in SARIF', () => {
+    const results = JSON.parse(formatSarif(grouped)).runs[0].results;
+    expect(results.filter((r: { ruleId: string }) => r.ruleId === 'impressum-link')).toHaveLength(
+      3,
+    );
+  });
+
+  it('on a single page stay with that page', () => {
+    const output = formatText(result([missing('https://example.de/auth')]));
+    expect(output).not.toContain('On several pages');
+  });
+});
+
 describe('sarif', () => {
   const sarif = JSON.parse(formatSarif(result([finding(), finding({ severity: 'info' })])));
   const run = sarif.runs[0];

@@ -25,8 +25,8 @@ export const privacyPolicyLink: Rule = {
         ruleId: ID,
         severity: 'warning',
         message: say(lang, {
-          en: 'No link to a privacy policy was found on this page.',
-          de: 'Auf dieser Seite wurde kein Link zur Datenschutzerklärung gefunden.',
+          en: 'No link to a privacy policy was found.',
+          de: 'Kein Link zur Datenschutzerklärung gefunden.',
         }),
         pageUrl: page.finalUrl,
         evidence: [linksChecked(page.links.length, lang)],
