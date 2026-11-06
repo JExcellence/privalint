@@ -22,6 +22,9 @@ Upgrade notes:
 
 ### Added
 
+- Trackers from the vendors' own documentation: Google Ads conversions on `www.google.com`,
+  Reddit Pixel, VWO (hosts and cookies), Microsoft Xandr universal pixel and the Amazon Associates
+  oneTag (#71)
 - The Drupal banner EU Cookie Compliance is recognised by name, as seen on a Hungarian railway
   site that offers only "accept all"
 - `--lang hu`: findings, fixes and the text, Markdown and SARIF reports in Hungarian, with

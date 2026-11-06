@@ -259,3 +259,35 @@ describe('cookies from the Open Cookie Database', () => {
     }
   });
 });
+
+describe('vendors from install and CSP documentation (2026-11-06)', () => {
+  it.each([
+    ['https://www.google.com/pagead/1p-conversion/123/?random=1', 'Google Ads'],
+    ['https://alb.reddit.com/rp.gif?ts=1&id=t2_abc&event=PageVisit', 'Reddit Pixel'],
+    ['https://pixel-config.reddit.com/pixels/t2_abc/config', 'Reddit Pixel'],
+    ['https://dev.visualwebsiteoptimizer.com/lib/123456.js', 'VWO'],
+    ['https://edge.wingify.net/tag/123456.js', 'VWO'],
+    ['https://r2.visualwebsiteoptimizer.com/events/t', 'VWO'],
+    ['https://acdn.adnxs.com/dmp/up/pixie.js', 'Microsoft Xandr'],
+    ['https://ib.adnxs.com/pixie?pi=abc&e=PageView&script=0', 'Microsoft Xandr'],
+    ['https://z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US', 'Amazon Associates'],
+  ])('%s -> %s', (url, vendor) => {
+    expect(findTrackerByUrl(url)?.vendor).toBe(vendor);
+  });
+
+  it.each([
+    'https://www.google.com/search?q=privalint',
+    'https://www.google.com/maps/place/x',
+    'https://www.reddit.com/r/privacy/',
+    'https://www.redditstatic.com/shreddit/en-US/app.js',
+    'https://visualwebsiteoptimizer.com.example.net/lib/1.js',
+    'https://acdn.adnxs.com/ast/ast.js',
+  ])('leaves %s alone', (url) => {
+    expect(findTrackerByUrl(url)).toBeUndefined();
+  });
+
+  it('recognises VWO cookies', () => {
+    expect(findTrackerByCookie('_vwo_uuid_v2')?.vendor).toBe('VWO');
+    expect(findTrackerByCookie('_vis_opt_s')?.vendor).toBe('VWO');
+  });
+});
