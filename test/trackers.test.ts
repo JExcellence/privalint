@@ -291,3 +291,30 @@ describe('vendors from install and CSP documentation (2026-11-06)', () => {
     expect(findTrackerByCookie('_vis_opt_s')?.vendor).toBe('VWO');
   });
 });
+
+describe('proxied collection endpoints', () => {
+  it.each([
+    ['https://metrics.example.de/g/collect?v=2&tid=G-ABC123&en=page_view', 'Google Analytics'],
+    ['https://example.de/proxy/collect?v=1&tid=UA-12345-1&t=pageview', 'Google Analytics'],
+    ['https://sgtm.example.de/gtm.js?id=GTM-ABCD12', 'Google Tag Manager'],
+    ['https://sgtm.example.de/gtag/js?id=G-ABC123', 'Google Analytics'],
+    ['https://example.de/fb/tr?id=123456789012&ev=PageView', 'Meta Pixel'],
+  ])('recognises %s as %s, marked as proxied', (url, vendor) => {
+    expect(findTrackerByUrl(url)).toMatchObject({ vendor, proxied: true });
+  });
+
+  it.each([
+    'https://example.de/api/collect?id=1',
+    'https://example.de/g/collect?v=2&tid=customer-42',
+    'https://example.de/gtm.js',
+    'https://example.de/tr?id=abc&ev=click',
+  ])('leaves unrelated first-party paths alone: %s', (url) => {
+    expect(findTrackerByUrl(url)).toBeUndefined();
+  });
+
+  it('prefers the vendor host match, which is not marked as proxied', () => {
+    expect(findTrackerByUrl('https://www.google-analytics.com/g/collect?v=2&tid=G-ABC123')).toEqual(
+      expect.not.objectContaining({ proxied: true }),
+    );
+  });
+});

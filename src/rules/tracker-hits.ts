@@ -4,7 +4,7 @@ import {
   findTrackerByUrl,
   type TrackerCategory,
 } from '../data/trackers.js';
-import { type Lang, say, type Text } from '../i18n.js';
+import { huArticle, type Lang, say, type Text } from '../i18n.js';
 import { observedRequests } from '../observations.js';
 import type { RecordedCookie, RecordedRequest, StorageKey } from '../types.js';
 
@@ -39,7 +39,14 @@ export function findTrackerHits(
   for (const request of observedRequests(requests)) {
     const tracker = findTrackerByUrl(request.url);
     if (tracker !== undefined) {
-      record(tracker, `${requestLabel} ${request.url}`);
+      const proxied = tracker.proxied
+        ? say(lang, {
+            en: ` (proxied through ${new URL(request.url).hostname})`,
+            de: ` (über ${new URL(request.url).hostname} weitergeleitet)`,
+            hu: ` (${huArticle(new URL(request.url).hostname)} ${new URL(request.url).hostname} kiszolgálón keresztül továbbítva)`,
+          })
+        : '';
+      record(tracker, `${requestLabel} ${request.url}${proxied}`);
     }
   }
   for (const cookie of cookies) {

@@ -24,6 +24,25 @@ Ein Tag-Manager-Container ist nur eine Warnung: Schon sein Laden überträgt die
 einen Dritten, ob er aber ohne Einwilligung Tags auslöst, hängt von seiner Konfiguration ab.
 Jedes ausgelöste Tag, das auf der Liste steht, wird gesondert als Fehler gemeldet.
 
+### Weitergeleitete Endpunkte
+
+Manche Websites leiten Tracking über die eigene Domain: ein serverseitiger Google-Tag-Manager-
+Container auf `metrics.example.com` oder ein Reverse Proxy unter `/g/collect`. Solche Anfragen
+wirken wie eigene, deshalb werden sie zusätzlich an Pfad und Parametern auf jedem Host erkannt.
+Jede Signatur verlangt das Parameterformat des Anbieters, ein beliebiger `/collect`-Endpunkt
+passt also nicht:
+
+| Anbieter           | Pfad und Parameter                                  |
+| ------------------ | --------------------------------------------------- |
+| Google Analytics   | `…/g/collect?v=2&tid=G-…`, `…/collect?v=1&tid=UA-…` |
+| Google Analytics   | `…/gtag/js?id=G-…` (auch `AW-`, `DC-`)              |
+| Google Tag Manager | `…/gtm.js?id=GTM-…`                                 |
+| Meta Pixel         | `…/tr?id=<numerische Pixel-ID>&ev=…`                |
+
+Der Beleg nennt dann den Host, über den die Anfragen liefen („über metrics.example.com
+weitergeleitet“). Auch ein serverseitiger Container braucht für das Weitergeleitete eine
+Einwilligung.
+
 ## Warum
 
 Einwilligungspflichtig sind hier zwei Dinge, und ein Tracker tut meist beides:

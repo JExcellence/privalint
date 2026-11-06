@@ -30,6 +30,10 @@ Upgrade notes:
 
 ### Added
 
+- Trackers routed through the site's own domain are recognised by their path and parameters on
+  any host: GA4 `/g/collect?v=2&tid=G-…`, Universal Analytics collect hits, server-side Google Tag
+  Manager `gtm.js?id=GTM-…` and `gtag/js?id=G-…`, and Meta Pixel `/tr?id=…&ev=…`. The evidence names
+  the host they were proxied through (#125)
 - New opt-in rule `trackers-after-close` (`--check-close`, config `closeCheck`, Action input
   `check-close`): privalint closes the banner with its close button ("×", "Schließen") in a fresh
   browser, reloads and reports trackers that load then as errors, since closing is no choice. A

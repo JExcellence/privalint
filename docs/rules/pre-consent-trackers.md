@@ -27,6 +27,23 @@ A tag manager container is a warning because loading it already transfers the IP
 third party, but whether it fires tags without consent depends on its configuration. Any tag it
 fires that matches the list is reported separately as an error.
 
+### Proxied endpoints
+
+Some sites route tracking through their own domain: a server-side Google Tag Manager container on
+`metrics.example.com`, or a reverse proxy at `/g/collect`. Such requests look first-party, so they
+are also recognised by their path and parameters on any host. Each signature needs the vendor's
+own parameter format, so an unrelated `/collect` endpoint doesn't match:
+
+| Vendor             | Path and parameters                                 |
+| ------------------ | --------------------------------------------------- |
+| Google Analytics   | `…/g/collect?v=2&tid=G-…`, `…/collect?v=1&tid=UA-…` |
+| Google Analytics   | `…/gtag/js?id=G-…` (also `AW-`, `DC-`)              |
+| Google Tag Manager | `…/gtm.js?id=GTM-…`                                 |
+| Meta Pixel         | `…/tr?id=<numeric pixel id>&ev=…`                   |
+
+The evidence then names the host the requests went through ("proxied through metrics.example.com").
+A server-side container still needs consent for what it forwards.
+
 ## Why
 
 Two things need consent here, and a tracker usually does both:
