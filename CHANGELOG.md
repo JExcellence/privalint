@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.10.0 - 2026-11-07
+
 Upgrade notes:
 
 - New reports carry `schemaVersion: "1.5.0"`. It adds the report language `hu` and the
