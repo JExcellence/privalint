@@ -44,8 +44,10 @@ the transfer outside the EU. If the site no longer needs a service, remove it in
 ## Limits
 
 - Only services that load on the start page without consent, or after rejecting, are seen.
-  privalint never accepts a banner, so services that only load after consent are not checked.
+  Services that only load after consent are checked with `--check-accept` only.
 - A name in the policy is enough; whether the description is correct is not checked.
-- Policies on another domain, in a PDF or split over more than one linked page are only partly
-  read. When the policy links a cookie policy that can't be read, such as a PDF, every finding
-  drops to `info` and names the unread link.
+- A cookie policy published as a PDF on the same site is downloaded (up to 5 MB) and its text read
+  with pdf.js; scanned PDFs without a text layer have no text to read. A privacy policy that is
+  itself a PDF, policies on another domain and policies split over more than one linked page are
+  only partly read. When the policy links a cookie policy that can't be read, such as a PDF over
+  5 MB, every finding drops to `info` and names the unread link.
