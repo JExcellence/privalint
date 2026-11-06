@@ -298,6 +298,16 @@ describe('scan', () => {
     ]);
   });
 
+  it('notes a banner in another language than the page', async () => {
+    const mismatch = await scan(`${origin}/consent/banner-language.html`, options);
+    expect(mismatch.findings.filter((f) => f.ruleId === 'banner-language')).toEqual([
+      expect.objectContaining({ evidence: ['<html lang="hu">', 'banner: en'] }),
+    ]);
+    const match = await scan(`${origin}/consent/good.html`, options);
+    expect(match.findings.filter((f) => f.ruleId === 'banner-language')).toEqual([]);
+    expect(JSON.stringify(match)).not.toContain('bannerText');
+  });
+
   it('checks the mobile layout of the banner with --device', async () => {
     const url = `${origin}/consent/mobile-reject.html`;
     const desktop = await scan(url, options);

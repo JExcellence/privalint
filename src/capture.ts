@@ -124,6 +124,8 @@ export async function capturePage(
       .catch(() => '');
     const primary = /^[a-z]{2,3}/i.exec(language.trim())?.[0];
     if (primary !== undefined) snapshot.language = primary.toLowerCase();
+    snapshot.browserLanguage =
+      (options.locale ?? DEFAULTS.locale).split('-')[0]?.toLowerCase() ?? '';
     snapshot.forms = await readForms(page);
     const security = await readPageSecurity(page);
     if (security.insecure.length > 0) snapshot.insecureResources = security.insecure;

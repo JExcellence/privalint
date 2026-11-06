@@ -149,6 +149,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 13. cikk (1) bekezdés e) pont'],
     eu: ['Art. 13(1)(e) GDPR'],
   },
+  // Informed consent: the visitor has to understand what they agree to.
+  'banner-language': {
+    de: ['Art. 4 Nr. 11, Art. 7 Abs. 2 DSGVO'],
+    at: ['Art. 4 Nr. 11, Art. 7 Abs. 2 DSGVO'],
+    ch: ['Art. 6 Abs. 6 DSG'],
+    hu: ['GDPR 4. cikk 11. pont, 7. cikk (2) bekezdés'],
+    eu: ['Art. 4(11) and 7(2) GDPR'],
+  },
   // Consent is an active choice: no pre-ticked boxes, and advertising e-mails need it.
   'form-preticked-consent': {
     de: ['Art. 4 Nr. 11, Art. 7 DSGVO', 'EuGH C-673/17 (Planet49)', '§ 7 Abs. 2 UWG'],

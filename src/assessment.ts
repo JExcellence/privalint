@@ -42,6 +42,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'trackers-after-settings': ['after-settings'],
   'consent-preselected': ['after-settings'],
   'consent-banner-missing': ['network', 'banner-search'],
+  'banner-language': ['consent'],
 };
 
 /** Rules that read a page linked from the start page, and which one. */

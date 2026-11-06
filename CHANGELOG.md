@@ -30,6 +30,9 @@ Upgrade notes:
 
 ### Added
 
+- New rule `banner-language` (info): the consent banner is in another language than the page's
+  `<html lang>`, guessed from common words of eight languages. A banner in the language of the
+  browser locale is not reported, since many consent managers follow it (#123)
 - `--sitemap` (config `sitemap`, Action input `sitemap`) chooses the pages after the start page from
   the sitemap: `Sitemap:` lines in robots.txt, else `/sitemap.xml`, with sitemap indexes one level
   deep. Pages likely to hold forms or checkout steps (`/kontakt`, `/newsletter`, `/checkout`, …)

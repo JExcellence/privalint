@@ -269,6 +269,8 @@ export interface ConsentObservation {
   bannerWaitMs?: number;
   /** Links inside the banner. Internal input for banner-legal-links, not in the report. */
   bannerLinks?: PageLink[];
+  /** Visible text of the banner, at most 2,000 characters. Internal input for banner-language. */
+  bannerText?: string;
   /** Whether the open banner keeps the visitor from the rest of the page. Internal. */
   bannerBlocking?: boolean;
   /** How the first-layer accept and reject controls look. Internal input for reject-less-prominent. */
@@ -417,6 +419,8 @@ export interface PageSnapshot {
   linkedPageMissing?: { legalNotice?: LinkedPageMissing; privacyPolicy?: LinkedPageMissing };
   /** Primary language subtag of `<html lang>`, lowercase, such as `en` or `hu`. */
   language?: string;
+  /** Primary language subtag of the browser locale the page was loaded with, such as `de`. */
+  browserLanguage?: string;
   resourceHints: ResourceHint[];
   /** Only present on the start page, unless the consent check was skipped. */
   consent?: ConsentObservation;

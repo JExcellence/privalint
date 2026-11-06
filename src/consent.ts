@@ -260,6 +260,7 @@ export async function observeConsent(
     ...(banner.rejectLabel === undefined ? {} : { rejectLabel: banner.rejectLabel }),
     ...(banner.payOrOk ? { payOrOk: true } : {}),
     ...(banner.links === undefined ? {} : { bannerLinks: banner.links }),
+    ...(banner.text === undefined ? {} : { bannerText: banner.text }),
     ...(banner.blocking === undefined ? {} : { bannerBlocking: banner.blocking }),
     ...(banner.controls === undefined ? {} : { bannerControls: banner.controls }),
   };
@@ -708,6 +709,7 @@ interface Banner {
   payOrOk?: boolean;
   links?: PageLink[];
   blocking?: boolean;
+  text?: string;
   controls?: { accept: ControlLook; reject: ControlLook };
 }
 
@@ -755,7 +757,11 @@ function bannerLayout(accept: Element, max: number) {
       .trim()
       .slice(0, 200),
   }));
-  return { links, blocking };
+  const text = ((container as HTMLElement).innerText ?? container.textContent ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 2_000);
+  return { links, blocking, text };
 }
 
 async function findBanner(page: Page): Promise<Banner | undefined> {
@@ -865,6 +871,7 @@ async function describe(accept: Locator, reject: Locator | undefined, cmp?: stri
   if (layout !== undefined) {
     banner.links = layout.links;
     banner.blocking = layout.blocking;
+    if (layout.text) banner.text = layout.text;
   }
   if (reject === undefined && (await offersSubscription(accept))) {
     banner.payOrOk = true;

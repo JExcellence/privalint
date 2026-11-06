@@ -554,6 +554,7 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
     bannerLinks: _bannerLinks,
     bannerBlocking: _bannerBlocking,
     bannerControls: _bannerControls,
+    bannerText: _bannerText,
     settings,
     ...summary
   } = start.consent;
