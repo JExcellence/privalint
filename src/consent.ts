@@ -80,6 +80,14 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
   { name: 'iubenda', accept: '.iubenda-cs-accept-btn', reject: '.iubenda-cs-reject-btn' },
   { name: 'Klaro', accept: '.klaro .cm-btn-success', reject: '.klaro .cm-btn-decline' },
   {
+    // The Drupal module eu_cookie_compliance. The accept button was seen on mavcsoport.hu on
+    // 2026-11-06; that site shows no decline button, so the reject selector is unchecked and the
+    // label fallback still applies.
+    name: 'EU Cookie Compliance',
+    accept: '.eu-cookie-compliance-banner .agree-button',
+    reject: '.eu-cookie-compliance-banner .decline-button',
+  },
+  {
     name: 'CookieConsent',
     accept: '#cc-main [data-role="all"]',
     reject: '#cc-main [data-role="necessary"]',

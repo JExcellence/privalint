@@ -208,12 +208,31 @@ describe('additional CMP recognition', () => {
       '<button class="sp_choice_type_11">Yes</button><button class="sp_choice_type_13">No</button>',
     ],
     [
+      'EU Cookie Compliance',
+      '<div class="eu-cookie-compliance-banner">Sütik <button class="agree-button eu-cookie-compliance-default-button">Az összes süti elfogadása</button><button class="decline-button eu-cookie-compliance-default-button">Elutasítom</button></div>',
+    ],
+    [
       'Real Cookie Banner',
       '<script type="application/json">{"slug":"real-cookie-banner-pro"}</script>' + banner,
     ],
   ])('recognizes %s and tests rejection using existing APIs', async (cmp, markup) => {
     const result = await scan(origin, { settleMs: 0, networkAdapter: async () => html(markup) });
     expect(result.consent).toMatchObject({ cmp, outcome: 'reject-succeeded' });
+  });
+  it('names an EU Cookie Compliance banner that offers only "accept all"', async () => {
+    const result = await scan(origin, {
+      settleMs: 0,
+      networkAdapter: async () =>
+        html(
+          '<meta charset="utf-8"><div class="eu-cookie-compliance-banner">Sütik <button class="agree-button eu-cookie-compliance-default-button">Az összes süti elfogadása</button></div>',
+        ),
+    });
+    expect(result.consent).toMatchObject({
+      cmp: 'EU Cookie Compliance',
+      acceptLabel: 'Az összes süti elfogadása',
+      outcome: 'unsupported-banner',
+    });
+    expect(result.findings.map((f) => f.ruleId)).toContain('reject-option');
   });
   it('recognizes Sourcepoint in an iframe and keeps both button locators in that frame', async () => {
     const result = await scan(origin, {

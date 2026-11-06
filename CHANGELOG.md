@@ -22,6 +22,8 @@ Upgrade notes:
 
 ### Added
 
+- The Drupal banner EU Cookie Compliance is recognised by name, as seen on a Hungarian railway
+  site that offers only "accept all"
 - `--lang hu`: findings, fixes and the text, Markdown and SARIF reports in Hungarian, with
   schema 1.5.0 for the new language value (#59)
 - New rule `privacy-policy-vendors`: trackers and cookie-setting embeds the start page uses that
