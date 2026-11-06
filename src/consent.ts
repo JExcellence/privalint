@@ -3,6 +3,7 @@ import { classifyLoadError } from './diagnostics.js';
 import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
   ConsentObservation,
+  ControlLook,
   PageLink,
   RecordedCookie,
   RecordedRequest,
@@ -252,6 +253,7 @@ export async function observeConsent(
     ...(banner.payOrOk ? { payOrOk: true } : {}),
     ...(banner.links === undefined ? {} : { bannerLinks: banner.links }),
     ...(banner.blocking === undefined ? {} : { bannerBlocking: banner.blocking }),
+    ...(banner.controls === undefined ? {} : { bannerControls: banner.controls }),
   };
   if (banner.reject === undefined) {
     if (banner.acceptLabel === undefined) observation.reason = 'unsupported-banner-markup';
@@ -323,14 +325,21 @@ export async function observeSettings(
     // Layers slide or fade in; a short wait is enough, a full settle is not needed here.
     await page.waitForTimeout(Math.min(1_000, options.settleMs));
     let switchedOff = 0;
+    const preselected: string[] = [];
     for (const frame of page.frames()) {
-      switchedOff += await switchOffOptional(frame);
-      switchedOff += await selectNarrowestLevel(frame);
+      switchedOff += await switchOffOptional(frame, preselected);
+      switchedOff += await selectNarrowestLevel(frame, preselected);
     }
     const legitimateInterest = await objectToLegitimateInterest(page, options);
     const save = await findSaveControl(page, entry.cmp);
     if (save === undefined) {
-      return { outcome: 'no-save-control', reason: 'no-save-control', openLabel, switchedOff };
+      return {
+        outcome: 'no-save-control',
+        reason: 'no-save-control',
+        openLabel,
+        switchedOff,
+        preselected,
+      };
     }
     const saveLabel = await label(save);
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
@@ -355,6 +364,7 @@ export async function observeSettings(
       openLabel,
       saveLabel,
       switchedOff,
+      preselected,
       ...(legitimateInterest === undefined ? {} : { legitimateInterest }),
       afterSave: { requests: requests.slice(firstRequest), cookies, storage },
       ...(tcf === undefined ? {} : { tcf }),
@@ -511,7 +521,7 @@ function isAcceptAll(text: string): boolean {
  * Switches off every optional consent category shown in the frame and returns how many it
  * changed. Runs after the settings layer opened; the caller saves afterwards.
  */
-async function switchOffOptional(frame: Frame): Promise<number> {
+async function switchOffOptional(frame: Frame, preselected?: string[]): Promise<number> {
   // Disabled controls are the "necessary" category; they stay on.
   const handles = await frame
     .locator(
@@ -538,6 +548,10 @@ async function switchOffOptional(frame: Frame): Promise<number> {
     const inLayer =
       shown && (await handle.evaluate(inConsentLayer, CONSENT_CONTEXT.source).catch(() => false));
     if (inLayer) {
+      // The locator only matched switches that were on: an optional category chosen in advance.
+      if (preselected !== undefined && preselected.length < 10) {
+        preselected.push(await handle.evaluate(toggleLabel).catch(() => ''));
+      }
       // A real click, not `.checked = false`: consent managers listen for click and change events.
       await handle.click({ force: true, timeout: 2_000 }).catch(() => undefined);
       const off = await handle
@@ -555,16 +569,41 @@ async function switchOffOptional(frame: Frame): Promise<number> {
 }
 
 /**
+ * The visible name of a consent switch: its label, aria-label or aria-labelledby, or the text of
+ * the row around it. Runs in the page.
+ */
+function toggleLabel(node: Node): string {
+  const element = node as HTMLElement;
+  const byId = (element.getAttribute('aria-labelledby') ?? '')
+    .split(/\s+/)
+    .map((id) => document.getElementById(id)?.innerText ?? '')
+    .join(' ');
+  const labels = element instanceof HTMLInputElement ? [...(element.labels ?? [])] : [];
+  const text =
+    labels.map((label) => label.innerText).join(' ') ||
+    element.getAttribute('aria-label') ||
+    byId ||
+    element.closest('label')?.innerText ||
+    (element.previousElementSibling as HTMLElement | null)?.innerText ||
+    element.parentElement?.innerText ||
+    '';
+  return text.replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+
+/**
  * Selects the narrowest level in each radio group of the consent layer and returns how many
  * groups it changed. A group without a radio labelled as necessary-only is left as it is: picking
  * by position could just as well pick "everything".
  */
-async function selectNarrowestLevel(frame: Frame): Promise<number> {
+async function selectNarrowestLevel(frame: Frame, preselected?: string[]): Promise<number> {
   const handles = await frame
     .locator('input[type="radio"]:not(:disabled)')
     .elementHandles()
     .catch(() => []);
-  const groups = new Map<string, { narrowest?: (typeof handles)[number]; checked: boolean }>();
+  const groups = new Map<
+    string,
+    { narrowest?: (typeof handles)[number]; checked: boolean; chosen?: string }
+  >();
   for (const handle of handles.slice(0, 50)) {
     const radio = await handle
       .evaluate((node) => {
@@ -583,6 +622,7 @@ async function selectNarrowestLevel(frame: Frame): Promise<number> {
       (await handle.evaluate(inConsentLayer, CONSENT_CONTEXT.source).catch(() => false));
     if (inLayer) {
       const group = groups.get(radio.name) ?? { checked: false };
+      if (radio.checked) group.chosen = radio.text;
       if (group.narrowest === undefined && NARROWEST_LEVEL.test(radio.text)) {
         group.narrowest = handle;
         group.checked = radio.checked;
@@ -591,8 +631,10 @@ async function selectNarrowestLevel(frame: Frame): Promise<number> {
     }
   }
   let changed = 0;
-  for (const { narrowest, checked } of groups.values()) {
+  for (const { narrowest, checked, chosen } of groups.values()) {
     if (narrowest !== undefined && !checked) {
+      // A wider level than necessary-only was selected before the visitor chose anything.
+      if (chosen !== undefined && preselected !== undefined) preselected.push(chosen.trim());
       // Styled radios hide the input; a forced click still fires the events the banner listens to.
       await narrowest.click({ force: true, timeout: 2_000 }).catch(() => undefined);
       const selected = await narrowest
@@ -652,6 +694,7 @@ interface Banner {
   payOrOk?: boolean;
   links?: PageLink[];
   blocking?: boolean;
+  controls?: { accept: ControlLook; reject: ControlLook };
 }
 
 const MAX_BANNER_LINKS = 30;
@@ -818,8 +861,81 @@ async function describe(accept: Locator, reject: Locator | undefined, cmp?: stri
   if (reject !== undefined) {
     banner.reject = reject;
     banner.rejectLabel = await label(reject);
+    const acceptLook = await accept.evaluate(controlLook).catch(() => undefined);
+    const rejectLook = await reject.evaluate(controlLook).catch(() => undefined);
+    if (acceptLook !== undefined && rejectLook !== undefined) {
+      banner.controls = { accept: acceptLook, reject: rejectLook };
+    }
   }
   return banner;
+}
+
+/**
+ * Runs in the page. Whether a control looks like a button or like plain text, its size, and the
+ * contrast of its text against the first solid background behind it (white if there is none).
+ */
+function controlLook(element: Element): ControlLook {
+  const rgba = (value: string): number[] | undefined => {
+    const parts = /^rgba?\(([^)]*)\)$/
+      .exec(value.trim())?.[1]
+      ?.split(/[\s,/]+/)
+      .filter((part) => part !== '')
+      .map(Number);
+    if (parts === undefined || parts.length < 3 || parts.some(Number.isNaN)) return undefined;
+    return [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0, parts[3] ?? 1];
+  };
+  const over = (top: number[], bottom: number[]) =>
+    [0, 1, 2].map((i) => (top[i] ?? 0) * (top[3] ?? 1) + (bottom[i] ?? 0) * (1 - (top[3] ?? 1)));
+  const luminance = (rgb: number[]) => {
+    const [r, g, b] = rgb.map((channel) => {
+      const c = channel / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0);
+  };
+  const parentOf = (node: Element): Element | null => {
+    const root = node.getRootNode();
+    return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+  };
+
+  const style = getComputedStyle(element);
+  const own = rgba(style.backgroundColor);
+  const bordered = (['Top', 'Right', 'Bottom', 'Left'] as const).some(
+    (side) =>
+      Number.parseFloat(style[`border${side}Width`]) > 0 &&
+      (rgba(style[`border${side}Color`])?.[3] ?? 0) > 0,
+  );
+  const filled = (own?.[3] ?? 0) > 0 || style.backgroundImage !== 'none';
+
+  let behind: number[] | undefined = [255, 255, 255];
+  for (let node: Element | null = element; node !== null; node = parentOf(node)) {
+    const nodeStyle = getComputedStyle(node);
+    if (nodeStyle.backgroundImage !== 'none') {
+      behind = undefined;
+      break;
+    }
+    const color = rgba(nodeStyle.backgroundColor);
+    if (color === undefined) {
+      behind = undefined;
+      break;
+    }
+    if ((color[3] ?? 0) > 0) {
+      behind = over(color, [255, 255, 255]);
+      break;
+    }
+  }
+  const text = rgba(style.color);
+  const box = element.getBoundingClientRect();
+  const look: ControlLook = {
+    style: filled || bordered ? 'button' : 'text',
+    width: Math.round(box.width),
+    height: Math.round(box.height),
+  };
+  if (behind !== undefined && text !== undefined) {
+    const [light, dark] = [luminance(over(text, behind)), luminance(behind)].sort((a, b) => b - a);
+    look.contrast = Math.round((((light ?? 0) + 0.05) / ((dark ?? 0) + 0.05)) * 10) / 10;
+  }
+  return look;
 }
 
 /**

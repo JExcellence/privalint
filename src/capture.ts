@@ -1,4 +1,4 @@
-import type { Browser } from 'playwright';
+import type { Browser, Page } from 'playwright';
 import { observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
 import { readForms } from './forms.js';
@@ -6,7 +6,7 @@ import { ControlledNetwork, networkLimits, watchPageCancellations } from './netw
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import { readStorageKeys } from './storage.js';
 import { observeTransport } from './transport.js';
-import type { PageSnapshot } from './types.js';
+import type { LinkedPageText, PageSnapshot } from './types.js';
 import { isFirstParty } from './url.js';
 
 /**
@@ -22,6 +22,7 @@ export async function capturePage(
   siteUrl: URL,
   options: ScanOptions,
   consentPath: ConsentPath,
+  keepText = false,
 ): Promise<PageSnapshot> {
   const checkConsent = consentPath !== 'none';
   const controlled = options.networkAdapter !== undefined;
@@ -123,6 +124,8 @@ export async function capturePage(
     const primary = /^[a-z]{2,3}/i.exec(language.trim())?.[0];
     if (primary !== undefined) snapshot.language = primary.toLowerCase();
     snapshot.forms = await readForms(page);
+    const text = keepText ? await readText(page, snapshot.finalUrl) : undefined;
+    if (text !== undefined) snapshot.pageText = text;
     snapshot.resourceHints = await page.$$eval('link[rel][href]', (elements) =>
       elements.map((link) => ({
         rel: (link.getAttribute('rel') ?? '').toLowerCase(),
@@ -223,4 +226,21 @@ export async function capturePage(
     diagnostics: diagnostics.data,
   };
   return snapshot;
+}
+
+/** Characters of page text kept; enough for a long privacy policy. */
+const MAX_PAGE_TEXT = 100_000;
+
+/** The visible text of the page and whether it links an e-mail address. */
+async function readText(page: Page, url: string): Promise<LinkedPageText | undefined> {
+  return page
+    .evaluate((max) => {
+      const doc = globalThis.document;
+      return {
+        text: (doc.body?.innerText ?? '').slice(0, max),
+        mailto: doc.querySelector('a[href^="mailto:" i]') !== null,
+      };
+    }, MAX_PAGE_TEXT)
+    .then((read) => ({ url, ...read }))
+    .catch(() => undefined);
 }

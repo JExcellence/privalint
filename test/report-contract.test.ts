@@ -4,6 +4,7 @@ import { NetworkError } from '../src/network.js';
 import { REPORT_SCHEMA_VERSION } from '../src/report-contract.js';
 import { scan } from '../src/scanner.js';
 import type { ScanProgressEvent } from '../src/types.js';
+import { IMPRINT_TEXT } from './helpers.js';
 
 const origin = 'https://contract.invalid';
 const html = (extra = '') => ({
@@ -167,8 +168,10 @@ describe('additional CMP recognition', () => {
   it('reports unsupported consent UI without inventing a missing-reject privacy finding', async () => {
     const result = await scan(origin, {
       settleMs: 0,
-      networkAdapter: async () =>
-        html('<div role="dialog">Cookie preferences <button>Proceed</button></div>'),
+      networkAdapter: async ({ url }) =>
+        url.endsWith('/impressum')
+          ? html(IMPRINT_TEXT)
+          : html('<div role="dialog">Cookie preferences <button>Proceed</button></div>'),
     });
     expect(result.consent).toMatchObject({
       outcome: 'unsupported-banner',

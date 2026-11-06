@@ -9,10 +9,16 @@ import { networkLimits } from './network.js';
 import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
 import { summarizeRules } from './rule-summary.js';
+import { LEGAL_NOTICE } from './rules/impressum-link.js';
 import { defaultRules } from './rules/index.js';
+import { legalNoticeContent } from './rules/legal-notice-content.js';
+import { linkMatches } from './rules/links.js';
+import { PRIVACY_POLICY } from './rules/privacy-policy-link.js';
+import { privacyPolicyVendors } from './rules/privacy-policy-vendors.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import type {
   ConsentSummary,
+  LinkedPageText,
   OffSiteRedirect,
   PageSnapshot,
   ScanProgressEvent,
@@ -166,6 +172,14 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           snapshot.consent?.bannerFound === true
         ) {
           snapshot.consent.settings = await checkSettings(browser, url, siteUrl, options);
+        }
+        if (isStart && rules.some((rule) => rule.id === legalNoticeContent.id)) {
+          const notice = await readLinkedPage(browser, snapshot, options, LEGAL_NOTICE);
+          if (notice !== undefined) snapshot.legalNotice = notice;
+        }
+        if (isStart && rules.some((rule) => rule.id === privacyPolicyVendors.id)) {
+          const policy = await readPrivacyPolicy(browser, snapshot, options);
+          if (policy !== undefined) snapshot.privacyPolicy = policy;
         }
         return { url, snapshot, isStart, hostStart, pageIndex, captureId };
       });
@@ -341,7 +355,49 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
   }
 }
 
+/** Links from a privacy policy to a separate cookie policy. */
+const COOKIE_POLICY =
+  /cookie[\s_-]?(?:policy|richtlinie|hinweise|erkl[aä]rung|policies)|s[uü]ti[\s_-]?(?:szab|t[aá]j[eé]koztat)/i;
+
+/**
+ * Loads the page a link matching `pattern` on `from` leads to, on the same site, and returns
+ * its text. One extra load that doesn't count as a crawled page, like the settings check.
+ */
+async function readLinkedPage(
+  browser: Browser,
+  from: Pick<PageSnapshot, 'finalUrl' | 'links'>,
+  options: ScanOptions,
+  pattern: RegExp,
+): Promise<(LinkedPageText & { links: PageSnapshot['links'] }) | undefined> {
+  const fromUrl = new URL(from.finalUrl);
+  const link = from.links.find(linkMatches(pattern));
+  const target = link === undefined ? undefined : crawlTarget(link.href, fromUrl);
+  if (target === undefined || target === withoutHash(from.finalUrl)) return undefined;
+  const page = await capturePage(browser, target, fromUrl, options, 'none', true);
+  if (page.error !== undefined || !isFirstParty(page.finalUrl, fromUrl)) return undefined;
+  return page.pageText === undefined ? undefined : { ...page.pageText, links: page.links };
+}
+
+/** The privacy policy, followed one level to a separate cookie policy it links. */
+async function readPrivacyPolicy(
+  browser: Browser,
+  start: PageSnapshot,
+  options: ScanOptions,
+): Promise<LinkedPageText | undefined> {
+  const policy = await readLinkedPage(browser, start, options, PRIVACY_POLICY);
+  if (policy === undefined) return undefined;
+  const { links, ...text } = policy;
+  const cookies = await readLinkedPage(
+    browser,
+    { finalUrl: policy.url, links },
+    options,
+    COOKIE_POLICY,
+  );
+  return cookies === undefined ? text : { ...text, text: `${text.text}\n${cookies.text}` };
+}
+
 /** Runs the settings path on the start page in a fresh context, after the reject path. */
+
 async function checkSettings(
   browser: Browser,
   url: string,
@@ -363,6 +419,7 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
     afterReject: _afterReject,
     bannerLinks: _bannerLinks,
     bannerBlocking: _bannerBlocking,
+    bannerControls: _bannerControls,
     settings,
     ...summary
   } = start.consent;

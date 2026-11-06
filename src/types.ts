@@ -223,6 +223,17 @@ export interface ResourceHint {
   href: string;
 }
 
+/** How a banner control is rendered, measured from its box and computed styles. */
+export interface ControlLook {
+  /** "button" if it has a visible background or border, "text" if it is shown as plain text. */
+  style: 'button' | 'text';
+  /** Rendered size in CSS pixels. */
+  width: number;
+  height: number;
+  /** Contrast of the text against the background behind it; absent if it can't be computed. */
+  contrast?: number;
+}
+
 /** What happened when privalint looked for a consent banner and clicked "reject". */
 export interface ConsentObservation {
   outcome?: 'no-banner-detected' | 'unsupported-banner' | 'interaction-failed' | 'reject-succeeded';
@@ -249,6 +260,8 @@ export interface ConsentObservation {
   bannerLinks?: PageLink[];
   /** Whether the open banner keeps the visitor from the rest of the page. Internal. */
   bannerBlocking?: boolean;
+  /** How the first-layer accept and reject controls look. Internal input for reject-less-prominent. */
+  bannerControls?: { accept: ControlLook; reject: ControlLook };
   /** True once the reject button was clicked and the page reloaded. */
   rejected: boolean;
   /** Requests made and cookies newly set after rejecting, including the reload. */
@@ -296,6 +309,11 @@ export interface SettingsObservation {
   /** How many checked category switches privalint turned off before saving. */
   switchedOff?: number;
   /**
+   * Labels of optional categories that were already on when the settings layer opened, and of
+   * radio levels wider than necessary-only that were preselected. Since scanner 0.10.0.
+   */
+  preselected?: string[];
+  /**
    * The legitimate-interest tab of a TCF banner, if there was one: its label, the "object to all"
    * button used, or how many of its switches were turned off. Since schema 1.4.0.
    */
@@ -324,6 +342,16 @@ export interface TcfObservation {
   vendorLegitimateInterests: number;
 }
 
+/** A page the start page links to, kept as text: the legal notice or the privacy policy. */
+export interface LinkedPageText {
+  /** Where the page ended up. */
+  url: string;
+  /** Visible text, cut to 100,000 characters. */
+  text: string;
+  /** Whether the page links a mailto: address. */
+  mailto: boolean;
+}
+
 /**
  * Everything observed while loading one page in a fresh browser context,
  * without touching any consent banner.
@@ -344,6 +372,18 @@ export interface PageSnapshot {
   /** localStorage and sessionStorage key names of the page's origin, never values. */
   storage?: StorageKey[];
   links: PageLink[];
+  /** The page's own text, when the capture was asked to keep it. Internal. */
+  pageText?: LinkedPageText;
+  /**
+   * Start page only: text of the page it links as its legal notice, loaded separately. Internal
+   * input for legal-notice-content, not in the report.
+   */
+  legalNotice?: LinkedPageText;
+  /**
+   * Start page only: text of its privacy policy, and of a cookie policy that one links, loaded
+   * separately. Internal input for privacy-policy-vendors, not in the report.
+   */
+  privacyPolicy?: LinkedPageText;
   /** Primary language subtag of `<html lang>`, lowercase, such as `en` or `hu`. */
   language?: string;
   resourceHints: ResourceHint[];

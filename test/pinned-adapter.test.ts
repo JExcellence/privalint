@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createPinnedAdapter } from '../examples/controlled-scanner.js';
 import type { NetworkRequest } from '../src/network.js';
 import { scan } from '../src/scanner.js';
+import { IMPRINT_TEXT } from './helpers.js';
 
 let server: Server;
 let origin: string;
@@ -29,6 +30,10 @@ beforeAll(async () => {
         '<a href="/impressum">Impressum</a><a href="/privacy">Privacy policy</a>' +
           '<script>fetch("/api", { method: "POST", body: JSON.stringify({ q: 1 }) })</script>',
       );
+      return;
+    }
+    if (request.url === '/impressum') {
+      response.writeHead(200, { 'content-type': 'text/html' }).end(IMPRINT_TEXT);
       return;
     }
     if (request.url === '/redirect') {

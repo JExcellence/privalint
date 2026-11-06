@@ -347,6 +347,8 @@ function definitions(version) {
                   saveLabel: string,
                   switchedOff: count,
                   afterSaveComplete: boolean,
+                  // Added within 1.4.0 (scanner 0.10.0); optional.
+                  ...(version === '1.4.0' ? { preselected: array(string) } : {}),
                   ...(timed
                     ? {
                         tcf: ref('tcf'),

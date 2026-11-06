@@ -5,11 +5,16 @@ import {
   accessibilityStatement,
   adobeFonts,
   consentBannerMissing,
+  consentPreselected,
   consentSettingsLink,
   googleFonts,
   impressumLink,
+  legalNoticeContent,
   preConsentTrackers,
   privacyPolicyLink,
+  privacyPolicyVendors,
+  rejectLessProminent,
+  thirdCountryProviders,
   thirdPartyCdns,
   thirdPartyEmbeds,
   trackersAfterReject,
@@ -17,7 +22,7 @@ import {
   withdrawalButton,
 } from '../src/rules/index.js';
 import { newStorageKeys } from '../src/storage.js';
-import type { Rule } from '../src/types.js';
+import type { ControlLook, PageSnapshot, Rule } from '../src/types.js';
 import { cookie, request, SITE, snapshot } from './helpers.js';
 
 const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
@@ -547,6 +552,281 @@ describe('tracking-cookie-lifetime', () => {
       },
     });
     expect(run(trackingCookieLifetime, page)).toHaveLength(1);
+  });
+});
+
+describe('privacy-policy-vendors', () => {
+  const POLICY = 'https://example.de/datenschutz';
+  const page = (text: string, overrides: Partial<PageSnapshot> = {}) =>
+    snapshot({ privacyPolicy: { url: POLICY, text, mailto: false }, ...overrides });
+  const subjects = (findings: { severity: string; subject?: string }[]) =>
+    findings.map((f) => `${f.severity}:${f.subject}`);
+
+  it('warns about a tracker and an embed that sets cookies, notes a font service', () => {
+    const findings = run(
+      privacyPolicyVendors,
+      page('Wir nutzen Google Analytics.', {
+        requests: [
+          request('https://www.google-analytics.com/g/collect'),
+          request('https://www.youtube.com/embed/abc', 'document'),
+          request('https://connect.facebook.net/en_US/fbevents.js'),
+          request('https://fonts.gstatic.com/s/lora.woff2', 'font'),
+        ],
+        cookies: [cookie('YSC', '.youtube.com')],
+      }),
+    );
+    expect(subjects(findings)).toEqual([
+      'warning:YouTube',
+      'warning:Meta Pixel',
+      'info:Google Fonts',
+    ]);
+    expect(findings[0]?.evidence).toEqual([
+      `privacy policy: ${POLICY}`,
+      'https://www.youtube.com/embed/abc',
+    ]);
+  });
+
+  it.each([
+    ['spacing and hyphens', 'Google-Analytics', 'https://www.google-analytics.com/g/collect'],
+    ['an alias', 'the Facebook Pixel', 'https://connect.facebook.net/en_US/fbevents.js'],
+    ['the name without "embed"', 'Videos von YouTube', 'https://www.youtube.com/embed/abc'],
+    ['the host', 'cdn.jsdelivr.net', 'https://cdn.jsdelivr.net/npm/x.js'],
+  ])('accepts %s', (_, text, url) => {
+    expect(run(privacyPolicyVendors, page(text, { requests: [request(url)] }))).toEqual([]);
+  });
+
+  it('matches whole words only', () => {
+    const findings = run(
+      privacyPolicyVendors,
+      page('Metadaten werden gespeichert.', {
+        requests: [request('https://connect.facebook.net/en_US/sdk.js')],
+      }),
+    );
+    expect(subjects(findings)).toEqual(['warning:Facebook SDK']);
+  });
+
+  it('notes an embed without cookies as info, and stays quiet without a policy', () => {
+    const requests = [request('https://player.vimeo.com/video/1', 'document')];
+    expect(subjects(run(privacyPolicyVendors, page('Nothing here.', { requests })))).toEqual([
+      'info:Vimeo',
+    ]);
+    expect(run(privacyPolicyVendors, snapshot({ requests }))).toEqual([]);
+  });
+});
+
+describe('legal-notice-content', () => {
+  const check = (text: string, region: Region = 'de', mailto = false) =>
+    legalNoticeContent.check({
+      siteUrl: SITE,
+      page: snapshot({ legalNotice: { url: 'https://example.de/impressum', text, mailto } }),
+      lang: 'en',
+      region,
+    });
+  const summary = (findings: { severity: string; subject?: string }[]) =>
+    findings.map((f) => `${f.severity}:${f.subject}`);
+
+  it.each<[string, Region, string]>([
+    [
+      'de',
+      'de',
+      'Beispiel GmbH\nMusterstraße 12\n10115 Berlin\ninfo@example.de\nAmtsgericht Berlin, HRB 12345',
+    ],
+    [
+      'at',
+      'at',
+      'Beispiel GmbH\nMariahilfer Straße 1\nA-1060 Wien\noffice (at) example.at\nFN 123456a, Handelsgericht Wien',
+    ],
+    [
+      'ch',
+      'ch',
+      'Beispiel AG\nBahnhofstrasse 10\n8001 Zürich\ninfo@example.ch\nUID CHE-123.456.789',
+    ],
+    [
+      'hu',
+      'hu',
+      'Példa Kft.\n1051 Budapest, Váci út 1.\nE-mail: info@example.hu\nCégjegyzékszám: Cg. 01-09-123456',
+    ],
+    [
+      'en, Hungarian address',
+      'hu',
+      'Example Kft.\nAndrássy út 12, Budapest, 1061\nhello@example.com\nCompany registration number: 01-09-123456',
+    ],
+  ])('passes a complete legal notice (%s)', (_, region, text) => {
+    expect(check(text, region)).toEqual([]);
+  });
+
+  it('warns when the address is missing and accepts a mailto link as the e-mail', () => {
+    const findings = check(
+      'Beispiel e.K.\nInhaber: Max Muster\nAmtsgericht Köln, HRA 1',
+      'de',
+      true,
+    );
+    expect(summary(findings)).toEqual(['warning:contact']);
+    expect(findings[0]?.message).toBe('The legal notice gives no postal address.');
+  });
+
+  it('warns about a contact form instead of details and notes the missing register entry', () => {
+    const findings = check('Example Ltd.\nPlease use our contact form.', 'eu');
+    expect(summary(findings)).toEqual(['warning:contact', 'info:register']);
+    expect(findings[0]?.message).toBe(
+      'The legal notice gives no postal address and no e-mail address.',
+    );
+    expect(findings[1]?.evidence).toEqual([
+      'legal notice: https://example.de/impressum',
+      'legal form: Ltd.',
+    ]);
+  });
+
+  it('does not ask a sole trader without a legal form for a register entry', () => {
+    expect(check('Max Muster\nMusterweg 3\n50667 Köln\nmail@muster.de')).toEqual([]);
+  });
+
+  it('stays quiet on pages that are not the legal notice', () => {
+    expect(run(legalNoticeContent, snapshot())).toEqual([]);
+  });
+});
+
+describe('third-country-providers', () => {
+  const page = (...urls: string[]) => snapshot({ requests: urls.map((url) => request(url)) });
+
+  it('lists Sentry in the US with its hosts, once per vendor', () => {
+    const findings = run(
+      thirdCountryProviders,
+      page(
+        'https://o123.ingest.us.sentry.io/api/4/envelope/?sentry_key=abc',
+        'https://o123.ingest.us.sentry.io/api/4/envelope/',
+        'https://browser.sentry-cdn.com/8.0.0/bundle.min.js',
+      ),
+    );
+    expect(findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'third-country-providers',
+        severity: 'info',
+        subject: 'Sentry',
+        evidence: ['o123.ingest.us.sentry.io', 'browser.sentry-cdn.com'],
+      }),
+    ]);
+    expect(findings[0]?.message).toBe(
+      'Sentry (USA) receives data before consent. Transfers outside the EU/EEA need a legal basis.',
+    );
+  });
+
+  it.each([
+    ['Sentry in Frankfurt', 'https://o123.ingest.de.sentry.io/api/4/envelope/'],
+    ['Datadog EU1', 'https://browser-intake-datadoghq.eu/api/v2/rum'],
+    ['an unknown host', 'https://api.example-backend.io/v1'],
+  ])('leaves %s alone', (_, url) => {
+    expect(run(thirdCountryProviders, page(url))).toEqual([]);
+  });
+
+  it('lists a Supabase project and cites the Swiss rules for ch', () => {
+    const [finding] = thirdCountryProviders.check({
+      siteUrl: SITE,
+      page: page('https://abcdefgh.supabase.co/rest/v1/items'),
+      lang: 'en',
+      region: 'ch',
+    });
+    expect(finding?.subject).toBe('Supabase');
+    expect(finding?.message).toContain('Transfers abroad');
+    expect(finding?.fix).toContain('Art. 16 DSG');
+  });
+});
+
+describe('reject-less-prominent', () => {
+  const button = { style: 'button', width: 120, height: 40, contrast: 7 } as const;
+  const page = (reject: ControlLook, accept: ControlLook = button) =>
+    snapshot({
+      consent: {
+        bannerFound: true,
+        rejected: true,
+        state: 'reject-tested',
+        acceptLabel: 'Accept all',
+        rejectLabel: 'Reject all',
+        bannerControls: { accept, reject },
+      },
+    });
+
+  it('passes controls of the same style, size and contrast', () => {
+    expect(run(rejectLessProminent, page({ ...button, width: 110 }))).toEqual([]);
+  });
+
+  it('notes a text link, with the measurements as evidence', () => {
+    const [finding] = run(
+      rejectLessProminent,
+      page({ style: 'text', width: 70, height: 20, contrast: 6 }),
+    );
+    expect(finding).toMatchObject({ ruleId: 'reject-less-prominent', severity: 'info' });
+    expect(finding?.message).toBe(
+      'The reject control "Reject all" is less prominent than "Accept all": shown as plain text; the accept button is 3.4 times its size.',
+    );
+    expect(finding?.evidence).toEqual([
+      'accept "Accept all": button, 120×40 px, contrast 7:1',
+      'reject "Reject all": plain text, 70×20 px, contrast 6:1',
+    ]);
+  });
+
+  it('notes low contrast only when accept is readable', () => {
+    const grey = { ...button, contrast: 1.6 };
+    expect(run(rejectLessProminent, page(grey))[0]?.message).toContain('low text contrast (1.6:1)');
+    expect(run(rejectLessProminent, page(grey, { ...button, contrast: 2 }))).toEqual([]);
+    expect(run(rejectLessProminent, page({ style: 'button', width: 120, height: 40 }))).toEqual([]);
+  });
+
+  it('says it in German', () => {
+    const [finding] = run(rejectLessProminent, page({ ...button, contrast: 2 }), 'de');
+    expect(finding?.message).toBe(
+      'Die Ablehnen-Steuerung „Reject all“ fällt weniger auf als „Accept all“: geringer Textkontrast (2:1).',
+    );
+  });
+
+  it('stays quiet without measurements', () => {
+    expect(run(rejectLessProminent, snapshot())).toEqual([]);
+  });
+});
+
+describe('consent-preselected', () => {
+  const page = (preselected?: string[]) =>
+    snapshot({
+      consent: {
+        bannerFound: true,
+        rejected: true,
+        state: 'reject-tested',
+        settings: {
+          outcome: 'saved',
+          reason: 'settings-saved-and-reloaded',
+          openLabel: 'Settings',
+          switchedOff: preselected?.length ?? 0,
+          ...(preselected === undefined ? {} : { preselected }),
+        },
+      },
+    });
+
+  it('reports categories ticked in advance as an error, with their names', () => {
+    const [finding] = run(consentPreselected, page(['Statistics', 'Marketing']));
+    expect(finding).toMatchObject({ ruleId: 'consent-preselected', severity: 'error' });
+    expect(finding?.message).toBe(
+      '2 optional categories are switched on in the cookie settings before the visitor chooses: "Statistics", "Marketing".',
+    );
+    expect(finding?.evidence).toEqual([
+      'settings opened with "Settings"',
+      'Statistics',
+      'Marketing',
+    ]);
+  });
+
+  it('counts a switch without a readable label', () => {
+    const [finding] = run(consentPreselected, page(['']), 'de');
+    expect(finding?.message).toBe(
+      'In den Cookie-Einstellungen ist 1 optionale Kategorie schon vor der Wahl der Besucher eingeschaltet.',
+    );
+  });
+
+  it.each([
+    ['nothing ticked', page([])],
+    ['an older report without the field', page()],
+    ['no settings check', snapshot()],
+  ])('passes with %s', (_, snap) => {
+    expect(run(consentPreselected, snap)).toEqual([]);
   });
 });
 

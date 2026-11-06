@@ -24,13 +24,18 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'adobe-fonts': ['network'],
   'third-party-embeds': ['network'],
   'third-party-cdns': ['network'],
+  'third-country-providers': ['network'],
   'tracking-cookie-lifetime': ['network'],
   'impressum-link': ['document'],
+  'legal-notice-content': ['document'],
   'privacy-policy-link': ['document'],
+  'privacy-policy-vendors': ['network'],
   'reject-option': ['consent'],
+  'reject-less-prominent': ['consent'],
   'trackers-after-reject': ['after-reject'],
   'consent-settings-link': ['after-reject'],
   'trackers-after-settings': ['after-settings'],
+  'consent-preselected': ['after-settings'],
   'consent-banner-missing': ['network', 'banner-search'],
 };
 

@@ -874,6 +874,12 @@
             "afterSaveComplete": {
               "type": "boolean"
             },
+            "preselected": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
             "tcf": {
               "$ref": "#/$defs/tcf"
             },

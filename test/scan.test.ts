@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { assessCoverage } from '../src/coverage.js';
 import { scan } from '../src/scanner.js';
+import type { ScanResult } from '../src/types.js';
 
 const FIXTURES = fileURLToPath(new URL('./fixtures/', import.meta.url));
 const TYPES: Record<string, string> = { '.html': 'text/html', '.css': 'text/css' };
@@ -117,6 +118,47 @@ describe('scan', () => {
         evidence: ['localStorage _hjSessionUser_123'],
       }),
     ]);
+  });
+
+  it('reads the legal notice linked from the start page without counting it as a page', async () => {
+    const notices: string[] = [];
+    const clean = await scan(`${origin}/clean/`, {
+      ...options,
+      onPage: (page) => {
+        if (page.legalNotice !== undefined)
+          notices.push(page.legalNotice.url, page.legalNotice.text);
+      },
+    });
+    expect(clean.pages).toHaveLength(1);
+    expect(clean.findings).toEqual([]);
+    expect(notices[0]).toBe(`${origin}/clean/impressum.html`);
+    expect(notices[1]).toContain('HRB 123456');
+
+    const formOnly = await scan(`${origin}/legal-notice/`, { ...options, region: 'hu' });
+    const findings = formOnly.findings.filter((f) => f.ruleId === 'legal-notice-content');
+    expect(findings.map(({ severity, message }) => `${severity}: ${message}`)).toEqual([
+      'warning: The legal notice gives no postal address and no e-mail address.',
+      'info: The legal notice names the legal form Kft. but no register entry.',
+    ]);
+    expect(findings[0]?.pageUrl).toBe(`${origin}/legal-notice/`);
+    expect(findings[0]?.evidence[0]).toBe(`legal notice: ${origin}/legal-notice/imprint.html`);
+  });
+
+  it('looks for every service the start page uses in its privacy policy and cookie policy', async () => {
+    const result = await scan(`${origin}/policy-vendors/`, options);
+    // Google Analytics is in the privacy policy, YouTube in the cookie policy it links.
+    expect(
+      result.findings
+        .filter((f) => f.ruleId === 'privacy-policy-vendors')
+        .map(({ severity, subject, evidence }) => ({ severity, subject, policy: evidence[0] })),
+    ).toEqual([
+      {
+        severity: 'info',
+        subject: 'Google Fonts',
+        policy: `privacy policy: ${origin}/policy-vendors/privacy.html`,
+      },
+    ]);
+    expect(result.pages).toHaveLength(1);
   });
 
   it('never puts URL credentials into the report', async () => {
@@ -325,9 +367,10 @@ describe('consent check', () => {
         openLabel: 'Einstellungen',
         saveLabel: 'Auswahl speichern',
         switchedOff: 2,
+        preselected: ['Statistik', 'Marketing'],
       },
     });
-    expect(result.findings).toEqual([]);
+    expect(result.findings.map((f) => f.ruleId)).toEqual(['consent-preselected']);
 
     // The words that tell a consent banner from other buttons are only inside the shadow root.
     const hidden = await scan(`${origin}/consent/shadow-banner-only.html`, {
@@ -427,8 +470,19 @@ describe('consent check', () => {
         openLabel: 'Einstellungen',
         saveLabel: 'Auswahl speichern',
         switchedOff: 2,
+        preselected: ['Statistik', 'Marketing'],
         afterSaveComplete: true,
       });
+      // The page loads nothing after saving, but it ticked both optional categories in advance.
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
+      expect(result.findings[0]).toMatchObject({ severity: 'error' });
+      expect(result.findings[0]?.message).toContain('"Statistik", "Marketing"');
+    });
+
+    it('passes a layer that starts with every optional category off', async () => {
+      const result = await scan(`${origin}/consent/settings-good.html?unticked`, settingsOptions);
+      expect(result.consent?.settings).toMatchObject({ outcome: 'saved', switchedOff: 0 });
+      expect(result.consent?.settings?.preselected ?? []).toEqual([]);
       expect(result.findings).toEqual([]);
     });
 
@@ -483,7 +537,7 @@ describe('consent check', () => {
           vendorConsents: 0,
           vendorLegitimateInterests: 0,
         });
-        expect(result.findings).toEqual([]);
+        expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
       });
 
       it('reports consent the TCF API still holds as an error', async () => {
@@ -528,7 +582,7 @@ describe('consent check', () => {
         saveLabel: 'Elfogadom a kiválasztottakat',
         switchedOff: 2,
       });
-      expect(result.findings).toEqual([]);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
     });
 
     it('picks the narrowest level when categories are radio buttons (otpbank.hu)', async () => {
@@ -540,6 +594,7 @@ describe('consent check', () => {
         outcome: 'saved',
         saveLabel: 'Elfogadom a fenti sütibeállítások használatát',
         switchedOff: 1,
+        preselected: ['Legbővebb szint: Statisztikai és reklám célú sütik'],
       });
       expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
     });
@@ -564,7 +619,7 @@ describe('consent check', () => {
     it('leaves checkboxes outside the consent layer alone', async () => {
       const result = await scan(`${origin}/consent/settings-with-login.html`, settingsOptions);
       expect(result.consent?.settings).toMatchObject({ outcome: 'saved', switchedOff: 2 });
-      expect(result.findings).toEqual([]);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
     });
 
     it('never saves with a button that confirms all, whatever its verb', async () => {
@@ -574,7 +629,7 @@ describe('consent check', () => {
         saveLabel: 'Auswahl bestätigen',
         switchedOff: 2,
       });
-      expect(result.findings).toEqual([]);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
     });
 
     it('names the Usercentrics v3 banner and uses its own settings and save buttons', async () => {
@@ -595,7 +650,7 @@ describe('consent check', () => {
 
     it('catches trackers that load after saving with everything off', async () => {
       const result = await scan(`${origin}/consent/settings-broken.html`, settingsOptions);
-      expect(ruleIds(result.findings)).toEqual(['trackers-after-settings']);
+      expect(ruleIds(result.findings)).toEqual(['trackers-after-settings', 'consent-preselected']);
       expect(result.findings[0]?.message).toContain('Auswahl speichern');
       expect(result.findings[0]?.evidence[0]).toContain('G-SETTINGS');
     });
@@ -618,7 +673,7 @@ describe('consent check', () => {
         },
       });
       expect(result.region).toBe('hu');
-      expect(result.findings).toEqual([]);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
     });
 
     it('reports a banner without a settings control', async () => {
@@ -646,6 +701,36 @@ describe('consent check', () => {
     expect(result.findings.map(({ ruleId, severity }) => `${ruleId}:${severity}`)).toEqual([
       'reject-option:info',
     ]);
+  });
+
+  describe('a reject control less prominent than accept', () => {
+    const prominence = (result: ScanResult) =>
+      result.findings.filter((f) => f.ruleId === 'reject-less-prominent');
+
+    it('passes two buttons of the same style', async () => {
+      const result = await scan(`${origin}/consent/prominence.html`, options);
+      expect(result.consent).toMatchObject({ rejected: true, rejectLabel: 'Reject all' });
+      expect(result.findings).toEqual([]);
+    });
+
+    it('notes a reject text link next to an accept button, with the measurements', async () => {
+      const result = await scan(`${origin}/consent/prominence.html?variant=link`, options);
+      const [finding] = prominence(result);
+      expect(finding).toMatchObject({ severity: 'info' });
+      expect(finding?.message).toContain('shown as plain text');
+      expect(finding?.message).toContain('times its size');
+      expect(finding?.evidence[0]).toMatch(
+        /^accept "Accept all": button, \d+×\d+ px, contrast [\d.]+:1$/,
+      );
+      expect(finding?.evidence[1]).toMatch(/^reject "Reject all": plain text, /);
+    });
+
+    it('notes a light-grey reject button', async () => {
+      const result = await scan(`${origin}/consent/prominence.html?variant=grey`, options);
+      const [finding] = prominence(result);
+      expect(finding?.message).toContain('low text contrast');
+      expect(finding?.message).not.toContain('plain text');
+    });
   });
 
   it('ignores subscription links outside the banner', async () => {
