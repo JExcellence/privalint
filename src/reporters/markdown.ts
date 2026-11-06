@@ -51,6 +51,12 @@ export function formatMarkdown(result: ScanResult): string {
     }
   }
 
+  const offSite = result.offSiteRedirects ?? [];
+  if (offSite.length > 0) {
+    lines.push('', m.offSite(offSite.length), '');
+    for (const { url, finalUrl } of offSite) lines.push(`- ${code(url)} → ${code(finalUrl)}`);
+  }
+
   // Keyed by rule and fix text: the tracker rules give each vendor its own fix, and the same
   // fix found on several pages is listed once.
   const fixes = new Map(

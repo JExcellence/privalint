@@ -3,13 +3,15 @@ import { request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
 import { type NetworkAdapter, NetworkError, scan } from '../src/index.js';
 
+const PAGE_METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']);
+
 /**
  * Small, deny-by-default example. Pins are trusted deployment configuration, NOT user input.
  * The operator must vet addresses and run the browser in an egress-restricted worker.
  * Requests never resolve DNS or follow redirects here. Every redirect re-enters the adapter.
  */
 export function createPinnedAdapter(pins: ReadonlyMap<string, string>): NetworkAdapter {
-  return async ({ url: raw, method, headers, signal }) => {
+  return async ({ url: raw, method, headers, body, signal }) => {
     const url = new URL(raw);
     const address = pins.get(url.origin);
     const family = address === undefined ? 0 : isIP(address);
@@ -24,7 +26,9 @@ export function createPinnedAdapter(pins: ReadonlyMap<string, string>): NetworkA
     ) {
       throw new NetworkError('security-blocked');
     }
-    if (method !== 'GET' && method !== 'HEAD') throw new NetworkError('unsupported-method');
+    // The methods a page's own scripts send, such as analytics or API calls. Refusing them makes
+    // every page with such a call partial. TRACE, CONNECT and anything unusual stay refused.
+    if (!PAGE_METHODS.has(method)) throw new NetworkError('unsupported-method');
     const outgoing = Object.fromEntries(
       Object.entries(headers).filter(
         ([name]) =>
@@ -34,6 +38,7 @@ export function createPinnedAdapter(pins: ReadonlyMap<string, string>): NetworkA
             'transfer-encoding',
             'proxy-authorization',
             'accept-encoding',
+            'content-length',
           ].includes(name.toLowerCase()),
       ),
     );
@@ -50,6 +55,7 @@ export function createPinnedAdapter(pins: ReadonlyMap<string, string>): NetworkA
             host: url.host,
             'accept-encoding': 'identity',
             connection: 'close',
+            ...(body === null ? {} : { 'content-length': String(body.byteLength) }),
           },
           // Pin the actual socket destination, retaining the original hostname for TLS verification.
           lookup: (_hostname, options, callback) => {
@@ -60,7 +66,7 @@ export function createPinnedAdapter(pins: ReadonlyMap<string, string>): NetworkA
         resolve,
       );
       request.on('error', reject);
-      request.end();
+      request.end(body ?? undefined);
     });
     const responseHeaders: Record<string, string | string[]> = {};
     for (const [name, value] of Object.entries(response.headers)) {

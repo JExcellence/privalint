@@ -320,6 +320,8 @@ export interface PageSnapshot {
   /** localStorage and sessionStorage key names of the page's origin, never values. */
   storage?: StorageKey[];
   links: PageLink[];
+  /** Primary language subtag of `<html lang>`, lowercase, such as `en` or `hu`. */
+  language?: string;
   resourceHints: ResourceHint[];
   /** Only present on the start page, unless the consent check was skipped. */
   consent?: ConsentObservation;
@@ -349,6 +351,8 @@ export interface RuleContext {
   page: PageSnapshot;
   /** Language for messages and fixes. */
   lang: Lang;
+  /** Legal profile of the scan. Absent when a custom caller doesn't pass one. */
+  region?: Region;
 }
 
 export interface Rule {
@@ -390,12 +394,22 @@ export interface ScanResult {
   scannedAt: string;
   durationMs: number;
   pages: PageSummary[];
+  /**
+   * Crawled links that redirected to another site. They are not scanned as part of the site and
+   * don't count against maxPages. Absent when there were none.
+   */
+  offSiteRedirects?: OffSiteRedirect[];
   /** Outcome of the consent check on the start page. */
   consent?: ConsentSummary;
   findings: Finding[];
   rules: Array<Omit<Rule, 'check'>>;
   /** Observation coverage, not a legal compliance judgement. */
   coverage?: 'complete' | 'partial';
+}
+
+export interface OffSiteRedirect {
+  url: string;
+  finalUrl: string;
 }
 
 export type RuleSettings = Record<string, Severity | 'off'>;

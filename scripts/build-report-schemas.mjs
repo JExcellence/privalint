@@ -426,6 +426,10 @@ function reportSchema(version) {
         },
         durationMs: { type: 'number', minimum: 0 },
         pages: array(ref('page')),
+        // Added within 1.4.0 (scanner 0.10.0); optional, so earlier 1.4.0 reports stay valid.
+        ...(version === '1.4.0'
+          ? { offSiteRedirects: array(object({ url: string, finalUrl: string })) }
+          : {}),
         consent: ref('consent'),
         findings: array(ref('finding')),
         rules: array(ref('rule')),

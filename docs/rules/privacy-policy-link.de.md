@@ -25,5 +25,6 @@ Link im Footer.
 
 ## Lösung
 
-Fügen Sie im Footer neben dem Impressum-Link einen Link „Datenschutz“ oder
-„Datenschutzerklärung“ ein.
+Fügen Sie im Footer neben dem Impressum-Link einen Link „Datenschutzerklärung“ ein. Die gemeldete
+Lösung richtet sich nach der Sprache, die die Seite in `<html lang>` angibt, zum Beispiel „Privacy
+policy“ auf einer englischen oder „Adatkezelési tájékoztató“ auf einer ungarischen Website.

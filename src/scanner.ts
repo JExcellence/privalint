@@ -10,8 +10,14 @@ import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
 import { defaultRules } from './rules/index.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
-import type { PageSnapshot, ScanProgressEvent, ScanResult, SettingsObservation } from './types.js';
-import { crawlTarget, withoutHash } from './url.js';
+import type {
+  OffSiteRedirect,
+  PageSnapshot,
+  ScanProgressEvent,
+  ScanResult,
+  SettingsObservation,
+} from './types.js';
+import { crawlTarget, isFirstParty, withoutHash } from './url.js';
 
 export type { ScanOptions } from './scan-options.js';
 
@@ -99,6 +105,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
   try {
     throwIfAborted(options.signal);
     const snapshots: PageSnapshot[] = [];
+    const offSite: OffSiteRedirect[] = [];
     const queue = [siteUrl.href];
     const seen = new Set(queue);
     const pageIds = new Map<string, { pageId: string; pageIndex: number }>();
@@ -176,6 +183,11 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           throw new Error(`Could not load ${diagnosticUrl(url)}: ${snapshot.error}`);
         }
         siteUrl = new URL(snapshot.finalUrl);
+      } else if (!isFirstParty(snapshot.finalUrl, siteUrl)) {
+        // A link that redirected to another site: its trackers and cookies aren't this site's.
+        offSite.push({ url: snapshot.url, finalUrl: snapshot.finalUrl });
+        emit({ stage: 'page-captured', elapsedMs: 0, captureId, pageIndex });
+        continue;
       }
       const finalUrl = withoutHash(snapshot.finalUrl);
       const existingPage = pageIds.get(finalUrl);
@@ -215,17 +227,15 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
         pageUrl: diagnosticUrl(page.finalUrl),
       });
-      return assessPage(
-        page,
-        rules,
-        siteUrl,
+      return assessPage(page, rules, siteUrl, {
         lang,
-        index === 0,
-        options.consentCheck !== false,
-        configuredRules,
-        options.settingsCheck === true,
-        !options.networkAdapter && !options.offline,
-      );
+        region,
+        isStart: index === 0,
+        consentEnabled: options.consentCheck !== false,
+        catalog: configuredRules,
+        settingsEnabled: options.settingsCheck === true,
+        transportEnabled: !options.networkAdapter && !options.offline,
+      });
     });
     const partial =
       assessments.some((assessment) =>
@@ -279,6 +289,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ...(page.capture === undefined ? {} : { capture: page.capture }),
         ruleEvaluations: assessments[index]?.evaluations ?? [],
       })),
+      ...(offSite.length === 0 ? {} : { offSiteRedirects: offSite }),
       ...consentSummary(snapshots[0]),
       findings: applyPolicy(
         applyRegion(
@@ -384,6 +395,14 @@ function redactReport(result: ScanResult): ScanResult {
       url: diagnosticUrl(page.url),
       finalUrl: diagnosticUrl(page.finalUrl),
     })),
+    ...(result.offSiteRedirects === undefined
+      ? {}
+      : {
+          offSiteRedirects: result.offSiteRedirects.map(({ url, finalUrl }) => ({
+            url: diagnosticUrl(url),
+            finalUrl: diagnosticUrl(finalUrl),
+          })),
+        }),
     findings: result.findings.map((finding) => ({
       ...finding,
       pageUrl: diagnosticUrl(finding.pageUrl),

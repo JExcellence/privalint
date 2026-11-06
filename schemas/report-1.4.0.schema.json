@@ -53,6 +53,24 @@
         "$ref": "#/$defs/page"
       }
     },
+    "offSiteRedirects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "finalUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "finalUrl"
+        ]
+      }
+    },
     "consent": {
       "$ref": "#/$defs/consent"
     },

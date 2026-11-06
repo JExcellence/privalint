@@ -6,6 +6,26 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- The fixes of `impressum-link` and `privacy-policy-link` suggest labels in the language the page
+  declares in `<html lang>`: "Legal notice" and "Privacy policy" on an English site, "Impresszum"
+  and "Adatkezelési tájékoztató" on a Hungarian one, "Impressum" and "Datenschutzerklärung" on a
+  German one. Without a declared language the region decides. The BGH two-click ruling is only
+  cited with `--region de` (#96)
+- The example adapter in `examples/controlled-scanner.ts` forwards the page's own POST, PUT,
+  PATCH, DELETE and OPTIONS requests with their body instead of refusing them. Refused API and
+  analytics calls made every page with one partial. The controlled-scanning docs explain why an
+  adapter should do the same (#98)
+
+### Fixed
+
+- A crawled link that redirects to another site is no longer scanned as one of the site's pages.
+  It is listed in `offSiteRedirects` and doesn't count against `--max-pages` (#95)
+- `impressum-link` no longer takes a deeper page such as `/blocks/contact` for the contact page.
+  A contact page is `/kontakt`, `/contact`, `/contact-us` or `/kapcsolat` at the top of the site
+  or under a language prefix, or a link labelled as one. "Kapcsolat" is recognised (#97)
+
 ## 0.9.0 - 2026-11-01
 
 Upgrade notes:

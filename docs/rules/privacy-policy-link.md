@@ -23,5 +23,6 @@ policy has to be reachable from every page, in practice through a link in the fo
 
 ## How to fix
 
-Add a link labelled "Datenschutz" or "Datenschutzerklärung" to the footer, next to the Impressum
-link.
+Add a link labelled "Datenschutzerklärung" to the footer, next to the Impressum link. The
+reported fix uses the language the page declares in `<html lang>`, for example "Privacy policy" on
+an English site or "Adatkezelési tájékoztató" on a Hungarian one.

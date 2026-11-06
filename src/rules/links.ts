@@ -11,7 +11,7 @@ export const linkMatches = (pattern: RegExp) => (link: PageLink) =>
 export const linksChecked = (count: number, lang: Lang) =>
   say(lang, { en: `${count} links checked`, de: `${count} Links geprüft` });
 
-function pathOf(href: string): string {
+export function pathOf(href: string): string {
   try {
     return decodeURIComponent(new URL(href).pathname);
   } catch {

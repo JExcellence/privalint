@@ -27,6 +27,58 @@ describe('https-transport in adapter scans', () => {
   });
 });
 
+describe('labels in link fixes', () => {
+  it('follow the language the page declares, not only the region', async () => {
+    const result = await scan(origin, {
+      ...settings,
+      region: 'hu',
+      networkAdapter: async () => ({
+        status: 200,
+        headers: { 'content-type': 'text/html' },
+        body: '<!doctype html><html lang="en-GB"><a href="/about">About</a></html>',
+      }),
+    });
+    const fix = (ruleId: string) => result.findings.find((f) => f.ruleId === ruleId)?.fix;
+    expect(fix('impressum-link')).toContain('"Legal notice"');
+    expect(fix('privacy-policy-link')).toContain('"Privacy policy"');
+  });
+});
+
+describe('links that redirect to another site', () => {
+  it('are listed, not scanned, and leave room for site pages', async () => {
+    const result = await scan(origin, {
+      ...settings,
+      maxPages: 2,
+      networkAdapter: async ({ url }) => {
+        const { host, pathname } = new URL(url);
+        if (pathname === '/repo') {
+          return { status: 302, headers: { location: 'https://code.invalid/org/repo' } };
+        }
+        if (host === 'code.invalid') {
+          return {
+            ...html('<script src="https://www.google-analytics.com/analytics.js"></script>'),
+            headers: { 'content-type': 'text/html', 'set-cookie': '_octo=1; Path=/' },
+          };
+        }
+        // The redirecting link comes first, so it is crawled before /about.
+        const body = pathname === '/' ? '<a href="/repo">Repo</a><a href="/about">About</a>' : '';
+        return { ...html(), body: `<!doctype html>${body}${links}` };
+      },
+    });
+    expect(result.pages.map((page) => new URL(page.url).host)).toEqual([
+      'scanner.invalid',
+      'scanner.invalid',
+    ]);
+    expect(result.offSiteRedirects).toEqual([
+      { url: 'https://scanner.invalid/[redacted]', finalUrl: 'https://code.invalid/[redacted]' },
+    ]);
+    expect(result.findings.filter((finding) => finding.ruleId === 'pre-consent-trackers')).toEqual(
+      [],
+    );
+    expect(result.coverage).toBe('complete');
+  });
+});
+
 describe('requests from iframes and workers', () => {
   // A cross-origin iframe runs in its own renderer process (site isolation) and a worker is its own
   // target; both must still go through the adapter, never around it.

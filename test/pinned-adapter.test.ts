@@ -8,9 +8,29 @@ import { scan } from '../src/scanner.js';
 let server: Server;
 let origin: string;
 let received = 0;
+const posted: string[] = [];
 beforeAll(async () => {
   server = createServer((request, response) => {
     received++;
+    if (request.method === 'POST') {
+      let body = '';
+      request.on('data', (chunk) => {
+        body += chunk;
+      });
+      request.on('end', () => {
+        posted.push(`${request.url} ${body}`);
+        response.writeHead(204).end();
+      });
+      return;
+    }
+    if (request.url === '/with-api-call') {
+      response.writeHead(200, { 'content-type': 'text/html' });
+      response.end(
+        '<a href="/impressum">Impressum</a><a href="/privacy">Privacy policy</a>' +
+          '<script>fetch("/api", { method: "POST", body: JSON.stringify({ q: 1 }) })</script>',
+      );
+      return;
+    }
     if (request.url === '/redirect') {
       response.writeHead(302, { location: 'http://169.254.169.254/private?token=SECRET' }).end();
     } else {
@@ -59,10 +79,19 @@ describe('pinned transport example', () => {
     await expect(
       adapter(request(origin.replace('http://', 'http://user:SECRET@'))),
     ).rejects.toMatchObject({ kind: 'security-blocked' });
-    await expect(adapter({ ...request(origin), method: 'POST' })).rejects.toMatchObject({
+    await expect(adapter({ ...request(origin), method: 'TRACE' })).rejects.toMatchObject({
       kind: 'unsupported-method',
     });
     expect(received).toBe(before);
+  });
+  it("forwards the page's own POST requests with their body", async () => {
+    const result = await scan(`${origin}/with-api-call`, {
+      networkAdapter: createPinnedAdapter(new Map([[origin, '127.0.0.1']])),
+      settleMs: 200,
+      maxPages: 1,
+    });
+    expect(posted).toContain('/api {"q":1}');
+    expect(result.pages[0]?.capture?.complete).toBe(true);
   });
   it('does not follow a redirect to a forbidden destination or use browser fallback', async () => {
     const before = received;

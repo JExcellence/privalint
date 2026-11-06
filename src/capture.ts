@@ -117,6 +117,11 @@ export async function capturePage(
           .slice(0, 200),
       })),
     );
+    const language = await page
+      .evaluate(() => globalThis.document.documentElement.lang)
+      .catch(() => '');
+    const primary = /^[a-z]{2,3}/i.exec(language.trim())?.[0];
+    if (primary !== undefined) snapshot.language = primary.toLowerCase();
     snapshot.forms = await readForms(page);
     snapshot.resourceHints = await page.$$eval('link[rel][href]', (elements) =>
       elements.map((link) => ({
