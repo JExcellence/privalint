@@ -80,6 +80,13 @@ strukturell validieren.
 Der Action-Input überschreibt die JSON-Einstellung auch bei seinem Standardwert `false`.
 Ungültige Boolean-Werte werden abgelehnt statt die Schranke stillschweigend abzuschalten.
 
+Jeder Bericht enthält `ruleSummary`: pro ausgewählter Regel die Zahl der Seiten mit Befund, ohne
+Befund geprüft und nicht prüfbar, übersprungene Seiten nach Grund sowie die Seiten-IDs mit Befund,
+nicht prüfbar oder eingeschränkt. `--evaluations summary` schreibt JSON ohne die
+`ruleEvaluations` pro Seite (leere Arrays) und mit `evaluations: "summary"`; ein Bericht über 50
+Seiten schrumpft auf einen Bruchteil. `assessCoverage` liest dann `ruleSummary` und kommt zum
+selben Ergebnis. Lesen andere Werkzeuge die Bewertungen pro Seite, beim Standard `full` bleiben.
+
 Die Schranke scheitert bei fehlenden Seiten/Erfassungen, HTTP-Fehlerseiten, widersprüchlichen Zählern,
 fehlenden nötigen Regelergebnissen, nicht prüfbaren Regeln und eingeschränkten Ergebnissen.
 Deaktivierte Regeln, ausdrücklich abgeschaltete Consent-Prüfungen und Consent außerhalb der

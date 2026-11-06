@@ -108,8 +108,8 @@ export const impressumLink: Rule = {
         ruleId: ID,
         severity: 'warning',
         message: say(lang, {
-          en: 'No link to an Impressum or legal notice was found on this page.',
-          de: 'Auf dieser Seite wurde kein Link zu einem Impressum gefunden.',
+          en: 'No link to an Impressum or legal notice was found.',
+          de: 'Kein Link zu einem Impressum gefunden.',
         }),
         pageUrl: page.finalUrl,
         evidence: [linksChecked(page.links.length, lang)],

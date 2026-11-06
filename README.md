@@ -138,6 +138,9 @@ privalint <url> [options]
   -o, --output <file>     Write the report to a file and print a text summary.
                           Repeatable; .sarif, .json and .md pick their format,
                           other extensions use --format
+      --evaluations <mode>  full | summary (default full). summary leaves the
+                          per-page rule results out of JSON; the per-rule
+                          summary stays
       --fail-on <level>   error | warning | never (default error)
       --fail-on-incomplete  Exit 3 for incomplete required observations (opt-in)
       --allow-incomplete    Override failOnIncomplete from JSON config

@@ -1,7 +1,7 @@
 import type { ScanResult, Severity } from '../types.js';
 import { captureLines, coverageMessage, isPartial } from './capture.js';
 import { messagesFor } from './messages.js';
-import { countBySeverity, groupByPage } from './shared.js';
+import { countBySeverity, groupByPage, splitSiteWide } from './shared.js';
 
 const ICONS: Record<Severity, string> = { error: '🔴', warning: '🟡', info: '🔵' };
 
@@ -31,7 +31,18 @@ export function formatMarkdown(result: ScanResult): string {
     lines.push('', ...observations.map((line) => `- ${escapeText(line)}`));
   }
 
-  for (const [pageUrl, findings] of groupByPage(result.findings)) {
+  const { siteWide, perPage } = splitSiteWide(result.findings);
+  if (siteWide.length > 0) {
+    lines.push('', `#### ${m.severalPages}`, '', `| | ${m.rule} | ${m.finding} |`, '|---|---|---|');
+    for (const { finding, pages } of siteWide) {
+      const message = `${finding.message} ${m.onPages(pages.length, result.pages.length)}`;
+      lines.push(
+        `| ${ICONS[finding.severity]} | \`${finding.ruleId}\` | ${escapeText(message)}${evidenceCell(pages)} |`,
+      );
+    }
+  }
+
+  for (const [pageUrl, findings] of groupByPage(perPage)) {
     lines.push('', `#### ${code(pageUrl)}`, '', `| | ${m.rule} | ${m.finding} |`, '|---|---|---|');
     for (const finding of findings) {
       const policy = finding.policy

@@ -8,10 +8,20 @@ All notable changes are listed here. The format follows
 
 ### Added
 
+- Every report has `ruleSummary`: per rule, pages with a finding, checked without one, not
+  evaluable and skipped by reason, plus the page IDs worth a look. `--evaluations summary` writes
+  JSON without the per-page rule evaluations; the coverage gate reads the summary then and gives
+  the same verdict (#101)
 - Adapter scans record how long the adapter took: `capture.diagnostics.timing.adapter` has the
   number of requests, the median and 95th percentile time to the response headers, and the five
   slowest requests split into queue, headers and body time. Text and Markdown reports print it on
   pages with timeouts, so a slow adapter environment stands out (#99)
+
+### Changed
+
+- Text and Markdown reports show an `impressum-link` or `privacy-policy-link` finding that repeats
+  on several pages once, under "On several pages", with the pages listed. JSON and SARIF still
+  have one finding per page. The messages no longer say "on this page" (#102)
 
 ### Fixed
 

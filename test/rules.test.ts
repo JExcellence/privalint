@@ -589,6 +589,6 @@ describe('German messages', () => {
 
   it('keeps English as the default wording', () => {
     const [finding] = run(privacyPolicyLink, snapshot());
-    expect(finding?.message).toBe('No link to a privacy policy was found on this page.');
+    expect(finding?.message).toBe('No link to a privacy policy was found.');
   });
 });

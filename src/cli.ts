@@ -37,6 +37,9 @@ Options
   -o, --output <file>     Write the report to a file and print a text summary.
                           Repeatable; .sarif, .json and .md pick their format,
                           other extensions use --format
+      --evaluations <mode>  full | summary (default full). summary leaves the
+                          per-page rule results out of JSON; the per-rule
+                          summary stays
       --fail-on <level>   error | warning | never (default error)
       --fail-on-incomplete  Exit 3 if required observation coverage is incomplete
       --allow-incomplete    Override failOnIncomplete from JSON config
@@ -80,6 +83,7 @@ async function main(argv: string[]): Promise<number> {
       'max-pages': { type: 'string', short: 'p' },
       concurrency: { type: 'string' },
       format: { type: 'string', short: 'f', default: 'text' },
+      evaluations: { type: 'string', default: 'full' },
       output: { type: 'string', short: 'o', multiple: true },
       'fail-on': { type: 'string', default: 'error' },
       'fail-on-incomplete': { type: 'boolean' },
@@ -121,6 +125,7 @@ async function main(argv: string[]): Promise<number> {
   const config = await loadConfig(values.config);
   const target = parseTarget(positionals.length === 0 && config.url ? [config.url] : positionals);
   const reportFormat = oneOf(values.format, FORMATS, '--format');
+  const evaluations = oneOf(values.evaluations, ['full', 'summary'] as const, '--evaluations');
   const failOn = oneOf(values['fail-on'], FAIL_LEVELS, '--fail-on');
   const rules = selectRules(values.disable);
   if (values['fail-on-incomplete'] && values['allow-incomplete']) {
@@ -172,7 +177,7 @@ async function main(argv: string[]): Promise<number> {
   for (const file of outputs) {
     const kind = FORMAT_BY_EXTENSION[extname(file).toLowerCase()] ?? reportFormat;
     try {
-      await writeFile(file, format(result, kind));
+      await writeFile(file, format(result, kind, { evaluations }));
       written.push(file);
     } catch (error) {
       // Keep the scan: name the file, print the result below and exit 2 at the end.
@@ -186,7 +191,9 @@ async function main(argv: string[]): Promise<number> {
     process.stdout.write(`${formatText(result, process.stdout.isTTY)}\n`);
     if (written.length > 0) process.stdout.write(`\nReport written to ${written.join(', ')}\n`);
   } else {
-    process.stdout.write(format(result, reportFormat, { color: process.stdout.isTTY }));
+    process.stdout.write(
+      format(result, reportFormat, { color: process.stdout.isTTY, evaluations }),
+    );
     if (reportFormat === 'text') {
       process.stdout.write('\n');
     }

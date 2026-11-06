@@ -36,7 +36,8 @@ describe('opaque page identity', () => {
     }
     expect(JSON.stringify(result)).not.toContain('SECRET');
     expect(JSON.stringify(events)).not.toContain('SECRET');
-    expect([...formatMarkdown(result).matchAll(/#### /g)]).toHaveLength(2);
+    // Both pages miss the same footer links, so Markdown lists them once with both page IDs.
+    expect([...formatMarkdown(result).matchAll(/#### /g)]).toHaveLength(1);
     for (const page of result.pages) {
       expect(formatText(result)).toContain(page.pageId);
       expect(formatMarkdown(result)).toContain(page.pageId);

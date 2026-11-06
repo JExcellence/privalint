@@ -2,7 +2,7 @@ import { styleText } from 'node:util';
 import type { Finding, ScanResult, Severity } from '../types.js';
 import { captureLines, coverageMessage, isPartial } from './capture.js';
 import { messagesFor, type ReportMessages } from './messages.js';
-import { countBySeverity, groupByPage } from './shared.js';
+import { countBySeverity, groupByPage, splitSiteWide } from './shared.js';
 
 type Style = Parameters<typeof styleText>[0];
 
@@ -17,7 +17,16 @@ export function formatText(result: ScanResult, color = false): string {
   const m = messagesFor(result.lang);
   const lines: string[] = [];
 
-  for (const [pageUrl, findings] of groupByPage(result.findings)) {
+  const { siteWide, perPage } = splitSiteWide(result.findings);
+  if (siteWide.length > 0) {
+    lines.push('', paint('underline', m.severalPages));
+    for (const { finding, pages } of siteWide) {
+      const evidence = [m.onPages(pages.length, result.pages.length), ...pages];
+      lines.push(...formatFinding({ ...finding, evidence }, paint, m));
+    }
+  }
+
+  for (const [pageUrl, findings] of groupByPage(perPage)) {
     lines.push('', paint('underline', pageUrl));
     for (const finding of findings) {
       lines.push(...formatFinding(finding, paint, m));

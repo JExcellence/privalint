@@ -8,6 +8,7 @@ import { VERSION } from './meta.js';
 import { networkLimits } from './network.js';
 import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
+import { summarizeRules } from './rule-summary.js';
 import { defaultRules } from './rules/index.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import type {
@@ -302,6 +303,10 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       rules: rules.map(({ check: _check, ...meta }) => meta),
       coverage: partial ? 'partial' : 'complete',
     };
+    result.ruleSummary = summarizeRules(
+      result.pages,
+      rules.map((rule) => rule.id),
+    );
     emit({ stage: 'completed', elapsedMs: 0 });
     const clean = withoutCredentials(result);
     return options.networkAdapter ? redactReport(clean) : clean;

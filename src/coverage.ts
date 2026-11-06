@@ -50,6 +50,8 @@ export function assessCoverage(result: ScanResult): CoverageAssessment {
     if (page.capture && !consistentCounters(page.capture.diagnostics)) {
       issues.push({ ...location, reason: 'inconsistent-counters' });
     }
+    // A report written with --evaluations summary carries the per-rule summary instead.
+    if (result.evaluations === 'summary') continue;
     const evaluations = new Map(
       (page.ruleEvaluations ?? []).map((evaluation) => [evaluation.ruleId, evaluation]),
     );
@@ -81,7 +83,34 @@ export function assessCoverage(result: ScanResult): CoverageAssessment {
       }
     }
   }
+  if (result.evaluations === 'summary') issues.push(...summaryIssues(result, selected));
   return { complete: issues.length === 0, issues };
+}
+
+/** The same checks as per page, read from the per-rule summary. */
+function summaryIssues(result: ScanResult, selected: readonly string[]): CoverageIssue[] {
+  const issues: CoverageIssue[] = [];
+  const summaries = new Map((result.ruleSummary ?? []).map((summary) => [summary.ruleId, summary]));
+  const urls = new Map(result.pages.map((page) => [page.pageId ?? page.url, page.url]));
+  const location = (page: string) => ({
+    ...(urls.has(page) && page !== urls.get(page) ? { pageId: page } : {}),
+    pageUrl: diagnosticUrl(urls.get(page) ?? page),
+  });
+  for (const ruleId of selected) {
+    const summary = summaries.get(ruleId);
+    if (summary === undefined) {
+      issues.push({ ruleId, reason: 'missing-evaluation' });
+      continue;
+    }
+    for (const page of summary.notEvaluablePages) {
+      issues.push({ ...location(page), ruleId, reason: 'not-evaluable' });
+    }
+    for (const page of summary.partialPages) {
+      if (!summary.notEvaluablePages.includes(page))
+        issues.push({ ...location(page), ruleId, reason: 'partial-evaluation' });
+    }
+  }
+  return issues;
 }
 
 function consistentCounters(data: LoadDiagnostics): boolean {

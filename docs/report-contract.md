@@ -90,6 +90,13 @@ privalint https://example.org --fail-on-incomplete --output report.json
 JSON config accepts `failOnIncomplete: true`; `--allow-incomplete` overrides it. The Action offers
 `fail-on-incomplete: true` (default false). API consumers use `assessCoverage(result)` returning
 `{ complete, issues }` with redacted locations. Validate external JSON structurally first.
+
+Every report has `ruleSummary`: per selected rule, the number of pages with a finding, checked
+without one and not evaluable, skipped pages by reason, and the page IDs with findings, not
+evaluable or partial. `--evaluations summary` writes JSON without the per-page
+`ruleEvaluations` (empty arrays) and with `evaluations: "summary"`; a 50-page report shrinks to a
+fraction. `assessCoverage` then reads `ruleSummary` and gives the same verdict. Keep the default
+`full` when other tools read the per-page evaluations.
 The Action input explicitly overrides the JSON gate setting, including its default `false`;
 invalid boolean input is rejected rather than silently weakening the gate.
 
