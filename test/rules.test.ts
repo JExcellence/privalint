@@ -10,6 +10,7 @@ import {
 import {
   accessibilityStatement,
   adobeFonts,
+  bannerKeyboard,
   bannerLanguage,
   consentBannerMissing,
   consentPreselected,
@@ -35,7 +36,7 @@ import {
   withdrawalButton,
 } from '../src/rules/index.js';
 import { newStorageKeys } from '../src/storage.js';
-import type { ControlLook, PageSnapshot, Rule } from '../src/types.js';
+import type { ControlLook, KeyboardReach, PageSnapshot, Rule } from '../src/types.js';
 import { cookie, request, SITE, snapshot } from './helpers.js';
 
 const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
@@ -1275,6 +1276,52 @@ describe('third-country-providers', () => {
     expect(finding?.subject).toBe('Supabase');
     expect(finding?.message).toContain('Transfers abroad');
     expect(finding?.fix).toContain('Art. 16 DSG');
+  });
+});
+
+describe('banner-keyboard', () => {
+  const page = (keyboard: KeyboardReach | undefined) =>
+    snapshot({
+      consent: {
+        bannerFound: true,
+        rejected: true,
+        state: 'reject-tested',
+        rejectLabel: 'Ablehnen',
+        ...(keyboard === undefined ? {} : { keyboard }),
+      },
+    });
+
+  it('passes a reject control that gets focus, and scans without a probe', () => {
+    const reached = { presses: 3, rejectTabs: 3, acceptTabs: 2, reject: { tag: 'button' } };
+    expect(run(bannerKeyboard, page(reached))).toEqual([]);
+    expect(run(bannerKeyboard, page(undefined))).toEqual([]);
+  });
+
+  it('warns when only the accept control can be reached, with the element as evidence', () => {
+    const keyboard = {
+      presses: 60,
+      acceptTabs: 2,
+      reject: { tag: 'a', tabindex: '-1' },
+    };
+    const [finding] = run(bannerKeyboard, page(keyboard));
+    expect(finding).toMatchObject({ ruleId: 'banner-keyboard', severity: 'warning' });
+    expect(finding?.message).toBe(
+      'The reject control "Ablehnen" cannot be reached with the Tab key, but the accept control can.',
+    );
+    expect(finding?.evidence).toEqual([
+      'reject control: <a tabindex="-1"> "Ablehnen"',
+      'not focused after 60 Tab presses',
+      'accept control focused after 2 Tab presses',
+    ]);
+  });
+
+  it('words the message without an accept comparison when neither is reachable', () => {
+    const keyboard = { presses: 60, acceptTabs: null, reject: { tag: 'div', role: 'button' } };
+    const [finding] = run(bannerKeyboard, page(keyboard), 'de');
+    expect(finding?.message).toBe(
+      'Das Ablehnen-Element „Ablehnen“ ist mit der Tab-Taste nicht erreichbar.',
+    );
+    expect(finding?.evidence).toHaveLength(2);
   });
 });
 

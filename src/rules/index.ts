@@ -1,6 +1,7 @@
 import type { Rule } from '../types.js';
 import { accessibilityStatement } from './accessibility-statement.js';
 import { adobeFonts } from './adobe-fonts.js';
+import { bannerKeyboard } from './banner-keyboard.js';
 import { bannerLanguage } from './banner-language.js';
 import { bannerLegalLinks } from './banner-legal-links.js';
 import { consentBannerMissing } from './consent-banner-missing.js';
@@ -43,6 +44,7 @@ export const defaultRules: readonly Rule[] = [
   consentBannerMissing,
   bannerLegalLinks,
   bannerLanguage,
+  bannerKeyboard,
   googleFonts,
   adobeFonts,
   thirdPartyEmbeds,
@@ -68,6 +70,7 @@ export const defaultRules: readonly Rule[] = [
 export {
   accessibilityStatement,
   adobeFonts,
+  bannerKeyboard,
   bannerLanguage,
   bannerLegalLinks,
   consentBannerMissing,

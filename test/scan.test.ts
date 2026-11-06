@@ -319,6 +319,20 @@ describe('scan', () => {
     expect(JSON.stringify(match)).not.toContain('bannerText');
   });
 
+  it('warns when the reject control cannot be reached with the Tab key', async () => {
+    const unreachable = await scan(`${origin}/consent/keyboard-unreachable.html`, options);
+    const [finding] = unreachable.findings.filter((f) => f.ruleId === 'banner-keyboard');
+    expect(finding).toMatchObject({ severity: 'warning' });
+    expect(finding?.evidence[0]).toBe('reject control: <div role="button"> "Reject all"');
+    expect(finding?.evidence[1]).toBe('not focused after 60 Tab presses');
+    expect(finding?.evidence[2]).toBe('accept control focused after 4 Tab presses');
+    expect(JSON.stringify(unreachable)).not.toContain('rejectTabs');
+    // The probe must not keep the reject click from working.
+    expect(unreachable.consent?.rejected).toBe(true);
+    const reachable = await scan(`${origin}/consent/good.html`, options);
+    expect(reachable.findings.filter((f) => f.ruleId === 'banner-keyboard')).toEqual([]);
+  });
+
   it('closes the banner with its close button and reports trackers that load then', async () => {
     const evaluation = (result: Awaited<ReturnType<typeof scan>>) =>
       result.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === 'trackers-after-close');

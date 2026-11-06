@@ -284,6 +284,8 @@ export interface ConsentObservation {
   bannerBlocking?: boolean;
   /** How the first-layer accept and reject controls look. Internal input for reject-less-prominent. */
   bannerControls?: { accept: ControlLook; reject: ControlLook };
+  /** Whether the first-layer controls can be reached with the Tab key. Internal input for banner-keyboard. */
+  keyboard?: KeyboardReach;
   /** True once the reject button was clicked and the page reloaded. */
   rejected: boolean;
   /** Requests made and cookies newly set after rejecting, including the reload. */
@@ -492,7 +494,25 @@ export interface PageSummary {
   ruleEvaluations?: RuleEvaluation[];
 }
 
-export type ConsentSummary = Omit<ConsentObservation, 'afterReject' | 'settings' | 'close'> & {
+/**
+ * After how many Tab presses the banner's reject and accept controls had focus, starting where the
+ * page put focus when it loaded.
+ */
+export interface KeyboardReach {
+  /** Tab presses made, at most 60. */
+  presses: number;
+  /** The press that focused the reject control; absent when none did. */
+  rejectTabs?: number;
+  /** The press that focused the accept control, null when none did. Absent without an accept control. */
+  acceptTabs?: number | null;
+  /** The reject control's element, role and tabindex, as evidence. */
+  reject: { tag: string; role?: string; tabindex?: string };
+}
+
+export type ConsentSummary = Omit<
+  ConsentObservation,
+  'afterReject' | 'settings' | 'close' | 'keyboard'
+> & {
   settings?: Omit<SettingsObservation, 'afterSave'>;
   close?: Omit<CloseObservation, 'afterClose'>;
 };

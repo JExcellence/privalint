@@ -5,6 +5,7 @@ import type {
   CloseObservation,
   ConsentObservation,
   ControlLook,
+  KeyboardReach,
   PageLink,
   RecordedCookie,
   RecordedRequest,
@@ -269,6 +270,8 @@ export async function observeConsent(
     if (banner.acceptLabel === undefined) observation.reason = 'unsupported-banner-markup';
     return observation;
   }
+  const keyboard = await probeKeyboard(page, banner.accept, banner.reject).catch(() => undefined);
+  if (keyboard !== undefined) observation.keyboard = keyboard;
 
   try {
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
@@ -367,6 +370,104 @@ export async function observeClose(
 }
 
 const CLOSE_MARK = 'data-privalint-close';
+
+const KEYBOARD_MARK = 'data-privalint-key';
+/** Tab presses before a control counts as out of keyboard reach. */
+const MAX_TABS = 60;
+
+/**
+ * Presses Tab up to 60 times, starting where the page put focus when it loaded, and records after
+ * how many presses the reject (and accept) control had focus. A control a keyboard user can't
+ * reach can only be clicked with a mouse or touch. Runs before the reject click.
+ */
+async function probeKeyboard(
+  page: Page,
+  accept: Locator | undefined,
+  reject: Locator,
+): Promise<KeyboardReach> {
+  const look = await reject.evaluate((element, mark) => {
+    element.setAttribute(mark, 'reject');
+    return {
+      tag: element.tagName.toLowerCase(),
+      role: element.getAttribute('role'),
+      tabindex: element.getAttribute('tabindex'),
+    };
+  }, KEYBOARD_MARK);
+  await accept
+    ?.evaluate((element, mark) => element.setAttribute(mark, 'accept'), KEYBOARD_MARK)
+    .catch(() => undefined);
+  const frames: Frame[] = [];
+  for (const frame of page.frames()) {
+    const marked = await frame
+      .locator(`[${KEYBOARD_MARK}]`)
+      .count()
+      .catch(() => 0);
+    if (marked > 0) frames.push(frame);
+  }
+  let rejectTabs: number | undefined;
+  let acceptTabs: number | undefined;
+  let presses = 0;
+  try {
+    while (
+      presses < MAX_TABS &&
+      (rejectTabs === undefined || (accept !== undefined && acceptTabs === undefined))
+    ) {
+      await page.keyboard.press('Tab');
+      presses++;
+      for (const frame of frames) {
+        const focused = await frame.evaluate(focusedMark, KEYBOARD_MARK).catch(() => undefined);
+        if (focused === 'reject') rejectTabs ??= presses;
+        if (focused === 'accept') acceptTabs ??= presses;
+      }
+    }
+  } finally {
+    for (const frame of frames) {
+      await frame
+        .evaluate((mark) => {
+          for (const element of document.querySelectorAll(`[${mark}]`)) {
+            element.removeAttribute(mark);
+          }
+        }, KEYBOARD_MARK)
+        .catch(() => undefined);
+    }
+    // Shadow DOM marks are out of querySelectorAll's reach; remove them through the locators.
+    await reject.evaluate((element, mark) => element.removeAttribute(mark), KEYBOARD_MARK);
+    await accept
+      ?.evaluate((element, mark) => element.removeAttribute(mark), KEYBOARD_MARK)
+      .catch(() => undefined);
+  }
+  return {
+    presses,
+    ...(rejectTabs === undefined ? {} : { rejectTabs }),
+    ...(accept === undefined ? {} : { acceptTabs: acceptTabs ?? null }),
+    reject: {
+      tag: look.tag,
+      ...(look.role === null ? {} : { role: look.role }),
+      ...(look.tabindex === null ? {} : { tabindex: look.tabindex }),
+    },
+  };
+}
+
+/**
+ * Runs in a frame. The mark of the control that has focus: the focused element itself, an
+ * ancestor of it (a button inside the marked container), or the marked element inside a focused
+ * button or link (the selector matched a span in it). Follows focus into shadow roots.
+ */
+function focusedMark(mark: string): string | undefined {
+  let active: Element | null = document.activeElement;
+  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+  if (active === null || active === document.body) return undefined;
+  for (let node: Element | null = active; node !== null && node !== document.body; ) {
+    const value = node.getAttribute(mark);
+    if (value !== null) return value;
+    const root = node.getRootNode();
+    node = node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+  }
+  if (active.matches('button, a[href], [role="button"], [role="link"]')) {
+    return active.querySelector(`[${mark}]`)?.getAttribute(mark) ?? undefined;
+  }
+  return undefined;
+}
 
 /**
  * Runs in the page. Finds the banner's close control, marks it with a data attribute so it can be

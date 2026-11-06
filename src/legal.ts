@@ -165,6 +165,15 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 4. cikk 11. pont, 7. cikk (2) bekezdés'],
     eu: ['Art. 4(11) and 7(2) GDPR'],
   },
+  // Refusing must be as easy as accepting, also without a mouse; accessibility law asks for
+  // keyboard operation (EN 301 549 9.2.1.1, WCAG 2.1 SC 2.1.1).
+  'banner-keyboard': {
+    de: ['Art. 4 Nr. 11, Art. 7 Abs. 3 DSGVO', 'BFSG, EN 301 549 9.2.1.1'],
+    at: ['Art. 4 Nr. 11, Art. 7 Abs. 3 DSGVO', 'BaFG, EN 301 549 9.2.1.1'],
+    ch: ['Art. 6 Abs. 6 DSG', 'WCAG 2.1 SC 2.1.1'],
+    hu: ['GDPR 4. cikk 11. pont, 7. cikk (3) bekezdés', '(EU) 2019/882 irányelv I. melléklet'],
+    eu: ['Art. 4(11) and 7(3) GDPR', 'Annex I Directive (EU) 2019/882, EN 301 549 9.2.1.1'],
+  },
   // Consent is an active choice: no pre-ticked boxes, and advertising e-mails need it.
   'form-preticked-consent': {
     de: ['Art. 4 Nr. 11, Art. 7 DSGVO', 'EuGH C-673/17 (Planet49)', '§ 7 Abs. 2 UWG'],
@@ -329,6 +338,7 @@ const SOFTER_IN_SWITZERLAND = new Set([
   'banner-legal-links',
   'withdrawal-button',
   'accessibility-statement',
+  'banner-keyboard',
 ]);
 
 function severityFor(finding: Finding, region: Region): Severity {

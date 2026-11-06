@@ -23,7 +23,8 @@ Upgrade notes:
   find CNAME-cloaked trackers. Scans through a network adapter make none.
 - New rules run by default and can add findings: `mixed-content` reports a form that submits over
   HTTP as an error, so scans with the default `--fail-on error` can fail on it;
-  `form-preticked-consent`, `privacy-policy-content` and `third-party-personal-data` add warnings,
+  `form-preticked-consent`, `privacy-policy-content`, `third-party-personal-data` and
+  `banner-keyboard` add warnings,
   `referrer-policy` info.
 - Values of e-mail and phone parameters in request addresses are replaced by `[redacted]` in
   finding evidence, so evidence strings of native scans can differ from earlier reports.
@@ -32,6 +33,9 @@ Upgrade notes:
 
 ### Added
 
+- New rule `banner-keyboard` (warning): before clicking reject, privalint presses Tab up to 60
+  times and warns when the reject control never gets focus, with the element and the press that
+  focused the accept control as evidence (#122)
 - CNAME-cloaked trackers: native scans resolve the CNAME chain of first-party subdomains that
   received requests and report a chain that reaches a tracker (from the tracker list and AdGuard's
   cname-trackers list) through `pre-consent-trackers`, with the chain as evidence. No DNS lookups
