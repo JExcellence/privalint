@@ -24,6 +24,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'adobe-fonts': ['network'],
   'third-party-embeds': ['network'],
   'third-party-cdns': ['network'],
+  'third-country-providers': ['network'],
   'tracking-cookie-lifetime': ['network'],
   'impressum-link': ['document'],
   'privacy-policy-link': ['document'],

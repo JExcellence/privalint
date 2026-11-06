@@ -13,6 +13,7 @@ import { preConsentTrackers } from './pre-consent-trackers.js';
 import { privacyPolicyLink } from './privacy-policy-link.js';
 import { rejectLessProminent } from './reject-less-prominent.js';
 import { rejectOption } from './reject-option.js';
+import { thirdCountryProviders } from './third-country-providers.js';
 import { thirdPartyCdns } from './third-party-cdns.js';
 import { thirdPartyEmbeds } from './third-party-embeds.js';
 import { trackersAfterReject } from './trackers-after-reject.js';
@@ -34,6 +35,7 @@ export const defaultRules: readonly Rule[] = [
   adobeFonts,
   thirdPartyEmbeds,
   thirdPartyCdns,
+  thirdCountryProviders,
   trackingCookieLifetime,
   impressumLink,
   privacyPolicyLink,
@@ -58,6 +60,7 @@ export {
   privacyPolicyLink,
   rejectLessProminent,
   rejectOption,
+  thirdCountryProviders,
   thirdPartyCdns,
   thirdPartyEmbeds,
   trackersAfterReject,

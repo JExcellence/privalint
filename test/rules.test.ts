@@ -12,6 +12,7 @@ import {
   preConsentTrackers,
   privacyPolicyLink,
   rejectLessProminent,
+  thirdCountryProviders,
   thirdPartyCdns,
   thirdPartyEmbeds,
   trackersAfterReject,
@@ -549,6 +550,52 @@ describe('tracking-cookie-lifetime', () => {
       },
     });
     expect(run(trackingCookieLifetime, page)).toHaveLength(1);
+  });
+});
+
+describe('third-country-providers', () => {
+  const page = (...urls: string[]) => snapshot({ requests: urls.map((url) => request(url)) });
+
+  it('lists Sentry in the US with its hosts, once per vendor', () => {
+    const findings = run(
+      thirdCountryProviders,
+      page(
+        'https://o123.ingest.us.sentry.io/api/4/envelope/?sentry_key=abc',
+        'https://o123.ingest.us.sentry.io/api/4/envelope/',
+        'https://browser.sentry-cdn.com/8.0.0/bundle.min.js',
+      ),
+    );
+    expect(findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'third-country-providers',
+        severity: 'info',
+        subject: 'Sentry',
+        evidence: ['o123.ingest.us.sentry.io', 'browser.sentry-cdn.com'],
+      }),
+    ]);
+    expect(findings[0]?.message).toBe(
+      'Sentry (USA) receives data before consent. Transfers outside the EU/EEA need a legal basis.',
+    );
+  });
+
+  it.each([
+    ['Sentry in Frankfurt', 'https://o123.ingest.de.sentry.io/api/4/envelope/'],
+    ['Datadog EU1', 'https://browser-intake-datadoghq.eu/api/v2/rum'],
+    ['an unknown host', 'https://api.example-backend.io/v1'],
+  ])('leaves %s alone', (_, url) => {
+    expect(run(thirdCountryProviders, page(url))).toEqual([]);
+  });
+
+  it('lists a Supabase project and cites the Swiss rules for ch', () => {
+    const [finding] = thirdCountryProviders.check({
+      siteUrl: SITE,
+      page: page('https://abcdefgh.supabase.co/rest/v1/items'),
+      lang: 'en',
+      region: 'ch',
+    });
+    expect(finding?.subject).toBe('Supabase');
+    expect(finding?.message).toContain('Transfers abroad');
+    expect(finding?.fix).toContain('Art. 16 DSG');
   });
 });
 

@@ -48,6 +48,7 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 | [`adobe-fonts`](docs/rules/adobe-fonts.md)                           | error    | Fonts fetched from Adobe Fonts (`use.typekit.net` / `p.typekit.net`). Leftover preconnects are a warning.                   |
 | [`third-party-embeds`](docs/rules/third-party-embeds.md)             | warning  | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar, social embeds and chat/review widgets such as Intercom before consent.    |
 | [`third-party-cdns`](docs/rules/third-party-cdns.md)                 | info     | Scripts and styles from jsDelivr, unpkg, cdnjs and other public CDNs.                                                       |
+| [`third-country-providers`](docs/rules/third-country-providers.md)   | info     | Error monitoring, backends and similar services outside the EU/EEA, such as Sentry in the US, contacted before consent.     |
 | [`tracking-cookie-lifetime`](docs/rules/tracking-cookie-lifetime.md) | info     | Tracking cookies that last longer than 13 months.                                                                           |
 | [`impressum-link`](docs/rules/impressum-link.md)                     | warning  | Pages without a link to an Impressum. A contact link alone is noted as info.                                                |
 | [`privacy-policy-link`](docs/rules/privacy-policy-link.md)           | warning  | Pages without a link to a privacy policy.                                                                                   |

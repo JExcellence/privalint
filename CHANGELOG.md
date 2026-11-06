@@ -16,6 +16,9 @@ Upgrade notes:
 
 ### Added
 
+- New rule `third-country-providers` (info): error monitoring, performance monitoring, feature
+  flag and backend services outside the EU/EEA contacted before consent, such as Sentry on
+  `ingest.us.sentry.io` or a Supabase project. Region hosts in the EU are not reported (#109)
 - New rule `reject-less-prominent` (info): a first-layer reject control shown as plain text next
   to an accept button, with less than half its area, or with low text contrast, measured from the
   rendered box and computed styles (#107)

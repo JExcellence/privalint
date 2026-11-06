@@ -141,6 +141,19 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 32. cikk'],
     eu: ['Art. 32 GDPR'],
   },
+  // Transfers of personal data to third countries need an adequacy decision or safeguards.
+  'third-country-providers': {
+    de: ['Art. 44 DSGVO', 'Art. 45 DSGVO', 'Art. 46 DSGVO'],
+    at: ['Art. 44 DSGVO', 'Art. 45 DSGVO', 'Art. 46 DSGVO'],
+    ch: ['Art. 16 DSG', 'Art. 17 DSG'],
+    hu: ['GDPR 44. cikk', 'GDPR 45. cikk', 'GDPR 46. cikk'],
+    eu: [
+      'Art. 44 GDPR',
+      'Art. 45 GDPR',
+      'Art. 46 GDPR',
+      'Commission Implementing Decision (EU) 2023/1795 (EU-US Data Privacy Framework)',
+    ],
+  },
   // Refusing must be as easy as accepting; deceptive designs undermine a free choice.
   'reject-less-prominent': {
     de: ['§ 25 Abs. 1 TDDDG', 'Art. 4 Nr. 11 DSGVO', 'EDSA Cookie-Banner-Taskforce, 17.01.2023'],
