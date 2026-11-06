@@ -144,6 +144,23 @@ describe('scan', () => {
     expect(findings[0]?.evidence[0]).toBe(`legal notice: ${origin}/legal-notice/imprint.html`);
   });
 
+  it('looks for every service the start page uses in its privacy policy and cookie policy', async () => {
+    const result = await scan(`${origin}/policy-vendors/`, options);
+    // Google Analytics is in the privacy policy, YouTube in the cookie policy it links.
+    expect(
+      result.findings
+        .filter((f) => f.ruleId === 'privacy-policy-vendors')
+        .map(({ severity, subject, evidence }) => ({ severity, subject, policy: evidence[0] })),
+    ).toEqual([
+      {
+        severity: 'info',
+        subject: 'Google Fonts',
+        policy: `privacy policy: ${origin}/policy-vendors/privacy.html`,
+      },
+    ]);
+    expect(result.pages).toHaveLength(1);
+  });
+
   it('never puts URL credentials into the report', async () => {
     const withAuth = origin.replace('http://', 'http://scanner:s3cret@');
     const result = await scan(`${withAuth}/leaky/`, options);

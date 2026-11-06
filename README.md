@@ -33,30 +33,31 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 
 ## What it checks
 
-| Rule                                                                 | Severity | What it finds                                                                                                                     |
-| -------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.md)         | error    | Analytics, ads and session-replay tools that send requests or set cookies before consent. A bare tag manager is a warning.        |
-| [`trackers-after-reject`](docs/rules/trackers-after-reject.md)       | error    | Trackers that still load after clicking "reject" on the consent banner and reloading.                                             |
-| [`trackers-after-settings`](docs/rules/trackers-after-settings.md)   | error    | Opt-in (`--check-settings`): trackers that still load after switching off every category in the banner settings and saving.       |
-| [`consent-preselected`](docs/rules/consent-preselected.md)           | error    | Opt-in (`--check-settings`): optional categories already switched on when the banner settings open.                               |
-| [`reject-option`](docs/rules/reject-option.md)                       | warning  | A banner with "accept" but no "reject" on its first layer. Pay-or-OK banners are noted as info.                                   |
-| [`reject-less-prominent`](docs/rules/reject-less-prominent.md)       | info     | A reject control shown as plain text, much smaller, or with much lower contrast than the accept button.                           |
-| [`consent-banner-missing`](docs/rules/consent-banner-missing.md)     | warning  | Trackers run and no consent banner was found at all, so visitors can't give or refuse consent.                                    |
-| [`banner-legal-links`](docs/rules/banner-legal-links.md)             | warning  | A banner that blocks the page and links neither the privacy policy nor the Impressum.                                             |
-| [`consent-settings-link`](docs/rules/consent-settings-link.md)       | warning  | No visible link or button to reopen the cookie settings after rejecting.                                                          |
-| [`google-fonts`](docs/rules/google-fonts.md)                         | error    | Fonts fetched from `fonts.googleapis.com` / `fonts.gstatic.com`. Leftover preconnects are a warning.                              |
-| [`adobe-fonts`](docs/rules/adobe-fonts.md)                           | error    | Fonts fetched from Adobe Fonts (`use.typekit.net` / `p.typekit.net`). Leftover preconnects are a warning.                         |
-| [`third-party-embeds`](docs/rules/third-party-embeds.md)             | warning  | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar, social embeds and chat/review widgets such as Intercom before consent.          |
-| [`third-party-cdns`](docs/rules/third-party-cdns.md)                 | info     | Scripts and styles from jsDelivr, unpkg, cdnjs and other public CDNs.                                                             |
-| [`third-country-providers`](docs/rules/third-country-providers.md)   | info     | Error monitoring, backends and similar services outside the EU/EEA, such as Sentry in the US, contacted before consent.           |
-| [`tracking-cookie-lifetime`](docs/rules/tracking-cookie-lifetime.md) | info     | Tracking cookies that last longer than 13 months.                                                                                 |
-| [`impressum-link`](docs/rules/impressum-link.md)                     | warning  | Pages without a link to an Impressum. A contact link alone is noted as info.                                                      |
-| [`legal-notice-content`](docs/rules/legal-notice-content.md)         | warning  | A linked legal notice without a postal address or e-mail address. A registered company without a register entry is noted as info. |
-| [`privacy-policy-link`](docs/rules/privacy-policy-link.md)           | warning  | Pages without a link to a privacy policy.                                                                                         |
-| [`form-privacy-notice`](docs/rules/form-privacy-notice.md)           | info     | Contact, sign-up or login forms without a privacy-policy link next to them.                                                       |
-| [`https-transport`](docs/rules/https-transport.md)                   | error    | The start page over plain HTTP; HTTP without a redirect to HTTPS is a warning, no HSTS is info.                                   |
-| [`withdrawal-button`](docs/rules/withdrawal-button.md)               | warning  | Online shops without a "withdraw from contract here" link on the start page (required since 19.06.2026).                          |
-| [`accessibility-statement`](docs/rules/accessibility-statement.md)   | info     | Online shops without a link to accessibility information (European Accessibility Act).                                            |
+| Rule                                                                 | Severity | What it finds                                                                                                                         |
+| -------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.md)         | error    | Analytics, ads and session-replay tools that send requests or set cookies before consent. A bare tag manager is a warning.            |
+| [`trackers-after-reject`](docs/rules/trackers-after-reject.md)       | error    | Trackers that still load after clicking "reject" on the consent banner and reloading.                                                 |
+| [`trackers-after-settings`](docs/rules/trackers-after-settings.md)   | error    | Opt-in (`--check-settings`): trackers that still load after switching off every category in the banner settings and saving.           |
+| [`consent-preselected`](docs/rules/consent-preselected.md)           | error    | Opt-in (`--check-settings`): optional categories already switched on when the banner settings open.                                   |
+| [`reject-option`](docs/rules/reject-option.md)                       | warning  | A banner with "accept" but no "reject" on its first layer. Pay-or-OK banners are noted as info.                                       |
+| [`reject-less-prominent`](docs/rules/reject-less-prominent.md)       | info     | A reject control shown as plain text, much smaller, or with much lower contrast than the accept button.                               |
+| [`consent-banner-missing`](docs/rules/consent-banner-missing.md)     | warning  | Trackers run and no consent banner was found at all, so visitors can't give or refuse consent.                                        |
+| [`banner-legal-links`](docs/rules/banner-legal-links.md)             | warning  | A banner that blocks the page and links neither the privacy policy nor the Impressum.                                                 |
+| [`consent-settings-link`](docs/rules/consent-settings-link.md)       | warning  | No visible link or button to reopen the cookie settings after rejecting.                                                              |
+| [`google-fonts`](docs/rules/google-fonts.md)                         | error    | Fonts fetched from `fonts.googleapis.com` / `fonts.gstatic.com`. Leftover preconnects are a warning.                                  |
+| [`adobe-fonts`](docs/rules/adobe-fonts.md)                           | error    | Fonts fetched from Adobe Fonts (`use.typekit.net` / `p.typekit.net`). Leftover preconnects are a warning.                             |
+| [`third-party-embeds`](docs/rules/third-party-embeds.md)             | warning  | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar, social embeds and chat/review widgets such as Intercom before consent.              |
+| [`third-party-cdns`](docs/rules/third-party-cdns.md)                 | info     | Scripts and styles from jsDelivr, unpkg, cdnjs and other public CDNs.                                                                 |
+| [`third-country-providers`](docs/rules/third-country-providers.md)   | info     | Error monitoring, backends and similar services outside the EU/EEA, such as Sentry in the US, contacted before consent.               |
+| [`tracking-cookie-lifetime`](docs/rules/tracking-cookie-lifetime.md) | info     | Tracking cookies that last longer than 13 months.                                                                                     |
+| [`impressum-link`](docs/rules/impressum-link.md)                     | warning  | Pages without a link to an Impressum. A contact link alone is noted as info.                                                          |
+| [`legal-notice-content`](docs/rules/legal-notice-content.md)         | warning  | A linked legal notice without a postal address or e-mail address. A registered company without a register entry is noted as info.     |
+| [`privacy-policy-link`](docs/rules/privacy-policy-link.md)           | warning  | Pages without a link to a privacy policy.                                                                                             |
+| [`privacy-policy-vendors`](docs/rules/privacy-policy-vendors.md)     | warning  | Trackers and cookie-setting embeds the start page uses that the privacy policy doesn't name. Fonts, CDNs and other services are info. |
+| [`form-privacy-notice`](docs/rules/form-privacy-notice.md)           | info     | Contact, sign-up or login forms without a privacy-policy link next to them.                                                           |
+| [`https-transport`](docs/rules/https-transport.md)                   | error    | The start page over plain HTTP; HTTP without a redirect to HTTPS is a warning, no HSTS is info.                                       |
+| [`withdrawal-button`](docs/rules/withdrawal-button.md)               | warning  | Online shops without a "withdraw from contract here" link on the start page (required since 19.06.2026).                              |
+| [`accessibility-statement`](docs/rules/accessibility-statement.md)   | info     | Online shops without a link to accessibility information (European Accessibility Act).                                                |
 
 Each rule is a small file with tests. Missing a check? See [Contributing](#contributing).
 

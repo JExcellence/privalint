@@ -279,8 +279,8 @@ describe('controlled capture', () => {
       networkAdapter: adapter,
       networkLimits: { concurrency: 2 },
     });
-    // 48 for the page, one for the legal notice it links.
-    expect(calls).toBe(49);
+    // 48 for the page, one each for the legal notice and the privacy policy it links.
+    expect(calls).toBe(50);
     expect(peak).toBe(2);
     expect(active).toBe(0);
     expect(result.pages[0]?.capture).toMatchObject({

@@ -12,6 +12,7 @@ import {
   legalNoticeContent,
   preConsentTrackers,
   privacyPolicyLink,
+  privacyPolicyVendors,
   rejectLessProminent,
   thirdCountryProviders,
   thirdPartyCdns,
@@ -21,7 +22,7 @@ import {
   withdrawalButton,
 } from '../src/rules/index.js';
 import { newStorageKeys } from '../src/storage.js';
-import type { ControlLook, Rule } from '../src/types.js';
+import type { ControlLook, PageSnapshot, Rule } from '../src/types.js';
 import { cookie, request, SITE, snapshot } from './helpers.js';
 
 const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
@@ -551,6 +552,65 @@ describe('tracking-cookie-lifetime', () => {
       },
     });
     expect(run(trackingCookieLifetime, page)).toHaveLength(1);
+  });
+});
+
+describe('privacy-policy-vendors', () => {
+  const POLICY = 'https://example.de/datenschutz';
+  const page = (text: string, overrides: Partial<PageSnapshot> = {}) =>
+    snapshot({ privacyPolicy: { url: POLICY, text, mailto: false }, ...overrides });
+  const subjects = (findings: { severity: string; subject?: string }[]) =>
+    findings.map((f) => `${f.severity}:${f.subject}`);
+
+  it('warns about a tracker and an embed that sets cookies, notes a font service', () => {
+    const findings = run(
+      privacyPolicyVendors,
+      page('Wir nutzen Google Analytics.', {
+        requests: [
+          request('https://www.google-analytics.com/g/collect'),
+          request('https://www.youtube.com/embed/abc', 'document'),
+          request('https://connect.facebook.net/en_US/fbevents.js'),
+          request('https://fonts.gstatic.com/s/lora.woff2', 'font'),
+        ],
+        cookies: [cookie('YSC', '.youtube.com')],
+      }),
+    );
+    expect(subjects(findings)).toEqual([
+      'warning:YouTube',
+      'warning:Meta Pixel',
+      'info:Google Fonts',
+    ]);
+    expect(findings[0]?.evidence).toEqual([
+      `privacy policy: ${POLICY}`,
+      'https://www.youtube.com/embed/abc',
+    ]);
+  });
+
+  it.each([
+    ['spacing and hyphens', 'Google-Analytics', 'https://www.google-analytics.com/g/collect'],
+    ['an alias', 'the Facebook Pixel', 'https://connect.facebook.net/en_US/fbevents.js'],
+    ['the name without "embed"', 'Videos von YouTube', 'https://www.youtube.com/embed/abc'],
+    ['the host', 'cdn.jsdelivr.net', 'https://cdn.jsdelivr.net/npm/x.js'],
+  ])('accepts %s', (_, text, url) => {
+    expect(run(privacyPolicyVendors, page(text, { requests: [request(url)] }))).toEqual([]);
+  });
+
+  it('matches whole words only', () => {
+    const findings = run(
+      privacyPolicyVendors,
+      page('Metadaten werden gespeichert.', {
+        requests: [request('https://connect.facebook.net/en_US/sdk.js')],
+      }),
+    );
+    expect(subjects(findings)).toEqual(['warning:Facebook SDK']);
+  });
+
+  it('notes an embed without cookies as info, and stays quiet without a policy', () => {
+    const requests = [request('https://player.vimeo.com/video/1', 'document')];
+    expect(subjects(run(privacyPolicyVendors, page('Nothing here.', { requests })))).toEqual([
+      'info:Vimeo',
+    ]);
+    expect(run(privacyPolicyVendors, snapshot({ requests }))).toEqual([]);
   });
 });
 

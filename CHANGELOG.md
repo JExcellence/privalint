@@ -11,14 +11,18 @@ Upgrade notes:
 - On sites with subdomains, the first crawled page of up to five other hosts (`docs.`, `blog.`)
   now gets the consent, banner and HTTPS checks too. That can add findings and one consent run
   per host. `--host-checks main` or `"hostChecks": "main"` keeps the previous behaviour.
-- The legal notice linked from the start page is loaded once more for the new
-  `legal-notice-content` rule. That is one extra page load per scan, also through a network
-  adapter, and can add findings. Deselect the rule to skip the load.
+- The legal notice and the privacy policy linked from the start page are loaded once more for the
+  new `legal-notice-content` and `privacy-policy-vendors` rules, plus a cookie policy the privacy
+  policy links. That is up to three extra page loads per scan, also through a network adapter,
+  and can add findings. Deselect a rule to skip its load.
 - Scans with the settings check can report the new `consent-preselected` error on banners whose
   settings layer starts with optional categories switched on.
 
 ### Added
 
+- New rule `privacy-policy-vendors`: trackers and cookie-setting embeds the start page uses that
+  the privacy policy, or a cookie policy it links, doesn't name (warning); font services, CDNs and
+  other listed services as info. Names match as whole words, with known other names (#105)
 - New rule `legal-notice-content`: the legal notice linked from the start page gives no postal
   address or e-mail address (warning), or names a registered legal form without a register entry
   (info). Postcodes of Germany, Austria, Switzerland and Hungary are recognised (#104)

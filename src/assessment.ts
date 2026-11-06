@@ -29,6 +29,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'impressum-link': ['document'],
   'legal-notice-content': ['document'],
   'privacy-policy-link': ['document'],
+  'privacy-policy-vendors': ['network'],
   'reject-option': ['consent'],
   'reject-less-prominent': ['consent'],
   'trackers-after-reject': ['after-reject'],

@@ -12,6 +12,7 @@ import { impressumLink } from './impressum-link.js';
 import { legalNoticeContent } from './legal-notice-content.js';
 import { preConsentTrackers } from './pre-consent-trackers.js';
 import { privacyPolicyLink } from './privacy-policy-link.js';
+import { privacyPolicyVendors } from './privacy-policy-vendors.js';
 import { rejectLessProminent } from './reject-less-prominent.js';
 import { rejectOption } from './reject-option.js';
 import { thirdCountryProviders } from './third-country-providers.js';
@@ -41,6 +42,7 @@ export const defaultRules: readonly Rule[] = [
   impressumLink,
   legalNoticeContent,
   privacyPolicyLink,
+  privacyPolicyVendors,
   formPrivacyNotice,
   httpsTransport,
   withdrawalButton,
@@ -61,6 +63,7 @@ export {
   legalNoticeContent,
   preConsentTrackers,
   privacyPolicyLink,
+  privacyPolicyVendors,
   rejectLessProminent,
   rejectOption,
   thirdCountryProviders,

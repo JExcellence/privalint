@@ -342,20 +342,20 @@ export interface TcfObservation {
   vendorLegitimateInterests: number;
 }
 
-/**
- * Everything observed while loading one page in a fresh browser context,
- * without touching any consent banner.
- */
-/** The legal notice page as text, for checking the provider details it gives. */
-export interface LegalNoticeObservation {
-  /** Where the legal notice page ended up. */
+/** A page the start page links to, kept as text: the legal notice or the privacy policy. */
+export interface LinkedPageText {
+  /** Where the page ended up. */
   url: string;
-  /** Visible text, cut to 20,000 characters. */
+  /** Visible text, cut to 100,000 characters. */
   text: string;
   /** Whether the page links a mailto: address. */
   mailto: boolean;
 }
 
+/**
+ * Everything observed while loading one page in a fresh browser context,
+ * without touching any consent banner.
+ */
 export interface PageSnapshot {
   pageId?: string;
   url: string;
@@ -372,11 +372,18 @@ export interface PageSnapshot {
   /** localStorage and sessionStorage key names of the page's origin, never values. */
   storage?: StorageKey[];
   links: PageLink[];
+  /** The page's own text, when the capture was asked to keep it. Internal. */
+  pageText?: LinkedPageText;
   /**
    * Start page only: text of the page it links as its legal notice, loaded separately. Internal
    * input for legal-notice-content, not in the report.
    */
-  legalNotice?: LegalNoticeObservation;
+  legalNotice?: LinkedPageText;
+  /**
+   * Start page only: text of its privacy policy, and of a cookie policy that one links, loaded
+   * separately. Internal input for privacy-policy-vendors, not in the report.
+   */
+  privacyPolicy?: LinkedPageText;
   /** Primary language subtag of `<html lang>`, lowercase, such as `en` or `hu`. */
   language?: string;
   resourceHints: ResourceHint[];

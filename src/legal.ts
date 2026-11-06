@@ -141,6 +141,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 32. cikk'],
     eu: ['Art. 32 GDPR'],
   },
+  // The privacy policy names the recipients of personal data.
+  'privacy-policy-vendors': {
+    de: ['Art. 13 Abs. 1 lit. e DSGVO'],
+    at: ['Art. 13 Abs. 1 lit. e DSGVO'],
+    ch: ['Art. 19 Abs. 2 lit. c DSG'],
+    hu: ['GDPR 13. cikk (1) bekezdés e) pont'],
+    eu: ['Art. 13(1)(e) GDPR'],
+  },
   // What the legal notice has to say: name, address, fast electronic contact, register entry.
   'legal-notice-content': {
     de: ['§ 5 Abs. 1 Nr. 1, 2 und 4 DDG'],

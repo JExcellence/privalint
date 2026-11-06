@@ -6,7 +6,7 @@ import { ControlledNetwork, networkLimits, watchPageCancellations } from './netw
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import { readStorageKeys } from './storage.js';
 import { observeTransport } from './transport.js';
-import type { LegalNoticeObservation, PageSnapshot } from './types.js';
+import type { LinkedPageText, PageSnapshot } from './types.js';
 import { isFirstParty } from './url.js';
 
 /**
@@ -22,7 +22,7 @@ export async function capturePage(
   siteUrl: URL,
   options: ScanOptions,
   consentPath: ConsentPath,
-  legalNotice = false,
+  keepText = false,
 ): Promise<PageSnapshot> {
   const checkConsent = consentPath !== 'none';
   const controlled = options.networkAdapter !== undefined;
@@ -124,8 +124,8 @@ export async function capturePage(
     const primary = /^[a-z]{2,3}/i.exec(language.trim())?.[0];
     if (primary !== undefined) snapshot.language = primary.toLowerCase();
     snapshot.forms = await readForms(page);
-    const notice = legalNotice ? await readLegalNotice(page, snapshot.finalUrl) : undefined;
-    if (notice !== undefined) snapshot.legalNotice = notice;
+    const text = keepText ? await readText(page, snapshot.finalUrl) : undefined;
+    if (text !== undefined) snapshot.pageText = text;
     snapshot.resourceHints = await page.$$eval('link[rel][href]', (elements) =>
       elements.map((link) => ({
         rel: (link.getAttribute('rel') ?? '').toLowerCase(),
@@ -228,14 +228,11 @@ export async function capturePage(
   return snapshot;
 }
 
-/** Characters of the legal notice text kept for legal-notice-content; enough for any imprint. */
-const MAX_LEGAL_NOTICE_TEXT = 20_000;
+/** Characters of page text kept; enough for a long privacy policy. */
+const MAX_PAGE_TEXT = 100_000;
 
-/** The visible text of the legal notice page and whether it links an e-mail address. */
-async function readLegalNotice(
-  page: Page,
-  url: string,
-): Promise<LegalNoticeObservation | undefined> {
+/** The visible text of the page and whether it links an e-mail address. */
+async function readText(page: Page, url: string): Promise<LinkedPageText | undefined> {
   return page
     .evaluate((max) => {
       const doc = globalThis.document;
@@ -243,7 +240,7 @@ async function readLegalNotice(
         text: (doc.body?.innerText ?? '').slice(0, max),
         mailto: doc.querySelector('a[href^="mailto:" i]') !== null,
       };
-    }, MAX_LEGAL_NOTICE_TEXT)
+    }, MAX_PAGE_TEXT)
     .then((read) => ({ url, ...read }))
     .catch(() => undefined);
 }
