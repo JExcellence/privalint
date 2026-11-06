@@ -405,7 +405,7 @@ function definitions(version) {
         // Added within 1.4.0 (scanner 0.10.0); optional.
         ...(LATEST_14.includes(version) ? { hostChecks: choices('each', 'main') } : {}),
         // Added in 1.5.0; optional, only when a device was emulated.
-        ...(version === '1.5.0' ? { device: string } : {}),
+        ...(version === '1.5.0' ? { device: string, sitemap: boolean } : {}),
       },
       Object.keys(reportOptions),
     ),

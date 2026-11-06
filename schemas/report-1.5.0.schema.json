@@ -1183,6 +1183,9 @@
         },
         "device": {
           "type": "string"
+        },
+        "sitemap": {
+          "type": "boolean"
         }
       },
       "required": [

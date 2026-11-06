@@ -572,6 +572,8 @@ export interface ReportOptions {
   hostChecks?: 'each' | 'main';
   /** The emulated Playwright device, when the scan used one. Absent before schema 1.5.0. */
   device?: string;
+  /** True when the pages were chosen from the sitemap. Absent before schema 1.5.0. */
+  sitemap?: boolean;
   headed: boolean;
   channel: string;
   /** Absent in reports from scanners before 0.5.0. */

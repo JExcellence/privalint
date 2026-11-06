@@ -119,6 +119,7 @@ Inputs left empty are not passed to privalint, so `privalint.config.json` in you
 | `fail-on`            | `error`              | `error`, `warning` or `never`.                                                 |
 | `fail-on-incomplete` | config, else off     | `true` or `false`: fail separately for incomplete observations.                |
 | `check-settings`     | config, else off     | `true` also tests the banner's settings layer.                                 |
+| `sitemap`            | config, else off     | `true` chooses pages from `sitemap.xml`, pages with forms first.               |
 | `device`             | config, else desktop | Playwright device to emulate, such as `iPhone 15`, to check the mobile banner. |
 | `disable`            |                      | Comma-separated rule ids to skip.                                              |
 | `lang`               | config, else `en`    | Language of the report: `en`, `de` or `hu`.                                    |
@@ -169,6 +170,8 @@ privalint <url> [options]
       --host-checks <mode>  each | main (default each). each also runs the consent,
                           banner and HTTPS checks on the first page of up to five
                           other hosts of the site, such as docs. or blog.
+      --sitemap           Choose the pages to scan from sitemap.xml, spread over the site
+                          and pages with forms first, instead of only following links
       --device <name>     Emulate a Playwright device, such as "iPhone 15" or "Pixel 7":
                           viewport, user agent and touch, to see mobile banners
       --headed            Open a visible browser window instead of running headless

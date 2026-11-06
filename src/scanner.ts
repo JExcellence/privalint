@@ -18,6 +18,7 @@ import { privacyPolicyContent } from './rules/privacy-policy-content.js';
 import { PRIVACY_POLICY } from './rules/privacy-policy-link.js';
 import { privacyPolicyVendors } from './rules/privacy-policy-vendors.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
+import { adapterFetchText, browserFetchText, sitemapPages } from './sitemap.js';
 import { thirdPartyInventory } from './third-party-inventory.js';
 import type {
   ConsentSummary,
@@ -244,22 +245,30 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         snapshots.push(snapshot);
         if (hostStart) hostStarts.add(snapshot);
         options.onPage?.(snapshot);
-        for (const link of snapshot.links) {
-          const next = crawlTarget(link.href, siteUrl);
-          if (next !== undefined && !seen.has(next)) {
-            seen.add(next);
-            queue.push(next);
-            const host = new URL(next).host;
-            if (
-              hostChecks === 'each' &&
-              !hostsSeen.has(host) &&
-              hostStartIndexes.size < MAX_HOST_STARTS
-            ) {
-              hostsSeen.add(host);
-              hostStartIndexes.add(queue.length - 1);
-            }
+        const enqueue = (next: string | undefined) => {
+          if (next === undefined || seen.has(next)) return;
+          seen.add(next);
+          queue.push(next);
+          const host = new URL(next).host;
+          if (
+            hostChecks === 'each' &&
+            !hostsSeen.has(host) &&
+            hostStartIndexes.size < MAX_HOST_STARTS
+          ) {
+            hostsSeen.add(host);
+            hostStartIndexes.add(queue.length - 1);
+          }
+        };
+        // Pages from the sitemap go first, spread over the site; links fill the rest.
+        if (isStart && options.sitemap === true && maxPages > 1) {
+          const fetchText = options.networkAdapter
+            ? adapterFetchText(options.networkAdapter)
+            : browserFetchText(browser);
+          for (const page of await sitemapPages(siteUrl, fetchText, maxPages - 1)) {
+            enqueue(crawlTarget(page, siteUrl));
           }
         }
+        for (const link of snapshot.links) enqueue(crawlTarget(link.href, siteUrl));
       }
     }
     throwIfAborted(options.signal);
@@ -303,6 +312,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         settingsCheck: options.settingsCheck === true,
         hostChecks,
         ...(options.device === undefined ? {} : { device: options.device }),
+        ...(options.sitemap === true ? { sitemap: true } : {}),
         headed: options.headed === true,
         channel: options.channel ?? 'chromium',
         sandbox: options.sandbox === true,

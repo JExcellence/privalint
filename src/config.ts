@@ -19,6 +19,7 @@ export interface PrivalintConfig {
   settingsCheck?: boolean;
   hostChecks?: 'each' | 'main';
   device?: string;
+  sitemap?: boolean;
   failOnIncomplete?: boolean;
   rules?: RuleSettings;
   allow?: { vendors: string[] };
@@ -37,6 +38,7 @@ const KEYS = [
   'settingsCheck',
   'hostChecks',
   'device',
+  'sitemap',
   'failOnIncomplete',
   'rules',
   'allow',
@@ -84,6 +86,7 @@ export function parseConfig(value: unknown): PrivalintConfig {
     invalid();
   if (value.device !== undefined && (typeof value.device !== 'string' || value.device === ''))
     invalid();
+  if (value.sitemap !== undefined && typeof value.sitemap !== 'boolean') invalid();
   if (value.failOnIncomplete !== undefined && typeof value.failOnIncomplete !== 'boolean')
     invalid();
   if (value.rules !== undefined) {

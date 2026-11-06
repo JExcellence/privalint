@@ -37,6 +37,11 @@ export interface ScanOptions {
    * scale factor of that device, so banners are checked in their mobile layout.
    */
   device?: string | undefined;
+  /**
+   * Choose the pages after the start page from the sitemap (robots.txt `Sitemap:`, else
+   * /sitemap.xml), spread over the site and pages with forms first, before following links.
+   */
+  sitemap?: boolean | undefined;
   headed?: boolean | undefined;
   channel?: string | undefined;
   /**

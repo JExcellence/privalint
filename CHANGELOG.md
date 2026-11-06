@@ -30,6 +30,11 @@ Upgrade notes:
 
 ### Added
 
+- `--sitemap` (config `sitemap`, Action input `sitemap`) chooses the pages after the start page from
+  the sitemap: `Sitemap:` lines in robots.txt, else `/sitemap.xml`, with sitemap indexes one level
+  deep. Pages likely to hold forms or checkout steps (`/kontakt`, `/newsletter`, `/checkout`, …)
+  come first, then one page per section in turn. Same-site pages only, within `maxPages`; without
+  a sitemap the crawl follows links as before (#133)
 - Reports list every host outside the site that answered a request in `thirdParties`: registrable
   domain, first page, phases, request count and the vendor privalint knows it as, hosts only. The
   Markdown report shows it as a collapsed table, a starting point for the privacy policy and for

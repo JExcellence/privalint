@@ -38,6 +38,18 @@ beforeAll(async () => {
       res.writeHead(200, { 'content-type': 'text/html' }).end(await readFile(join(FIXTURES, file)));
       return;
     }
+    if (path === '/sitemap.xml' || path === '/sitemap-pages.xml') {
+      // A sitemap index pointing to one sitemap, like most CMS generate.
+      const base = `http://${req.headers.host}`;
+      const body =
+        path === '/sitemap.xml'
+          ? `<sitemapindex><sitemap><loc>${base}/sitemap-pages.xml</loc></sitemap></sitemapindex>`
+          : `<urlset>${['blog/a', 'blog/b', 'blog/c', 'shop/x', 'kontakt']
+              .map((page) => `<url><loc>${base}/sitemap/${page}.html</loc></url>`)
+              .join('')}</urlset>`;
+      res.writeHead(200, { 'content-type': 'application/xml' }).end(body);
+      return;
+    }
     if (path === '/hang') {
       // Never answers, like a stuck backend.
       return;
@@ -267,6 +279,23 @@ describe('scan', () => {
       explanation: 'linked-page-not-loaded',
     });
     expect(evaluation('privacy-policy-vendors')).toMatchObject({ outcome: 'checked-no-finding' });
+  });
+
+  it('chooses pages from the sitemap, pages with forms first, then by section', async () => {
+    const start = `${origin}/sitemap/index.html`;
+    const withSitemap = await scan(start, { ...options, maxPages: 4, sitemap: true });
+    expect(withSitemap.pages.map((page) => new URL(page.url).pathname)).toEqual([
+      '/sitemap/index.html',
+      '/sitemap/kontakt.html',
+      '/sitemap/blog/a.html',
+      '/sitemap/shop/x.html',
+    ]);
+    expect(withSitemap.options?.sitemap).toBe(true);
+    const links = await scan(start, { ...options, maxPages: 2 });
+    expect(links.pages.map((page) => new URL(page.url).pathname)).toEqual([
+      '/sitemap/index.html',
+      '/sitemap/blog/a.html',
+    ]);
   });
 
   it('checks the mobile layout of the banner with --device', async () => {

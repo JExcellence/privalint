@@ -13,7 +13,8 @@ Supported fields: `url` (absolute HTTP(S)), `maxPages` (positive integer), `conc
 (positive integer, pages loaded at the same time), `settleMs` (nonnegative),
 `timeoutMs` (positive), `locale`, `lang` (`en`/`de`/`hu`), `region` (`de`/`at`/`ch`/`hu`/`eu`),
 `consentCheck`, `settingsCheck` and `failOnIncomplete` (booleans), `hostChecks` (`each`/`main`), `device` (a Playwright device name such as `"iPhone 15"`; the
-report records it in `options.device`), `rules` (known IDs to `off`/`error`/`warning`/`info`) and
+report records it in `options.device`), `sitemap` (boolean: choose the pages after the start
+page from the sitemap), `rules` (known IDs to `off`/`error`/`warning`/`info`) and
 `allow: { vendors: string[] }` (exact, case-sensitive finding `subject` names).
 
 ```json
