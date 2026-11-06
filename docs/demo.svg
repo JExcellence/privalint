@@ -8,7 +8,7 @@
   <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#c9d1d9">
   <text x="20" y="68" xml:space="preserve"><tspan fill="#3fb950">$</tspan> npx privalint https://cafe-morgenrot.example</text>
   <text x="20" y="87" xml:space="preserve"></text>
-  <text x="20" y="106" xml:space="preserve">https://cafe-morgenrot.example/ [d6b3422c-9a8a-420b-ba6b-81f7dd7c7992]</text>
+  <text x="20" y="106" xml:space="preserve">https://cafe-morgenrot.example/ [a66b5661-5d93-48e9-be1d-6c549ae93a90]</text>
   <text x="20" y="125" xml:space="preserve">  <tspan fill="#ff7b72">✖</tspan> Google Analytics (analytics) still runs after clicking "Alle ablehnen". <tspan fill="#8b949e">trackers-after-reject</tspan></text>
   <text x="20" y="144" xml:space="preserve"><tspan fill="#8b949e">      request https://www.googletagmanager.com/gtag/js?id=G-MORGENROT</tspan></text>
   <text x="20" y="163" xml:space="preserve">      <tspan fill="#56d4dd">fix:</tspan> Check that Google Analytics is assigned to a consent category in your consent manager an…</text>
@@ -22,8 +22,8 @@
   <text x="20" y="315" xml:space="preserve">      <tspan fill="#56d4dd">fix:</tspan> Review the purpose and legal basis for YouTube. Where consent is required, use a click-t…</text>
   <text x="20" y="334" xml:space="preserve"><tspan fill="#8b949e">      legal basis: Art. 6 Abs. 1 DSGVO; § 25 Abs. 1 TDDDG</tspan></text>
   <text x="20" y="353" xml:space="preserve"></text>
-  <text x="20" y="372" xml:space="preserve">privalint 0.9.0 · schema 1.4.0</text>
-  <text x="20" y="391" xml:space="preserve">Capture https://cafe-morgenrot.example/ [d6b3422c-9a8a-420b-ba6b-81f7dd7c7992]: 7 requests, 7 respo…</text>
+  <text x="20" y="372" xml:space="preserve">privalint 0.9.1 · schema 1.4.0</text>
+  <text x="20" y="391" xml:space="preserve">Capture https://cafe-morgenrot.example/ [a66b5661-5d93-48e9-be1d-6c549ae93a90]: 7 requests, 7 respo…</text>
   <text x="20" y="410" xml:space="preserve">  pre-consent-trackers: Checked, no finding (Required observations available)</text>
   <text x="20" y="429" xml:space="preserve">  trackers-after-reject: Finding detected (Positive evidence observed)</text>
   <text x="20" y="448" xml:space="preserve">  trackers-after-settings: Not evaluable (Settings check not enabled (--check-settings))</text>
@@ -42,7 +42,7 @@
   <text x="20" y="695" xml:space="preserve">  withdrawal-button: Checked, no finding (Required observations available)</text>
   <text x="20" y="714" xml:space="preserve">  accessibility-statement: Checked, no finding (Required observations available)</text>
   <text x="20" y="733" xml:space="preserve"><tspan fill="#8b949e">Consent banner: clicked "Alle ablehnen" and reloaded</tspan></text>
-  <text x="20" y="752" xml:space="preserve"><tspan fill="#ff7b72">2 errors</tspan>, <tspan fill="#e3b341">1 warning</tspan> on 1 page (3.0s).</text>
+  <text x="20" y="752" xml:space="preserve"><tspan fill="#ff7b72">2 errors</tspan>, <tspan fill="#e3b341">1 warning</tspan> on 1 page (3.6s).</text>
   <text x="20" y="771" xml:space="preserve"><tspan fill="#8b949e">Automated checks only. A clean result is not proof of GDPR compliance.</tspan></text>
   </g>
 </svg>
