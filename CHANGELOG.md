@@ -36,6 +36,11 @@ Upgrade notes:
 
 ### Added
 
+- Fix guides for Cookiebot, Usercentrics, OneTrust and Complianz (`docs/fixes`, English and
+  German): each consent finding mapped to the setting in that consent manager, every step linked to
+  the vendor's documentation. When the consent manager is recognised, the fix of the finding links
+  the section; Hungarian reports link the English guide. Complianz's documented reopen class
+  `cmplz-show-banner` now counts as a settings link (#138)
 - `privacy-policy-vendors` reads a cookie policy published as a PDF on the same site: it is
   downloaded (up to 5 MB, through the network adapter when there is one) and its text extracted
   with pdf.js, without running code from the file. A PDF that fails or is larger stays unread as

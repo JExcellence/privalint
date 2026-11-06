@@ -5,6 +5,7 @@ import { capturePage, deviceOptions } from './capture.js';
 import { findCnameCloaks } from './cname.js';
 import { diagnosticUrl } from './diagnostics.js';
 import { adapterFetchBytes, browserFetchBytes } from './fetch.js';
+import { withFixGuides } from './fix-guides.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
 import { networkLimits } from './network.js';
@@ -36,7 +37,7 @@ import type {
   ScanResult,
   SettingsObservation,
 } from './types.js';
-import { crawlTarget, isFirstParty, withoutHash } from './url.js';
+import { crawlTarget, isFirstParty, safeHost, withoutHash } from './url.js';
 
 export type { ScanOptions } from './scan-options.js';
 
@@ -306,6 +307,13 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     if (!options.networkAdapter && (options.resolveCname !== undefined || !options.offline)) {
       await findCnameCloaks(snapshots, siteUrl, options.resolveCname);
     }
+    // The consent manager seen on a host's first page is the one its other pages use.
+    const cmpByHost = new Map<string, string>();
+    for (const page of snapshots) {
+      const cmp = page.consent?.cmp;
+      const host = safeHost(page.finalUrl);
+      if (cmp !== undefined && host !== undefined && !cmpByHost.has(host)) cmpByHost.set(host, cmp);
+    }
     const assessments = snapshots.map((page, index) => {
       emit({
         stage: 'evaluating-rules',
@@ -314,7 +322,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
         pageUrl: diagnosticUrl(page.finalUrl),
       });
-      return assessPage(page, rules, siteUrl, {
+      const assessment = assessPage(page, rules, siteUrl, {
         lang,
         region,
         isStart: index === 0 || hostStarts.has(page),
@@ -325,6 +333,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         gpcEnabled: options.gpc === true,
         transportEnabled: !options.networkAdapter && !options.offline,
       });
+      const cmp = page.consent?.cmp ?? cmpByHost.get(safeHost(page.finalUrl) ?? '');
+      return { ...assessment, findings: withFixGuides(assessment.findings, cmp, lang) };
     });
     const partial =
       assessments.some((assessment) =>
