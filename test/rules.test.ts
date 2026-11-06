@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { huArticle, type Lang } from '../src/i18n.js';
 import type { Region } from '../src/legal.js';
 import {
+  personalParameters,
+  redactPersonalData,
+  redactPersonalDataInText,
+} from '../src/personal-data.js';
+import {
   accessibilityStatement,
   adobeFonts,
   consentBannerMissing,
@@ -21,6 +26,7 @@ import {
   thirdCountryProviders,
   thirdPartyCdns,
   thirdPartyEmbeds,
+  thirdPartyPersonalData,
   trackersAfterReject,
   trackingCookieLifetime,
   withdrawalButton,
@@ -1080,6 +1086,56 @@ describe('referrer-policy', () => {
   });
 });
 
+describe('personal data in URLs', () => {
+  it.each<[string, { name: string; kind: string; hashed: boolean }[]]>([
+    [
+      'https://t.example.net/p?email=jane%40example.org&page=1',
+      [{ name: 'email', kind: 'email', hashed: false }],
+    ],
+    [
+      `https://www.facebook.com/tr?em=${'b'.repeat(64)}`,
+      [{ name: 'em', kind: 'email', hashed: true }],
+    ],
+    [
+      'https://t.example.net/p?ph=%2B49%20170%201234567',
+      [{ name: 'ph', kind: 'phone', hashed: false }],
+    ],
+    ['https://t.example.net/p?ts=1730900000000&tel=&id=0123456789', []],
+    [`https://t.example.net/p?sid=${'c'.repeat(64)}`, []],
+  ])('reads %s', (url, expected) => {
+    expect(personalParameters(url)).toEqual(expected);
+  });
+
+  it('redacts only personal values, also inside longer text', () => {
+    expect(
+      redactPersonalDataInText('request https://t.example.net/p?a=1&email=jane%40example.org'),
+    ).toBe('request https://t.example.net/p?a=1&email=[redacted]');
+    expect(redactPersonalData('https://t.example.net/p?a=1')).toBe('https://t.example.net/p?a=1');
+  });
+});
+
+describe('third-party-personal-data', () => {
+  it('groups parameters by host and ignores first-party requests', () => {
+    const findings = run(
+      thirdPartyPersonalData,
+      snapshot({
+        requests: [
+          request('https://www.facebook.com/tr?ud[ph]=' + 'd'.repeat(64)),
+          request('https://www.facebook.com/tr?ud[em]=' + 'e'.repeat(64)),
+          request('https://example.de/search?q=jane%40example.org'),
+        ],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toBe(
+      'Requests to www.facebook.com carry hashed e-mail addresses or phone numbers of visitors.',
+    );
+    expect(findings[0]?.evidence).toEqual([
+      'www.facebook.com: ud[ph] (phone, hashed), ud[em] (e-mail, hashed)',
+    ]);
+  });
+});
+
 describe('third-country-providers', () => {
   const page = (...urls: string[]) => snapshot({ requests: urls.map((url) => request(url)) });
 
@@ -1221,6 +1277,28 @@ describe('consent-preselected', () => {
     ['no settings check', snapshot()],
   ])('passes with %s', (_, snap) => {
     expect(run(consentPreselected, snap)).toEqual([]);
+  });
+});
+
+describe('third-party-embeds fix hints', () => {
+  const fixFor = (...urls: string[]) =>
+    run(thirdPartyEmbeds, snapshot({ requests: urls.map((url) => request(url)) }))[0]?.fix ?? '';
+
+  it('points a youtube.com embed to the privacy-enhanced mode', () => {
+    expect(fixFor('https://www.youtube.com/embed/abc')).toContain(
+      'www.youtube-nocookie.com/embed/',
+    );
+    expect(fixFor('https://www.youtube-nocookie.com/embed/abc')).not.toContain('youtube-nocookie');
+  });
+
+  it('suggests dnt=1 for Vimeo unless the player already uses it', () => {
+    expect(fixFor('https://player.vimeo.com/video/1')).toContain('dnt=1');
+    expect(fixFor('https://player.vimeo.com/video/1?dnt=1')).not.toContain('dnt=1');
+  });
+
+  it('suggests a placeholder image for Google Maps and keeps the generic fix elsewhere', () => {
+    expect(fixFor('https://www.google.com/maps/embed?pb=1')).toContain('placeholder image');
+    expect(fixFor('https://www.google.com/recaptcha/api.js')).not.toContain('Until then');
   });
 });
 

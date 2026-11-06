@@ -143,6 +143,18 @@ describe('scan', () => {
     ]);
   });
 
+  it('redacts e-mail hashes in request URLs from every finding', async () => {
+    const result = await scan(`${origin}/leaky/pixel.html`, { ...options, consentCheck: false });
+    const report = JSON.stringify(result);
+    expect(report).not.toContain('f'.repeat(64));
+    expect(result.findings.find((f) => f.ruleId === 'pre-consent-trackers')?.evidence).toEqual([
+      'request https://www.facebook.com/tr?id=1&ev=PageView&ud%5Bem%5D=[redacted]',
+    ]);
+    expect(result.findings.find((f) => f.ruleId === 'third-party-personal-data')?.evidence).toEqual(
+      ['www.facebook.com: ud[em] (e-mail, hashed)'],
+    );
+  });
+
   it('recognises a tracker by its localStorage key, not only by cookies', async () => {
     const result = await scan(`${origin}/storage/`, { ...options, consentCheck: false });
     expect(result.findings).toEqual([

@@ -23,6 +23,12 @@ Upgrade notes:
 
 ### Added
 
+- New rule `third-party-personal-data` (warning): requests to other sites carry e-mail
+  addresses or phone numbers in their query string, plain or as SHA-256 hashes in parameters
+  such as `em` or `ud[em]`. Only parameter names are reported, and the values are replaced by
+  `[redacted]` in every finding that shows a request address (#118)
+- `third-party-embeds` fixes point to the YouTube privacy-enhanced mode, the Vimeo `dnt=1`
+  parameter and a placeholder image for Google Maps. None replaces consent (#137)
 - New rule `form-preticked-consent` (warning): a form ticks a newsletter or advertising consent
   checkbox before the visitor chooses (#139)
 - New rule `mixed-content`: a form on an HTTPS page submits to an `http://` address (error);

@@ -6,6 +6,7 @@ import { diagnosticUrl } from './diagnostics.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
 import { networkLimits } from './network.js';
+import { redactPersonalDataInText } from './personal-data.js';
 import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
 import { summarizeRules } from './rule-summary.js';
@@ -335,7 +336,14 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       ...consentSummary(snapshots[0]),
       findings: applyPolicy(
         applyRegion(
-          assessments.flatMap((assessment) => assessment.findings),
+          assessments
+            .flatMap((assessment) => assessment.findings)
+            // E-mail addresses or phone numbers in request URLs never reach a report.
+            .map((finding) => ({
+              ...finding,
+              message: redactPersonalDataInText(finding.message),
+              evidence: finding.evidence.map(redactPersonalDataInText),
+            })),
           region,
         ),
         options.ruleSettings,

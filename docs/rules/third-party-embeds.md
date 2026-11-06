@@ -81,3 +81,12 @@ Legal basis:
 - For maps, a static image linking to the map is often enough.
 - For captchas, consider a self-hosted or privacy-friendly alternative, or load it only on the form
   page.
+
+The fix in the report adds a hint for some providers. None of these replaces consent, but each
+reduces what loads before it:
+
+| Provider    | Hint                                                                                                        | Source                                                                                         |
+| ----------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| YouTube     | privacy-enhanced mode `www.youtube-nocookie.com/embed/...`, shown when `youtube.com/embed` is used          | [YouTube Help: privacy-enhanced mode](https://support.google.com/youtube/answer/171780)        |
+| Vimeo       | player parameter `dnt=1`, which stops new cookies other than security cookies; shown when it is not set yet | [Vimeo Help: About Player Parameters](https://help.vimeo.com/hc/en-us/articles/12426260232977) |
+| Google Maps | a placeholder image of the location with a link to Google Maps                                              |                                                                                                |

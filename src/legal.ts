@@ -165,6 +165,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 32. cikk'],
     eu: ['Art. 32 GDPR'],
   },
+  // Personal data beyond the IP address sent to other sites.
+  'third-party-personal-data': {
+    de: ['Art. 5 Abs. 1 lit. c, Art. 6 Abs. 1 DSGVO'],
+    at: ['Art. 5 Abs. 1 lit. c, Art. 6 Abs. 1 DSGVO'],
+    ch: ['Art. 6 Abs. 2 und 3 DSG'],
+    hu: ['GDPR 5. cikk (1) c), 6. cikk (1)'],
+    eu: ['Art. 5(1)(c) and 6(1) GDPR'],
+  },
   // Data protection by default: no more data to third parties than needed.
   'referrer-policy': {
     de: ['Art. 25 Abs. 2 DSGVO'],

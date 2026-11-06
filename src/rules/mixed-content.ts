@@ -29,15 +29,13 @@ export const mixedContent: Rule = {
           hu: `${actions.length} személyes adatokat gyűjtő űrlap titkosítatlan HTTP-n keresztül küld adatot.`,
         }),
         pageUrl: page.finalUrl,
-        evidence: actions
-          .slice(0, 3)
-          .map((action) =>
-            say(lang, {
-              en: `submits to ${action}`,
-              de: `sendet an ${action}`,
-              hu: `küldés ide: ${action}`,
-            }),
-          ),
+        evidence: actions.slice(0, 3).map((action) =>
+          say(lang, {
+            en: `submits to ${action}`,
+            de: `sendet an ${action}`,
+            hu: `küldés ide: ${action}`,
+          }),
+        ),
         fix: say(lang, {
           en: 'Point the form action (and any formaction on its buttons) to an https:// address.',
           de: 'Das Formularziel (und formaction an den Schaltflächen) auf eine https://-Adresse setzen.',

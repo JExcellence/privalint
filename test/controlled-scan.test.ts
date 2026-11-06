@@ -849,3 +849,32 @@ describe('diagnostic privacy and classification', () => {
     });
   });
 });
+
+describe('personal data in third-party requests', () => {
+  it('reports the parameter names and keeps the values out of every finding', async () => {
+    const hash = 'a'.repeat(64);
+    const pixel = `https://www.facebook.com/tr?id=1&ev=PageView&ud[em]=${hash}`;
+    const search = 'https://search.example.net/q?q=jane.doe%40example.org';
+    const result = await scan(origin, {
+      ...settings,
+      maxPages: 1,
+      consentCheck: false,
+      networkAdapter: async ({ url }) =>
+        url.startsWith(origin)
+          ? url.endsWith('/impressum') || url.endsWith('/privacy')
+            ? html('Beispiel GmbH, Musterweg 1, 10115 Berlin, info@example.de, HRB 1')
+            : html(`<img src="${pixel}"><img src="${search}">`)
+          : { status: 200, headers: { 'content-type': 'image/gif' }, body: '' },
+    });
+    const personal = result.findings.filter((f) => f.ruleId === 'third-party-personal-data');
+    expect(personal.map((f) => f.evidence)).toEqual([
+      ['www.facebook.com: ud[em] (e-mail, hashed)'],
+      ['search.example.net: q (e-mail)'],
+    ]);
+    const report = JSON.stringify(result);
+    expect(report).not.toContain(hash);
+    expect(report).not.toContain('jane.doe');
+    // Adapter scans keep only the origin of request URLs anyway.
+    expect(report).toContain('https://www.facebook.com/[redacted]');
+  });
+});

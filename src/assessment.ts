@@ -34,6 +34,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'form-preticked-consent': ['document'],
   'mixed-content': ['document'],
   'referrer-policy': ['network'],
+  'third-party-personal-data': ['network'],
   'reject-option': ['consent'],
   'reject-less-prominent': ['consent'],
   'trackers-after-reject': ['after-reject'],
