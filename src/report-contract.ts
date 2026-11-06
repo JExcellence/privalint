@@ -1,9 +1,10 @@
-export const REPORT_SCHEMA_VERSION = '1.4.0';
+export const REPORT_SCHEMA_VERSION = '1.5.0';
 export const SUPPORTED_REPORT_SCHEMAS = [
   '1.0.0',
   '1.1.0',
   '1.2.0',
   '1.3.0',
+  '1.4.0',
   REPORT_SCHEMA_VERSION,
 ] as const;
 

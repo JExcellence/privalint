@@ -1,7 +1,7 @@
 import { findProvider } from '../data/providers.js';
 import { findCdn, findEmbed } from '../data/third-parties.js';
 import { findTrackerByCookie, findTrackerByUrl } from '../data/trackers.js';
-import { say } from '../i18n.js';
+import { huArticle, say } from '../i18n.js';
 import { observedRequests } from '../observations.js';
 import type { Finding, RecordedRequest, Rule, Severity } from '../types.js';
 import { hostMatches } from '../url.js';
@@ -103,18 +103,21 @@ export const privacyPolicyVendors: Rule = {
           message: say(lang, {
             en: `The privacy policy does not mention ${vendor}, which the start page uses.`,
             de: `Die Datenschutzerklärung nennt ${vendor} nicht, obwohl die Startseite es nutzt.`,
+            hu: `Az adatkezelési tájékoztató nem említi ${huArticle(vendor)} ${vendor} szolgáltatást, pedig a kezdőlap használja.`,
           }),
           pageUrl: page.finalUrl,
           evidence: [
             say(lang, {
               en: `privacy policy: ${policy.url}`,
               de: `Datenschutzerklärung: ${policy.url}`,
+              hu: `adatkezelési tájékoztató: ${policy.url}`,
             }),
             evidence,
           ],
           fix: say(lang, {
             en: `Name ${vendor} in the privacy policy, with the purpose, the legal basis and, where it applies, the transfer outside the EU. If the site no longer needs it, remove it instead.`,
             de: `${vendor} in der Datenschutzerklärung nennen, mit Zweck, Rechtsgrundlage und, falls zutreffend, der Übermittlung außerhalb der EU. Wird es nicht mehr gebraucht, stattdessen entfernen.`,
+            hu: `Nevezze meg ${huArticle(vendor)} ${vendor} szolgáltatást az adatkezelési tájékoztatóban, a céllal, a jogalappal és adott esetben az EU-n kívüli továbbítással együtt. Ha az oldalnak már nincs rá szüksége, inkább távolítsa el.`,
           }),
         }),
       );

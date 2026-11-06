@@ -13,7 +13,7 @@ const readJson = async (path: string): Promise<unknown> =>
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 const schemas = new Map(
   await Promise.all(
-    ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0'].map(async (version) => {
+    ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0'].map(async (version) => {
       const report = ajv.compile(
         (await readJson(`../schemas/report-${version}.schema.json`)) as object,
       );
@@ -96,6 +96,21 @@ describe('standalone report contracts', () => {
     expect(validate('1.2.0')).toBe(false);
     const broken = { ...value, consent: { ...value.consent, settings: { outcome: 'maybe' } } };
     expect(schemas.get('1.3.0')?.report({ ...broken, schemaVersion: '1.3.0' })).toBe(false);
+  });
+
+  it('accepts Hungarian report text only from schema 1.5.0 on', async () => {
+    const value = (await fixture('complete')) as ScanResult;
+    const hungarian = (version: string) => ({
+      ...value,
+      schemaVersion: version,
+      lang: 'hu' as const,
+      ...(value.options === undefined
+        ? {}
+        : { options: { ...value.options, lang: 'hu' as const } }),
+    });
+    expect(schemas.get('1.5.0')?.report(hungarian('1.5.0'))).toBe(true);
+    expect(schemas.get('1.4.0')?.report(hungarian('1.4.0'))).toBe(false);
+    expect(schemas.get('1.5.0')?.report({ ...value, schemaVersion: '1.5.0' })).toBe(true);
   });
 
   it('accepts capture timing, timeout stages and the TCF readout only from schema 1.4.0 on', async () => {

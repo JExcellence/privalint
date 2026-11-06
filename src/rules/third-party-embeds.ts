@@ -1,5 +1,5 @@
 import { findEmbed } from '../data/third-parties.js';
-import { say } from '../i18n.js';
+import { huArticle, say } from '../i18n.js';
 import type { Finding, Rule } from '../types.js';
 import { groupRequestsByVendor } from './third-party-hits.js';
 
@@ -21,6 +21,7 @@ export const thirdPartyEmbeds: Rule = {
         message: say(lang, {
           en: `${vendor} loads before the visitor has given consent.`,
           de: `${vendor} wird geladen, bevor eine Einwilligung vorliegt.`,
+          hu: `${huArticle(vendor, true)} ${vendor} betöltődik, mielőtt a látogató hozzájárult volna.`,
         }),
         pageUrl: page.finalUrl,
         subject: vendor,
@@ -28,6 +29,7 @@ export const thirdPartyEmbeds: Rule = {
         fix: say(lang, {
           en: `Review the purpose and legal basis for ${vendor}. Where consent is required, use a click-to-load placeholder or block the resource until consent. Security widgets may need a separate necessity assessment.`,
           de: `Zweck und Rechtsgrundlage für ${vendor} prüfen. Soweit Einwilligung erforderlich ist, einen Platzhalter verwenden oder bis zur Einwilligung blockieren. Sicherheits-Widgets benötigen gegebenenfalls eine gesonderte Erforderlichkeitsprüfung.`,
+          hu: `Vizsgálja felül ${huArticle(vendor)} ${vendor} használatának célját és jogalapját. Ahol hozzájárulás szükséges, használjon kattintásra betöltődő helyőrzőt, vagy blokkolja az erőforrást a hozzájárulásig. Biztonsági widgeteknél külön szükségességi vizsgálat kellhet.`,
         }),
       }),
     );

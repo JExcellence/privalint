@@ -8,6 +8,8 @@ All notable changes are listed here. The format follows
 
 Upgrade notes:
 
+- New reports carry `schemaVersion: "1.5.0"`. It only adds the report language `hu`. Consumers
+  that accept 1.4.0 only must add 1.5.0 (`schemas/report-1.5.0.schema.json`).
 - On sites with subdomains, the first crawled page of up to five other hosts (`docs.`, `blog.`)
   now gets the consent, banner and HTTPS checks too. That can add findings and one consent run
   per host. `--host-checks main` or `"hostChecks": "main"` keeps the previous behaviour.
@@ -20,6 +22,8 @@ Upgrade notes:
 
 ### Added
 
+- `--lang hu`: findings, fixes and the text, Markdown and SARIF reports in Hungarian, with
+  schema 1.5.0 for the new language value (#59)
 - New rule `privacy-policy-vendors`: trackers and cookie-setting embeds the start page uses that
   the privacy policy, or a cookie policy it links, doesn't name (warning); font services, CDNs and
   other listed services as info. Names match as whole words, with known other names (#105)

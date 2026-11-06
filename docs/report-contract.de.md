@@ -4,7 +4,7 @@
 
 ## Versionierte Validierung
 
-Neue Scans verwenden Schema **1.4.0**; 1.0.0 bis 1.3.0 bleiben für frühere versionierte
+Neue Scans verwenden Schema **1.5.0**; 1.0.0 bis 1.4.0 bleiben für frühere versionierte
 Berichte verfügbar. 1.2.0 ergänzt den Grund `cancelled-by-page`, den ein 1.1.0-Validator ablehnen
 würde. 1.3.0 ergänzt die optionale Prüfung der Einstellungsebene: `consent.settings`,
 `options.settingsCheck`, die Beobachtungsart `after-settings`, den Grund
@@ -13,7 +13,9 @@ würde. 1.3.0 ergänzt die optionale Prüfung der Einstellungsebene: `consent.se
 `networkIdleMs` und bei Adapter-Scans `peakQueued`), die Timeout-Phase `stage` (`queued` oder
 `fetching`) in Adapter-Diagnosen, die optionalen Felder `capture.diagnostics.timing.adapter` und
 `offSiteRedirects` (mit Scanner 0.9.1 und 0.10.0 ergänzt, ohne 1.4.0-Validatoren zu brechen) sowie `consent.tcf` und `consent.settings.tcf`: was ein
-IAB-TCF-Consent-Tool nach dem Ablehnen und nach dem Abwählen von allem meldet.
+IAB-TCF-Consent-Tool nach dem Ablehnen und nach dem Abwählen von allem meldet. 1.5.0 ergänzt die
+Berichtssprache `hu` (`lang` und `options.lang`), die ein 1.4.0-Validator ablehnen würde; die
+Struktur ist sonst gleich.
 Paket-/Scanner-Version und Schemaversion sind unabhängig. Ohne `schemaVersion` ist ein Bericht
 Legacy; unbekannte Versionen müssen ausdrücklich unterstützt werden. Alte Daten bekommen nicht
 einfach eine neue Version zugewiesen, damit sie validieren.
@@ -25,11 +27,13 @@ Das npm-Paket enthält eigenständige JSON-Schema-2020-12-Dateien:
 - `privalint/schemas/report-1.2.0.schema.json`
 - `privalint/schemas/report-1.3.0.schema.json`
 - `privalint/schemas/report-1.4.0.schema.json`
+- `privalint/schemas/report-1.5.0.schema.json`
 - `privalint/schemas/sarif-properties-1.0.0.schema.json`
 - `privalint/schemas/sarif-properties-1.1.0.schema.json`
 - `privalint/schemas/sarif-properties-1.2.0.schema.json`
 - `privalint/schemas/sarif-properties-1.3.0.schema.json`
 - `privalint/schemas/sarif-properties-1.4.0.schema.json`
+- `privalint/schemas/sarif-properties-1.5.0.schema.json`
 
 Die SARIF-Schemas prüfen `runs[].properties`, nicht den vollständigen SARIF-Standard. Pflichtfelder,
 Typen, Ergebnisse und Widersprüche wie negativer Erfolg mit `partial: true` werden geprüft.

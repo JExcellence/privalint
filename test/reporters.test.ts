@@ -235,6 +235,24 @@ describe('German reports', () => {
   });
 });
 
+describe('Hungarian reports', () => {
+  const hungarian = (findings: Finding[]): ScanResult => ({ ...result(findings), lang: 'hu' });
+
+  it('writes the text summary in Hungarian, with the noun singular after a number', () => {
+    const output = formatText(hungarian([finding(), finding({ severity: 'warning' })]));
+    expect(output).toContain('1 hiba, 1 figyelmeztetés · 1 oldal (1,2 mp).');
+    expect(output).toContain('megoldás: Self-host the font files.');
+    expect(output).toContain('nem bizonyítja a GDPR-nak való megfelelést');
+    expect(formatText(hungarian([]))).toContain('Nem található probléma (1 oldal, 1,2 mp).');
+  });
+
+  it('translates the Markdown headings', () => {
+    const output = formatMarkdown(hungarian([finding()]));
+    expect(output).toContain('| | Szabály | Megállapítás |');
+    expect(output).toContain('<summary>Javítás módja</summary>');
+  });
+});
+
 describe('incomplete observations', () => {
   it('keeps policy-adjusted findings visible in both report languages', () => {
     const adjusted = result([

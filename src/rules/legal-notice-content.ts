@@ -1,4 +1,4 @@
-import { type Lang, say } from '../i18n.js';
+import { huArticle, type Lang, say } from '../i18n.js';
 import type { Finding, Rule } from '../types.js';
 
 const ID = 'legal-notice-content';
@@ -40,10 +40,14 @@ export const legalNoticeContent: Rule = {
 
     const missing: string[] = [];
     if (!(POSTCODE.test(text) && STREET.test(text))) {
-      missing.push(say(lang, { en: 'postal address', de: 'keine Postanschrift' }));
+      missing.push(
+        say(lang, { en: 'postal address', de: 'keine Postanschrift', hu: 'postai címet' }),
+      );
     }
     if (!(notice.mailto || EMAIL.test(text))) {
-      missing.push(say(lang, { en: 'e-mail address', de: 'keine E-Mail-Adresse' }));
+      missing.push(
+        say(lang, { en: 'e-mail address', de: 'keine E-Mail-Adresse', hu: 'e-mail-címet' }),
+      );
     }
     if (missing.length > 0) {
       findings.push({
@@ -53,12 +57,14 @@ export const legalNoticeContent: Rule = {
         message: say(lang, {
           en: `The legal notice gives no ${missing.join(' and no ')}.`,
           de: `Das Impressum nennt ${missing.join(' und ')}.`,
+          hu: `Az impresszum nem ad meg ${missing.join(' és ')}.`,
         }),
         pageUrl: page.finalUrl,
         evidence: evidence(lang, notice.url, text),
         fix: say(lang, {
           en: 'Give the full name of the provider, a postal address that can receive mail (no P.O. box) and an e-mail address, as text on the legal notice page. A contact form alone is not enough.',
           de: 'Den vollständigen Namen des Anbieters, eine ladungsfähige Anschrift (kein Postfach) und eine E-Mail-Adresse als Text im Impressum angeben. Ein Kontaktformular allein reicht nicht.',
+          hu: 'Adja meg szövegként az impresszumban a szolgáltató teljes nevét, egy kézbesítésre alkalmas postai címet (nem postafiókot) és egy e-mail-címet. Egy kapcsolatfelvételi űrlap önmagában nem elég.',
         }),
       });
     }
@@ -72,15 +78,25 @@ export const legalNoticeContent: Rule = {
         message: say(lang, {
           en: `The legal notice names the legal form ${form} but no register entry.`,
           de: `Das Impressum nennt die Rechtsform ${form}, aber keinen Registereintrag.`,
+          hu: `Az impresszum megnevezi ${huArticle(form)} ${form} cégformát, de cégjegyzékszámot vagy más nyilvántartási adatot nem.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [
-          say(lang, { en: `legal notice: ${notice.url}`, de: `Impressum: ${notice.url}` }),
-          say(lang, { en: `legal form: ${form}`, de: `Rechtsform: ${form}` }),
+          say(lang, {
+            en: `legal notice: ${notice.url}`,
+            de: `Impressum: ${notice.url}`,
+            hu: `impresszum: ${notice.url}`,
+          }),
+          say(lang, {
+            en: `legal form: ${form}`,
+            de: `Rechtsform: ${form}`,
+            hu: `cégforma: ${form}`,
+          }),
         ],
         fix: say(lang, {
           en: 'Add the register, the register court or authority and the registration number, for example "Amtsgericht Berlin, HRB 12345" or "Cg. 01-09-123456".',
           de: 'Register, Registergericht und Registernummer ergänzen, etwa „Amtsgericht Berlin, HRB 12345“.',
+          hu: 'Adja meg a nyilvántartást, a nyilvántartó bíróságot vagy hatóságot és a nyilvántartási számot, például „Fővárosi Törvényszék Cégbírósága, Cg. 01-09-123456”.',
         }),
       });
     }
@@ -91,10 +107,11 @@ export const legalNoticeContent: Rule = {
 function evidence(lang: Lang, url: string, text: string): string[] {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   return [
-    say(lang, { en: `legal notice: ${url}`, de: `Impressum: ${url}` }),
+    say(lang, { en: `legal notice: ${url}`, de: `Impressum: ${url}`, hu: `impresszum: ${url}` }),
     say(lang, {
       en: `legal notice text: ${words} words`,
       de: `Text des Impressums: ${words} Wörter`,
+      hu: `az impresszum szövege: ${words} szó`,
     }),
   ];
 }

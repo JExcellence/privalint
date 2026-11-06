@@ -1,4 +1,4 @@
-import { say } from '../i18n.js';
+import { huArticle, say } from '../i18n.js';
 import type { Finding, Rule } from '../types.js';
 import { categoryLabel, findTrackerHits } from './tracker-hits.js';
 
@@ -30,10 +30,12 @@ export const preConsentTrackers: Rule = {
           ? say(lang, {
               en: `${vendor} loads before consent and sends the visitor's IP address to a third party.`,
               de: `${vendor} wird vor der Einwilligung geladen und überträgt die IP-Adresse an einen Dritten.`,
+              hu: `${huArticle(vendor, true)} ${vendor} a hozzájárulás előtt betöltődik, és harmadik félnek továbbítja a látogató IP-címét.`,
             })
           : say(lang, {
               en: `${vendor} (${category}) runs before the visitor has given consent.`,
               de: `${vendor} (${category}) läuft, bevor eine Einwilligung vorliegt.`,
+              hu: `${huArticle(vendor, true)} ${vendor} (${category}) fut, mielőtt a látogató hozzájárult volna.`,
             }),
         pageUrl: page.finalUrl,
         subject: vendor,
@@ -41,6 +43,7 @@ export const preConsentTrackers: Rule = {
         fix: say(lang, {
           en: `Only load ${vendor} after opt-in, for example by letting your consent manager inject it or by using it in a consent mode that sends no requests until consent is given.`,
           de: `${vendor} erst nach der Einwilligung laden, zum Beispiel über das Consent-Tool, oder einen Consent-Modus nutzen, der vorher keine Anfragen sendet.`,
+          hu: `${huArticle(vendor, true)} ${vendor} csak hozzájárulás után töltődjön be, például úgy, hogy a hozzájárulás-kezelő illeszti be, vagy olyan hozzájárulási módban, amely a hozzájárulásig nem küld kéréseket.`,
         }),
       };
     });

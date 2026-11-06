@@ -1,4 +1,4 @@
-import { say } from '../i18n.js';
+import { huArticle, say } from '../i18n.js';
 import type { Finding, Rule } from '../types.js';
 import { tcfFindings } from './tcf-findings.js';
 import { categoryLabel, findTrackerHits } from './tracker-hits.js';
@@ -18,7 +18,8 @@ export const trackersAfterReject: Rule = {
     if (after === undefined) {
       return [];
     }
-    const button = page.consent?.rejectLabel ?? say(lang, { en: 'reject', de: 'Ablehnen' });
+    const button =
+      page.consent?.rejectLabel ?? say(lang, { en: 'reject', de: 'Ablehnen', hu: 'elutasítás' });
     const tcf =
       page.consent?.tcf === undefined
         ? []
@@ -27,7 +28,11 @@ export const trackersAfterReject: Rule = {
             ruleId: ID,
             pageUrl: page.finalUrl,
             lang,
-            action: { en: `clicking "${button}"`, de: `„${button}“ geklickt wurde` },
+            action: {
+              en: `clicking "${button}"`,
+              de: `„${button}“ geklickt wurde`,
+              hu: `${huArticle(button)} „${button}” gombra kattintás után`,
+            },
           });
     const trackerFindings = findTrackerHits(after.requests, after.cookies, lang, after.storage).map(
       ({ tracker, evidence }): Finding => {
@@ -40,6 +45,7 @@ export const trackersAfterReject: Rule = {
           message: say(lang, {
             en: `${vendor} (${category}) still runs after clicking "${button}".`,
             de: `${vendor} (${category}) läuft weiter, obwohl „${button}“ geklickt wurde.`,
+            hu: `${huArticle(vendor, true)} ${vendor} (${category}) ${huArticle(button)} „${button}” gombra kattintás után is tovább fut.`,
           }),
           pageUrl: page.finalUrl,
           subject: vendor,
@@ -47,6 +53,7 @@ export const trackersAfterReject: Rule = {
           fix: say(lang, {
             en: `Check that ${vendor} is assigned to a consent category in your consent manager and that the category is blocked when the visitor rejects.`,
             de: `Prüfen, ob ${vendor} im Consent-Tool einer Kategorie zugeordnet ist und diese Kategorie beim Ablehnen blockiert wird.`,
+            hu: `Ellenőrizze, hogy ${huArticle(vendor)} ${vendor} a hozzájárulás-kezelőben hozzá van-e rendelve egy hozzájárulási kategóriához, és hogy ez a kategória blokkolva van-e, amikor a látogató elutasít.`,
           }),
         };
       },

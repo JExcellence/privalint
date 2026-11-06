@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Lang } from '../src/i18n.js';
+import { huArticle, type Lang } from '../src/i18n.js';
 import type { Region } from '../src/legal.js';
 import {
   accessibilityStatement,
@@ -552,6 +552,34 @@ describe('tracking-cookie-lifetime', () => {
       },
     });
     expect(run(trackingCookieLifetime, page)).toHaveLength(1);
+  });
+});
+
+describe('Hungarian text', () => {
+  it('picks "a" or "az" by the first sound', () => {
+    expect(
+      ['Adobe Fonts', 'YouTube', '„Impresszum”', 'Elutasítom', 'Hotjar'].map((w) => huArticle(w)),
+    ).toEqual(['az', 'a', 'az', 'az', 'a']);
+    expect(huArticle('Intercom', true)).toBe('Az');
+  });
+
+  it('writes findings and fixes in Hungarian', () => {
+    const [missing] = impressumLink.check({
+      siteUrl: SITE,
+      page: snapshot(),
+      lang: 'hu',
+      region: 'hu',
+    });
+    expect(missing?.message).toBe('Nem található hivatkozás impresszumra vagy jogi nyilatkozatra.');
+    expect(missing?.fix).toContain('„Impresszum” feliratú hivatkozást');
+    const [tracker] = run(
+      preConsentTrackers,
+      snapshot({ requests: [request('https://www.google-analytics.com/g/collect')] }),
+      'hu',
+    );
+    expect(tracker?.message).toBe(
+      'A Google Analytics (analitika) fut, mielőtt a látogató hozzájárult volna.',
+    );
   });
 });
 

@@ -22,11 +22,19 @@ export const bannerLegalLinks: Rule = {
     const missing = [
       ...(links.some(linkMatches(PRIVACY_POLICY))
         ? []
-        : [say(lang, { en: 'privacy policy', de: 'Datenschutzerklärung' })]),
-      ...(links.some(linkMatches(LEGAL_NOTICE)) ? [] : ['Impressum']),
+        : [
+            say(lang, {
+              en: 'privacy policy',
+              de: 'Datenschutzerklärung',
+              hu: 'adatkezelési tájékoztató',
+            }),
+          ]),
+      ...(links.some(linkMatches(LEGAL_NOTICE))
+        ? []
+        : [say(lang, { en: 'Impressum', de: 'Impressum', hu: 'impresszum' })]),
     ];
     if (missing.length === 0) return [];
-    const list = missing.join(say(lang, { en: ' and ', de: ' und ' }));
+    const list = missing.join(say(lang, { en: ' and ', de: ' und ', hu: ' és ' }));
     return [
       {
         ruleId: ID,
@@ -34,18 +42,21 @@ export const bannerLegalLinks: Rule = {
         message: say(lang, {
           en: `The consent banner blocks the page but doesn't link the ${list}.`,
           de: `Das Cookie-Banner blockiert die Seite, verlinkt aber nicht die ${list}.`,
+          hu: `A sütibanner eltakarja az oldalt, de nem hivatkozik a következőkre: ${list}.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [
           say(lang, {
             en: `${links.length} links inside the banner`,
             de: `${links.length} Links im Banner`,
+            hu: `${links.length} hivatkozás a bannerben`,
           }),
           ...links.slice(0, 3).map((link) => `${link.text || '(no text)'} -> ${link.href}`),
         ],
         fix: say(lang, {
           en: 'Link the privacy policy and the Impressum in the banner itself, or make the banner small enough that the footer stays usable while it is open.',
           de: 'Datenschutzerklärung und Impressum direkt im Banner verlinken, oder das Banner so klein halten, dass der Footer nutzbar bleibt, solange es offen ist.',
+          hu: 'Hivatkozzon az adatkezelési tájékoztatóra és az impresszumra magában a bannerben, vagy tegye a bannert olyan kicsivé, hogy nyitott állapotban is használható maradjon a lábléc.',
         }),
       },
     ];

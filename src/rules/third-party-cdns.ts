@@ -21,6 +21,7 @@ export const thirdPartyCdns: Rule = {
         message: say(lang, {
           en: `Files are loaded from ${vendor}.`,
           de: `Dateien werden von ${vendor} geladen.`,
+          hu: `Az oldal fájlokat tölt be innen: ${vendor}.`,
         }),
         pageUrl: page.finalUrl,
         subject: vendor,
@@ -28,6 +29,7 @@ export const thirdPartyCdns: Rule = {
         fix: say(lang, {
           en: 'Install the library with your package manager and bundle it, or copy the files to your own server.',
           de: 'Die Bibliothek über den Paketmanager installieren und mitbündeln oder die Dateien auf den eigenen Server kopieren.',
+          hu: 'Telepítse a könyvtárat csomagkezelővel és csomagolja az oldal kódjába, vagy másolja a fájlokat a saját szerverére.',
         }),
       }),
     );

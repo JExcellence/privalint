@@ -1,5 +1,5 @@
 import { findTrackerByCookie } from '../data/trackers.js';
-import { say } from '../i18n.js';
+import { huArticle, say } from '../i18n.js';
 import type { Finding, RecordedCookie, Rule } from '../types.js';
 
 const ID = 'tracking-cookie-lifetime';
@@ -41,14 +41,20 @@ export const trackingCookieLifetime: Rule = {
         message: say(lang, {
           en: `${vendor} sets cookies that last longer than 13 months.`,
           de: `${vendor} setzt Cookies, die länger als 13 Monate gelten.`,
+          hu: `${huArticle(vendor, true)} ${vendor} 13 hónapnál tovább érvényes sütiket állít be.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [...found].map(([cookie, days]) =>
-          say(lang, { en: `cookie ${cookie}: ${days} days`, de: `Cookie ${cookie}: ${days} Tage` }),
+          say(lang, {
+            en: `cookie ${cookie}: ${days} days`,
+            de: `Cookie ${cookie}: ${days} Tage`,
+            hu: `${cookie} süti: ${days} nap`,
+          }),
         ),
         fix: say(lang, {
           en: `Set the cookie lifetime of ${vendor} to at most 13 months in its configuration, for Google Analytics the cookie_expires setting.`,
           de: `Die Cookie-Laufzeit von ${vendor} in seiner Konfiguration auf höchstens 13 Monate setzen, bei Google Analytics über die Einstellung cookie_expires.`,
+          hu: `Állítsa ${huArticle(vendor)} ${vendor} sütijeinek élettartamát a beállításaiban legfeljebb 13 hónapra, Google Analytics esetén a cookie_expires beállítással.`,
         }),
       }),
     );

@@ -53,6 +53,9 @@ const explanation = choices(
 );
 const meta = { $schema: 'https://json-schema.org/draft/2020-12/schema' };
 
+/** Versions that carry the fields added within 1.4.0; 1.5.0 keeps them. */
+const LATEST_14 = ['1.4.0', '1.5.0'];
+
 function definitions(version) {
   // 1.1.0 added scan and page IDs; every later version keeps them.
   const identified = version !== '1.0.0';
@@ -348,7 +351,7 @@ function definitions(version) {
                   switchedOff: count,
                   afterSaveComplete: boolean,
                   // Added within 1.4.0 (scanner 0.10.0); optional.
-                  ...(version === '1.4.0' ? { preselected: array(string) } : {}),
+                  ...(LATEST_14.includes(version) ? { preselected: array(string) } : {}),
                   ...(timed
                     ? {
                         tcf: ref('tcf'),
@@ -393,8 +396,9 @@ function definitions(version) {
         // Added within 1.1.0; optional so reports from earlier 1.1.0 scanners stay valid.
         ...(identified ? { sandbox: boolean, concurrency: positive } : {}),
         ...(settingsAware ? { settingsCheck: boolean, region: regionFor(version) } : {}),
+        lang: langFor(version),
         // Added within 1.4.0 (scanner 0.10.0); optional.
-        ...(version === '1.4.0' ? { hostChecks: choices('each', 'main') } : {}),
+        ...(LATEST_14.includes(version) ? { hostChecks: choices('each', 'main') } : {}),
       },
       Object.keys(reportOptions),
     ),
@@ -421,6 +425,9 @@ const reportOptions = {
   allowedVendors: array(string),
 };
 
+// 1.5.0 added Hungarian report text.
+const langFor = (version) => (version === '1.5.0' ? choices('en', 'de', 'hu') : reportOptions.lang);
+
 // 1.3.0 added Hungary.
 const regionFor = (version) =>
   ['1.0.0', '1.1.0', '1.2.0'].includes(version)
@@ -441,7 +448,7 @@ function reportSchema(version) {
         scannerVersion: { type: 'string', minLength: 1 },
         options: ref('options'),
         siteUrl: string,
-        lang: choices('en', 'de'),
+        lang: langFor(version),
         region: regionFor(version),
         scannedAt: {
           type: 'string',
@@ -450,7 +457,7 @@ function reportSchema(version) {
         durationMs: { type: 'number', minimum: 0 },
         pages: array(ref('page')),
         // Added within 1.4.0 (scanner 0.10.0); optional, so earlier 1.4.0 reports stay valid.
-        ...(version === '1.4.0'
+        ...(LATEST_14.includes(version)
           ? {
               offSiteRedirects: array(object({ url: string, finalUrl: string })),
               ruleSummary: array(
@@ -532,7 +539,7 @@ function sarifPropertiesSchema(version) {
 
 const directory = new URL('../schemas/', import.meta.url);
 await mkdir(directory, { recursive: true });
-for (const version of ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0']) {
+for (const version of ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0']) {
   for (const [name, schema] of [
     ['report', reportSchema(version)],
     ['sarif-properties', sarifPropertiesSchema(version)],

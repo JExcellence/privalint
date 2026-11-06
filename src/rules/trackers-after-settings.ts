@@ -1,4 +1,4 @@
-import { say } from '../i18n.js';
+import { huArticle, say } from '../i18n.js';
 import type { Finding, Rule } from '../types.js';
 import { tcfFindings } from './tcf-findings.js';
 import { categoryLabel, findTrackerHits } from './tracker-hits.js';
@@ -21,7 +21,7 @@ export const trackersAfterSettings: Rule = {
     if (after === undefined) {
       return [];
     }
-    const button = settings?.saveLabel ?? say(lang, { en: 'save', de: 'Speichern' });
+    const button = settings?.saveLabel ?? say(lang, { en: 'save', de: 'Speichern', hu: 'mentés' });
     const tcf =
       settings?.tcf === undefined
         ? []
@@ -33,6 +33,7 @@ export const trackersAfterSettings: Rule = {
             action: {
               en: `switching off all categories and clicking "${button}"`,
               de: `alle Kategorien abgewählt und „${button}“ geklickt wurde`,
+              hu: `az összes kategória kikapcsolása és ${huArticle(button)} „${button}” gombra kattintás után`,
             },
           });
     const trackerFindings = findTrackerHits(after.requests, after.cookies, lang, after.storage).map(
@@ -46,6 +47,7 @@ export const trackersAfterSettings: Rule = {
           message: say(lang, {
             en: `${vendor} (${category}) still runs after switching off all categories and clicking "${button}".`,
             de: `${vendor} (${category}) läuft weiter, obwohl alle Kategorien abgewählt und „${button}“ geklickt wurde.`,
+            hu: `${huArticle(vendor, true)} ${vendor} (${category}) az összes kategória kikapcsolása és ${huArticle(button)} „${button}” gombra kattintás után is tovább fut.`,
           }),
           pageUrl: page.finalUrl,
           subject: vendor,
@@ -53,6 +55,7 @@ export const trackersAfterSettings: Rule = {
           fix: say(lang, {
             en: `Check that ${vendor} belongs to a category the visitor can switch off in your consent manager, and that saving the settings blocks it the same way rejecting does.`,
             de: `Prüfen, ob ${vendor} im Consent-Tool einer abwählbaren Kategorie zugeordnet ist und das Speichern der Einstellungen es genauso blockiert wie das Ablehnen.`,
+            hu: `Ellenőrizze, hogy ${huArticle(vendor)} ${vendor} a hozzájárulás-kezelőben olyan kategóriába tartozik-e, amelyet a látogató kikapcsolhat, és hogy a beállítások mentése ugyanúgy blokkolja-e, mint az elutasítás.`,
           }),
         };
       },

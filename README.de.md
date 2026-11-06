@@ -42,6 +42,12 @@ der EU, prüfen Sie sie zusätzlich mit `--region eu`.
 npx privalint https://ihre-seite.at --region at --lang de --max-pages 20
 ```
 
+Für ungarische Websites schreibt `--lang hu` Befunde, Lösungen und Bericht auf Ungarisch:
+
+```bash
+npx privalint https://pelda.hu --region hu --lang hu
+```
+
 ## Was geprüft wird
 
 | Regel                                                                   | Was sie findet                                                                                                                                    |
