@@ -55,9 +55,7 @@ ${finding.fix ?? ''}`;
     groups.set(key, [...(groups.get(key) ?? []), finding]);
   }
   // Two findings of one group on the same page don't make it site-wide.
-  const repeated = [...groups.values()].filter(
-    (group) => new Set(group.map(pageLabel)).size > 1,
-  );
+  const repeated = [...groups.values()].filter((group) => new Set(group.map(pageLabel)).size > 1);
   const grouped = new Set(repeated.flat());
   return {
     siteWide: repeated.map((group) => ({

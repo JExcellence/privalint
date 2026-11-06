@@ -67,6 +67,10 @@ Upgrade notes:
 
 ### Fixed
 
+- A request that never finishes no longer makes every document rule not evaluable. When the page
+  itself was read, a rule that finds what it looks for (the Impressum link, the privacy link)
+  counts as checked; a finding about something missing stays not evaluable, since the missing
+  part may not have loaded (#140)
 - Side loads of the legal notice and the privacy policy skip error pages (404, 500) and links that
   lead nowhere, such as a "Privacy settings" button with `href="#"` before the policy link
 - `consent-preselected` only counts switches the visitor can actually switch off, and keeps what

@@ -39,6 +39,38 @@ describe('adapter timing', () => {
     expect(adapter?.headersP50Ms).toBeLessThan(400);
   });
 
+  it('still counts the links it saw when one request never finished', async () => {
+    const hanging = async ({ url, signal }: { url: string; signal: AbortSignal }) => {
+      if (url.endsWith('/slow.js')) await delay(5_000, undefined, { signal });
+      return html('<script src="/slow.js"></script>');
+    };
+    const result = await timed(hanging);
+    expect(result.pages[0]?.capture?.complete).toBe(false);
+    const outcome = (ruleId: string) =>
+      result.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === ruleId);
+    expect(outcome('impressum-link')).toMatchObject({
+      outcome: 'checked-no-finding',
+      partial: false,
+    });
+    expect(outcome('privacy-policy-link')).toMatchObject({ outcome: 'checked-no-finding' });
+    // A tracker that might have loaded can't be ruled out.
+    expect(outcome('pre-consent-trackers')).toMatchObject({ outcome: 'not-evaluable' });
+
+    // Without the links the absence may be a loading gap: still not evaluable, no finding.
+    const bare = await timed(async ({ url, signal }) => {
+      if (url.endsWith('/slow.js')) await delay(5_000, undefined, { signal });
+      return {
+        status: 200,
+        headers: { 'content-type': 'text/html' },
+        body: '<script src="/slow.js"></script>',
+      };
+    });
+    expect(bare.findings.map((finding) => finding.ruleId)).not.toContain('impressum-link');
+    expect(
+      bare.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === 'impressum-link'),
+    ).toMatchObject({ outcome: 'not-evaluable', explanation: 'incomplete-document' });
+  });
+
   it('separates fast headers from a body that stalls', async () => {
     const result = await timed(async ({ url, signal }) => {
       if (!url.endsWith('/stall.png')) return html('<img src="/stall.png">');
@@ -333,7 +365,8 @@ describe('controlled capture', () => {
     expect(result.consent?.state).toBe('not-detected');
     expect(result.pages[0]?.ruleEvaluations).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ ruleId: 'impressum-link', status: 'not-evaluable' }),
+        // The page's Impressum link was seen, so the rule is checked despite the failures.
+        expect.objectContaining({ ruleId: 'impressum-link', outcome: 'checked-no-finding' }),
         expect.objectContaining({
           ruleId: 'pre-consent-trackers',
           status: 'executed',

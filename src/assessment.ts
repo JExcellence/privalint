@@ -75,6 +75,8 @@ export function assessPage(
     page.status !== null &&
     page.status < 400 &&
     isFirstParty(page.finalUrl, siteUrl);
+  // The page's DOM was read, even if some request never finished.
+  const readDocument = validPage && page.capture?.document === true;
   const available: Record<ObservationKind, boolean> = {
     document: validPage && complete && (page.capture?.document ?? true),
     network: validPage,
@@ -169,6 +171,21 @@ export function assessPage(
         explanation: 'no-consent-needed',
         findingCount: 0,
       };
+    }
+    if (!available.document && readDocument && requirements.every((kind) => kind === 'document')) {
+      // The DOM was read, but a request never finished. What the rule found there is reliable,
+      // so a clean result counts; a finding about something missing may be a gap in loading.
+      const seen = rule.check({ page: input, siteUrl, lang, region });
+      if (seen.length === 0) {
+        return {
+          ruleId: rule.id,
+          status: 'executed',
+          partial: false,
+          outcome: 'checked-no-finding',
+          explanation: 'required-observations-available',
+          findingCount: 0,
+        };
+      }
     }
     if (!requirements.every((kind) => availableFor(rule, kind))) {
       return {
