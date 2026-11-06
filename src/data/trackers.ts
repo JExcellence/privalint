@@ -7,7 +7,8 @@ export type TrackerCategory =
   | 'session-replay'
   | 'social'
   | 'marketing-automation'
-  | 'tag-manager';
+  | 'tag-manager'
+  | 'fingerprinting';
 
 /** Who set a cookie and why. Cookies from the Open Cookie Database carry no hosts. */
 export interface CookieTracker {
@@ -387,6 +388,13 @@ export const trackers: readonly Tracker[] = [
     category: 'advertising',
     domains: ['ib.adnxs.com'],
     paths: ['/pixie'],
+  },
+  // Fingerprint (FingerprintJS Pro): script CDNs and the identification API, from the vendor's
+  // CSP guide https://docs.fingerprint.com/docs/js-agent-csp (2026-11-06).
+  {
+    vendor: 'Fingerprint',
+    category: 'fingerprinting',
+    domains: ['fpjscdn.net', 'fpnpmcdn.net', 'api.fpjs.io'],
   },
   {
     vendor: 'Amazon Associates',

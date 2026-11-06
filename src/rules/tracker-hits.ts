@@ -72,6 +72,7 @@ const CATEGORY_LABELS: Record<TrackerCategory, Text> = {
   analytics: { en: 'analytics', de: 'Analyse', hu: 'analitika' },
   advertising: { en: 'advertising', de: 'Werbung', hu: 'hirdetés' },
   'session-replay': { en: 'session-replay', de: 'Session-Replay', hu: 'munkamenet-visszajátszás' },
+  fingerprinting: { en: 'fingerprinting', de: 'Fingerprinting', hu: 'ujjlenyomat-azonosítás' },
   social: { en: 'social', de: 'Social Media', hu: 'közösségi média' },
   'marketing-automation': {
     en: 'marketing-automation',

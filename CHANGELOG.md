@@ -30,6 +30,10 @@ Upgrade notes:
 
 ### Added
 
+- New rule `fingerprinting` (warning): a third-party script reads back a canvas, the unmasked WebGL
+  renderer or an offline audio rendering before consent. Charts that only draw are not reported;
+  reCAPTCHA, hCaptcha and Turnstile are info. The Fingerprint agent hosts are on the tracker list
+  (#124)
 - Trackers routed through the site's own domain are recognised by their path and parameters on
   any host: GA4 `/g/collect?v=2&tid=G-…`, Universal Analytics collect hits, server-side Google Tag
   Manager `gtm.js?id=GTM-…` and `gtag/js?id=G-…`, and Meta Pixel `/tr?id=…&ev=…`. The evidence names

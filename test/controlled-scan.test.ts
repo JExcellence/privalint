@@ -878,3 +878,46 @@ describe('personal data in third-party requests', () => {
     expect(report).toContain('https://www.facebook.com/[redacted]');
   });
 });
+
+describe('fingerprinting before consent', () => {
+  it('names third-party scripts that read back a canvas or the WebGL renderer, not charts', async () => {
+    const fingerprintScript = `
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      context.fillText('Cwm fjordbank glyphs vext quiz', 2, 15);
+      canvas.toDataURL();
+      const gl = document.createElement('canvas').getContext('webgl');
+      if (gl) gl.getParameter(0x9246);`;
+    const chartScript = `
+      const chart = document.createElement('canvas');
+      document.body.append(chart);
+      chart.getContext('2d').fillRect(0, 0, 10, 10);`;
+    const result = await scan(origin, {
+      ...settings,
+      maxPages: 1,
+      consentCheck: false,
+      networkAdapter: async ({ url }) => {
+        if (url === 'https://fp.example.net/fp.js') {
+          return {
+            status: 200,
+            headers: { 'content-type': 'text/javascript' },
+            body: fingerprintScript,
+          };
+        }
+        if (url === 'https://charts.example.net/chart.js') {
+          return { status: 200, headers: { 'content-type': 'text/javascript' }, body: chartScript };
+        }
+        return url.endsWith('/impressum') || url.endsWith('/privacy')
+          ? html('Beispiel GmbH, Musterweg 1, 10115 Berlin, info@example.de, HRB 1')
+          : html(
+              '<script src="https://fp.example.net/fp.js"></script><script src="https://charts.example.net/chart.js"></script>',
+            );
+      },
+    });
+    const findings = result.findings.filter((f) => f.ruleId === 'fingerprinting');
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ severity: 'warning', subject: 'fp.example.net' });
+    expect(findings[0]?.evidence[0]).toBe('https://fp.example.net/[redacted]');
+    expect(findings[0]?.evidence).toContain('canvas readback');
+  });
+});

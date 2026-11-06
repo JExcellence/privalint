@@ -14,6 +14,7 @@ import {
   consentBannerMissing,
   consentPreselected,
   consentSettingsLink,
+  fingerprinting,
   formPretickedConsent,
   googleFonts,
   impressumLink,
@@ -1203,6 +1204,31 @@ describe('banner-language', () => {
     expect(banner(undefined, ENGLISH)).toEqual([]);
     expect(banner('hu', 'OK')).toEqual([]);
     expect(banner('hu', ENGLISH, 'en')).toEqual([]);
+  });
+});
+
+describe('fingerprinting', () => {
+  it('reports third-party readers, notes security widgets and ignores the site itself', () => {
+    const findings = run(
+      fingerprinting,
+      snapshot({
+        fingerprinting: [
+          { api: 'canvas', script: 'https://fp.example.net/agent.js' },
+          { api: 'webgl', script: 'https://fp.example.net/agent.js' },
+          { api: 'canvas', script: 'https://www.google.com/recaptcha/api2/bframe.js' },
+          { api: 'canvas', script: 'https://example.de/wp-includes/js/wp-emoji-release.min.js' },
+        ],
+      }),
+    );
+    expect(findings.map((f) => `${f.severity}:${f.subject}`)).toEqual([
+      'warning:fp.example.net',
+      'info:www.google.com',
+    ]);
+    expect(findings[0]?.evidence).toEqual([
+      'https://fp.example.net/agent.js',
+      'canvas readback',
+      'WebGL renderer',
+    ]);
   });
 });
 

@@ -404,6 +404,8 @@ export interface PageSnapshot {
   cookies: RecordedCookie[];
   /** Forms that collect personal data. Internal input for form-privacy-notice. */
   forms?: FormObservation[];
+  /** Calls to fingerprinting APIs before consent and the script that made each. Internal. */
+  fingerprinting?: FingerprintRead[];
   /** Scripts, images, frames and stylesheets the page references over http://, at most ten. */
   insecureResources?: string[];
   /** The referrer policy the page sets by response header and by meta tag, as written. */
@@ -639,4 +641,11 @@ export interface ThirdPartyHost {
   requests: number;
   /** The vendor privalint's lists name for it; absent for hosts on no list. */
   vendor?: string;
+}
+
+/** A call to an API fingerprinting reads its signals from, and the script that made it. */
+export interface FingerprintRead {
+  api: 'canvas' | 'webgl' | 'audio';
+  /** URL of the calling script, from the stack; the page URL for inline scripts. */
+  script: string;
 }

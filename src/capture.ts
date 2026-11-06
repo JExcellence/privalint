@@ -1,6 +1,7 @@
 import { type Browser, devices, type Page } from 'playwright';
 import { observeClose, observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
+import { installFingerprintProbe, readFingerprinting } from './fingerprinting.js';
 import { readForms } from './forms.js';
 import { ControlledNetwork, networkLimits, watchPageCancellations } from './network.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
@@ -81,6 +82,7 @@ export async function capturePage(
           : route.fulfill({ status: 200, body: '' }),
       );
     }
+    await installFingerprintProbe(context);
     const page = await context.newPage();
     if (network) await network.attachPage(page);
     else {
@@ -127,6 +129,8 @@ export async function capturePage(
     snapshot.browserLanguage =
       (options.locale ?? DEFAULTS.locale).split('-')[0]?.toLowerCase() ?? '';
     snapshot.forms = await readForms(page);
+    const fingerprinting = await readFingerprinting(page);
+    if (fingerprinting.length > 0) snapshot.fingerprinting = fingerprinting;
     const security = await readPageSecurity(page);
     if (security.insecure.length > 0) snapshot.insecureResources = security.insecure;
     const header = response?.headers()['referrer-policy'];
