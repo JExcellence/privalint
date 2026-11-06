@@ -43,7 +43,14 @@ const origin = `http://127.0.0.1:${server.address().port}`;
 try {
   const result = await scan(`${origin}/demo/`, { offline: true, settleMs: 500 });
   const output = formatText(result).replaceAll(`${origin}/demo/`, `${SHOWN_ORIGIN}/`);
-  const lines = [`$ npx privalint ${SHOWN_ORIGIN}`, ...output.split('\n')];
+  // The per-rule results (one line per rule, mostly "Checked, no finding") would bury the findings
+  // in the image; the terminal still prints them.
+  const ruleIds = new Set(result.rules.map((rule) => rule.id));
+  const perRule = (line) => ruleIds.has(/^ {2}([a-z0-9-]+): /.exec(line)?.[1] ?? '');
+  const lines = [
+    `$ npx privalint ${SHOWN_ORIGIN}`,
+    ...output.split('\n').filter((line) => !perRule(line)),
+  ];
   await writeFile(join(ROOT, 'docs/demo.svg'), render(lines));
   console.log(`docs/demo.svg written (${result.findings.length} findings)`);
 } finally {
