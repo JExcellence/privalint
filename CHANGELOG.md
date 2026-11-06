@@ -16,6 +16,9 @@ Upgrade notes:
 
 ### Added
 
+- New rule `reject-less-prominent` (info): a first-layer reject control shown as plain text next
+  to an accept button, with less than half its area, or with low text contrast, measured from the
+  rendered box and computed styles (#107)
 - New rule `consent-preselected` (error, with the settings check): optional categories, or a wider
   consent level, already switched on when the banner settings open, named by their labels in
   `consent.settings.preselected` (#106)

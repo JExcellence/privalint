@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { assessCoverage } from '../src/coverage.js';
 import { scan } from '../src/scanner.js';
+import type { ScanResult } from '../src/types.js';
 
 const FIXTURES = fileURLToPath(new URL('./fixtures/', import.meta.url));
 const TYPES: Record<string, string> = { '.html': 'text/html', '.css': 'text/css' };
@@ -659,6 +660,36 @@ describe('consent check', () => {
     expect(result.findings.map(({ ruleId, severity }) => `${ruleId}:${severity}`)).toEqual([
       'reject-option:info',
     ]);
+  });
+
+  describe('a reject control less prominent than accept', () => {
+    const prominence = (result: ScanResult) =>
+      result.findings.filter((f) => f.ruleId === 'reject-less-prominent');
+
+    it('passes two buttons of the same style', async () => {
+      const result = await scan(`${origin}/consent/prominence.html`, options);
+      expect(result.consent).toMatchObject({ rejected: true, rejectLabel: 'Reject all' });
+      expect(result.findings).toEqual([]);
+    });
+
+    it('notes a reject text link next to an accept button, with the measurements', async () => {
+      const result = await scan(`${origin}/consent/prominence.html?variant=link`, options);
+      const [finding] = prominence(result);
+      expect(finding).toMatchObject({ severity: 'info' });
+      expect(finding?.message).toContain('shown as plain text');
+      expect(finding?.message).toContain('times its size');
+      expect(finding?.evidence[0]).toMatch(
+        /^accept "Accept all": button, \d+×\d+ px, contrast [\d.]+:1$/,
+      );
+      expect(finding?.evidence[1]).toMatch(/^reject "Reject all": plain text, /);
+    });
+
+    it('notes a light-grey reject button', async () => {
+      const result = await scan(`${origin}/consent/prominence.html?variant=grey`, options);
+      const [finding] = prominence(result);
+      expect(finding?.message).toContain('low text contrast');
+      expect(finding?.message).not.toContain('plain text');
+    });
   });
 
   it('ignores subscription links outside the banner', async () => {

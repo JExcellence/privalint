@@ -40,6 +40,7 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 | [`trackers-after-settings`](docs/rules/trackers-after-settings.md)   | error    | Opt-in (`--check-settings`): trackers that still load after switching off every category in the banner settings and saving. |
 | [`consent-preselected`](docs/rules/consent-preselected.md)           | error    | Opt-in (`--check-settings`): optional categories already switched on when the banner settings open.                         |
 | [`reject-option`](docs/rules/reject-option.md)                       | warning  | A banner with "accept" but no "reject" on its first layer. Pay-or-OK banners are noted as info.                             |
+| [`reject-less-prominent`](docs/rules/reject-less-prominent.md)       | info     | A reject control shown as plain text, much smaller, or with much lower contrast than the accept button.                     |
 | [`consent-banner-missing`](docs/rules/consent-banner-missing.md)     | warning  | Trackers run and no consent banner was found at all, so visitors can't give or refuse consent.                              |
 | [`banner-legal-links`](docs/rules/banner-legal-links.md)             | warning  | A banner that blocks the page and links neither the privacy policy nor the Impressum.                                       |
 | [`consent-settings-link`](docs/rules/consent-settings-link.md)       | warning  | No visible link or button to reopen the cookie settings after rejecting.                                                    |

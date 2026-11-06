@@ -11,6 +11,7 @@ import {
   impressumLink,
   preConsentTrackers,
   privacyPolicyLink,
+  rejectLessProminent,
   thirdPartyCdns,
   thirdPartyEmbeds,
   trackersAfterReject,
@@ -18,7 +19,7 @@ import {
   withdrawalButton,
 } from '../src/rules/index.js';
 import { newStorageKeys } from '../src/storage.js';
-import type { Rule } from '../src/types.js';
+import type { ControlLook, Rule } from '../src/types.js';
 import { cookie, request, SITE, snapshot } from './helpers.js';
 
 const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
@@ -548,6 +549,58 @@ describe('tracking-cookie-lifetime', () => {
       },
     });
     expect(run(trackingCookieLifetime, page)).toHaveLength(1);
+  });
+});
+
+describe('reject-less-prominent', () => {
+  const button = { style: 'button', width: 120, height: 40, contrast: 7 } as const;
+  const page = (reject: ControlLook, accept: ControlLook = button) =>
+    snapshot({
+      consent: {
+        bannerFound: true,
+        rejected: true,
+        state: 'reject-tested',
+        acceptLabel: 'Accept all',
+        rejectLabel: 'Reject all',
+        bannerControls: { accept, reject },
+      },
+    });
+
+  it('passes controls of the same style, size and contrast', () => {
+    expect(run(rejectLessProminent, page({ ...button, width: 110 }))).toEqual([]);
+  });
+
+  it('notes a text link, with the measurements as evidence', () => {
+    const [finding] = run(
+      rejectLessProminent,
+      page({ style: 'text', width: 70, height: 20, contrast: 6 }),
+    );
+    expect(finding).toMatchObject({ ruleId: 'reject-less-prominent', severity: 'info' });
+    expect(finding?.message).toBe(
+      'The reject control "Reject all" is less prominent than "Accept all": shown as plain text; the accept button is 3.4 times its size.',
+    );
+    expect(finding?.evidence).toEqual([
+      'accept "Accept all": button, 120×40 px, contrast 7:1',
+      'reject "Reject all": plain text, 70×20 px, contrast 6:1',
+    ]);
+  });
+
+  it('notes low contrast only when accept is readable', () => {
+    const grey = { ...button, contrast: 1.6 };
+    expect(run(rejectLessProminent, page(grey))[0]?.message).toContain('low text contrast (1.6:1)');
+    expect(run(rejectLessProminent, page(grey, { ...button, contrast: 2 }))).toEqual([]);
+    expect(run(rejectLessProminent, page({ style: 'button', width: 120, height: 40 }))).toEqual([]);
+  });
+
+  it('says it in German', () => {
+    const [finding] = run(rejectLessProminent, page({ ...button, contrast: 2 }), 'de');
+    expect(finding?.message).toBe(
+      'Die Ablehnen-Steuerung „Reject all“ fällt weniger auf als „Accept all“: geringer Textkontrast (2:1).',
+    );
+  });
+
+  it('stays quiet without measurements', () => {
+    expect(run(rejectLessProminent, snapshot())).toEqual([]);
   });
 });
 

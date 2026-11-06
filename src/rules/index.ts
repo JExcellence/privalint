@@ -11,6 +11,7 @@ import { httpsTransport } from './https-transport.js';
 import { impressumLink } from './impressum-link.js';
 import { preConsentTrackers } from './pre-consent-trackers.js';
 import { privacyPolicyLink } from './privacy-policy-link.js';
+import { rejectLessProminent } from './reject-less-prominent.js';
 import { rejectOption } from './reject-option.js';
 import { thirdPartyCdns } from './third-party-cdns.js';
 import { thirdPartyEmbeds } from './third-party-embeds.js';
@@ -25,6 +26,7 @@ export const defaultRules: readonly Rule[] = [
   trackersAfterSettings,
   consentPreselected,
   rejectOption,
+  rejectLessProminent,
   consentSettingsLink,
   consentBannerMissing,
   bannerLegalLinks,
@@ -54,6 +56,7 @@ export {
   impressumLink,
   preConsentTrackers,
   privacyPolicyLink,
+  rejectLessProminent,
   rejectOption,
   thirdPartyCdns,
   thirdPartyEmbeds,

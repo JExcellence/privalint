@@ -3,6 +3,7 @@ import { classifyLoadError } from './diagnostics.js';
 import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
   ConsentObservation,
+  ControlLook,
   PageLink,
   RecordedCookie,
   RecordedRequest,
@@ -252,6 +253,7 @@ export async function observeConsent(
     ...(banner.payOrOk ? { payOrOk: true } : {}),
     ...(banner.links === undefined ? {} : { bannerLinks: banner.links }),
     ...(banner.blocking === undefined ? {} : { bannerBlocking: banner.blocking }),
+    ...(banner.controls === undefined ? {} : { bannerControls: banner.controls }),
   };
   if (banner.reject === undefined) {
     if (banner.acceptLabel === undefined) observation.reason = 'unsupported-banner-markup';
@@ -692,6 +694,7 @@ interface Banner {
   payOrOk?: boolean;
   links?: PageLink[];
   blocking?: boolean;
+  controls?: { accept: ControlLook; reject: ControlLook };
 }
 
 const MAX_BANNER_LINKS = 30;
@@ -858,8 +861,81 @@ async function describe(accept: Locator, reject: Locator | undefined, cmp?: stri
   if (reject !== undefined) {
     banner.reject = reject;
     banner.rejectLabel = await label(reject);
+    const acceptLook = await accept.evaluate(controlLook).catch(() => undefined);
+    const rejectLook = await reject.evaluate(controlLook).catch(() => undefined);
+    if (acceptLook !== undefined && rejectLook !== undefined) {
+      banner.controls = { accept: acceptLook, reject: rejectLook };
+    }
   }
   return banner;
+}
+
+/**
+ * Runs in the page. Whether a control looks like a button or like plain text, its size, and the
+ * contrast of its text against the first solid background behind it (white if there is none).
+ */
+function controlLook(element: Element): ControlLook {
+  const rgba = (value: string): number[] | undefined => {
+    const parts = /^rgba?\(([^)]*)\)$/
+      .exec(value.trim())?.[1]
+      ?.split(/[\s,/]+/)
+      .filter((part) => part !== '')
+      .map(Number);
+    if (parts === undefined || parts.length < 3 || parts.some(Number.isNaN)) return undefined;
+    return [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0, parts[3] ?? 1];
+  };
+  const over = (top: number[], bottom: number[]) =>
+    [0, 1, 2].map((i) => (top[i] ?? 0) * (top[3] ?? 1) + (bottom[i] ?? 0) * (1 - (top[3] ?? 1)));
+  const luminance = (rgb: number[]) => {
+    const [r, g, b] = rgb.map((channel) => {
+      const c = channel / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0);
+  };
+  const parentOf = (node: Element): Element | null => {
+    const root = node.getRootNode();
+    return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+  };
+
+  const style = getComputedStyle(element);
+  const own = rgba(style.backgroundColor);
+  const bordered = (['Top', 'Right', 'Bottom', 'Left'] as const).some(
+    (side) =>
+      Number.parseFloat(style[`border${side}Width`]) > 0 &&
+      (rgba(style[`border${side}Color`])?.[3] ?? 0) > 0,
+  );
+  const filled = (own?.[3] ?? 0) > 0 || style.backgroundImage !== 'none';
+
+  let behind: number[] | undefined = [255, 255, 255];
+  for (let node: Element | null = element; node !== null; node = parentOf(node)) {
+    const nodeStyle = getComputedStyle(node);
+    if (nodeStyle.backgroundImage !== 'none') {
+      behind = undefined;
+      break;
+    }
+    const color = rgba(nodeStyle.backgroundColor);
+    if (color === undefined) {
+      behind = undefined;
+      break;
+    }
+    if ((color[3] ?? 0) > 0) {
+      behind = over(color, [255, 255, 255]);
+      break;
+    }
+  }
+  const text = rgba(style.color);
+  const box = element.getBoundingClientRect();
+  const look: ControlLook = {
+    style: filled || bordered ? 'button' : 'text',
+    width: Math.round(box.width),
+    height: Math.round(box.height),
+  };
+  if (behind !== undefined && text !== undefined) {
+    const [light, dark] = [luminance(over(text, behind)), luminance(behind)].sort((a, b) => b - a);
+    look.contrast = Math.round((((light ?? 0) + 0.05) / ((dark ?? 0) + 0.05)) * 10) / 10;
+  }
+  return look;
 }
 
 /**

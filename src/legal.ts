@@ -141,6 +141,22 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 32. cikk'],
     eu: ['Art. 32 GDPR'],
   },
+  // Refusing must be as easy as accepting; deceptive designs undermine a free choice.
+  'reject-less-prominent': {
+    de: ['§ 25 Abs. 1 TDDDG', 'Art. 4 Nr. 11 DSGVO', 'EDSA Cookie-Banner-Taskforce, 17.01.2023'],
+    at: [
+      '§ 165 Abs. 3 TKG 2021',
+      'Art. 4 Nr. 11 DSGVO',
+      'EDSA Cookie-Banner-Taskforce, 17.01.2023',
+    ],
+    ch: ['Art. 45c FMG', 'EDÖB, Leitfaden zu Cookies (2025)'],
+    hu: ['Eht. 155. § (4)', 'GDPR 4. cikk 11. pont', 'EDPB Cookie Banner Taskforce, 2023.01.17.'],
+    eu: [
+      'Art. 4(11) GDPR',
+      'EDPB Cookie Banner Taskforce report, 17.01.2023',
+      'EDPB Guidelines 03/2022 on deceptive design patterns',
+    ],
+  },
   // Pre-ticked boxes are no consent (Planet49); the same in every EU country.
   'consent-preselected': {
     de: ['§ 25 Abs. 1 TDDDG', 'Art. 4 Nr. 11 DSGVO', 'EuGH, 01.10.2019, C-673/17 (Planet49)'],

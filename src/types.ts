@@ -223,6 +223,17 @@ export interface ResourceHint {
   href: string;
 }
 
+/** How a banner control is rendered, measured from its box and computed styles. */
+export interface ControlLook {
+  /** "button" if it has a visible background or border, "text" if it is shown as plain text. */
+  style: 'button' | 'text';
+  /** Rendered size in CSS pixels. */
+  width: number;
+  height: number;
+  /** Contrast of the text against the background behind it; absent if it can't be computed. */
+  contrast?: number;
+}
+
 /** What happened when privalint looked for a consent banner and clicked "reject". */
 export interface ConsentObservation {
   outcome?: 'no-banner-detected' | 'unsupported-banner' | 'interaction-failed' | 'reject-succeeded';
@@ -249,6 +260,8 @@ export interface ConsentObservation {
   bannerLinks?: PageLink[];
   /** Whether the open banner keeps the visitor from the rest of the page. Internal. */
   bannerBlocking?: boolean;
+  /** How the first-layer accept and reject controls look. Internal input for reject-less-prominent. */
+  bannerControls?: { accept: ControlLook; reject: ControlLook };
   /** True once the reject button was clicked and the page reloaded. */
   rejected: boolean;
   /** Requests made and cookies newly set after rejecting, including the reload. */

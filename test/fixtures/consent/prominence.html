@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Accept and reject side by side</title>
+    <style>
+      #banner { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px; background: #ffffff; }
+      .primary { background: #1a56db; color: #ffffff; border: 0; padding: 12px 24px; font-size: 16px; }
+      .secondary { background: #1a56db; color: #ffffff; border: 0; padding: 12px 24px; font-size: 16px; }
+      .link { background: none; border: 0; padding: 0; color: #1a56db; font-size: 12px; text-decoration: underline; }
+      .grey { background: #ffffff; color: #d0d0d0; border: 1px solid #eeeeee; padding: 12px 24px; font-size: 16px; }
+    </style>
+  </head>
+  <body>
+    <h1>Accept and reject side by side</h1>
+    <footer>
+      <a href="/clean/impressum.html">Imprint</a>
+      <a href="/clean/datenschutz.html">Privacy policy</a>
+      <button type="button">Cookie settings</button>
+    </footer>
+    <div id="banner" role="dialog" aria-label="Cookie consent">
+      <p>We use cookies to analyse how the site is used.</p>
+      <button id="accept" class="primary">Accept all</button>
+      <button id="reject" class="secondary">Reject all</button>
+    </div>
+    <script>
+      const variant = new URLSearchParams(location.search).get('variant');
+      const reject = document.getElementById('reject');
+      if (variant === 'link') {
+        const link = document.createElement('a');
+        link.id = 'reject';
+        link.href = '#';
+        link.className = 'link';
+        link.textContent = 'Reject all';
+        reject.replaceWith(link);
+      }
+      if (variant === 'grey') reject.className = 'grey';
+      const banner = document.getElementById('banner');
+      if (localStorage.getItem('consent')) banner.remove();
+      document.getElementById('accept').onclick = () => {
+        localStorage.setItem('consent', 'accepted');
+        location.reload();
+      };
+      document.getElementById('reject').addEventListener('click', (event) => {
+        event.preventDefault();
+        localStorage.setItem('consent', 'rejected');
+        banner.remove();
+      });
+    </script>
+  </body>
+</html>
