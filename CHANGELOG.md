@@ -45,7 +45,7 @@ Upgrade notes:
   basis and the disclaimer. Every scanned value is escaped, and the page loads nothing (#129)
 - `--baseline <report.json>` (Action input `baseline`) compares the findings with an earlier JSON
   report: each finding is marked `new` or `existing` by rule, page and subject (the SARIF
-  fingerprint), `baseline.fixed` lists the findings that are gone, and `--fail-on` counts new
+  fingerprint), `baseline.fixed` lists the findings that are gone where the rule ran again, and `--fail-on` counts new
   findings only. Text and Markdown show the counts, SARIF sets `baselineState`. A baseline with
   another schema major version is rejected (#128)
 - New opt-in rule `gpc-signal` (`--gpc`, config `gpc`, Action input `gpc`): privalint loads the

@@ -211,7 +211,8 @@ With `--baseline report.json`, privalint compares the findings with an earlier J
 same schema major version. A finding is the same when rule, page URL and subject (such as the
 vendor) match, the same identity as SARIF's `partialFingerprints`. Each finding gets
 `baseline: "new"` or `"existing"`, the report lists the counts and the findings that are gone
-(`baseline.fixed`), and `--fail-on` counts new findings only. SARIF results carry
+(`baseline.fixed`, only where the rule ran again on that page), and `--fail-on` counts new
+findings only. SARIF results carry
 `baselineState`. A file that is not such a report exits `2` before the scan starts.
 
 The first run needs a browser. If Playwright hasn't installed one yet:

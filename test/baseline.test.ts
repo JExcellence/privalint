@@ -14,14 +14,26 @@ const finding = (ruleId: string, subject?: string, message = 'Something'): Findi
   ...(subject === undefined ? {} : { subject }),
 });
 
-const result = (findings: Finding[]): ScanResult => ({
+type Page = ScanResult['pages'][number];
+
+const scannedPage = (ruleEvaluations?: Page['ruleEvaluations']): Page =>
+  ({
+    url: 'https://example.de/',
+    finalUrl: 'https://example.de/',
+    status: 200,
+    requestCount: 0,
+    cookieCount: 0,
+    ...(ruleEvaluations === undefined ? {} : { ruleEvaluations }),
+  }) as Page;
+
+const result = (findings: Finding[], pages: Page[] = [scannedPage()]): ScanResult => ({
   schemaVersion: '1.5.0',
   siteUrl: 'https://example.de/',
   lang: 'en',
   region: 'de',
   scannedAt: '2026-11-06T00:00:00.000Z',
   durationMs: 1000,
-  pages: [],
+  pages,
   findings,
   rules: [],
 });
@@ -76,6 +88,20 @@ describe('applyBaseline', () => {
         { ruleId: 'pre-consent-trackers', pageUrl: 'https://example.de/', subject: 'Hotjar' },
       ],
     });
+  });
+
+  it('counts a gone finding as fixed only where the rule ran again on that page', () => {
+    const evaluation = (status: 'executed' | 'skipped', partial = false) => ({
+      ruleId: 'pre-consent-trackers',
+      status,
+      partial,
+    });
+    const fixedWith = (pages: Page[]) => applyBaseline(result([], pages), [gone]).baseline?.fixed;
+    expect(fixedWith([scannedPage([evaluation('executed')])])).toHaveLength(1);
+    // An opt-in check left off, a partial capture, or a page not reached this time.
+    expect(fixedWith([scannedPage([evaluation('skipped')])])).toEqual([]);
+    expect(fixedWith([scannedPage([evaluation('executed', true)])])).toEqual([]);
+    expect(fixedWith([])).toEqual([]);
   });
 
   it('shows the comparison in text, Markdown and SARIF', () => {

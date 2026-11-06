@@ -62,11 +62,23 @@ export function applyBaseline(result: ScanResult, baseline: readonly Finding[]):
     }),
   );
   const current = new Set(result.findings.map(findingFingerprint));
+  // Gone only counts as fixed where this scan checked again: the page was scanned and the rule
+  // ran on it completely. An opt-in check left off this time, or a page the crawl didn't reach,
+  // says nothing about the finding.
+  const checkedAgain = (finding: Finding): boolean => {
+    const page = result.pages.find(
+      (candidate) => candidate.finalUrl === finding.pageUrl || candidate.url === finding.pageUrl,
+    );
+    if (page === undefined) return false;
+    if (page.ruleEvaluations === undefined) return true;
+    const evaluation = page.ruleEvaluations.find((entry) => entry.ruleId === finding.ruleId);
+    return evaluation?.status === 'executed' && !evaluation.partial;
+  };
   const fixed: BaselineFixed[] = [];
   const listed = new Set<string>();
   for (const finding of baseline) {
     const key = findingFingerprint(finding);
-    if (current.has(key) || listed.has(key)) continue;
+    if (current.has(key) || listed.has(key) || !checkedAgain(finding)) continue;
     listed.add(key);
     fixed.push({
       ruleId: finding.ruleId,
