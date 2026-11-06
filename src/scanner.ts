@@ -387,13 +387,19 @@ async function readPrivacyPolicy(
   const policy = await readLinkedPage(browser, start, options, PRIVACY_POLICY);
   if (policy === undefined) return undefined;
   const { links, ...text } = policy;
+  const cookieLink = links.find(linkMatches(COOKIE_POLICY));
+  if (cookieLink === undefined) return text;
   const cookies = await readLinkedPage(
     browser,
     { finalUrl: policy.url, links },
     options,
     COOKIE_POLICY,
   );
-  return cookies === undefined ? text : { ...text, text: `${text.text}\n${cookies.text}` };
+  if (cookies !== undefined) return { ...text, text: `${text.text}\n${cookies.text}` };
+  // A link back to the policy itself was read already; anything else (a PDF, another site, a
+  // page that failed) leaves part of the policy unread.
+  const target = crawlTarget(cookieLink.href, new URL(policy.url));
+  return target === withoutHash(policy.url) ? text : { ...text, unread: [cookieLink.href] };
 }
 
 /** Runs the settings path on the start page in a fresh context, after the reject path. */

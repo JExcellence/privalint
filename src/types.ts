@@ -350,6 +350,8 @@ export interface LinkedPageText {
   text: string;
   /** Whether the page links a mailto: address. */
   mailto: boolean;
+  /** Linked parts that could not be read, such as a cookie policy in a PDF. */
+  unread?: string[];
 }
 
 /**

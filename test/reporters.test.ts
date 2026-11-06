@@ -132,6 +132,29 @@ describe('footer findings on several pages', () => {
     );
   });
 
+  it('also group a service the whole site loads, one group per vendor', () => {
+    const service = (pageUrl: string, vendor: string) =>
+      finding({
+        ruleId: 'third-country-providers',
+        severity: 'info',
+        subject: vendor,
+        message: `${vendor} (USA) receives data before consent.`,
+        pageUrl,
+        evidence: ['o1.ingest.us.sentry.io'],
+        fix: `Check that ${vendor} is certified.`,
+      });
+    const output = formatText({
+      ...grouped,
+      findings: [
+        ...pages.map((page) => service(page, 'Sentry')),
+        service(pages[0] ?? '', 'Supabase'),
+      ],
+    });
+    expect(output.split('Sentry (USA) receives')).toHaveLength(2);
+    expect(output.split('Supabase (USA) receives')).toHaveLength(2);
+    expect(output).toContain('on 3 of 4 pages:');
+  });
+
   it('on a single page stay with that page', () => {
     const output = formatText(result([missing('https://example.de/auth')]));
     expect(output).not.toContain('On several pages');

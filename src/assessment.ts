@@ -87,6 +87,12 @@ export function assessPage(
       validPage && page.consent !== undefined && page.consent.state !== 'interaction-failed',
     transport: validPage && page.transport !== undefined,
   };
+  // Pre-selected categories are read when the settings layer opens, before anything is saved, so
+  // the rule needs the opened layer, not a completed save.
+  const availableFor = (rule: Rule, kind: ObservationKind): boolean =>
+    kind === 'after-settings' && rule.id === 'consent-preselected'
+      ? validPage && page.consent?.settings?.preselected !== undefined
+      : available[kind];
   const input: PageSnapshot = {
     ...page,
     requests: observedRequests(page.requests),
@@ -153,7 +159,7 @@ export function assessPage(
         findingCount: 0,
       };
     }
-    if (noConsentNeeded && !requirements.every((kind) => available[kind])) {
+    if (noConsentNeeded && !requirements.every((kind) => availableFor(rule, kind))) {
       return {
         ruleId: rule.id,
         status: 'skipped',
@@ -164,7 +170,7 @@ export function assessPage(
         findingCount: 0,
       };
     }
-    if (!requirements.every((kind) => available[kind])) {
+    if (!requirements.every((kind) => availableFor(rule, kind))) {
       return {
         ruleId: rule.id,
         status: 'not-evaluable',

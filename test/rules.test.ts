@@ -633,6 +633,23 @@ describe('privacy-policy-vendors', () => {
     expect(subjects(findings)).toEqual(['warning:Facebook SDK']);
   });
 
+  it('only notes missing names when part of the policy could not be read', () => {
+    const findings = run(
+      privacyPolicyVendors,
+      snapshot({
+        privacyPolicy: {
+          url: POLICY,
+          text: 'Details in our cookie policy.',
+          mailto: false,
+          unread: ['https://example.de/cookie-policy.pdf'],
+        },
+        requests: [request('https://www.google-analytics.com/g/collect')],
+      }),
+    );
+    expect(subjects(findings)).toEqual(['info:Google Analytics']);
+    expect(findings[0]?.evidence.at(-1)).toBe('not read: https://example.de/cookie-policy.pdf');
+  });
+
   it('notes an embed without cookies as info, and stays quiet without a policy', () => {
     const requests = [request('https://player.vimeo.com/video/1', 'document')];
     expect(subjects(run(privacyPolicyVendors, page('Nothing here.', { requests })))).toEqual([

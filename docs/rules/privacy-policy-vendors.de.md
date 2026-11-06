@@ -47,4 +47,5 @@ der Übermittlung außerhalb der EU. Wird ein Dienst nicht mehr gebraucht, ihn s
   nicht geprüft.
 - Ein Name in der Erklärung reicht; ob die Beschreibung stimmt, wird nicht geprüft.
 - Erklärungen auf einer anderen Domain, als PDF oder verteilt auf mehr als eine verlinkte Seite
-  werden nur teilweise gelesen.
+  werden nur teilweise gelesen. Verlinkt die Erklärung eine Cookie-Richtlinie, die sich nicht lesen
+  lässt, etwa ein PDF, sinkt jeder Befund auf `info` und nennt den ungelesenen Link.

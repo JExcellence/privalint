@@ -67,6 +67,12 @@ Upgrade notes:
 
 ### Fixed
 
+- `privacy-policy-vendors` drops to info when the privacy policy links a cookie policy it can't
+  read, such as a PDF, and names that link
+- Text and Markdown reports also show a `third-country-providers` or `third-party-cdns` finding
+  that repeats on several pages once per vendor
+- `consent-preselected` is evaluated whenever the settings layer opened, also when no save button
+  was found; before, it was not evaluable there
 - A video, image or font over `maxResponseBytes` no longer makes an adapter scan page partial. It
   is delivered without its body, with status and headers kept, and noted as `resource-limit` with
   `skippedReason: 'policy'` (#100)

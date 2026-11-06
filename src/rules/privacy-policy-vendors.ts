@@ -93,12 +93,20 @@ export const privacyPolicyVendors: Rule = {
         note(tracker, 'warning', `cookie ${cookie.name} (${cookie.domain})`);
     }
 
+    // Part of the policy could not be read (a cookie policy in a PDF, say): the name may be there.
+    const unread = (policy.unread ?? []).map((url) =>
+      say(lang, {
+        en: `not read: ${url}`,
+        de: `nicht gelesen: ${url}`,
+        hu: `nem olvasható: ${url}`,
+      }),
+    );
     return [...seen]
       .filter(([vendor, { evidence }]) => !isNamed(text, vendor, evidence))
       .map(
         ([vendor, { severity, evidence }]): Finding => ({
           ruleId: ID,
-          severity,
+          severity: unread.length > 0 ? 'info' : severity,
           subject: vendor,
           message: say(lang, {
             en: `The privacy policy does not mention ${vendor}, which the start page uses.`,
@@ -113,6 +121,7 @@ export const privacyPolicyVendors: Rule = {
               hu: `adatkezelési tájékoztató: ${policy.url}`,
             }),
             evidence,
+            ...unread,
           ],
           fix: say(lang, {
             en: `Name ${vendor} in the privacy policy, with the purpose, the legal basis and, where it applies, the transfer outside the EU. If the site no longer needs it, remove it instead.`,

@@ -19,7 +19,16 @@ export function groupByPage(findings: readonly Finding[]): Map<string, Finding[]
  * Rules about something every page should have, such as the footer links. The same finding on
  * several pages has the same cause, usually one layout, so reports show it once.
  */
-const SITE_WIDE = new Set(['impressum-link', 'privacy-policy-link']);
+/**
+ * Rules whose finding is usually the same on every page: a footer link that is missing, or a
+ * service the whole site loads. Grouped by rule, severity and fix, so one vendor stays one group.
+ */
+const SITE_WIDE = new Set([
+  'impressum-link',
+  'privacy-policy-link',
+  'third-country-providers',
+  'third-party-cdns',
+]);
 
 export interface SiteWideFinding {
   /** The first page's finding. */

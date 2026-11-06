@@ -479,6 +479,20 @@ describe('consent check', () => {
       expect(result.findings[0]?.message).toContain('"Statistik", "Marketing"');
     });
 
+    it('reports categories ticked in advance even when the layer has no save button', async () => {
+      const result = await scan(`${origin}/consent/settings-no-save.html`, settingsOptions);
+      expect(result.consent?.settings).toMatchObject({
+        outcome: 'no-save-control',
+        preselected: ['Statistik', 'Marketing'],
+      });
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
+      const evaluations = result.pages[0]?.ruleEvaluations ?? [];
+      expect(evaluations.find((e) => e.ruleId === 'trackers-after-settings')).toMatchObject({
+        outcome: 'not-evaluable',
+        explanation: 'no-save-control',
+      });
+    });
+
     it('passes a layer that starts with every optional category off', async () => {
       const result = await scan(`${origin}/consent/settings-good.html?unticked`, settingsOptions);
       expect(result.consent?.settings).toMatchObject({ outcome: 'saved', switchedOff: 0 });
