@@ -13,7 +13,7 @@ werden abgelehnt.
 Unterstützt sind `url` (absolute HTTP(S)-URL), `maxPages` (positive Ganzzahl), `concurrency`
 (positive Ganzzahl, gleichzeitig geladene Seiten), `settleMs` (ab 0),
 `timeoutMs` (positiv), `locale`, `lang` (`en`/`de`/`hu`), `region` (`de`/`at`/`ch`/`hu`/`eu`),
-`consentCheck`, `settingsCheck`, `closeCheck` und `failOnIncomplete` (Boolean), `hostChecks` (`each`/`main`), `device` (ein Playwright-Gerätename wie `"iPhone 15"`; der Bericht
+`consentCheck`, `settingsCheck`, `closeCheck`, `acceptCheck` und `failOnIncomplete` (Boolean), `hostChecks` (`each`/`main`), `device` (ein Playwright-Gerätename wie `"iPhone 15"`; der Bericht
 hält ihn in `options.device` fest), `sitemap` (Boolean: die Seiten nach der Startseite aus der
 Sitemap wählen), `rules` (bekannte IDs mit `off`/`error`/`warning`/`info`) und
 `allow: { vendors: string[] }` (exakte, groß-/kleinschreibungsabhängige `subject`-Anbieternamen).

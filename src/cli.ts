@@ -56,6 +56,9 @@ Options
                           save, then check what still loads (loads the start page again)
       --check-close       Also close the banner with its "×" button, reload and check
                           whether that counts as consent (loads the start page again)
+      --check-accept      Also accept in a fresh browser and record what loads then, so
+                          the privacy policy check covers services that need consent
+                          (loads the start page again)
       --host-checks <mode>  each | main (default each). each also runs the consent,
                           banner and HTTPS checks on the first page of up to five
                           other hosts of the site, such as docs. or blog.
@@ -108,6 +111,7 @@ async function main(argv: string[]): Promise<number> {
       consent: { type: 'boolean' },
       'check-settings': { type: 'boolean' },
       'check-close': { type: 'boolean' },
+      'check-accept': { type: 'boolean' },
       'host-checks': { type: 'string' },
       device: { type: 'string' },
       sitemap: { type: 'boolean' },
@@ -174,6 +178,7 @@ async function main(argv: string[]): Promise<number> {
           : (config.consentCheck ?? true),
     settingsCheck: values['check-settings'] === true || config.settingsCheck === true,
     closeCheck: values['check-close'] === true || config.closeCheck === true,
+    acceptCheck: values['check-accept'] === true || config.acceptCheck === true,
     hostChecks:
       values['host-checks'] === undefined
         ? config.hostChecks

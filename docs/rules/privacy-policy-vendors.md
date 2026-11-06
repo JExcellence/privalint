@@ -12,7 +12,9 @@ policy ("Cookie policy", "Cookie-Richtlinie", "Süti tájékoztató", …), that
 level deep.
 
 Every service the start page contacted, before consent and after rejecting, is then looked up in
-that text:
+that text. With `--check-accept`, privalint also accepts in a fresh browser, reloads and adds the
+services that load only with consent. The consent it gave stays in that browser, which is closed
+afterwards.
 
 | Service                                                                                                                    | Missing from the policy |
 | -------------------------------------------------------------------------------------------------------------------------- | ----------------------- |

@@ -48,6 +48,11 @@ export interface ScanOptions {
    */
   closeCheck?: boolean | undefined;
   /**
+   * Opt-in: accept in a fresh browser, reload and record what loads then, so the privacy policy
+   * check also covers services that run only with consent. One extra page load.
+   */
+  acceptCheck?: boolean | undefined;
+  /**
    * Resolves CNAME records to find trackers behind first-party subdomains. Defaults to the system
    * resolver in native scans; never used with a network adapter. Tests pass a stub.
    */

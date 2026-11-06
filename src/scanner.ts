@@ -22,6 +22,7 @@ import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import { adapterFetchText, browserFetchText, sitemapPages } from './sitemap.js';
 import { thirdPartyInventory } from './third-party-inventory.js';
 import type {
+  AcceptObservation,
   CloseObservation,
   ConsentSummary,
   LinkedPageMissing,
@@ -190,6 +191,14 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ) {
           snapshot.consent.close = await checkClose(browser, url, siteUrl, options);
         }
+        if (
+          isStart &&
+          options.acceptCheck === true &&
+          options.consentCheck !== false &&
+          snapshot.consent?.bannerFound === true
+        ) {
+          snapshot.consent.accept = await checkAccept(browser, url, siteUrl, options);
+        }
         if (isStart) {
           const wants = (id: string) => rules.some((rule) => rule.id === id);
           await readLegalPages(browser, snapshot, options, {
@@ -329,6 +338,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ...(options.device === undefined ? {} : { device: options.device }),
         ...(options.sitemap === true ? { sitemap: true } : {}),
         ...(options.closeCheck === true ? { closeCheck: true } : {}),
+        ...(options.acceptCheck === true ? { acceptCheck: true } : {}),
         headed: options.headed === true,
         channel: options.channel ?? 'chromium',
         sandbox: options.sandbox === true,
@@ -546,6 +556,20 @@ async function readPolicyAndCookies(
     : { page: { ...text, unread: [cookieLink.href] }, links, label: policy.label };
 }
 
+/** Runs the accept path on the start page in a fresh context: accept, reload, observe. */
+async function checkAccept(
+  browser: Browser,
+  url: string,
+  siteUrl: URL,
+  options: ScanOptions,
+): Promise<AcceptObservation> {
+  const capture = await capturePage(browser, url, siteUrl, options, 'accept');
+  if (capture.consent?.accept !== undefined) return capture.consent.accept;
+  return capture.error === undefined
+    ? { outcome: 'banner-not-shown', reason: 'banner-not-shown' }
+    : { outcome: 'interaction-failed', reason: 'browser-interaction-failed', error: capture.error };
+}
+
 /** Runs the close path on the start page in a fresh context: close the banner, reload, observe. */
 async function checkClose(
   browser: Browser,
@@ -589,11 +613,12 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
     settings,
     ...summary
   } = start.consent;
-  const { close, ...rest } = summary;
+  const { close, accept, ...rest } = summary;
   const closeSummary = close === undefined ? {} : { close: withoutAfterClose(close) };
-  if (settings === undefined) return { consent: { ...rest, ...closeSummary } };
+  const acceptSummary = accept === undefined ? {} : { accept: withoutAfterAccept(accept) };
+  if (settings === undefined) return { consent: { ...rest, ...closeSummary, ...acceptSummary } };
   const { afterSave: _afterSave, ...settingsSummary } = settings;
-  return { consent: { ...rest, ...closeSummary, settings: settingsSummary } };
+  return { consent: { ...rest, ...closeSummary, ...acceptSummary, settings: settingsSummary } };
 }
 
 function consentByHost(pages: readonly PageSnapshot[]): Pick<ScanResult, 'consentByHost'> {
@@ -692,6 +717,11 @@ function inventoryOf(
 ): Pick<ScanResult, 'thirdParties'> {
   const thirdParties = thirdPartyInventory(pages, siteUrl);
   return thirdParties.length === 0 ? {} : { thirdParties };
+}
+
+function withoutAfterAccept(accept: AcceptObservation): Omit<AcceptObservation, 'afterAccept'> {
+  const { afterAccept: _afterAccept, ...summary } = accept;
+  return summary;
 }
 
 function withoutAfterClose(close: CloseObservation): Omit<CloseObservation, 'afterClose'> {

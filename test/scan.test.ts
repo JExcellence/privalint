@@ -421,6 +421,28 @@ describe('scan', () => {
     expect(result.pages).toHaveLength(1);
   });
 
+  it('with --check-accept, also looks for services that load only after accepting', async () => {
+    const vendors = (result: Awaited<ReturnType<typeof scan>>) =>
+      result.findings
+        .filter((f) => f.ruleId === 'privacy-policy-vendors')
+        .map(({ subject }) => subject);
+    const start = `${origin}/policy-vendors/accept.html`;
+    expect(vendors(await scan(start, options))).toEqual([]);
+    const result = await scan(start, { ...options, acceptCheck: true });
+    expect(vendors(result)).toEqual(['Hotjar']);
+    expect(result.consent?.accept).toEqual({
+      outcome: 'accepted',
+      reason: 'accept-clicked-and-reloaded',
+      acceptLabel: 'Accept all',
+      afterAcceptComplete: true,
+    });
+    expect(result.options?.acceptCheck).toBe(true);
+    expect(result.thirdParties?.find((host) => host.host === 'static.hotjar.com')?.phases).toEqual([
+      'after-accept',
+    ]);
+    expect(JSON.stringify(result)).not.toContain('afterAccept"');
+  });
+
   it('never puts URL credentials into the report', async () => {
     const withAuth = origin.replace('http://', 'http://scanner:s3cret@');
     const result = await scan(`${withAuth}/leaky/`, options);

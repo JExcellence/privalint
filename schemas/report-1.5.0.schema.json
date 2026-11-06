@@ -165,7 +165,8 @@
                 "before-consent",
                 "after-reject",
                 "after-settings",
-                "after-close"
+                "after-close",
+                "after-accept"
               ]
             }
           },
@@ -1005,6 +1006,40 @@
             "reason"
           ]
         },
+        "accept": {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "accepted",
+                "interaction-failed",
+                "banner-not-shown"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "accept-clicked-and-reloaded",
+                "browser-interaction-failed",
+                "banner-not-shown"
+              ]
+            },
+            "acceptLabel": {
+              "type": "string"
+            },
+            "afterAcceptComplete": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "outcome",
+            "reason"
+          ]
+        },
         "error": {
           "type": "string"
         }
@@ -1231,6 +1266,9 @@
           "type": "boolean"
         },
         "closeCheck": {
+          "type": "boolean"
+        },
+        "acceptCheck": {
           "type": "boolean"
         }
       },

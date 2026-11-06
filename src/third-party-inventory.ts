@@ -64,6 +64,8 @@ export function thirdPartyInventory(
     if (saved) add(page, 'after-settings', saved.requests);
     const closed = page.consent?.close?.afterClose;
     if (closed) add(page, 'after-close', closed.requests);
+    const accepted = page.consent?.accept?.afterAccept;
+    if (accepted) add(page, 'after-accept', accepted.requests);
   }
   return [...hosts.values()]
     .sort((a, b) => b.requests - a.requests || a.host.localeCompare(b.host))

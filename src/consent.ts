@@ -2,6 +2,7 @@ import type { BrowserContext, Frame, Locator, Page } from 'playwright';
 import { classifyLoadError } from './diagnostics.js';
 import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
+  AcceptObservation,
   CloseObservation,
   ConsentObservation,
   ControlLook,
@@ -364,6 +365,51 @@ export async function observeClose(
       outcome: 'interaction-failed',
       reason: 'browser-interaction-failed',
       closeLabel,
+      error: classifyLoadError(error),
+    };
+  }
+}
+
+/**
+ * Clicks the banner's accept button, reloads the page and records what loads then: the services
+ * the site runs with consent. Use a fresh browser context, so the stored consent stays in it.
+ * Returns undefined when there is no banner with an accept button.
+ */
+export async function observeAccept(
+  page: Page,
+  context: BrowserContext,
+  requests: RecordedRequest[],
+  options: ConsentCheckOptions,
+): Promise<AcceptObservation | undefined> {
+  if (options.signal?.aborted) throw new DOMException('Accept check aborted', 'AbortError');
+  const { found: banner } = await waitFor(page, options, () => findBanner(page));
+  if (banner?.accept === undefined) return undefined;
+  const label = banner.acceptLabel === undefined ? {} : { acceptLabel: banner.acceptLabel };
+  try {
+    const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
+    const storageBefore = await readStorageKeys(page);
+    const firstRequest = requests.length;
+    options.onReject?.();
+    await banner.accept.click({ timeout: Math.min(5_000, options.timeoutMs) });
+    await settle(page, options);
+    const response = await page.reload({ waitUntil: 'load', timeout: options.timeoutMs });
+    if (response === null || response.status() >= 400) throw new Error('HTTP reload failed');
+    await settle(page, options);
+    const cookies: RecordedCookie[] = (await context.cookies())
+      .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
+      .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    const storage = newStorageKeys(storageBefore, await readStorageKeys(page));
+    return {
+      outcome: 'accepted',
+      reason: 'accept-clicked-and-reloaded',
+      ...label,
+      afterAccept: { requests: requests.slice(firstRequest), cookies, storage },
+    };
+  } catch (error) {
+    return {
+      outcome: 'interaction-failed',
+      reason: 'browser-interaction-failed',
+      ...label,
       error: classifyLoadError(error),
     };
   }

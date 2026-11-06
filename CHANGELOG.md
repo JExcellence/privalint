@@ -33,6 +33,11 @@ Upgrade notes:
 
 ### Added
 
+- `--check-accept` (config `acceptCheck`, Action input `check-accept`): privalint also accepts in a
+  fresh browser, reloads and records what loads then. `privacy-policy-vendors` then also looks for
+  services that run only with consent, and `thirdParties` lists them with the phase
+  `after-accept`. The outcome is in `consent.accept` (schema 1.5.0); there is no finding of its
+  own (#131)
 - New rule `banner-keyboard` (warning): before clicking reject, privalint presses Tab up to 60
   times and warns when the reject control never gets focus, with the element and the press that
   focused the accept control as evidence (#122)

@@ -306,6 +306,8 @@ export interface ConsentObservation {
   settings?: SettingsObservation;
   /** Only present when the close-button check ran. Since schema 1.5.0. */
   close?: CloseObservation;
+  /** Only present when the accept check ran. Since schema 1.5.0. */
+  accept?: AcceptObservation;
   error?: string;
 }
 
@@ -511,11 +513,31 @@ export interface KeyboardReach {
 
 export type ConsentSummary = Omit<
   ConsentObservation,
-  'afterReject' | 'settings' | 'close' | 'keyboard'
+  'afterReject' | 'settings' | 'close' | 'keyboard' | 'accept'
 > & {
   settings?: Omit<SettingsObservation, 'afterSave'>;
   close?: Omit<CloseObservation, 'afterClose'>;
+  accept?: Omit<AcceptObservation, 'afterAccept'>;
 };
+
+/**
+ * What happened when privalint clicked the banner's accept button in a fresh browser context and
+ * reloaded the page. The stored consent stays in that context.
+ */
+export interface AcceptObservation {
+  outcome: 'accepted' | 'interaction-failed' | 'banner-not-shown';
+  reason: 'accept-clicked-and-reloaded' | 'browser-interaction-failed' | 'banner-not-shown';
+  acceptLabel?: string;
+  /** Requests made and cookies newly set after accepting, including the reload. Internal. */
+  afterAccept?: {
+    requests: RecordedRequest[];
+    cookies: RecordedCookie[];
+    storage?: StorageKey[];
+  };
+  /** True only if the observation window after accepting completed without load issues. */
+  afterAcceptComplete?: boolean;
+  error?: string;
+}
 
 /**
  * What happened when privalint closed the banner with its close button ("X", "Schließen") in a
@@ -636,6 +658,8 @@ export interface ReportOptions {
   sitemap?: boolean;
   /** True when the close-button check ran. Absent before schema 1.5.0. */
   closeCheck?: boolean;
+  /** True when the accept check ran. Absent before schema 1.5.0. */
+  acceptCheck?: boolean;
   headed: boolean;
   channel: string;
   /** Absent in reports from scanners before 0.5.0. */
@@ -650,7 +674,12 @@ export interface ReportOptions {
   allowedVendors: string[];
 }
 
-export type ThirdPartyPhase = 'before-consent' | 'after-reject' | 'after-settings' | 'after-close';
+export type ThirdPartyPhase =
+  | 'before-consent'
+  | 'after-reject'
+  | 'after-settings'
+  | 'after-close'
+  | 'after-accept';
 
 /** One host outside the site, with what privalint knows about it. Hosts only, never paths. */
 export interface ThirdPartyHost {

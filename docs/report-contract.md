@@ -21,7 +21,8 @@ privacy policy linked from the start page, the skip reason `no-linked-page` and 
 `--device`, `options.sitemap`, the opt-in close-button check (`options.closeCheck`, `consent.close`,
 the observation kind `after-close`, the skip reason `close-check-disabled` and the explanations
 `close-check-disabled`, `missing-close-observation`, `no-close-control` and
-`banner-closed-and-reloaded`), and the optional `thirdParties` inventory: every host outside the site that answered
+`banner-closed-and-reloaded`), the opt-in accept check (`options.acceptCheck`, `consent.accept` and
+the `thirdParties` phase `after-accept`), and the optional `thirdParties` inventory: every host outside the site that answered
 a request, with its registrable domain, the page it was first seen on, the phases
 (`before-consent`, `after-reject`, `after-settings`, `after-close`), the number of requests and the vendor
 privalint knows it as. It holds hosts only, never paths or query strings. A 1.4.0 validator would

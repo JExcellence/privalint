@@ -1,5 +1,5 @@
 import { type Browser, devices, type Page } from 'playwright';
-import { observeClose, observeConsent, observeSettings } from './consent.js';
+import { observeAccept, observeClose, observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
 import { installFingerprintProbe, readFingerprinting } from './fingerprinting.js';
 import { readForms } from './forms.js';
@@ -14,7 +14,7 @@ import { isFirstParty } from './url.js';
  * Which consent path to test on the page: none, the reject button, or the settings layer.
  * Settings runs in its own capture because a stored reject would hide the banner.
  */
-export type ConsentPath = 'none' | 'reject' | 'settings' | 'close';
+export type ConsentPath = 'none' | 'reject' | 'settings' | 'close' | 'accept';
 
 /** Always owns and closes its context. Each crawl page starts without cookies/storage. */
 export async function capturePage(
@@ -180,7 +180,14 @@ export async function capturePage(
         },
         onTimeout: () => diagnostics.add('timeout', page.url()),
       };
-      if (consentPath === 'close') {
+      if (consentPath === 'accept') {
+        const accept = await observeAccept(page, context, requests, consentOptions);
+        snapshot.consent = {
+          bannerFound: accept !== undefined,
+          rejected: false,
+          ...(accept === undefined ? {} : { accept }),
+        };
+      } else if (consentPath === 'close') {
         const close = await observeClose(page, context, requests, consentOptions);
         snapshot.consent = {
           bannerFound: close !== undefined,
@@ -237,6 +244,10 @@ export async function capturePage(
   beforeComplete = beforeComplete && !diagnostics.hasIssues('before-consent');
   if (snapshot.consent?.rejected) {
     snapshot.consent.afterRejectComplete = !diagnostics.hasIssues('after-reject');
+  }
+  // So does the accept path, for what loads after accepting.
+  if (snapshot.consent?.accept?.afterAccept !== undefined) {
+    snapshot.consent.accept.afterAcceptComplete = !diagnostics.hasIssues('after-reject');
   }
   // The close path, too, reuses the after-reject phase for what loads after closing.
   if (snapshot.consent?.close?.afterClose !== undefined) {

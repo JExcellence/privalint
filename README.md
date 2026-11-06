@@ -124,6 +124,7 @@ Inputs left empty are not passed to privalint, so `privalint.config.json` in you
 | `fail-on-incomplete` | config, else off     | `true` or `false`: fail separately for incomplete observations.                |
 | `check-settings`     | config, else off     | `true` also tests the banner's settings layer.                                 |
 | `check-close`        | config, else off     | `true` also closes the banner with its close button and checks what loads.     |
+| `check-accept`       | config, else off     | `true` also accepts and checks the privacy policy for services loaded then.    |
 | `sitemap`            | config, else off     | `true` chooses pages from `sitemap.xml`, pages with forms first.               |
 | `device`             | config, else desktop | Playwright device to emulate, such as `iPhone 15`, to check the mobile banner. |
 | `disable`            |                      | Comma-separated rule ids to skip.                                              |
@@ -174,6 +175,9 @@ privalint <url> [options]
                           save, then check what still loads (loads the start page again)
       --check-close       Also close the banner with its "×" button, reload and check
                           whether that counts as consent (loads the start page again)
+      --check-accept      Also accept in a fresh browser and record what loads then, so
+                          the privacy policy check covers services that need consent
+                          (loads the start page again)
       --host-checks <mode>  each | main (default each). each also runs the consent,
                           banner and HTTPS checks on the first page of up to five
                           other hosts of the site, such as docs. or blog.
