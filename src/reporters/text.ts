@@ -32,6 +32,12 @@ export function formatText(result: ScanResult, color = false): string {
     }
   }
 
+  const offSite = result.offSiteRedirects ?? [];
+  if (offSite.length > 0) {
+    lines.push('', paint('dim', m.offSite(offSite.length)));
+    for (const { url, finalUrl } of offSite) lines.push(paint('dim', `  ${url} → ${finalUrl}`));
+  }
+
   const counts = countBySeverity(result.findings);
   const pages = m.pages(result.pages.length);
   const duration = m.duration(result.durationMs);

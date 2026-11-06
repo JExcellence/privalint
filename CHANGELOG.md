@@ -6,6 +6,11 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- A crawled link that redirects to another site is no longer scanned as one of the site's pages.
+  It is listed in `offSiteRedirects` and doesn't count against `--max-pages` (#95)
+
 ## 0.9.0 - 2026-11-01
 
 Upgrade notes:

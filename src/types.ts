@@ -390,12 +390,22 @@ export interface ScanResult {
   scannedAt: string;
   durationMs: number;
   pages: PageSummary[];
+  /**
+   * Crawled links that redirected to another site. They are not scanned as part of the site and
+   * don't count against maxPages. Absent when there were none.
+   */
+  offSiteRedirects?: OffSiteRedirect[];
   /** Outcome of the consent check on the start page. */
   consent?: ConsentSummary;
   findings: Finding[];
   rules: Array<Omit<Rule, 'check'>>;
   /** Observation coverage, not a legal compliance judgement. */
   coverage?: 'complete' | 'partial';
+}
+
+export interface OffSiteRedirect {
+  url: string;
+  finalUrl: string;
 }
 
 export type RuleSettings = Record<string, Severity | 'off'>;
