@@ -325,9 +325,10 @@ describe('consent check', () => {
         openLabel: 'Einstellungen',
         saveLabel: 'Auswahl speichern',
         switchedOff: 2,
+        preselected: ['Statistik', 'Marketing'],
       },
     });
-    expect(result.findings).toEqual([]);
+    expect(result.findings.map((f) => f.ruleId)).toEqual(['consent-preselected']);
 
     // The words that tell a consent banner from other buttons are only inside the shadow root.
     const hidden = await scan(`${origin}/consent/shadow-banner-only.html`, {
@@ -427,8 +428,19 @@ describe('consent check', () => {
         openLabel: 'Einstellungen',
         saveLabel: 'Auswahl speichern',
         switchedOff: 2,
+        preselected: ['Statistik', 'Marketing'],
         afterSaveComplete: true,
       });
+      // The page loads nothing after saving, but it ticked both optional categories in advance.
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
+      expect(result.findings[0]).toMatchObject({ severity: 'error' });
+      expect(result.findings[0]?.message).toContain('"Statistik", "Marketing"');
+    });
+
+    it('passes a layer that starts with every optional category off', async () => {
+      const result = await scan(`${origin}/consent/settings-good.html?unticked`, settingsOptions);
+      expect(result.consent?.settings).toMatchObject({ outcome: 'saved', switchedOff: 0 });
+      expect(result.consent?.settings?.preselected ?? []).toEqual([]);
       expect(result.findings).toEqual([]);
     });
 
@@ -483,7 +495,7 @@ describe('consent check', () => {
           vendorConsents: 0,
           vendorLegitimateInterests: 0,
         });
-        expect(result.findings).toEqual([]);
+        expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
       });
 
       it('reports consent the TCF API still holds as an error', async () => {
@@ -528,7 +540,7 @@ describe('consent check', () => {
         saveLabel: 'Elfogadom a kiválasztottakat',
         switchedOff: 2,
       });
-      expect(result.findings).toEqual([]);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
     });
 
     it('picks the narrowest level when categories are radio buttons (otpbank.hu)', async () => {
@@ -540,6 +552,7 @@ describe('consent check', () => {
         outcome: 'saved',
         saveLabel: 'Elfogadom a fenti sütibeállítások használatát',
         switchedOff: 1,
+        preselected: ['Legbővebb szint: Statisztikai és reklám célú sütik'],
       });
       expect(result.findings.map((f) => f.ruleId)).not.toContain('trackers-after-settings');
     });
@@ -564,7 +577,7 @@ describe('consent check', () => {
     it('leaves checkboxes outside the consent layer alone', async () => {
       const result = await scan(`${origin}/consent/settings-with-login.html`, settingsOptions);
       expect(result.consent?.settings).toMatchObject({ outcome: 'saved', switchedOff: 2 });
-      expect(result.findings).toEqual([]);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
     });
 
     it('never saves with a button that confirms all, whatever its verb', async () => {
@@ -574,7 +587,7 @@ describe('consent check', () => {
         saveLabel: 'Auswahl bestätigen',
         switchedOff: 2,
       });
-      expect(result.findings).toEqual([]);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
     });
 
     it('names the Usercentrics v3 banner and uses its own settings and save buttons', async () => {
@@ -595,7 +608,7 @@ describe('consent check', () => {
 
     it('catches trackers that load after saving with everything off', async () => {
       const result = await scan(`${origin}/consent/settings-broken.html`, settingsOptions);
-      expect(ruleIds(result.findings)).toEqual(['trackers-after-settings']);
+      expect(ruleIds(result.findings)).toEqual(['trackers-after-settings', 'consent-preselected']);
       expect(result.findings[0]?.message).toContain('Auswahl speichern');
       expect(result.findings[0]?.evidence[0]).toContain('G-SETTINGS');
     });
@@ -618,7 +631,7 @@ describe('consent check', () => {
         },
       });
       expect(result.region).toBe('hu');
-      expect(result.findings).toEqual([]);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
     });
 
     it('reports a banner without a settings control', async () => {

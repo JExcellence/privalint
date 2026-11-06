@@ -37,6 +37,10 @@
     </div>
     <script>
       const banner = document.getElementById('banner');
+      if (location.search.includes('unticked')) {
+        document.querySelector('[name="statistics"]').checked = false;
+        document.getElementById('marketing').setAttribute('aria-checked', 'false');
+      }
       const stored = localStorage.getItem('consent');
       const choice = stored ? JSON.parse(stored) : undefined;
       const load = (src) => {

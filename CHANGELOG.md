@@ -11,9 +11,14 @@ Upgrade notes:
 - On sites with subdomains, the first crawled page of up to five other hosts (`docs.`, `blog.`)
   now gets the consent, banner and HTTPS checks too. That can add findings and one consent run
   per host. `--host-checks main` or `"hostChecks": "main"` keeps the previous behaviour.
+- Scans with the settings check can report the new `consent-preselected` error on banners whose
+  settings layer starts with optional categories switched on.
 
 ### Added
 
+- New rule `consent-preselected` (error, with the settings check): optional categories, or a wider
+  consent level, already switched on when the banner settings open, named by their labels in
+  `consent.settings.preselected` (#106)
 - New rule `tracking-cookie-lifetime` (info): tracking cookies that last longer than 13 months,
   the CNIL's recommended maximum, with their lifetime in days (#108)
 - Start-page checks on other hosts of the site: consent, reject, banner and HTTPS rules run on the

@@ -141,6 +141,18 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 32. cikk'],
     eu: ['Art. 32 GDPR'],
   },
+  // Pre-ticked boxes are no consent (Planet49); the same in every EU country.
+  'consent-preselected': {
+    de: ['§ 25 Abs. 1 TDDDG', 'Art. 4 Nr. 11 DSGVO', 'EuGH, 01.10.2019, C-673/17 (Planet49)'],
+    at: ['§ 165 Abs. 3 TKG 2021', 'Art. 4 Nr. 11 DSGVO', 'EuGH, 01.10.2019, C-673/17 (Planet49)'],
+    ch: ['Art. 45c FMG'],
+    hu: ['Eht. 155. § (4)', 'GDPR 4. cikk 11. pont', 'EUB, 2019. október 1., C-673/17 (Planet49)'],
+    eu: [
+      'Art. 5(3) ePrivacy Directive',
+      'Art. 4(11) GDPR',
+      'CJEU, 01.10.2019, C-673/17 (Planet49)',
+    ],
+  },
   // Storage limitation; the 13 months come from the CNIL recommendation of 17.09.2020.
   'tracking-cookie-lifetime': {
     de: ['Art. 5 Abs. 1 lit. e DSGVO', 'CNIL-Empfehlung zu Cookies, 17.09.2020'],
@@ -195,6 +207,7 @@ export function applyRegion(findings: readonly Finding[], region: Region): Findi
  */
 const SOFTER_IN_SWITZERLAND = new Set([
   'pre-consent-trackers',
+  'consent-preselected',
   'consent-banner-missing',
   'consent-settings-link',
   'third-party-embeds',

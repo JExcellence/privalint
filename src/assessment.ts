@@ -31,6 +31,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'trackers-after-reject': ['after-reject'],
   'consent-settings-link': ['after-reject'],
   'trackers-after-settings': ['after-settings'],
+  'consent-preselected': ['after-settings'],
   'consent-banner-missing': ['network', 'banner-search'],
 };
 

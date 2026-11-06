@@ -5,6 +5,7 @@ import {
   accessibilityStatement,
   adobeFonts,
   consentBannerMissing,
+  consentPreselected,
   consentSettingsLink,
   googleFonts,
   impressumLink,
@@ -547,6 +548,52 @@ describe('tracking-cookie-lifetime', () => {
       },
     });
     expect(run(trackingCookieLifetime, page)).toHaveLength(1);
+  });
+});
+
+describe('consent-preselected', () => {
+  const page = (preselected?: string[]) =>
+    snapshot({
+      consent: {
+        bannerFound: true,
+        rejected: true,
+        state: 'reject-tested',
+        settings: {
+          outcome: 'saved',
+          reason: 'settings-saved-and-reloaded',
+          openLabel: 'Settings',
+          switchedOff: preselected?.length ?? 0,
+          ...(preselected === undefined ? {} : { preselected }),
+        },
+      },
+    });
+
+  it('reports categories ticked in advance as an error, with their names', () => {
+    const [finding] = run(consentPreselected, page(['Statistics', 'Marketing']));
+    expect(finding).toMatchObject({ ruleId: 'consent-preselected', severity: 'error' });
+    expect(finding?.message).toBe(
+      '2 optional categories are switched on in the cookie settings before the visitor chooses: "Statistics", "Marketing".',
+    );
+    expect(finding?.evidence).toEqual([
+      'settings opened with "Settings"',
+      'Statistics',
+      'Marketing',
+    ]);
+  });
+
+  it('counts a switch without a readable label', () => {
+    const [finding] = run(consentPreselected, page(['']), 'de');
+    expect(finding?.message).toBe(
+      'In den Cookie-Einstellungen ist 1 optionale Kategorie schon vor der Wahl der Besucher eingeschaltet.',
+    );
+  });
+
+  it.each([
+    ['nothing ticked', page([])],
+    ['an older report without the field', page()],
+    ['no settings check', snapshot()],
+  ])('passes with %s', (_, snap) => {
+    expect(run(consentPreselected, snap)).toEqual([]);
   });
 });
 

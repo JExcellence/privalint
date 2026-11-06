@@ -296,6 +296,11 @@ export interface SettingsObservation {
   /** How many checked category switches privalint turned off before saving. */
   switchedOff?: number;
   /**
+   * Labels of optional categories that were already on when the settings layer opened, and of
+   * radio levels wider than necessary-only that were preselected. Since scanner 0.10.0.
+   */
+  preselected?: string[];
+  /**
    * The legitimate-interest tab of a TCF banner, if there was one: its label, the "object to all"
    * button used, or how many of its switches were turned off. Since schema 1.4.0.
    */
