@@ -136,6 +136,12 @@
         "summary"
       ]
     },
+    "consentByHost": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/consent"
+      }
+    },
     "consent": {
       "$ref": "#/$defs/consent"
     },
@@ -1114,6 +1120,13 @@
         },
         "settingsCheck": {
           "type": "boolean"
+        },
+        "hostChecks": {
+          "type": "string",
+          "enum": [
+            "each",
+            "main"
+          ]
         }
       },
       "required": [

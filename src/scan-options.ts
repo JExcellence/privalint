@@ -26,6 +26,12 @@ export interface ScanOptions {
    * second capture of the start page. Off by default: it loads the start page once more.
    */
   settingsCheck?: boolean | undefined;
+  /**
+   * `each` (default): the first crawled page of every other host of the site, such as a docs or
+   * blog subdomain, gets the start-page checks too (consent, banner, transport), for up to five
+   * hosts. `main`: only the start page.
+   */
+  hostChecks?: 'each' | 'main' | undefined;
   headed?: boolean | undefined;
   channel?: string | undefined;
   /**

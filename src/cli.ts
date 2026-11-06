@@ -54,6 +54,9 @@ Options
       --consent           Enable consent checking even if the JSON config disables it
       --check-settings    Also open the banner's settings, switch everything off and
                           save, then check what still loads (loads the start page again)
+      --host-checks <mode>  each | main (default each). each also runs the consent,
+                          banner and HTTPS checks on the first page of up to five
+                          other hosts of the site, such as docs. or blog.
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
       --sandbox           Run Chromium with its sandbox (recommended for untrusted
@@ -98,6 +101,7 @@ async function main(argv: string[]): Promise<number> {
       'skip-consent': { type: 'boolean' },
       consent: { type: 'boolean' },
       'check-settings': { type: 'boolean' },
+      'host-checks': { type: 'string' },
       headed: { type: 'boolean' },
       channel: { type: 'string' },
       sandbox: { type: 'boolean' },
@@ -160,6 +164,10 @@ async function main(argv: string[]): Promise<number> {
           ? false
           : (config.consentCheck ?? true),
     settingsCheck: values['check-settings'] === true || config.settingsCheck === true,
+    hostChecks:
+      values['host-checks'] === undefined
+        ? config.hostChecks
+        : oneOf(values['host-checks'], ['each', 'main'] as const, '--host-checks'),
     headed: values.headed === true,
     channel:
       values.channel === undefined ? undefined : oneOf(values.channel, CHANNELS, '--channel'),

@@ -125,6 +125,47 @@ describe('labels in link fixes', () => {
   });
 });
 
+describe('other hosts of the site', () => {
+  const main = 'https://example.org';
+  const docs = 'https://docs.example.org';
+  const adapter: NetworkAdapter = async ({ url }) => {
+    const { origin: from, pathname } = new URL(url);
+    if (from !== main && from !== docs) {
+      return { status: 200, headers: { 'content-type': 'text/javascript' }, body: '' };
+    }
+    const body =
+      from === main
+        ? `<a href="${docs}/guide">Docs</a><a href="/about">About</a>`
+        : '<script src="https://www.google-analytics.com/analytics.js"></script>';
+    return pathname === '/favicon.ico'
+      ? { status: 404, headers: {}, body: '' }
+      : { ...html(), body: `<!doctype html>${body}${links}` };
+  };
+  const run = (hostChecks?: 'each' | 'main') =>
+    scan(main, { ...settings, maxPages: 3, networkAdapter: adapter, hostChecks });
+
+  it('check the first page of a subdomain like a start page', async () => {
+    const result = await run();
+    expect(result.options?.hostChecks).toBe('each');
+    const missing = result.findings.filter((f) => f.ruleId === 'consent-banner-missing');
+    expect(missing).toHaveLength(1);
+    expect(missing[0]?.pageUrl).toContain('docs.example.org');
+    expect(Object.keys(result.consentByHost ?? {})).toEqual(['docs.example.org']);
+    const about = result.pages.find(
+      (page) => page.url.startsWith(`${main}/`) && page !== result.pages[0],
+    );
+    expect(about?.ruleEvaluations).toContainEqual(
+      expect.objectContaining({ ruleId: 'consent-banner-missing', reason: 'not-start-page' }),
+    );
+  });
+
+  it('stay plain pages with hostChecks main', async () => {
+    const result = await run('main');
+    expect(result.findings.filter((f) => f.ruleId === 'consent-banner-missing')).toEqual([]);
+    expect(result.consentByHost).toBeUndefined();
+  });
+});
+
 describe('links that redirect to another site', () => {
   it('are listed, not scanned, and leave room for site pages', async () => {
     const result = await scan(origin, {

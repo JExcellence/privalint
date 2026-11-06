@@ -391,6 +391,8 @@ function definitions(version) {
         // Added within 1.1.0; optional so reports from earlier 1.1.0 scanners stay valid.
         ...(identified ? { sandbox: boolean, concurrency: positive } : {}),
         ...(settingsAware ? { settingsCheck: boolean, region: regionFor(version) } : {}),
+        // Added within 1.4.0 (scanner 0.10.0); optional.
+        ...(version === '1.4.0' ? { hostChecks: choices('each', 'main') } : {}),
       },
       Object.keys(reportOptions),
     ),
@@ -462,6 +464,7 @@ function reportSchema(version) {
                 }),
               ),
               evaluations: choices('full', 'summary'),
+              consentByHost: { type: 'object', additionalProperties: ref('consent') },
             }
           : {}),
         consent: ref('consent'),
