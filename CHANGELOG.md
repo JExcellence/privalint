@@ -14,6 +14,8 @@ Upgrade notes:
 
 ### Added
 
+- New rule `tracking-cookie-lifetime` (info): tracking cookies that last longer than 13 months,
+  the CNIL's recommended maximum, with their lifetime in days (#108)
 - Start-page checks on other hosts of the site: consent, reject, banner and HTTPS rules run on the
   first crawled page of each subdomain, up to five. Their consent results are in `consentByHost`.
   `--host-checks main` turns it off (#103)

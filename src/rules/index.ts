@@ -15,6 +15,7 @@ import { thirdPartyCdns } from './third-party-cdns.js';
 import { thirdPartyEmbeds } from './third-party-embeds.js';
 import { trackersAfterReject } from './trackers-after-reject.js';
 import { trackersAfterSettings } from './trackers-after-settings.js';
+import { trackingCookieLifetime } from './tracking-cookie-lifetime.js';
 import { withdrawalButton } from './withdrawal-button.js';
 
 export const defaultRules: readonly Rule[] = [
@@ -29,6 +30,7 @@ export const defaultRules: readonly Rule[] = [
   adobeFonts,
   thirdPartyEmbeds,
   thirdPartyCdns,
+  trackingCookieLifetime,
   impressumLink,
   privacyPolicyLink,
   formPrivacyNotice,
@@ -54,5 +56,6 @@ export {
   thirdPartyEmbeds,
   trackersAfterReject,
   trackersAfterSettings,
+  trackingCookieLifetime,
   withdrawalButton,
 };

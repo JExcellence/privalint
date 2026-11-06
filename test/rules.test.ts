@@ -13,6 +13,7 @@ import {
   thirdPartyCdns,
   thirdPartyEmbeds,
   trackersAfterReject,
+  trackingCookieLifetime,
   withdrawalButton,
 } from '../src/rules/index.js';
 import { newStorageKeys } from '../src/storage.js';
@@ -513,6 +514,39 @@ describe('legal link labels', () => {
   it('keeps the German labels when no region is passed, as before', () => {
     const fix = impressumLink.check({ siteUrl: SITE, page: snapshot(), lang: 'de' })[0]?.fix;
     expect(fix).toContain('„Impressum“');
+  });
+});
+
+describe('tracking-cookie-lifetime', () => {
+  const inDays = (days: number) => ({
+    ...cookie('_ga'),
+    expires: Math.round(Date.now() / 1000) + days * 24 * 60 * 60,
+  });
+
+  it('notes a tracker cookie that lasts two years, with its lifetime', () => {
+    const [finding] = run(trackingCookieLifetime, snapshot({ cookies: [inDays(730)] }));
+    expect(finding).toMatchObject({ severity: 'info', subject: 'Google Analytics' });
+    expect(finding?.evidence[0]).toMatch(/_ga .*: 730 days/);
+  });
+
+  it.each([
+    ['13 months', inDays(390)],
+    ['a session cookie', { ...cookie('_ga'), expires: -1 }],
+    ['a cookie not on the tracker list', { ...inDays(730), name: 'cart_id' }],
+  ])('leaves %s alone', (_, entry) => {
+    expect(run(trackingCookieLifetime, snapshot({ cookies: [entry] }))).toEqual([]);
+  });
+
+  it('also looks at cookies set after rejecting', () => {
+    const page = snapshot({
+      consent: {
+        bannerFound: true,
+        rejected: true,
+        state: 'reject-tested',
+        afterReject: { requests: [], cookies: [inDays(500)] },
+      },
+    });
+    expect(run(trackingCookieLifetime, page)).toHaveLength(1);
   });
 });
 

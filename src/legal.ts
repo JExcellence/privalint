@@ -141,6 +141,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 32. cikk'],
     eu: ['Art. 32 GDPR'],
   },
+  // Storage limitation; the 13 months come from the CNIL recommendation of 17.09.2020.
+  'tracking-cookie-lifetime': {
+    de: ['Art. 5 Abs. 1 lit. e DSGVO', 'CNIL-Empfehlung zu Cookies, 17.09.2020'],
+    at: ['Art. 5 Abs. 1 lit. e DSGVO', 'CNIL-Empfehlung zu Cookies, 17.09.2020'],
+    ch: ['Art. 6 Abs. 4 DSG'],
+    hu: ['GDPR 5. cikk (1) bekezdés e) pont', 'CNIL-ajánlás a sütikről, 2020.09.17.'],
+    eu: ['Art. 5(1)(e) GDPR', 'CNIL recommendation on cookies, 17.09.2020'],
+  },
   // Directive (EU) 2023/2673 added Art. 11a; Germany: § 356a BGB, applicable from 19.06.2026.
   'withdrawal-button': {
     de: ['§ 356a BGB'],

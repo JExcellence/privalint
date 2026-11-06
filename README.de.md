@@ -44,25 +44,26 @@ npx privalint https://ihre-seite.at --region at --lang de --max-pages 20
 
 ## Was geprüft wird
 
-| Regel                                                                 | Was sie findet                                                                                                                             |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.de.md)       | Analyse-, Werbe- und Session-Replay-Tools, die vor der Einwilligung Anfragen senden oder Cookies setzen                                    |
-| [`trackers-after-reject`](docs/rules/trackers-after-reject.de.md)     | Tracker, die nach Klick auf „Ablehnen“ und Neuladen weiterlaufen                                                                           |
-| [`trackers-after-settings`](docs/rules/trackers-after-settings.de.md) | Optional (`--check-settings`): Tracker, die laufen, obwohl in den Banner-Einstellungen alles abgewählt und gespeichert wurde               |
-| [`reject-option`](docs/rules/reject-option.de.md)                     | Cookie-Banner mit „Zustimmen“, aber ohne „Ablehnen“ auf der ersten Ebene; Pur-Abo-Modelle als Hinweis                                      |
-| [`consent-banner-missing`](docs/rules/consent-banner-missing.de.md)   | Tracker laufen und es gibt überhaupt kein Cookie-Banner; Besucher können weder einwilligen noch ablehnen                                   |
-| [`banner-legal-links`](docs/rules/banner-legal-links.de.md)           | Ein Banner, das die Seite blockiert und weder Datenschutzerklärung noch Impressum verlinkt                                                 |
-| [`consent-settings-link`](docs/rules/consent-settings-link.de.md)     | Kein sichtbarer Link oder Button, um die Cookie-Einstellungen nach dem Ablehnen wieder zu öffnen                                           |
-| [`google-fonts`](docs/rules/google-fonts.de.md)                       | Schriften von `fonts.googleapis.com` / `fonts.gstatic.com`                                                                                 |
-| [`adobe-fonts`](docs/rules/adobe-fonts.de.md)                         | Schriften von Adobe Fonts (`use.typekit.net` / `p.typekit.net`)                                                                            |
-| [`third-party-embeds`](docs/rules/third-party-embeds.de.md)           | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar, Social-Media-Einbindungen und Chat-/Bewertungs-Widgets wie Intercom vor der Einwilligung |
-| [`third-party-cdns`](docs/rules/third-party-cdns.de.md)               | Skripte und Styles von jsDelivr, unpkg, cdnjs und anderen öffentlichen CDNs (Hinweis)                                                      |
-| [`impressum-link`](docs/rules/impressum-link.de.md)                   | Seiten ohne Link zum Impressum                                                                                                             |
-| [`privacy-policy-link`](docs/rules/privacy-policy-link.de.md)         | Seiten ohne Link zur Datenschutzerklärung                                                                                                  |
-| [`form-privacy-notice`](docs/rules/form-privacy-notice.de.md)         | Kontakt-, Anmelde- oder Login-Formulare ohne Datenschutz-Link daneben; Hinweis                                                             |
-| [`https-transport`](docs/rules/https-transport.de.md)                 | Startseite über unverschlüsseltes HTTP; HTTP ohne Weiterleitung auf HTTPS als Warnung, fehlendes HSTS als Hinweis                          |
-| [`withdrawal-button`](docs/rules/withdrawal-button.de.md)             | Onlineshops ohne Link „Vertrag widerrufen“ auf der Startseite (Pflicht seit 19.06.2026)                                                    |
-| [`accessibility-statement`](docs/rules/accessibility-statement.de.md) | Onlineshops ohne Link zu Angaben über die Barrierefreiheit (BFSG); Hinweis                                                                 |
+| Regel                                                                   | Was sie findet                                                                                                                             |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`pre-consent-trackers`](docs/rules/pre-consent-trackers.de.md)         | Analyse-, Werbe- und Session-Replay-Tools, die vor der Einwilligung Anfragen senden oder Cookies setzen                                    |
+| [`trackers-after-reject`](docs/rules/trackers-after-reject.de.md)       | Tracker, die nach Klick auf „Ablehnen“ und Neuladen weiterlaufen                                                                           |
+| [`trackers-after-settings`](docs/rules/trackers-after-settings.de.md)   | Optional (`--check-settings`): Tracker, die laufen, obwohl in den Banner-Einstellungen alles abgewählt und gespeichert wurde               |
+| [`reject-option`](docs/rules/reject-option.de.md)                       | Cookie-Banner mit „Zustimmen“, aber ohne „Ablehnen“ auf der ersten Ebene; Pur-Abo-Modelle als Hinweis                                      |
+| [`consent-banner-missing`](docs/rules/consent-banner-missing.de.md)     | Tracker laufen und es gibt überhaupt kein Cookie-Banner; Besucher können weder einwilligen noch ablehnen                                   |
+| [`banner-legal-links`](docs/rules/banner-legal-links.de.md)             | Ein Banner, das die Seite blockiert und weder Datenschutzerklärung noch Impressum verlinkt                                                 |
+| [`consent-settings-link`](docs/rules/consent-settings-link.de.md)       | Kein sichtbarer Link oder Button, um die Cookie-Einstellungen nach dem Ablehnen wieder zu öffnen                                           |
+| [`google-fonts`](docs/rules/google-fonts.de.md)                         | Schriften von `fonts.googleapis.com` / `fonts.gstatic.com`                                                                                 |
+| [`adobe-fonts`](docs/rules/adobe-fonts.de.md)                           | Schriften von Adobe Fonts (`use.typekit.net` / `p.typekit.net`)                                                                            |
+| [`third-party-embeds`](docs/rules/third-party-embeds.de.md)             | YouTube, Vimeo, Google Maps, reCAPTCHA, Gravatar, Social-Media-Einbindungen und Chat-/Bewertungs-Widgets wie Intercom vor der Einwilligung |
+| [`third-party-cdns`](docs/rules/third-party-cdns.de.md)                 | Skripte und Styles von jsDelivr, unpkg, cdnjs und anderen öffentlichen CDNs (Hinweis)                                                      |
+| [`tracking-cookie-lifetime`](docs/rules/tracking-cookie-lifetime.de.md) | Tracking-Cookies, die länger als 13 Monate gelten (Hinweis)                                                                                |
+| [`impressum-link`](docs/rules/impressum-link.de.md)                     | Seiten ohne Link zum Impressum                                                                                                             |
+| [`privacy-policy-link`](docs/rules/privacy-policy-link.de.md)           | Seiten ohne Link zur Datenschutzerklärung                                                                                                  |
+| [`form-privacy-notice`](docs/rules/form-privacy-notice.de.md)           | Kontakt-, Anmelde- oder Login-Formulare ohne Datenschutz-Link daneben; Hinweis                                                             |
+| [`https-transport`](docs/rules/https-transport.de.md)                   | Startseite über unverschlüsseltes HTTP; HTTP ohne Weiterleitung auf HTTPS als Warnung, fehlendes HSTS als Hinweis                          |
+| [`withdrawal-button`](docs/rules/withdrawal-button.de.md)               | Onlineshops ohne Link „Vertrag widerrufen“ auf der Startseite (Pflicht seit 19.06.2026)                                                    |
+| [`accessibility-statement`](docs/rules/accessibility-statement.de.md)   | Onlineshops ohne Link zu Angaben über die Barrierefreiheit (BFSG); Hinweis                                                                 |
 
 Details, Hintergründe und Lösungen stehen auf den verlinkten Regelseiten in [`docs/rules`](docs/rules).
 
