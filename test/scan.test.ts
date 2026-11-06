@@ -112,6 +112,37 @@ describe('scan', () => {
     ]);
   });
 
+  it('reads ticked boxes, HTTP form targets, HTTP resources and the referrer policy', async () => {
+    let start: PageSnapshot | undefined;
+    const result = await scan(`${origin}/forms/signup.html`, {
+      ...options,
+      consentCheck: false,
+      onPage: (page) => {
+        start ??= page;
+      },
+    });
+    expect(start?.forms).toEqual([
+      {
+        kind: 'contact',
+        privacyNearby: true,
+        checkedBoxes: [
+          'Ich akzeptiere die AGB.',
+          'Ja, ich möchte den Newsletter mit Angeboten erhalten.',
+        ],
+        httpAction: 'http://forms.example.test/signup',
+      },
+    ]);
+    expect(start?.insecureResources).toEqual(['http://img.example.test/logo.png']);
+    expect(start?.referrerPolicy).toEqual({ meta: 'unsafe-url' });
+    expect(result.findings.map((f) => f.ruleId)).toEqual([
+      'form-preticked-consent',
+      'referrer-policy',
+    ]);
+    expect(result.findings[0]?.evidence).toEqual([
+      'ticked: "Ja, ich möchte den Newsletter mit Angeboten erhalten."',
+    ]);
+  });
+
   it('recognises a tracker by its localStorage key, not only by cookies', async () => {
     const result = await scan(`${origin}/storage/`, { ...options, consentCheck: false });
     expect(result.findings).toEqual([

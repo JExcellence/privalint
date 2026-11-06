@@ -5,15 +5,18 @@ import { bannerLegalLinks } from './banner-legal-links.js';
 import { consentBannerMissing } from './consent-banner-missing.js';
 import { consentPreselected } from './consent-preselected.js';
 import { consentSettingsLink } from './consent-settings-link.js';
+import { formPretickedConsent } from './form-preticked-consent.js';
 import { formPrivacyNotice } from './form-privacy-notice.js';
 import { googleFonts } from './google-fonts.js';
 import { httpsTransport } from './https-transport.js';
 import { impressumLink } from './impressum-link.js';
 import { legalNoticeContent } from './legal-notice-content.js';
+import { mixedContent } from './mixed-content.js';
 import { preConsentTrackers } from './pre-consent-trackers.js';
 import { privacyPolicyContent } from './privacy-policy-content.js';
 import { privacyPolicyLink } from './privacy-policy-link.js';
 import { privacyPolicyVendors } from './privacy-policy-vendors.js';
+import { referrerPolicy } from './referrer-policy.js';
 import { rejectLessProminent } from './reject-less-prominent.js';
 import { rejectOption } from './reject-option.js';
 import { thirdCountryProviders } from './third-country-providers.js';
@@ -46,7 +49,10 @@ export const defaultRules: readonly Rule[] = [
   privacyPolicyVendors,
   privacyPolicyContent,
   formPrivacyNotice,
+  formPretickedConsent,
   httpsTransport,
+  mixedContent,
+  referrerPolicy,
   withdrawalButton,
   accessibilityStatement,
 ];
@@ -58,15 +64,18 @@ export {
   consentBannerMissing,
   consentPreselected,
   consentSettingsLink,
+  formPretickedConsent,
   formPrivacyNotice,
   googleFonts,
   httpsTransport,
   impressumLink,
   legalNoticeContent,
+  mixedContent,
   preConsentTrackers,
   privacyPolicyContent,
   privacyPolicyLink,
   privacyPolicyVendors,
+  referrerPolicy,
   rejectLessProminent,
   rejectOption,
   thirdCountryProviders,

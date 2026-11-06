@@ -222,6 +222,10 @@ export interface FormObservation {
   kind: 'login' | 'contact';
   /** A link to the privacy policy in the form or right around it. */
   privacyNearby: boolean;
+  /** Labels of the checkboxes ticked when the page loaded, at most five, cut to 120 characters. */
+  checkedBoxes?: string[];
+  /** An http:// address the form or one of its submit buttons sends to. */
+  httpAction?: string;
 }
 
 /** A `<link>` element such as preconnect, dns-prefetch or preload. */
@@ -386,6 +390,10 @@ export interface PageSnapshot {
   cookies: RecordedCookie[];
   /** Forms that collect personal data. Internal input for form-privacy-notice. */
   forms?: FormObservation[];
+  /** Scripts, images, frames and stylesheets the page references over http://, at most ten. */
+  insecureResources?: string[];
+  /** The referrer policy the page sets by response header and by meta tag, as written. */
+  referrerPolicy?: { header?: string; meta?: string };
   /** Start page in native scans only: how it travels. */
   transport?: TransportObservation;
   /** localStorage and sessionStorage key names of the page's origin, never values. */

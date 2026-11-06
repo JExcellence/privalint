@@ -24,7 +24,22 @@ export async function readForms(page: Page): Promise<FormObservation[]> {
             }
             return privacy.test(a.textContent ?? '') || privacy.test(path);
           });
-        const result: { kind: 'login' | 'contact'; privacyNearby: boolean }[] = [];
+        const labelOf = (box: HTMLInputElement) =>
+          (
+            [...(box.labels ?? [])].map((label) => label.textContent).join(' ') ||
+            box.getAttribute('aria-label') ||
+            box.closest('label, p, li, div')?.textContent ||
+            ''
+          )
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 120);
+        const result: {
+          kind: 'login' | 'contact';
+          privacyNearby: boolean;
+          checkedBoxes?: string[];
+          httpAction?: string;
+        }[] = [];
         for (const form of [...document.forms].slice(0, max)) {
           const search =
             form.getAttribute('role') === 'search' ||
@@ -42,9 +57,25 @@ export async function readForms(page: Page): Promise<FormObservation[]> {
               around = parent;
             }
           }
+          const checkedBoxes = [
+            ...form.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
+          ]
+            .filter((box) => box.checked)
+            .map(labelOf)
+            .filter(Boolean)
+            .slice(0, 5);
+          const targets = [
+            form.action,
+            ...[...form.querySelectorAll<HTMLButtonElement | HTMLInputElement>('[formaction]')].map(
+              (button) => button.formAction,
+            ),
+          ];
+          const httpAction = targets.find((target) => /^http:/i.test(target));
           result.push({
             kind: login ? 'login' : 'contact',
             privacyNearby: mentionsPrivacy(around),
+            ...(checkedBoxes.length > 0 ? { checkedBoxes } : {}),
+            ...(httpAction === undefined ? {} : { httpAction }),
           });
         }
         return result;

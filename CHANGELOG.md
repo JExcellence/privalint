@@ -23,6 +23,12 @@ Upgrade notes:
 
 ### Added
 
+- New rule `form-preticked-consent` (warning): a form ticks a newsletter or advertising consent
+  checkbox before the visitor chooses (#139)
+- New rule `mixed-content`: a form on an HTTPS page submits to an `http://` address (error);
+  scripts, images, frames or stylesheets referenced over HTTP are info (#120)
+- New rule `referrer-policy` (info): the page sets `unsafe-url` or `no-referrer-when-downgrade` by
+  header or meta tag and contacts other hosts, which then receive the full page address (#119)
 - New rule `privacy-policy-content`: the privacy policy gives no e-mail or postal address of the
   controller, or still contains template text such as `[Firmenname]` or "Musterstraße" (warning);
   a data protection officer named without contact details is info (#116)

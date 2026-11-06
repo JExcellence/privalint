@@ -7,13 +7,16 @@ import {
   consentBannerMissing,
   consentPreselected,
   consentSettingsLink,
+  formPretickedConsent,
   googleFonts,
   impressumLink,
   legalNoticeContent,
+  mixedContent,
   preConsentTrackers,
   privacyPolicyContent,
   privacyPolicyLink,
   privacyPolicyVendors,
+  referrerPolicy,
   rejectLessProminent,
   thirdCountryProviders,
   thirdPartyCdns,
@@ -960,6 +963,120 @@ describe('privacy-policy-content', () => {
 
   it('stays quiet without a privacy policy', () => {
     expect(run(privacyPolicyContent, snapshot())).toEqual([]);
+  });
+});
+
+describe('form-preticked-consent', () => {
+  const form = (checkedBoxes: string[]) =>
+    snapshot({ forms: [{ kind: 'contact', privacyNearby: true, checkedBoxes }] });
+
+  it('warns about a newsletter box ticked in advance', () => {
+    const findings = run(
+      formPretickedConsent,
+      form(['Send me the newsletter', 'I accept the terms']),
+    );
+    expect(findings.map((f) => f.severity)).toEqual(['warning']);
+    expect(findings[0]?.evidence).toEqual(['ticked: "Send me the newsletter"']);
+  });
+
+  it.each([
+    ['Werbung per E-Mail erhalten'],
+    ['Feliratkozom a hírlevélre'],
+    ['Exclusive offers from our partners'],
+  ])('recognises "%s"', (label) => {
+    expect(run(formPretickedConsent, form([label]))).toHaveLength(1);
+  });
+
+  it('ignores ticked terms and remember-me boxes, and unticked newsletter boxes', () => {
+    expect(
+      run(formPretickedConsent, form(['Ich akzeptiere die AGB', 'Angemeldet bleiben'])),
+    ).toEqual([]);
+    expect(
+      run(formPretickedConsent, snapshot({ forms: [{ kind: 'contact', privacyNearby: true }] })),
+    ).toEqual([]);
+  });
+});
+
+describe('mixed-content', () => {
+  const page = (overrides: Partial<PageSnapshot>) =>
+    snapshot({ url: 'https://example.de/', finalUrl: 'https://example.de/', ...overrides });
+
+  it('reports a form that submits over HTTP as an error', () => {
+    const findings = run(
+      mixedContent,
+      page({
+        forms: [{ kind: 'login', privacyNearby: true, httpAction: 'http://example.de/login' }],
+      }),
+    );
+    expect(findings.map((f) => `${f.severity}:${f.subject}`)).toEqual(['error:form-action']);
+    expect(findings[0]?.evidence).toEqual(['submits to http://example.de/login']);
+  });
+
+  it('notes resources over HTTP, from the page and its requests, once each', () => {
+    const findings = run(
+      mixedContent,
+      page({
+        insecureResources: ['http://cdn.example.net/a.js'],
+        requests: [request('http://cdn.example.net/a.js'), request('http://img.example.net/b.png')],
+      }),
+    );
+    expect(findings.map((f) => `${f.severity}:${f.subject}`)).toEqual(['info:resources']);
+    expect(findings[0]?.evidence).toEqual([
+      'http://cdn.example.net/a.js',
+      'http://img.example.net/b.png',
+    ]);
+  });
+
+  it('leaves plain HTTP pages to https-transport', () => {
+    expect(
+      run(
+        mixedContent,
+        snapshot({
+          url: 'http://example.de/',
+          finalUrl: 'http://example.de/',
+          forms: [{ kind: 'login', privacyNearby: true, httpAction: 'http://example.de/login' }],
+        }),
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe('referrer-policy', () => {
+  const page = (
+    referrerPolicy: PageSnapshot['referrerPolicy'],
+    urls = ['https://www.google-analytics.com/g/collect'],
+  ) =>
+    snapshot({
+      ...(referrerPolicy === undefined ? {} : { referrerPolicy }),
+      requests: urls.map((url) => request(url)),
+    });
+
+  it.each<[string, NonNullable<PageSnapshot['referrerPolicy']>, string]>([
+    ['unsafe-url by header', { header: 'unsafe-url' }, 'Referrer-Policy header: unsafe-url'],
+    [
+      'the last known header token',
+      { header: 'no-referrer, no-referrer-when-downgrade' },
+      'Referrer-Policy header: no-referrer-when-downgrade',
+    ],
+    ['the legacy meta value always', { meta: 'always' }, '<meta name="referrer">: unsafe-url'],
+    [
+      'a meta tag replacing a strict header',
+      { header: 'strict-origin', meta: 'unsafe-url' },
+      '<meta name="referrer">: unsafe-url',
+    ],
+  ])('notes %s', (_, policy, evidence) => {
+    const findings = run(referrerPolicy, page(policy));
+    expect(findings.map((f) => f.severity)).toEqual(['info']);
+    expect(findings[0]?.evidence).toEqual([evidence, 'www.google-analytics.com']);
+  });
+
+  it('stays quiet with the default, a strict policy, or no third-party requests', () => {
+    expect(run(referrerPolicy, page(undefined))).toEqual([]);
+    expect(run(referrerPolicy, page({ header: 'strict-origin-when-cross-origin' }))).toEqual([]);
+    expect(run(referrerPolicy, page({ header: 'unsafe-url', meta: 'no-referrer' }))).toEqual([]);
+    expect(
+      run(referrerPolicy, page({ header: 'unsafe-url' }, ['https://example.de/app.js'])),
+    ).toEqual([]);
   });
 });
 

@@ -28,6 +28,7 @@ const SITE_WIDE = new Set([
   'privacy-policy-link',
   'third-country-providers',
   'third-party-cdns',
+  'referrer-policy',
 ]);
 
 export interface SiteWideFinding {
