@@ -149,10 +149,50 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 13. cikk (1) bekezdés e) pont'],
     eu: ['Art. 13(1)(e) GDPR'],
   },
+  // Consent is an active choice: no pre-ticked boxes, and advertising e-mails need it.
+  'form-preticked-consent': {
+    de: ['Art. 4 Nr. 11, Art. 7 DSGVO', 'EuGH C-673/17 (Planet49)', '§ 7 Abs. 2 UWG'],
+    at: ['Art. 4 Nr. 11, Art. 7 DSGVO', 'EuGH C-673/17 (Planet49)', '§ 174 TKG 2021'],
+    ch: ['Art. 3 Abs. 1 lit. o UWG'],
+    hu: ['GDPR 4. cikk 11. pont, 7. cikk', 'Grt. 6. §'],
+    eu: ['Art. 4(11) and 7 GDPR', 'CJEU C-673/17 (Planet49)', 'Art. 13 Directive 2002/58/EC'],
+  },
+  // Security of processing: personal data travels encrypted.
+  'mixed-content': {
+    de: ['Art. 32 DSGVO'],
+    at: ['Art. 32 DSGVO'],
+    ch: ['Art. 8 DSG'],
+    hu: ['GDPR 32. cikk'],
+    eu: ['Art. 32 GDPR'],
+  },
+  // Personal data beyond the IP address sent to other sites.
+  'third-party-personal-data': {
+    de: ['Art. 5 Abs. 1 lit. c, Art. 6 Abs. 1 DSGVO'],
+    at: ['Art. 5 Abs. 1 lit. c, Art. 6 Abs. 1 DSGVO'],
+    ch: ['Art. 6 Abs. 2 und 3 DSG'],
+    hu: ['GDPR 5. cikk (1) c), 6. cikk (1)'],
+    eu: ['Art. 5(1)(c) and 6(1) GDPR'],
+  },
+  // Data protection by default: no more data to third parties than needed.
+  'referrer-policy': {
+    de: ['Art. 25 Abs. 2 DSGVO'],
+    at: ['Art. 25 Abs. 2 DSGVO'],
+    ch: ['Art. 7 Abs. 3 DSG'],
+    hu: ['GDPR 25. cikk (2) bekezdés'],
+    eu: ['Art. 25(2) GDPR'],
+  },
+  // Who is responsible for the data and how to reach them and the data protection officer.
+  'privacy-policy-content': {
+    de: ['Art. 13 Abs. 1 lit. a und b DSGVO'],
+    at: ['Art. 13 Abs. 1 lit. a und b DSGVO'],
+    ch: ['Art. 19 Abs. 2 lit. a DSG'],
+    hu: ['GDPR 13. cikk (1) bekezdés a) és b) pont'],
+    eu: ['Art. 13(1)(a) and (b) GDPR'],
+  },
   // What the legal notice has to say: name, address, fast electronic contact, register entry.
   'legal-notice-content': {
     de: ['§ 5 Abs. 1 Nr. 1, 2 und 4 DDG'],
-    at: ['§ 5 Abs. 1 ECG', '§ 14 UGB'],
+    at: ['§ 5 Abs. 1 ECG', '§ 14 UGB', '§ 25 MedienG'],
     ch: ['Art. 3 Abs. 1 lit. s UWG'],
     hu: ['Ekertv. 4. §'],
     eu: ['Art. 5(1) Directive 2000/31/EC (e-commerce)'],

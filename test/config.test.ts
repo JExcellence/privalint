@@ -11,6 +11,7 @@ import { applyPolicy } from '../src/policy.js';
 import { defaultRules } from '../src/rules/index.js';
 import { scan } from '../src/scanner.js';
 import type { Finding } from '../src/types.js';
+import { IMPRINT_TEXT } from './helpers.js';
 
 const temporary: string[] = [];
 // The CLI is built into a private directory, not the shared dist/, so a parallel `npm run build`
@@ -233,6 +234,10 @@ describe('JSON configuration', () => {
     const server = createServer((request, response) => {
       if (request.url?.startsWith('/missing')) {
         response.writeHead(503).end();
+        return;
+      }
+      if (request.url === '/impressum' || request.url === '/privacy') {
+        response.writeHead(200, { 'content-type': 'text/html' }).end(IMPRINT_TEXT);
         return;
       }
       const body =

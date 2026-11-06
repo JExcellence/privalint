@@ -18,7 +18,7 @@ export const LEGAL_NOTICE =
  * "Rechtliche Hinweise", "Rechtliches" or "Jogi tudnivalók" (telekom.hu). They can't be told
  * apart by the label, so they are noted, not trusted.
  */
-const VAGUE_LEGAL = /rechtliche[\s_-]?hinweise|rechtliches|jogi[\s_-]?tudnival|\blegal\b/i;
+export const VAGUE_LEGAL = /rechtliche[\s_-]?hinweise|rechtliches|jogi[\s_-]?tudnival|\blegal\b/i;
 
 const CONTACT = /kontakt|contact|kapcsolat/i;
 

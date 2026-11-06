@@ -15,7 +15,9 @@ the timeout `stage` (`queued` or `fetching`) on adapter diagnostics, the optiona
 0.10.0 without breaking 1.4.0 validators), and
 `consent.tcf` and `consent.settings.tcf`, what an IAB TCF consent manager reports after rejecting
 and after everything was switched off. 1.5.0 adds the report language `hu` (`lang` and
-`options.lang`), which a 1.4.0 validator would reject; the structure is otherwise the same.
+`options.lang`), the observation kind `linked-page` for rules that read the legal notice or
+privacy policy linked from the start page, the skip reason `no-linked-page` and the explanations
+`no-linked-page` and `linked-page-not-loaded`, all of which a 1.4.0 validator would reject.
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;
 unknown versions are unsupported. Never assign a schema version to old data merely to validate it.
 

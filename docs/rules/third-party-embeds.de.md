@@ -24,4 +24,9 @@ Einwilligung bzw. Klick laden. Karten können alternativ durch einen statischen 
 werden; Captchas möglichst nur an tatsächlich geschützten Formularen laden. Länderprofile steuern
 die Einordnung des Tools und bestimmen nicht automatisch anwendbares Recht.
 
+Für YouTube (`youtube.com/embed`), Vimeo (ohne `dnt=1`) und Google Maps nennt der Bericht zusätzlich
+einen Hinweis: den erweiterten Datenschutzmodus `www.youtube-nocookie.com/embed/...`, den
+Player-Parameter `dnt=1` bzw. ein Platzhalterbild mit Link zu Google Maps. Keiner davon ersetzt eine
+Einwilligung.
+
 Die [englische Fassung](third-party-embeds.md) verlinkt die Originaldokumentation aller neuen Anbieter.

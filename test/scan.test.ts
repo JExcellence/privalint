@@ -14,10 +14,13 @@ const TYPES: Record<string, string> = { '.html': 'text/html', '.css': 'text/css'
 let server: Server;
 let origin: string;
 let onceServed = false;
+/** How often each path was requested. */
+const hits = new Map<string, number>();
 
 beforeAll(async () => {
   server = createServer(async (req, res) => {
     const path = new URL(req.url ?? '/', 'http://localhost').pathname;
+    hits.set(path, (hits.get(path) ?? 0) + 1);
     if (path === '/old-about') {
       res.writeHead(301, { location: '/clean/about.html' }).end();
       return;
@@ -109,6 +112,49 @@ describe('scan', () => {
     ]);
   });
 
+  it('reads ticked boxes, HTTP form targets, HTTP resources and the referrer policy', async () => {
+    let start: PageSnapshot | undefined;
+    const result = await scan(`${origin}/forms/signup.html`, {
+      ...options,
+      consentCheck: false,
+      onPage: (page) => {
+        start ??= page;
+      },
+    });
+    expect(start?.forms).toEqual([
+      {
+        kind: 'contact',
+        privacyNearby: true,
+        checkedBoxes: [
+          'Ich akzeptiere die AGB.',
+          'Ja, ich möchte den Newsletter mit Angeboten erhalten.',
+        ],
+        httpAction: 'http://forms.example.test/signup',
+      },
+    ]);
+    expect(start?.insecureResources).toEqual(['http://img.example.test/logo.png']);
+    expect(start?.referrerPolicy).toEqual({ meta: 'unsafe-url' });
+    expect(result.findings.map((f) => f.ruleId)).toEqual([
+      'form-preticked-consent',
+      'referrer-policy',
+    ]);
+    expect(result.findings[0]?.evidence).toEqual([
+      'ticked: "Ja, ich möchte den Newsletter mit Angeboten erhalten."',
+    ]);
+  });
+
+  it('redacts e-mail hashes in request URLs from every finding', async () => {
+    const result = await scan(`${origin}/leaky/pixel.html`, { ...options, consentCheck: false });
+    const report = JSON.stringify(result);
+    expect(report).not.toContain('f'.repeat(64));
+    expect(result.findings.find((f) => f.ruleId === 'pre-consent-trackers')?.evidence).toEqual([
+      'request https://www.facebook.com/tr?id=1&ev=PageView&ud%5Bem%5D=[redacted]',
+    ]);
+    expect(result.findings.find((f) => f.ruleId === 'third-party-personal-data')?.evidence).toEqual(
+      ['www.facebook.com: ud[em] (e-mail, hashed)'],
+    );
+  });
+
   it('recognises a tracker by its localStorage key, not only by cookies', async () => {
     const result = await scan(`${origin}/storage/`, { ...options, consentCheck: false });
     expect(result.findings).toEqual([
@@ -139,14 +185,72 @@ describe('scan', () => {
     expect(findings.map(({ severity, message }) => `${severity}: ${message}`)).toEqual([
       'warning: The legal notice gives no postal address and no e-mail address.',
       'info: The legal notice names the legal form Kft. but no register entry.',
+      'info: The legal notice names the legal form Kft. but no tax number.',
     ]);
     expect(findings[0]?.pageUrl).toBe(`${origin}/legal-notice/`);
     expect(findings[0]?.evidence[0]).toBe(`legal notice: ${origin}/legal-notice/imprint.html`);
   });
 
+  it('reads a vague legal page or the privacy policy when no legal notice is linked', async () => {
+    const pages: PageSnapshot[] = [];
+    const vague = await scan(`${origin}/provider-details/vague.html`, {
+      ...options,
+      onPage: (page) => pages.push(page),
+    });
+    expect(pages[0]?.legalNotice?.readAs).toEqual({
+      source: 'legal-link',
+      label: 'Rechtliche Hinweise',
+    });
+    expect(vague.findings.filter((f) => f.ruleId === 'legal-notice-content')).toEqual([]);
+
+    const before = hits.get('/provider-details/datenschutz.html') ?? 0;
+    const policyOnly = await scan(`${origin}/provider-details/policy-only.html`, {
+      ...options,
+      onPage: (page) => pages.push(page),
+    });
+    expect(pages[1]?.legalNotice?.readAs).toEqual({ source: 'privacy-policy' });
+    expect(pages[1]?.privacyPolicy?.url).toBe(`${origin}/provider-details/datenschutz.html`);
+    expect(
+      policyOnly.findings.filter(
+        (f) => f.ruleId.startsWith('legal-notice') || f.ruleId.startsWith('privacy-policy-content'),
+      ),
+    ).toEqual([]);
+    // Read once for both rules.
+    expect(hits.get('/provider-details/datenschutz.html')).toBe(before + 1);
+  });
+
+  it('lists further privacy documents an overview policy page links', async () => {
+    let start: PageSnapshot | undefined;
+    const result = await scan(`${origin}/provider-details/hub.html`, {
+      ...options,
+      onPage: (page) => {
+        start ??= page;
+      },
+    });
+    expect(start?.privacyPolicy?.linkedDocuments).toEqual([
+      `${origin}/provider-details/adatvedelem/reszletek`,
+      `${origin}/provider-details/adatkezelesi-tajekoztato.pdf`,
+    ]);
+    expect(
+      result.findings
+        .filter((f) => f.ruleId === 'privacy-policy-content')
+        .map((f) => `${f.severity}:${f.subject}`),
+    ).toEqual(['info:contact']);
+  });
+
+  it('notes template text and an unreachable data protection officer in the privacy policy', async () => {
+    const result = await scan(`${origin}/provider-details/template.html`, options);
+    const findings = result.findings.filter((f) => f.ruleId === 'privacy-policy-content');
+    expect(findings.map((f) => `${f.severity}:${f.subject}`)).toEqual([
+      'warning:placeholder',
+      'info:dpo',
+    ]);
+    expect(findings[0]?.message).toContain('"[Firmenname]", "Musterstraße"');
+  });
+
   it('skips links that lead nowhere and never reads an error page as a legal page', async () => {
     let start: PageSnapshot | undefined;
-    await scan(`${origin}/legal-notice/links.html`, {
+    const result = await scan(`${origin}/legal-notice/links.html`, {
       ...options,
       onPage: (page) => {
         start ??= page;
@@ -154,8 +258,35 @@ describe('scan', () => {
     });
     // "Privacy settings" with href="#" comes first; the policy behind it is still read.
     expect(start?.privacyPolicy?.url).toBe(`${origin}/policy-vendors/privacy.html`);
-    // The Imprint link answers 404.
+    // The Imprint link answers 404: not evaluable, not "checked".
     expect(start?.legalNotice).toBeUndefined();
+    const evaluation = (ruleId: string) =>
+      result.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === ruleId);
+    expect(evaluation('legal-notice-content')).toMatchObject({
+      status: 'not-evaluable',
+      explanation: 'linked-page-not-loaded',
+    });
+    expect(evaluation('privacy-policy-vendors')).toMatchObject({ outcome: 'checked-no-finding' });
+  });
+
+  it('skips the linked-page rules without a link, and on every page but the start page', async () => {
+    const result = await scan(`${origin}/consent/good.html`, { ...options, maxPages: 1 });
+    const start = result.pages[0]?.ruleEvaluations ?? [];
+    // good.html links the Impressum and privacy policy of the clean fixture: both read.
+    expect(start.find((rule) => rule.ruleId === 'legal-notice-content')).toMatchObject({
+      outcome: 'checked-no-finding',
+    });
+    const crawl = await scan(`${origin}/clean/`, { ...options, maxPages: 2 });
+    const second = crawl.pages[1]?.ruleEvaluations ?? [];
+    expect(second.find((rule) => rule.ruleId === 'legal-notice-content')).toMatchObject({
+      status: 'skipped',
+      explanation: 'not-start-page',
+    });
+    const bare = await scan(`${origin}/legal-notice/imprint.html`, options);
+    // Its only "Imprint" link points to the page itself: no legal notice to read.
+    expect(
+      bare.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === 'legal-notice-content'),
+    ).toMatchObject({ status: 'skipped', explanation: 'no-linked-page' });
   });
 
   it('looks for every service the start page uses in its privacy policy and cookie policy', async () => {
@@ -610,7 +741,7 @@ describe('consent check', () => {
         saveLabel: 'Elfogadom a kiválasztottakat',
         switchedOff: 2,
       });
-      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected', 'legal-notice-content']);
     });
 
     it('picks the narrowest level when categories are radio buttons (otpbank.hu)', async () => {
@@ -701,7 +832,7 @@ describe('consent check', () => {
         },
       });
       expect(result.region).toBe('hu');
-      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected', 'legal-notice-content']);
     });
 
     it('reports a banner without a settings control', async () => {

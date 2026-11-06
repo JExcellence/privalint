@@ -6,18 +6,21 @@ import { diagnosticUrl } from './diagnostics.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
 import { networkLimits } from './network.js';
+import { redactPersonalDataInText } from './personal-data.js';
 import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
 import { summarizeRules } from './rule-summary.js';
-import { LEGAL_NOTICE } from './rules/impressum-link.js';
+import { LEGAL_NOTICE, VAGUE_LEGAL } from './rules/impressum-link.js';
 import { defaultRules } from './rules/index.js';
 import { legalNoticeContent } from './rules/legal-notice-content.js';
 import { linkMatches } from './rules/links.js';
+import { privacyPolicyContent } from './rules/privacy-policy-content.js';
 import { PRIVACY_POLICY } from './rules/privacy-policy-link.js';
 import { privacyPolicyVendors } from './rules/privacy-policy-vendors.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import type {
   ConsentSummary,
+  LinkedPageMissing,
   LinkedPageText,
   OffSiteRedirect,
   PageSnapshot,
@@ -173,13 +176,12 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ) {
           snapshot.consent.settings = await checkSettings(browser, url, siteUrl, options);
         }
-        if (isStart && rules.some((rule) => rule.id === legalNoticeContent.id)) {
-          const notice = await readLinkedPage(browser, snapshot, options, LEGAL_NOTICE);
-          if (notice !== undefined) snapshot.legalNotice = notice;
-        }
-        if (isStart && rules.some((rule) => rule.id === privacyPolicyVendors.id)) {
-          const policy = await readPrivacyPolicy(browser, snapshot, options);
-          if (policy !== undefined) snapshot.privacyPolicy = policy;
+        if (isStart) {
+          const wants = (id: string) => rules.some((rule) => rule.id === id);
+          await readLegalPages(browser, snapshot, options, {
+            notice: wants(legalNoticeContent.id),
+            policy: wants(privacyPolicyVendors.id) || wants(privacyPolicyContent.id),
+          });
         }
         return { url, snapshot, isStart, hostStart, pageIndex, captureId };
       });
@@ -334,7 +336,14 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       ...consentSummary(snapshots[0]),
       findings: applyPolicy(
         applyRegion(
-          assessments.flatMap((assessment) => assessment.findings),
+          assessments
+            .flatMap((assessment) => assessment.findings)
+            // E-mail addresses or phone numbers in request URLs never reach a report.
+            .map((finding) => ({
+              ...finding,
+              message: redactPersonalDataInText(finding.message),
+              evidence: finding.evidence.map(redactPersonalDataInText),
+            })),
           region,
         ),
         options.ruleSettings,
@@ -368,43 +377,142 @@ async function readLinkedPage(
   from: Pick<PageSnapshot, 'finalUrl' | 'links'>,
   options: ScanOptions,
   pattern: RegExp,
-): Promise<(LinkedPageText & { links: PageSnapshot['links'] }) | undefined> {
+): Promise<LinkedPageResult> {
   const fromUrl = new URL(from.finalUrl);
   // "Privacy settings" with href="#" may come before the policy link: try the first real target.
-  const target = from.links
+  const found = from.links
     .filter(linkMatches(pattern))
-    .map((link) => crawlTarget(link.href, fromUrl))
-    .find((url) => url !== undefined && url !== withoutHash(from.finalUrl));
-  if (target === undefined) return undefined;
+    .map((link) => ({ link, url: crawlTarget(link.href, fromUrl) }))
+    .find(({ url }) => url !== undefined && url !== withoutHash(from.finalUrl));
+  const target = found?.url;
+  if (target === undefined) return { missing: 'no-link' };
   const page = await capturePage(browser, target, fromUrl, options, 'none', true);
-  // A 404 or 500 page is no legal notice or policy, whatever it says.
+  // A 404 or 500 page is no legal notice or policy, whatever it says. A link that leads to another
+  // site is not this site's page either.
+  if (!isFirstParty(page.finalUrl, fromUrl)) return { missing: 'no-link' };
   const failed = page.error !== undefined || page.status === null || page.status >= 400;
-  if (failed || !isFirstParty(page.finalUrl, fromUrl)) return undefined;
-  return page.pageText === undefined ? undefined : { ...page.pageText, links: page.links };
+  if (failed || page.pageText === undefined) return { missing: 'not-loaded' };
+  const complete = page.capture?.complete !== false;
+  return { page: { ...page.pageText, complete }, links: page.links, label: found?.link.text ?? '' };
 }
 
-/** The privacy policy, followed one level to a separate cookie policy it links. */
+type LinkedPageResult =
+  | { page: LinkedPageText; links: PageSnapshot['links']; label: string }
+  | { missing: LinkedPageMissing };
+
+/**
+ * Reads the legal notice and the privacy policy the selected rules need, each at most once.
+ * Without a clear legal notice link, a page behind a vague legal link or the privacy policy is
+ * read in its place, since some sites put the provider details there.
+ */
+async function readLegalPages(
+  browser: Browser,
+  start: PageSnapshot,
+  options: ScanOptions,
+  want: { notice: boolean; policy: boolean },
+): Promise<void> {
+  let policy: LinkedPageResult | undefined;
+  const readPolicy = async (): Promise<LinkedPageResult> => {
+    policy ??= await readPrivacyPolicy(browser, start, options);
+    return policy;
+  };
+  const missing: NonNullable<PageSnapshot['linkedPageMissing']> = {};
+  if (want.notice) {
+    let notice = await readLinkedPage(browser, start, options, LEGAL_NOTICE);
+    // A legal notice link back to the start page makes the start page the legal notice: nothing to
+    // read in its place.
+    if (
+      'missing' in notice &&
+      notice.missing === 'no-link' &&
+      !start.links.some(linkMatches(LEGAL_NOTICE))
+    ) {
+      const vague = await readLinkedPage(browser, start, options, VAGUE_LEGAL);
+      const instead = 'page' in vague ? vague : await readPolicy();
+      if ('page' in instead) {
+        const readAs: LinkedPageText['readAs'] =
+          instead === vague
+            ? { source: 'legal-link', label: instead.label }
+            : { source: 'privacy-policy' };
+        notice = { ...instead, page: { ...instead.page, readAs } };
+      }
+    }
+    if ('page' in notice) start.legalNotice = notice.page;
+    else missing.legalNotice = notice.missing;
+  }
+  if (want.policy) {
+    const read = await readPolicy();
+    if ('page' in read) start.privacyPolicy = read.page;
+    else missing.privacyPolicy = read.missing;
+  }
+  if (Object.keys(missing).length > 0) {
+    start.linkedPageMissing = { ...start.linkedPageMissing, ...missing };
+  }
+}
+
+/**
+ * The privacy policy and a cookie policy it links, plus the other privacy documents the policy page
+ * links but privalint doesn't read: sub-pages of the policy, and pages or PDFs labelled as privacy
+ * notices. A policy page that is only an overview keeps its details there.
+ */
 async function readPrivacyPolicy(
   browser: Browser,
   start: PageSnapshot,
   options: ScanOptions,
-): Promise<LinkedPageText | undefined> {
+): Promise<LinkedPageResult> {
+  const result = await readPolicyAndCookies(browser, start, options);
+  if ('missing' in result) return result;
+  const policyUrl = new URL(result.page.url);
+  const subPages = `${policyUrl.pathname.replace(/\/$/, '')}/`;
+  const documents = new Set<string>();
+  for (const link of result.links) {
+    let target: URL;
+    try {
+      target = new URL(link.href, policyUrl);
+    } catch {
+      continue;
+    }
+    if (!/^https?:$/.test(target.protocol) || linkMatches(COOKIE_POLICY)(link)) continue;
+    target.hash = '';
+    if (target.href === withoutHash(policyUrl.href)) continue;
+    if (target.pathname.startsWith(subPages) || linkMatches(PRIVACY_POLICY)(link)) {
+      documents.add(target.href);
+    }
+  }
+  if (documents.size === 0) return result;
+  return { ...result, page: { ...result.page, linkedDocuments: [...documents].slice(0, 3) } };
+}
+
+/** The privacy policy, followed one level to a separate cookie policy it links. */
+async function readPolicyAndCookies(
+  browser: Browser,
+  start: PageSnapshot,
+  options: ScanOptions,
+): Promise<LinkedPageResult> {
   const policy = await readLinkedPage(browser, start, options, PRIVACY_POLICY);
-  if (policy === undefined) return undefined;
-  const { links, ...text } = policy;
+  if ('missing' in policy) return policy;
+  const { page: text, links } = policy;
   const cookieLink = links.find(linkMatches(COOKIE_POLICY));
-  if (cookieLink === undefined) return text;
+  if (cookieLink === undefined) return policy;
   const cookies = await readLinkedPage(
     browser,
-    { finalUrl: policy.url, links },
+    { finalUrl: text.url, links },
     options,
     COOKIE_POLICY,
   );
-  if (cookies !== undefined) return { ...text, text: `${text.text}\n${cookies.text}` };
+  if ('page' in cookies) {
+    const complete = text.complete !== false && cookies.page.complete !== false;
+    return {
+      page: { ...text, text: `${text.text}\n${cookies.page.text}`, complete },
+      links,
+      label: policy.label,
+    };
+  }
   // A link back to the policy itself was read already; anything else (a PDF, another site, a
   // page that failed) leaves part of the policy unread.
-  const target = crawlTarget(cookieLink.href, new URL(policy.url));
-  return target === withoutHash(policy.url) ? text : { ...text, unread: [cookieLink.href] };
+  const target = crawlTarget(cookieLink.href, new URL(text.url));
+  return target === withoutHash(text.url)
+    ? policy
+    : { page: { ...text, unread: [cookieLink.href] }, links, label: policy.label };
 }
 
 /** Runs the settings path on the start page in a fresh context, after the reject path. */

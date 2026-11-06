@@ -13,11 +13,19 @@ privalint diese Seite nach der Startseite zusätzlich, ohne sie als gecrawlte Se
 liest ihren sichtbaren Text. Die Befunde stehen bei der Startseite, mit der Impressums-URL als
 Beleg.
 
-| Angabe          | Wie sie erkannt wird                                                                     | Fehlt                                                                                                          |
-| --------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Postanschrift   | eine Postleitzahl mit Ort, dazu eine Straße mit Hausnummer                               | `warning`                                                                                                      |
-| E-Mail          | ein `mailto:`-Link oder eine Adresse im Text, auch als `(at)` / `[at]` geschrieben       | `warning`                                                                                                      |
-| Registereintrag | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE-Nummer, „company number“, … | `info`, nur wenn eine eingetragene Rechtsform (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., …) genannt ist |
+Hat die Startseite gar keinen Impressums-Link, liest privalint stattdessen eine Seite hinter einem
+unklaren Rechts-Link („Rechtliche Hinweise“, „Rechtliches“, „Jogi tudnivalók“, „Legal“) oder
+sonst die Datenschutzerklärung, weil manche Websites die Anbieterangaben dort nennen. Alles, was
+dort fehlt, wird als `info` gemeldet, da die Seite nicht als Impressum gedacht sein muss. Die
+Datenschutzerklärung wird nur einmal geladen, auch wenn die Datenschutz-Regeln sie brauchen.
+
+| Angabe                   | Wie sie erkannt wird                                                                     | Fehlt                                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Postanschrift            | Postleitzahl und Ort, mit Straße und Hausnummer in dieser oder der Zeile darüber         | `warning`                                                                                                      |
+| E-Mail                   | ein `mailto:`-Link oder eine Adresse im Text, auch als `(at)` / `[at]` geschrieben       | `warning`                                                                                                      |
+| Registereintrag          | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE-Nummer, „company number“, … | `info`, nur wenn eine eingetragene Rechtsform (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., …) genannt ist |
+| Steuernummer (Ungarn)    | „adószám“ oder eine Nummer wie `12345678-2-42`                                           | `info`, nur mit `--region hu` und einer eingetragenen Rechtsform                                               |
+| Offenlegung (Österreich) | „Offenlegung“, „§ 25 MedienG“ oder „Mediengesetz“                                        | `info`, nur mit `--region at`                                                                                  |
 
 Postleitzahlen mit fünf Ziffern (Deutschland) oder vier (Österreich, Schweiz, Ungarn), auch mit
 Länderkürzel wie `A-` oder `H-`, zählen in jeder Region, ebenso die ungarische Reihenfolge
@@ -30,9 +38,9 @@ und schnell per E-Mail. Ein Kontaktformular allein reicht nicht. Eingetragene Un
 Register und Nummer nennen.
 
 - § 5 Abs. 1 Nr. 1, 2 und 4 DDG
-- § 5 Abs. 1 ECG, § 14 UGB (Österreich)
+- § 5 Abs. 1 ECG, § 14 UGB, § 25 MedienG (Österreich)
 - Art. 3 Abs. 1 lit. s UWG (Schweiz, für den elektronischen Geschäftsverkehr)
-- Ekertv. 4. § (Ungarn)
+- Ekertv. 4. § (Ungarn, auch die Steuernummer)
 - Art. 5 Abs. 1 Richtlinie 2000/31/EG (E-Commerce)
 
 ## Wie beheben

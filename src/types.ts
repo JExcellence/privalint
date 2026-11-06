@@ -123,7 +123,9 @@ export type ObservationKind =
   /** The start page was searched for a banner, found or not. Since schema 1.4.0. */
   | 'banner-search'
   /** How the start page travels: HTTPS, HSTS, plain HTTP. Native scans only. Since 1.4.0. */
-  | 'transport';
+  | 'transport'
+  /** The legal notice or privacy policy the start page links, loaded separately. Since 1.5.0. */
+  | 'linked-page';
 
 export interface RuleEvaluation {
   pageId?: string;
@@ -139,7 +141,9 @@ export interface RuleEvaluation {
     /** The settings-layer check is opt-in. Since schema 1.3.0. */
     | 'settings-check-disabled'
     /** Adapter and offline scans make no extra request to http://. Since schema 1.4.0. */
-    | 'transport-not-checked';
+    | 'transport-not-checked'
+    /** The start page links no such page on the same site. Since schema 1.5.0. */
+    | 'no-linked-page';
   /** Executed against available positive evidence, without ruling out additional findings. */
   partial: boolean;
   outcome?: 'checked-no-finding' | 'finding-detected' | 'not-evaluable';
@@ -171,7 +175,10 @@ export type RuleExplanation =
   | 'settings-saved-and-reloaded'
   // Since schema 1.4.0:
   | 'banner-not-shown'
-  | 'transport-not-checked';
+  | 'transport-not-checked'
+  // Since schema 1.5.0:
+  | 'no-linked-page'
+  | 'linked-page-not-loaded';
 
 export interface CaptureObservation {
   complete: boolean;
@@ -215,6 +222,10 @@ export interface FormObservation {
   kind: 'login' | 'contact';
   /** A link to the privacy policy in the form or right around it. */
   privacyNearby: boolean;
+  /** Labels of the checkboxes ticked when the page loaded, at most five, cut to 120 characters. */
+  checkedBoxes?: string[];
+  /** An http:// address the form or one of its submit buttons sends to. */
+  httpAction?: string;
 }
 
 /** A `<link>` element such as preconnect, dns-prefetch or preload. */
@@ -342,6 +353,9 @@ export interface TcfObservation {
   vendorLegitimateInterests: number;
 }
 
+/** Why a linked page was not read: no such link on the same site, or the load failed. */
+export type LinkedPageMissing = 'no-link' | 'not-loaded';
+
 /** A page the start page links to, kept as text: the legal notice or the privacy policy. */
 export interface LinkedPageText {
   /** Where the page ended up. */
@@ -352,6 +366,15 @@ export interface LinkedPageText {
   mailto: boolean;
   /** Linked parts that could not be read, such as a cookie policy in a PDF. */
   unread?: string[];
+  /** Privacy policy only: further privacy documents it links that were not read, at most three. */
+  linkedDocuments?: string[];
+  /** False when a request of the page never finished: what's missing may not have loaded. */
+  complete?: boolean;
+  /**
+   * Set when the page was read in place of a missing legal notice: a page behind a vague legal
+   * link ("Rechtliche Hinweise"), or the privacy policy.
+   */
+  readAs?: { source: 'legal-link'; label: string } | { source: 'privacy-policy' };
 }
 
 /**
@@ -369,6 +392,10 @@ export interface PageSnapshot {
   cookies: RecordedCookie[];
   /** Forms that collect personal data. Internal input for form-privacy-notice. */
   forms?: FormObservation[];
+  /** Scripts, images, frames and stylesheets the page references over http://, at most ten. */
+  insecureResources?: string[];
+  /** The referrer policy the page sets by response header and by meta tag, as written. */
+  referrerPolicy?: { header?: string; meta?: string };
   /** Start page in native scans only: how it travels. */
   transport?: TransportObservation;
   /** localStorage and sessionStorage key names of the page's origin, never values. */
@@ -386,6 +413,8 @@ export interface PageSnapshot {
    * separately. Internal input for privacy-policy-vendors, not in the report.
    */
   privacyPolicy?: LinkedPageText;
+  /** Start page only: why the legal notice or privacy policy was not read. Internal. */
+  linkedPageMissing?: { legalNotice?: LinkedPageMissing; privacyPolicy?: LinkedPageMissing };
   /** Primary language subtag of `<html lang>`, lowercase, such as `en` or `hu`. */
   language?: string;
   resourceHints: ResourceHint[];

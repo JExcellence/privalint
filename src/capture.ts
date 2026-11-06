@@ -124,6 +124,15 @@ export async function capturePage(
     const primary = /^[a-z]{2,3}/i.exec(language.trim())?.[0];
     if (primary !== undefined) snapshot.language = primary.toLowerCase();
     snapshot.forms = await readForms(page);
+    const security = await readPageSecurity(page);
+    if (security.insecure.length > 0) snapshot.insecureResources = security.insecure;
+    const header = response?.headers()['referrer-policy'];
+    if (header !== undefined || security.referrer !== undefined) {
+      snapshot.referrerPolicy = {
+        ...(header === undefined ? {} : { header }),
+        ...(security.referrer === undefined ? {} : { meta: security.referrer }),
+      };
+    }
     const text = keepText ? await readText(page, snapshot.finalUrl) : undefined;
     if (text !== undefined) snapshot.pageText = text;
     snapshot.resourceHints = await page.$$eval('link[rel][href]', (elements) =>
@@ -243,4 +252,23 @@ async function readText(page: Page, url: string): Promise<LinkedPageText | undef
     }, MAX_PAGE_TEXT)
     .then((read) => ({ url, ...read }))
     .catch(() => undefined);
+}
+
+/** Resources referenced over http:// and the referrer policy set by meta tag. */
+async function readPageSecurity(page: Page): Promise<{ insecure: string[]; referrer?: string }> {
+  const read = await page
+    .evaluate(() => {
+      const selector =
+        'script[src], img[src], iframe[src], source[src], video[src], audio[src], embed[src], link[rel~="stylesheet" i][href]';
+      const urls = [...document.querySelectorAll(selector)].map(
+        (element) => (element as HTMLLinkElement).href || (element as HTMLImageElement).src || '',
+      );
+      const meta = document.querySelector('meta[name="referrer" i]')?.getAttribute('content');
+      return {
+        insecure: [...new Set(urls.filter((url) => /^http:/i.test(url)))].slice(0, 10),
+        ...(meta == null ? {} : { referrer: meta }),
+      };
+    })
+    .catch(() => ({ insecure: [] as string[] }));
+  return read;
 }

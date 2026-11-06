@@ -169,7 +169,7 @@ describe('additional CMP recognition', () => {
     const result = await scan(origin, {
       settleMs: 0,
       networkAdapter: async ({ url }) =>
-        url.endsWith('/impressum')
+        url.endsWith('/impressum') || url.endsWith('/privacy')
           ? html(IMPRINT_TEXT)
           : html('<div role="dialog">Cookie preferences <button>Proceed</button></div>'),
     });

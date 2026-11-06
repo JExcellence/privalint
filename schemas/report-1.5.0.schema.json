@@ -538,7 +538,8 @@
             "missing-observation",
             "no-consent-needed",
             "settings-check-disabled",
-            "transport-not-checked"
+            "transport-not-checked",
+            "no-linked-page"
           ]
         },
         "partial": {
@@ -576,7 +577,9 @@
             "no-save-control",
             "settings-saved-and-reloaded",
             "banner-not-shown",
-            "transport-not-checked"
+            "transport-not-checked",
+            "no-linked-page",
+            "linked-page-not-loaded"
           ]
         },
         "findingCount": {
@@ -960,7 +963,8 @@
               "after-reject",
               "after-settings",
               "banner-search",
-              "transport"
+              "transport",
+              "linked-page"
             ]
           }
         }

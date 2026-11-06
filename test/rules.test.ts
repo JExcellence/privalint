@@ -2,21 +2,31 @@ import { describe, expect, it } from 'vitest';
 import { huArticle, type Lang } from '../src/i18n.js';
 import type { Region } from '../src/legal.js';
 import {
+  personalParameters,
+  redactPersonalData,
+  redactPersonalDataInText,
+} from '../src/personal-data.js';
+import {
   accessibilityStatement,
   adobeFonts,
   consentBannerMissing,
   consentPreselected,
   consentSettingsLink,
+  formPretickedConsent,
   googleFonts,
   impressumLink,
   legalNoticeContent,
+  mixedContent,
   preConsentTrackers,
+  privacyPolicyContent,
   privacyPolicyLink,
   privacyPolicyVendors,
+  referrerPolicy,
   rejectLessProminent,
   thirdCountryProviders,
   thirdPartyCdns,
   thirdPartyEmbeds,
+  thirdPartyPersonalData,
   trackersAfterReject,
   trackingCookieLifetime,
   withdrawalButton,
@@ -693,6 +703,7 @@ describe('privacy-policy-vendors', () => {
 });
 
 describe('legal-notice-content', () => {
+  const NL = String.fromCharCode(10);
   const check = (text: string, region: Region = 'de', mailto = false) =>
     legalNoticeContent.check({
       siteUrl: SITE,
@@ -712,7 +723,9 @@ describe('legal-notice-content', () => {
     [
       'at',
       'at',
-      'Beispiel GmbH\nMariahilfer Straße 1\nA-1060 Wien\noffice (at) example.at\nFN 123456a, Handelsgericht Wien',
+      'Beispiel GmbH\nMariahilfer Straße 1\nA-1060 Wien\noffice (at) example.at\nFN 123456a, Handelsgericht Wien' +
+        NL +
+        'Offenlegung nach § 25 MedienG: Unternehmenswebsite',
     ],
     [
       'ch',
@@ -722,12 +735,16 @@ describe('legal-notice-content', () => {
     [
       'hu',
       'hu',
-      'Példa Kft.\n1051 Budapest, Váci út 1.\nE-mail: info@example.hu\nCégjegyzékszám: Cg. 01-09-123456',
+      'Példa Kft.\n1051 Budapest, Váci út 1.\nE-mail: info@example.hu\nCégjegyzékszám: Cg. 01-09-123456' +
+        NL +
+        'Adószám: 12345678-2-42',
     ],
     [
       'en, Hungarian address',
       'hu',
-      'Example Kft.\nAndrássy út 12, Budapest, 1061\nhello@example.com\nCompany registration number: 01-09-123456',
+      'Example Kft.\nAndrássy út 12, Budapest, 1061\nhello@example.com\nCompany registration number: 01-09-123456' +
+        NL +
+        'Tax number 12345678-2-42',
     ],
   ])('passes a complete legal notice (%s)', (_, region, text) => {
     expect(check(text, region)).toEqual([]);
@@ -773,6 +790,16 @@ describe('legal-notice-content', () => {
     expect(check(text, 'eu')).toEqual([]);
   });
 
+  it('needs postcode and street in one address block', () => {
+    const findings = check(
+      'Example Ltd\nVersion 2 of our app\n\n2024 Neue Funktionen\ninfo@example.de',
+    );
+    expect(findings[0]?.message).toBe('The legal notice gives no postal address.');
+    expect(check('Beispiel GmbH, Musterstraße 12, 10115 Berlin, info@example.de, HRB 1')).toEqual(
+      [],
+    );
+  });
+
   it('does not take a copyright year and a phone number for an address', () => {
     const findings = check('© 2025 Musterfirma\nTelefon 030 123456\ninfo@musterfirma.de');
     expect(findings[0]?.message).toBe('The legal notice gives no postal address.');
@@ -787,8 +814,346 @@ describe('legal-notice-content', () => {
     expect(check('Max Muster\nMusterweg 3\n50667 Köln\nmail@muster.de')).toEqual([]);
   });
 
+  it('notes a Hungarian business without a tax number', () => {
+    const findings = check(
+      'Példa Kft.' +
+        NL +
+        '1051 Budapest, Váci út 1.' +
+        NL +
+        'info@example.hu' +
+        NL +
+        'Cg. 01-09-123456',
+      'hu',
+    );
+    expect(summary(findings)).toEqual(['info:tax-number']);
+    expect(findings[0]?.message).toBe(
+      'The legal notice names the legal form Kft. but no tax number.',
+    );
+    // A Hungarian sole trader without a legal form is not asked, nor is a business in Germany.
+    expect(
+      check('Kovács János' + NL + '1051 Budapest, Váci út 1.' + NL + 'jk@example.hu', 'hu'),
+    ).toEqual([]);
+  });
+
+  it('notes an Austrian legal notice without a media disclosure', () => {
+    const text =
+      'Max Muster' + NL + 'Mariahilfer Straße 1' + NL + '1060 Wien' + NL + 'max@muster.at';
+    expect(summary(check(text, 'at'))).toEqual(['info:media-disclosure']);
+    expect(check(text + NL + 'Grundlegende Richtung nach Mediengesetz: Information', 'at')).toEqual(
+      [],
+    );
+    expect(check(text, 'de')).toEqual([]);
+  });
+
   it('stays quiet on pages that are not the legal notice', () => {
     expect(run(legalNoticeContent, snapshot())).toEqual([]);
+  });
+});
+
+describe('legal-notice-content, read in place of a legal notice', () => {
+  const NL = String.fromCharCode(10);
+  const check = (
+    text: string,
+    readAs: NonNullable<NonNullable<PageSnapshot['legalNotice']>['readAs']>,
+  ) =>
+    legalNoticeContent.check({
+      siteUrl: SITE,
+      page: snapshot({
+        legalNotice: { url: 'https://example.de/datenschutz', text, mailto: false, readAs },
+      }),
+      lang: 'en',
+      region: 'de',
+    });
+
+  it('passes a privacy policy that holds the provider details', () => {
+    const text = [
+      'Verantwortlich:',
+      'Beispiel GmbH',
+      'Musterweg 3',
+      '50667 Köln',
+      'info@beispiel.de',
+      'HRB 1, Amtsgericht Köln',
+    ].join(NL);
+    expect(check(text, { source: 'privacy-policy' })).toEqual([]);
+  });
+
+  it('notes missing details only as info, naming the page that was read', () => {
+    const findings = check('We take privacy seriously.', { source: 'privacy-policy' });
+    expect(findings.map((f) => f.severity)).toEqual(['info']);
+    expect(findings[0]?.message).toBe(
+      'The privacy policy, read because no legal notice is linked, gives no postal address and no e-mail address.',
+    );
+    expect(findings[0]?.evidence[0]).toBe(
+      'privacy policy, read instead: https://example.de/datenschutz',
+    );
+    const legal = check('Haftungsausschluss', {
+      source: 'legal-link',
+      label: 'Rechtliche Hinweise',
+    });
+    expect(legal[0]?.message).toMatch(/^The page "Rechtliche Hinweise", read because/);
+    expect(legal[0]?.severity).toBe('info');
+  });
+});
+
+describe('privacy-policy-content', () => {
+  const NL = String.fromCharCode(10);
+  const check = (lines: string[], mailto = false, lang: Lang = 'en') =>
+    privacyPolicyContent.check({
+      siteUrl: SITE,
+      page: snapshot({
+        privacyPolicy: { url: 'https://example.de/datenschutz', text: lines.join(NL), mailto },
+      }),
+      lang,
+      region: 'de',
+    });
+  const subjects = (findings: { severity: string; subject?: string }[]) =>
+    findings.map((f) => `${f.severity}:${f.subject}`);
+  const CONTROLLER = [
+    'Verantwortlicher:',
+    'Beispiel GmbH',
+    'Hauptstraße 5',
+    '10115 Berlin',
+    'datenschutz@beispiel.de',
+  ];
+
+  it('passes a complete policy', () => {
+    expect(
+      check([
+        ...CONTROLLER,
+        'Unseren Datenschutzbeauftragten erreichen Sie unter:',
+        'dsb@beispiel.de',
+      ]),
+    ).toEqual([]);
+  });
+
+  it('warns when no contact of the controller is given', () => {
+    const findings = check(['We use cookies.', 'Contact us via the form.']);
+    expect(subjects(findings)).toEqual(['warning:contact']);
+    expect(check(['Kontakt: E-Mail schreiben'], true)).toEqual([]);
+  });
+
+  it('notes only info on an overview page that links further privacy documents', () => {
+    const findings = privacyPolicyContent.check({
+      siteUrl: SITE,
+      page: snapshot({
+        privacyPolicy: {
+          url: 'https://example.de/datenschutz',
+          text: 'Your data with us. Details below.',
+          mailto: false,
+          linkedDocuments: ['https://example.de/datenschutz/details'],
+        },
+      }),
+      lang: 'en',
+      region: 'de',
+    });
+    expect(findings.map((f) => `${f.severity}:${f.subject}`)).toEqual(['info:contact']);
+    expect(findings[0]?.evidence).toEqual([
+      'privacy policy: https://example.de/datenschutz',
+      'not read: https://example.de/datenschutz/details',
+    ]);
+  });
+
+  it('warns about template placeholders', () => {
+    const findings = check([
+      '[Firmenname]',
+      'Musterstraße 1',
+      '12345 Musterstadt',
+      'E-Mail: info@example.com',
+    ]);
+    expect(subjects(findings)).toEqual(['warning:placeholder']);
+    expect(findings[0]?.message).toBe(
+      'The privacy policy still contains template text: "[Firmenname]", "Musterstraße", "example.com".',
+    );
+  });
+
+  it('notes a data protection officer without contact details', () => {
+    expect(subjects(check([...CONTROLLER, '', 'Data protection officer', 'Dr. Jane Roe']))).toEqual(
+      ['info:dpo'],
+    );
+    // A statement that there is none, or a phone number, is fine.
+    expect(check([...CONTROLLER, 'Wir haben keinen Datenschutzbeauftragten bestellt.'])).toEqual(
+      [],
+    );
+    expect(
+      check([...CONTROLLER, 'Adatvédelmi tisztviselő: Kovács Anna', 'Telefon: +36 1 234 5678']),
+    ).toEqual([]);
+  });
+
+  it('says it in German and Hungarian', () => {
+    expect(check(['Text'], false, 'de')[0]?.message).toBe(
+      'Die Datenschutzerklärung nennt weder eine E-Mail-Adresse noch eine Postanschrift des Verantwortlichen.',
+    );
+    expect(check(['Text'], false, 'hu')[0]?.evidence).toEqual([
+      'adatvédelmi tájékoztató: https://example.de/datenschutz',
+    ]);
+  });
+
+  it('stays quiet without a privacy policy', () => {
+    expect(run(privacyPolicyContent, snapshot())).toEqual([]);
+  });
+});
+
+describe('form-preticked-consent', () => {
+  const form = (checkedBoxes: string[]) =>
+    snapshot({ forms: [{ kind: 'contact', privacyNearby: true, checkedBoxes }] });
+
+  it('warns about a newsletter box ticked in advance', () => {
+    const findings = run(
+      formPretickedConsent,
+      form(['Send me the newsletter', 'I accept the terms']),
+    );
+    expect(findings.map((f) => f.severity)).toEqual(['warning']);
+    expect(findings[0]?.evidence).toEqual(['ticked: "Send me the newsletter"']);
+  });
+
+  it.each([
+    ['Werbung per E-Mail erhalten'],
+    ['Feliratkozom a hírlevélre'],
+    ['Exclusive offers from our partners'],
+  ])('recognises "%s"', (label) => {
+    expect(run(formPretickedConsent, form([label]))).toHaveLength(1);
+  });
+
+  it('ignores ticked terms and remember-me boxes, and unticked newsletter boxes', () => {
+    expect(
+      run(formPretickedConsent, form(['Ich akzeptiere die AGB', 'Angemeldet bleiben'])),
+    ).toEqual([]);
+    expect(
+      run(formPretickedConsent, snapshot({ forms: [{ kind: 'contact', privacyNearby: true }] })),
+    ).toEqual([]);
+  });
+});
+
+describe('mixed-content', () => {
+  const page = (overrides: Partial<PageSnapshot>) =>
+    snapshot({ url: 'https://example.de/', finalUrl: 'https://example.de/', ...overrides });
+
+  it('reports a form that submits over HTTP as an error', () => {
+    const findings = run(
+      mixedContent,
+      page({
+        forms: [{ kind: 'login', privacyNearby: true, httpAction: 'http://example.de/login' }],
+      }),
+    );
+    expect(findings.map((f) => `${f.severity}:${f.subject}`)).toEqual(['error:form-action']);
+    expect(findings[0]?.evidence).toEqual(['submits to http://example.de/login']);
+  });
+
+  it('notes resources over HTTP, from the page and its requests, once each', () => {
+    const findings = run(
+      mixedContent,
+      page({
+        insecureResources: ['http://cdn.example.net/a.js'],
+        requests: [request('http://cdn.example.net/a.js'), request('http://img.example.net/b.png')],
+      }),
+    );
+    expect(findings.map((f) => `${f.severity}:${f.subject}`)).toEqual(['info:resources']);
+    expect(findings[0]?.evidence).toEqual([
+      'http://cdn.example.net/a.js',
+      'http://img.example.net/b.png',
+    ]);
+  });
+
+  it('leaves plain HTTP pages to https-transport', () => {
+    expect(
+      run(
+        mixedContent,
+        snapshot({
+          url: 'http://example.de/',
+          finalUrl: 'http://example.de/',
+          forms: [{ kind: 'login', privacyNearby: true, httpAction: 'http://example.de/login' }],
+        }),
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe('referrer-policy', () => {
+  const page = (
+    referrerPolicy: PageSnapshot['referrerPolicy'],
+    urls = ['https://www.google-analytics.com/g/collect'],
+  ) =>
+    snapshot({
+      ...(referrerPolicy === undefined ? {} : { referrerPolicy }),
+      requests: urls.map((url) => request(url)),
+    });
+
+  it.each<[string, NonNullable<PageSnapshot['referrerPolicy']>, string]>([
+    ['unsafe-url by header', { header: 'unsafe-url' }, 'Referrer-Policy header: unsafe-url'],
+    [
+      'the last known header token',
+      { header: 'no-referrer, no-referrer-when-downgrade' },
+      'Referrer-Policy header: no-referrer-when-downgrade',
+    ],
+    ['the legacy meta value always', { meta: 'always' }, '<meta name="referrer">: unsafe-url'],
+    [
+      'a meta tag replacing a strict header',
+      { header: 'strict-origin', meta: 'unsafe-url' },
+      '<meta name="referrer">: unsafe-url',
+    ],
+  ])('notes %s', (_, policy, evidence) => {
+    const findings = run(referrerPolicy, page(policy));
+    expect(findings.map((f) => f.severity)).toEqual(['info']);
+    expect(findings[0]?.evidence).toEqual([evidence, 'www.google-analytics.com']);
+  });
+
+  it('stays quiet with the default, a strict policy, or no third-party requests', () => {
+    expect(run(referrerPolicy, page(undefined))).toEqual([]);
+    expect(run(referrerPolicy, page({ header: 'strict-origin-when-cross-origin' }))).toEqual([]);
+    expect(run(referrerPolicy, page({ header: 'unsafe-url', meta: 'no-referrer' }))).toEqual([]);
+    expect(
+      run(referrerPolicy, page({ header: 'unsafe-url' }, ['https://example.de/app.js'])),
+    ).toEqual([]);
+  });
+});
+
+describe('personal data in URLs', () => {
+  it.each<[string, { name: string; kind: string; hashed: boolean }[]]>([
+    [
+      'https://t.example.net/p?email=jane%40example.org&page=1',
+      [{ name: 'email', kind: 'email', hashed: false }],
+    ],
+    [
+      `https://www.facebook.com/tr?em=${'b'.repeat(64)}`,
+      [{ name: 'em', kind: 'email', hashed: true }],
+    ],
+    [
+      'https://t.example.net/p?ph=%2B49%20170%201234567',
+      [{ name: 'ph', kind: 'phone', hashed: false }],
+    ],
+    ['https://t.example.net/p?ts=1730900000000&tel=&id=0123456789', []],
+    [`https://t.example.net/p?sid=${'c'.repeat(64)}`, []],
+  ])('reads %s', (url, expected) => {
+    expect(personalParameters(url)).toEqual(expected);
+  });
+
+  it('redacts only personal values, also inside longer text', () => {
+    expect(
+      redactPersonalDataInText('request https://t.example.net/p?a=1&email=jane%40example.org'),
+    ).toBe('request https://t.example.net/p?a=1&email=[redacted]');
+    expect(redactPersonalData('https://t.example.net/p?a=1')).toBe('https://t.example.net/p?a=1');
+  });
+});
+
+describe('third-party-personal-data', () => {
+  it('groups parameters by host and ignores first-party requests', () => {
+    const findings = run(
+      thirdPartyPersonalData,
+      snapshot({
+        requests: [
+          request('https://www.facebook.com/tr?ud[ph]=' + 'd'.repeat(64)),
+          request('https://www.facebook.com/tr?ud[em]=' + 'e'.repeat(64)),
+          request('https://example.de/search?q=jane%40example.org'),
+        ],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toBe(
+      'Requests to www.facebook.com carry hashed e-mail addresses or phone numbers of visitors.',
+    );
+    expect(findings[0]?.evidence).toEqual([
+      'www.facebook.com: ud[ph] (phone, hashed), ud[em] (e-mail, hashed)',
+    ]);
   });
 });
 
@@ -933,6 +1298,28 @@ describe('consent-preselected', () => {
     ['no settings check', snapshot()],
   ])('passes with %s', (_, snap) => {
     expect(run(consentPreselected, snap)).toEqual([]);
+  });
+});
+
+describe('third-party-embeds fix hints', () => {
+  const fixFor = (...urls: string[]) =>
+    run(thirdPartyEmbeds, snapshot({ requests: urls.map((url) => request(url)) }))[0]?.fix ?? '';
+
+  it('points a youtube.com embed to the privacy-enhanced mode', () => {
+    expect(fixFor('https://www.youtube.com/embed/abc')).toContain(
+      'www.youtube-nocookie.com/embed/',
+    );
+    expect(fixFor('https://www.youtube-nocookie.com/embed/abc')).not.toContain('youtube-nocookie');
+  });
+
+  it('suggests dnt=1 for Vimeo unless the player already uses it', () => {
+    expect(fixFor('https://player.vimeo.com/video/1')).toContain('dnt=1');
+    expect(fixFor('https://player.vimeo.com/video/1?dnt=1')).not.toContain('dnt=1');
+  });
+
+  it('suggests a placeholder image for Google Maps and keeps the generic fix elsewhere', () => {
+    expect(fixFor('https://www.google.com/maps/embed?pb=1')).toContain('placeholder image');
+    expect(fixFor('https://www.google.com/recaptcha/api.js')).not.toContain('Until then');
   });
 });
 

@@ -218,6 +218,16 @@ const EXPLANATIONS: Record<RuleExplanation, Text> = {
     de: 'Consent-Interaktion fehlgeschlagen',
     hu: 'A hozzájárulási művelet sikertelen',
   },
+  'no-linked-page': {
+    en: 'The start page links no such page on this site',
+    de: 'Die Startseite verlinkt keine solche Seite auf dieser Website',
+    hu: 'A kezdőlap nem hivatkozik ilyen oldalra ezen a webhelyen',
+  },
+  'linked-page-not-loaded': {
+    en: 'The linked page could not be loaded',
+    de: 'Die verlinkte Seite ließ sich nicht laden',
+    hu: 'A hivatkozott oldal nem tölthető be',
+  },
   'reject-clicked-and-reloaded': {
     en: 'Reject clicked and page reloaded',
     de: 'Ablehnen geklickt und Seite neu geladen',

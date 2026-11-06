@@ -66,6 +66,9 @@ function definitions(version) {
   const observationKinds = ['document', 'network', 'consent', 'after-reject'];
   if (settingsAware) observationKinds.push('after-settings');
   if (timed) observationKinds.push('banner-search', 'transport');
+  // 1.5.0 added the legal notice and privacy policy read next to the start page.
+  const linked = version === '1.5.0';
+  if (linked) observationKinds.push('linked-page');
   const pageIdentity = identified ? { pageId: uuid } : {};
   return {
     diagnostic: object(
@@ -221,6 +224,7 @@ function definitions(version) {
             ...(identified ? EXPLANATIONS : []),
             ...(settingsAware ? ['settings-check-disabled'] : []),
             ...(timed ? ['transport-not-checked'] : []),
+            ...(linked ? ['no-linked-page'] : []),
           ),
           partial: boolean,
           outcome: choices('checked-no-finding', 'finding-detected', 'not-evaluable'),
@@ -232,6 +236,7 @@ function definitions(version) {
                   ...EXPLANATIONS,
                   ...(settingsAware ? SETTINGS_EXPLANATIONS : []),
                   ...(timed ? ['banner-not-shown', 'transport-not-checked'] : []),
+                  ...(linked ? ['no-linked-page', 'linked-page-not-loaded'] : []),
                 ],
               }
             : explanation,

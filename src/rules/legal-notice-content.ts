@@ -1,31 +1,8 @@
-import { huArticle, type Lang, say } from '../i18n.js';
-import type { Finding, Rule } from '../types.js';
+import { huArticle, type Lang, say, type Text } from '../i18n.js';
+import type { Finding, LinkedPageText, Rule } from '../types.js';
+import { hasAddress, hasEmail } from './contact-details.js';
 
 const ID = 'legal-notice-content';
-
-/**
- * Postcode and place: five digits in Germany, four in Austria, Switzerland and Hungary, optionally
- * with a country prefix ("D-", "A-", "CH-", "H-"), and the Hungarian order "Budapest, 1061". Every
- * format counts in every region: a Hungarian site may well be run from Germany.
- */
-const POSTCODE =
-  /\b(?:[A-Z]{1,2}-?\s?)?\d{4,5}\s+\p{Lu}|\p{Lu}\p{Ll}+,?\s+\d{4}\b|\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b|\b[AC-FHKNPRTV-Y]\d[\dW]\s?[AC-FHKNPRTV-Y\d]{4}\b/u;
-// The last two: UK postcodes ("SW1A 2AA") and Irish Eircodes ("D04 E5W5").
-
-/** A street with a house number, such as "Musterstraße 12", "Váci út 1." or "12 Main Street". */
-const STREET =
-  /\p{L}[\p{L}.'-]*(?:straße|strasse|str\.|weg|gasse|platz|allee|ring|damm|ufer|utca|út|tér|körút|street|road|avenue|lane|rue|via)?\s+\d+\s?[a-z]?\b|\b\d+[a-z]?,?\s+\p{L}+\s+(?:street|road|avenue|lane|st\.|rd\.)/iu;
-
-/**
- * Numbers that look like a postcode or a house number but aren't: phone and fax numbers, tax and
- * register numbers, a copyright year. Removed before looking for the address.
- */
-const NOT_ADDRESS =
-  /\b(?:tel(?:efon)?|fax|phone|mobil(?:e)?|ust-?id\w*|vat|steuer\w*|adószám|hr[ab]|cg|fn|iban|bic)\b\.?:?\s*[^\n,;]*|(?:©|\bcopyright\b)[^\n]*/giu;
-
-/** "(at)" and "[dot]" spellings count; a dot needs a letter right after it, as in a domain. */
-const EMAIL =
-  /[\w.+-]+\s?(?:@|\(at\)|\[at\]|\{at\}|\s(?:at|kukac)\s)\s?[\w-]+(?:(?:\.(?=\w)|\s?\(dot\)\s?|\s?\[dot\]\s?|\s(?:dot|pont)\s)[\w-]+)+/i;
 
 /**
  * Legal forms that are entered in a commercial or association register. Not right after a number,
@@ -59,20 +36,20 @@ export const legalNoticeContent: Rule = {
     'quickly by e-mail, and a register entry where the legal form has one. privalint reads the ' +
     'legal notice page linked from the start page and looks for these details.',
   references: ['§ 5 DDG', '§ 5 ECG', 'Ekertv. 4. §', 'Art. 5 Directive 2000/31/EC'],
-  check({ page, lang }) {
+  check({ page, lang, region }) {
     const notice = page.legalNotice;
     if (notice === undefined) return [];
     const text = notice.text;
+    const name = noticeName(notice);
     const findings: Finding[] = [];
 
     const missing: string[] = [];
-    const addressText = text.replace(NOT_ADDRESS, ' ');
-    if (!(POSTCODE.test(addressText) && STREET.test(addressText))) {
+    if (!hasAddress(text)) {
       missing.push(
         say(lang, { en: 'postal address', de: 'keine Postanschrift', hu: 'postai címet' }),
       );
     }
-    if (!(notice.mailto || EMAIL.test(text))) {
+    if (!hasEmail(text, notice.mailto)) {
       missing.push(
         say(lang, { en: 'e-mail address', de: 'keine E-Mail-Adresse', hu: 'e-mail-címet' }),
       );
@@ -83,12 +60,12 @@ export const legalNoticeContent: Rule = {
         severity: 'warning',
         subject: 'contact',
         message: say(lang, {
-          en: `The legal notice gives no ${missing.join(' and no ')}.`,
-          de: `Das Impressum nennt ${missing.join(' und ')}.`,
-          hu: `Az impresszum nem ad meg ${missing.join(' és ')}.`,
+          en: `${name.en} gives no ${missing.join(' and no ')}.`,
+          de: `${name.de} nennt ${missing.join(' und ')}.`,
+          hu: `${name.hu} nem ad meg ${missing.join(' és ')}.`,
         }),
         pageUrl: page.finalUrl,
-        evidence: evidence(lang, notice.url, text),
+        evidence: evidence(lang, notice),
         fix: say(lang, {
           en: 'Give the full name of the provider, a postal address that can receive mail (no P.O. box) and an e-mail address, as text on the legal notice page. A contact form alone is not enough.',
           de: 'Den vollständigen Namen des Anbieters, eine ladungsfähige Anschrift (kein Postfach) und eine E-Mail-Adresse als Text im Impressum angeben. Ein Kontaktformular allein reicht nicht.',
@@ -104,17 +81,13 @@ export const legalNoticeContent: Rule = {
         severity: 'info',
         subject: 'register',
         message: say(lang, {
-          en: `The legal notice names the legal form ${form} but no register entry.`,
-          de: `Das Impressum nennt die Rechtsform ${form}, aber keinen Registereintrag.`,
-          hu: `Az impresszum megnevezi ${huArticle(form)} ${form} cégformát, de cégjegyzékszámot vagy más nyilvántartási adatot nem.`,
+          en: `${name.en} names the legal form ${form} but no register entry.`,
+          de: `${name.de} nennt die Rechtsform ${form}, aber keinen Registereintrag.`,
+          hu: `${name.hu} megnevezi ${huArticle(form)} ${form} cégformát, de cégjegyzékszámot vagy más nyilvántartási adatot nem.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [
-          say(lang, {
-            en: `legal notice: ${notice.url}`,
-            de: `Impressum: ${notice.url}`,
-            hu: `impresszum: ${notice.url}`,
-          }),
+          noticeEvidence(lang, notice),
           say(lang, {
             en: `legal form: ${form}`,
             de: `Rechtsform: ${form}`,
@@ -128,14 +101,125 @@ export const legalNoticeContent: Rule = {
         }),
       });
     }
-    return findings;
+    findings.push(...regionDetails(region, form, notice, name, lang, page.finalUrl));
+    // A page read in place of a legal notice may not be meant as one.
+    return notice.readAs === undefined
+      ? findings
+      : findings.map((finding) => ({ ...finding, severity: 'info' }));
   },
 };
 
-function evidence(lang: Lang, url: string, text: string): string[] {
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
+/** Hungarian tax numbers: 8 digits, the VAT code and the county code ("12345678-2-42"). */
+const HU_TAX_NUMBER = /adószám|\b\d{8}-\d-\d{2}\b/i;
+const AT_MEDIA_DISCLOSURE = /offenlegung|§\s?25\s?medieng|mediengesetz/i;
+
+/**
+ * Details only some regions ask for: the tax number of a Hungarian business (Ekertv. 4. §) and the
+ * Austrian media disclosure (§ 25 MedienG). Noted as info.
+ */
+function regionDetails(
+  region: string | undefined,
+  form: string | undefined,
+  notice: LinkedPageText,
+  name: Text,
+  lang: Lang,
+  pageUrl: string,
+): Finding[] {
+  const text = notice.text;
+  const finding = (subject: string, message: Text, fix: Text): Finding => ({
+    ruleId: ID,
+    severity: 'info',
+    subject,
+    message: say(lang, message),
+    pageUrl,
+    evidence: [noticeEvidence(lang, notice)],
+    fix: say(lang, fix),
+  });
+  if (region === 'hu' && form !== undefined && !HU_TAX_NUMBER.test(text)) {
+    return [
+      finding(
+        'tax-number',
+        {
+          en: `${name.en} names the legal form ${form} but no tax number.`,
+          de: `${name.de} nennt die Rechtsform ${form}, aber keine Steuernummer.`,
+          hu: `${name.hu} megnevezi ${huArticle(form)} ${form} cégformát, de adószámot nem.`,
+        },
+        {
+          en: 'Add the tax number (adószám) of the business, as Ekertv. 4. § asks for it.',
+          de: 'Die Steuernummer (adószám) des Unternehmens ergänzen, wie es Ekertv. 4. § verlangt.',
+          hu: 'Adja meg a vállalkozás adószámát, ahogy az Ekertv. 4. §-a előírja.',
+        },
+      ),
+    ];
+  }
+  if (region === 'at' && !AT_MEDIA_DISCLOSURE.test(text)) {
+    return [
+      finding(
+        'media-disclosure',
+        {
+          en: `${name.en} has no media disclosure (Offenlegung).`,
+          de: `${name.de} enthält keine Offenlegung nach dem Mediengesetz.`,
+          hu: `${name.hu} nem tartalmaz médiatörvény szerinti közzétételt (Offenlegung).`,
+        },
+        {
+          en: 'Add a disclosure under § 25 MedienG: owner, purpose of the site and its basic direction. Most Austrian websites need one.',
+          de: 'Eine Offenlegung nach § 25 MedienG ergänzen: Medieninhaber, Unternehmensgegenstand und grundlegende Richtung. Die meisten österreichischen Websites brauchen sie.',
+          hu: 'Egészítse ki a § 25 MedienG szerinti közzététellel: médiatulajdonos, tevékenység és alapvető irány. A legtöbb osztrák webhelynek szüksége van rá.',
+        },
+      ),
+    ];
+  }
+  return [];
+}
+
+/** What the read page is called in messages: the legal notice, or what was read in its place. */
+function noticeName(notice: LinkedPageText): Text {
+  const readAs = notice.readAs;
+  if (readAs === undefined) {
+    return { en: 'The legal notice', de: 'Das Impressum', hu: 'Az impresszum' };
+  }
+  if (readAs.source === 'privacy-policy') {
+    return {
+      en: 'The privacy policy, read because no legal notice is linked,',
+      de: 'Die Datenschutzerklärung (gelesen, weil kein Impressum verlinkt ist)',
+      hu: 'Az adatvédelmi tájékoztató (impresszum-hivatkozás hiányában olvasva)',
+    };
+  }
+  const label = readAs.label.trim() || '…';
+  return {
+    en: `The page "${label}", read because no legal notice is linked,`,
+    de: `Die Seite „${label}“ (gelesen, weil kein Impressum verlinkt ist)`,
+    hu: `${huArticle(label, true)} „${label}” oldal (impresszum-hivatkozás hiányában olvasva)`,
+  };
+}
+
+function noticeEvidence(lang: Lang, notice: LinkedPageText): string {
+  const url = notice.url;
+  if (notice.readAs?.source === 'privacy-policy') {
+    return say(lang, {
+      en: `privacy policy, read instead: ${url}`,
+      de: `Datenschutzerklärung, ersatzweise gelesen: ${url}`,
+      hu: `adatvédelmi tájékoztató, helyette olvasva: ${url}`,
+    });
+  }
+  if (notice.readAs?.source === 'legal-link') {
+    return say(lang, {
+      en: `legal page, read instead: ${url}`,
+      de: `Rechtsseite, ersatzweise gelesen: ${url}`,
+      hu: `jogi oldal, helyette olvasva: ${url}`,
+    });
+  }
+  return say(lang, {
+    en: `legal notice: ${url}`,
+    de: `Impressum: ${url}`,
+    hu: `impresszum: ${url}`,
+  });
+}
+
+function evidence(lang: Lang, notice: LinkedPageText): string[] {
+  const words = notice.text.trim().split(/\s+/).filter(Boolean).length;
   return [
-    say(lang, { en: `legal notice: ${url}`, de: `Impressum: ${url}`, hu: `impresszum: ${url}` }),
+    noticeEvidence(lang, notice),
     say(lang, {
       en: `legal notice text: ${words} words`,
       de: `Text des Impressums: ${words} Wörter`,
