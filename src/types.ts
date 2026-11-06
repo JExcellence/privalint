@@ -423,12 +423,32 @@ export interface ScanResult {
    * don't count against maxPages. Absent when there were none.
    */
   offSiteRedirects?: OffSiteRedirect[];
+  /** Each selected rule across all pages. Since scanner 0.10.0. */
+  ruleSummary?: RuleSummary[];
+  /**
+   * `summary` when the per-page `ruleEvaluations` were left out on purpose (`--evaluations
+   * summary`); `ruleSummary` then holds the result. Absent means full.
+   */
+  evaluations?: 'full' | 'summary';
   /** Outcome of the consent check on the start page. */
   consent?: ConsentSummary;
   findings: Finding[];
   rules: Array<Omit<Rule, 'check'>>;
   /** Observation coverage, not a legal compliance judgement. */
   coverage?: 'complete' | 'partial';
+}
+
+export interface RuleSummary {
+  ruleId: string;
+  /** Pages per outcome. Skipped pages are counted by reason instead. */
+  findingDetected: number;
+  checkedNoFinding: number;
+  notEvaluable: number;
+  skipped: Partial<Record<NonNullable<RuleEvaluation['reason']>, number>>;
+  /** Page IDs (or URLs without IDs) worth a look. */
+  findingPages: string[];
+  notEvaluablePages: string[];
+  partialPages: string[];
 }
 
 export interface OffSiteRedirect {

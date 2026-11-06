@@ -71,6 +71,71 @@
         ]
       }
     },
+    "ruleSummary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string"
+          },
+          "findingDetected": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "checkedNoFinding": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "notEvaluable": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "skipped": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "findingPages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notEvaluablePages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "partialPages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "ruleId",
+          "findingDetected",
+          "checkedNoFinding",
+          "notEvaluable",
+          "skipped",
+          "findingPages",
+          "notEvaluablePages",
+          "partialPages"
+        ]
+      }
+    },
+    "evaluations": {
+      "type": "string",
+      "enum": [
+        "full",
+        "summary"
+      ]
+    },
     "consent": {
       "$ref": "#/$defs/consent"
     },

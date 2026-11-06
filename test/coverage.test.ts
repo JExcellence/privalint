@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { assessCoverage } from '../src/coverage.js';
+import { summarizeRules, withSummaryOnly } from '../src/rule-summary.js';
 import type { ScanResult } from '../src/types.js';
 
 async function report(name = 'complete'): Promise<ScanResult> {
@@ -8,6 +9,41 @@ async function report(name = 'complete'): Promise<ScanResult> {
     await readFile(new URL(`./fixtures/reports/${name}.json`, import.meta.url), 'utf8'),
   );
 }
+
+/** The report as `--evaluations summary` writes it. */
+const summaryOnly = (value: ScanResult): ScanResult =>
+  withSummaryOnly({
+    ...value,
+    ruleSummary: summarizeRules(value.pages, value.options?.selectedRules ?? []),
+  });
+
+describe('coverage of a summary-only report', () => {
+  it.each(['complete', 'partial', 'skipped', 'policy-overridden'])(
+    'gives the same verdict as the full %s report',
+    async (name) => {
+      const full = await report(name);
+      const summary = summaryOnly(full);
+      expect(summary.pages.every((page) => page.ruleEvaluations?.length === 0)).toBe(true);
+      expect(assessCoverage(summary).complete).toBe(assessCoverage(full).complete);
+      const reasons = (value: ScanResult) =>
+        new Set(assessCoverage(value).issues.map((issue) => `${issue.ruleId}:${issue.reason}`));
+      expect(reasons(summary)).toEqual(reasons(full));
+    },
+  );
+
+  it('counts outcomes and skip reasons per rule', async () => {
+    const full = await report('partial');
+    const [first] = summarizeRules(full.pages, [full.pages[0]?.ruleEvaluations?.[0]?.ruleId ?? '']);
+    const pages = full.pages.length;
+    const skipped = Object.values(first?.skipped ?? {}).reduce((sum, n) => sum + (n ?? 0), 0);
+    expect(
+      (first?.findingDetected ?? 0) +
+        (first?.checkedNoFinding ?? 0) +
+        (first?.notEvaluable ?? 0) +
+        skipped,
+    ).toBe(pages);
+  });
+});
 
 describe('required observation coverage', () => {
   it('rejects inconsistent counters even if the capture flag claims completion', async () => {

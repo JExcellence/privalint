@@ -447,7 +447,22 @@ function reportSchema(version) {
         pages: array(ref('page')),
         // Added within 1.4.0 (scanner 0.10.0); optional, so earlier 1.4.0 reports stay valid.
         ...(version === '1.4.0'
-          ? { offSiteRedirects: array(object({ url: string, finalUrl: string })) }
+          ? {
+              offSiteRedirects: array(object({ url: string, finalUrl: string })),
+              ruleSummary: array(
+                object({
+                  ruleId: string,
+                  findingDetected: count,
+                  checkedNoFinding: count,
+                  notEvaluable: count,
+                  skipped: { type: 'object', additionalProperties: count },
+                  findingPages: array(string),
+                  notEvaluablePages: array(string),
+                  partialPages: array(string),
+                }),
+              ),
+              evaluations: choices('full', 'summary'),
+            }
           : {}),
         consent: ref('consent'),
         findings: array(ref('finding')),
