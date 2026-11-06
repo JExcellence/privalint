@@ -2,7 +2,7 @@
 
 [English](onetrust.md)
 
-So behebst du privalint-Befunde im Cookie-Consent-Banner von OneTrust. Jeder Schritt nennt die
+So beheben Sie privalint-Befunde im Cookie-Consent-Banner von OneTrust. Jeder Schritt nennt die
 Einstellung und verlinkt die OneTrust-Seite, aus der er stammt. Die Seiten sind englisch; die
 Menünamen stehen hier so, wie OneTrust sie schreibt. Ändert sich die Oberfläche, nennt die
 verlinkte Seite den aktuellen Weg. Geprüft am 2026-11-06.
@@ -16,7 +16,7 @@ Kategorie kennt.
   ändern, mit der Kategorie-ID des Trackers (C0002 ist im Standard „Performance“). Bei einem iframe
   `src` in `data-src` umbenennen und dieselbe Klasse setzen.
   [Client-side cookie management](https://docs.onetrust.com/en/consent--preferences/cookie-consent/managing-cookie-scripts-cookie-blocking-and-technical-implementation/client-side-cookie-management)
-- **Oder Auto-Blocking nutzen:** Cookie Consent > Websites > deine Website > Reiter „Auto-Block“,
+- **Oder Auto-Blocking nutzen:** Cookie Consent > Websites > Ihre Website > Reiter „Auto-Block“,
   „Auto-Blocking“ einschalten. Das OneTrust-Skript muss dann das erste Element im `<head>` sein.
   [Auto-blocking](https://docs.onetrust.com/en/consent--preferences/cookie-consent/managing-cookie-scripts-cookie-blocking-and-technical-implementation/onetrust-cookie-auto-blocking-enhanced-interface)
 - **Lücken des Auto-Blockings beachten:** nicht kategorisierte Cookies, „Strictly Necessary“ und
@@ -45,7 +45,7 @@ und blockieren wie unter [`pre-consent-trackers`](#pre-consent-trackers).
 
 Ein Tracker lud, nachdem das Banner mit seinem Schließen-Button geschlossen wurde.
 
-- Der Schließen-Button (Templates > dein Template > Reiter „Banner“ > Content > Button Set > „Show
+- Der Schließen-Button (Templates > Ihr Template > Reiter „Banner“ > Content > Button Set > „Show
   close button“, „Show Close Button (X)“) schließt das Banner, ohne zuzustimmen oder abzulehnen;
   laut OneTrust lässt er sich nicht als „Accept all“ einstellen. Danach gilt die Vorgabe des
   Consent-Modells, also „Opt-in“ wählen wie unter [`consent-preselected`](#consent-preselected).
@@ -65,7 +65,7 @@ Kategorien außer „Strictly Necessary“ starten inaktiv. „Custom“ setzt d
 
 ## `reject-option`
 
-Das Banner hat auf der ersten Ebene keinen Ablehnen-Button. Templates > dein Template > Reiter
+Das Banner hat auf der ersten Ebene keinen Ablehnen-Button. Templates > Ihr Template > Reiter
 „Banner“ > Content > Button Set: „Show reject all button“ einschalten und „Reject all button text“
 setzen.
 [Customizing the banner template](https://docs.onetrust.com/en/consent--preferences/cookie-consent/configuring-templates-and-geolocation-rules/customizing-the-banner-template)

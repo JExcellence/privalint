@@ -2,18 +2,18 @@
 
 [English](complianz.md)
 
-So behebst du privalint-Befunde mit dem WordPress-Plugin Complianz. Jeder Schritt nennt die
+So beheben Sie privalint-Befunde mit dem WordPress-Plugin Complianz. Jeder Schritt nennt die
 Einstellung und verlinkt die Complianz-Seite, aus der er stammt. Die Seiten sind englisch, manche
 älter als Complianz 7, und das Menü heißt je nach Version „Cookie Banner“ oder „Consent Banner“:
-richte dich nach den Bezeichnungen deiner installierten Version. Geprüft am 2026-11-06.
+richten Sie sich nach den Bezeichnungen Ihrer installierten Version. Geprüft am 2026-11-06.
 
 ## `pre-consent-trackers`
 
 Ein Tracker lud, bevor der Besucher gewählt hat. Complianz blockiert, was es kennt: seine
-Integrationen und die Skripte, die du einträgst.
+Integrationen und die Skripte, die Sie eintragen.
 
 - **Skript eintragen:** Complianz > Integrations (früher „Script Center“): „Add a Third-Party
-  Script“ für ein Skript, das du über Complianz einbindest, oder „Block a script, iframe or plugin“
+  Script“ für ein Skript, das Sie über Complianz einbinden, oder „Block a script, iframe or plugin“
   mit einer URL oder iframe-Quelle, die bis zur Einwilligung blockiert wird. iframes bekommen einen
   Platzhalter; bei anderen Elementen Klasse oder ID angeben.
   [Integrating plugins](https://complianz.io/integrating-plugins/)

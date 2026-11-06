@@ -2,7 +2,7 @@
 
 [English](usercentrics.md)
 
-So behebst du privalint-Befunde in der Web-CMP von Usercentrics. Jeder Schritt nennt die
+So beheben Sie privalint-Befunde in der Web-CMP von Usercentrics. Jeder Schritt nennt die
 Einstellung und verlinkt die Usercentrics-Seite, aus der er stammt. Die Seiten sind englisch. Manche
 Wege im Admin Interface stammen aus Artikeln zur CMP v2; wo v3 abweicht und die Seiten das sagen,
 sind beide genannt. Geprüft am 2026-11-06.
