@@ -6,6 +6,14 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.9.1 - 2026-11-06
+
+Upgrade notes:
+
+- If your network adapter refuses POST requests, pages with API or analytics calls stay partial.
+  Forward the page's own POST, PUT, PATCH, DELETE and OPTIONS requests with their body, like
+  `examples/controlled-scanner.ts` now does.
+
 ### Changed
 
 - The fixes of `impressum-link` and `privacy-policy-link` suggest labels in the language the page
