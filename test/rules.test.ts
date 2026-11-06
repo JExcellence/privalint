@@ -9,6 +9,7 @@ import {
   consentSettingsLink,
   googleFonts,
   impressumLink,
+  legalNoticeContent,
   preConsentTrackers,
   privacyPolicyLink,
   rejectLessProminent,
@@ -550,6 +551,78 @@ describe('tracking-cookie-lifetime', () => {
       },
     });
     expect(run(trackingCookieLifetime, page)).toHaveLength(1);
+  });
+});
+
+describe('legal-notice-content', () => {
+  const check = (text: string, region: Region = 'de', mailto = false) =>
+    legalNoticeContent.check({
+      siteUrl: SITE,
+      page: snapshot({ legalNotice: { url: 'https://example.de/impressum', text, mailto } }),
+      lang: 'en',
+      region,
+    });
+  const summary = (findings: { severity: string; subject?: string }[]) =>
+    findings.map((f) => `${f.severity}:${f.subject}`);
+
+  it.each<[string, Region, string]>([
+    [
+      'de',
+      'de',
+      'Beispiel GmbH\nMusterstraße 12\n10115 Berlin\ninfo@example.de\nAmtsgericht Berlin, HRB 12345',
+    ],
+    [
+      'at',
+      'at',
+      'Beispiel GmbH\nMariahilfer Straße 1\nA-1060 Wien\noffice (at) example.at\nFN 123456a, Handelsgericht Wien',
+    ],
+    [
+      'ch',
+      'ch',
+      'Beispiel AG\nBahnhofstrasse 10\n8001 Zürich\ninfo@example.ch\nUID CHE-123.456.789',
+    ],
+    [
+      'hu',
+      'hu',
+      'Példa Kft.\n1051 Budapest, Váci út 1.\nE-mail: info@example.hu\nCégjegyzékszám: Cg. 01-09-123456',
+    ],
+    [
+      'en, Hungarian address',
+      'hu',
+      'Example Kft.\nAndrássy út 12, Budapest, 1061\nhello@example.com\nCompany registration number: 01-09-123456',
+    ],
+  ])('passes a complete legal notice (%s)', (_, region, text) => {
+    expect(check(text, region)).toEqual([]);
+  });
+
+  it('warns when the address is missing and accepts a mailto link as the e-mail', () => {
+    const findings = check(
+      'Beispiel e.K.\nInhaber: Max Muster\nAmtsgericht Köln, HRA 1',
+      'de',
+      true,
+    );
+    expect(summary(findings)).toEqual(['warning:contact']);
+    expect(findings[0]?.message).toBe('The legal notice gives no postal address.');
+  });
+
+  it('warns about a contact form instead of details and notes the missing register entry', () => {
+    const findings = check('Example Ltd.\nPlease use our contact form.', 'eu');
+    expect(summary(findings)).toEqual(['warning:contact', 'info:register']);
+    expect(findings[0]?.message).toBe(
+      'The legal notice gives no postal address and no e-mail address.',
+    );
+    expect(findings[1]?.evidence).toEqual([
+      'legal notice: https://example.de/impressum',
+      'legal form: Ltd.',
+    ]);
+  });
+
+  it('does not ask a sole trader without a legal form for a register entry', () => {
+    expect(check('Max Muster\nMusterweg 3\n50667 Köln\nmail@muster.de')).toEqual([]);
+  });
+
+  it('stays quiet on pages that are not the legal notice', () => {
+    expect(run(legalNoticeContent, snapshot())).toEqual([]);
   });
 });
 

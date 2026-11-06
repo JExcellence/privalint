@@ -23,3 +23,7 @@ export const cookie = (name: string, domain = '.example.de') => ({
   path: '/',
   expires: -1,
 });
+
+/** A legal notice with every detail legal-notice-content looks for, for servers that need one. */
+export const IMPRINT_TEXT =
+  'Beispiel GmbH, Musterweg 1, 10115 Berlin, info@example.de, Amtsgericht Berlin, HRB 1';

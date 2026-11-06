@@ -346,6 +346,16 @@ export interface TcfObservation {
  * Everything observed while loading one page in a fresh browser context,
  * without touching any consent banner.
  */
+/** The legal notice page as text, for checking the provider details it gives. */
+export interface LegalNoticeObservation {
+  /** Where the legal notice page ended up. */
+  url: string;
+  /** Visible text, cut to 20,000 characters. */
+  text: string;
+  /** Whether the page links a mailto: address. */
+  mailto: boolean;
+}
+
 export interface PageSnapshot {
   pageId?: string;
   url: string;
@@ -362,6 +372,11 @@ export interface PageSnapshot {
   /** localStorage and sessionStorage key names of the page's origin, never values. */
   storage?: StorageKey[];
   links: PageLink[];
+  /**
+   * Start page only: text of the page it links as its legal notice, loaded separately. Internal
+   * input for legal-notice-content, not in the report.
+   */
+  legalNotice?: LegalNoticeObservation;
   /** Primary language subtag of `<html lang>`, lowercase, such as `en` or `hu`. */
   language?: string;
   resourceHints: ResourceHint[];

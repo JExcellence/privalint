@@ -1,4 +1,4 @@
-import type { Browser } from 'playwright';
+import type { Browser, Page } from 'playwright';
 import { observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
 import { readForms } from './forms.js';
@@ -6,7 +6,7 @@ import { ControlledNetwork, networkLimits, watchPageCancellations } from './netw
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import { readStorageKeys } from './storage.js';
 import { observeTransport } from './transport.js';
-import type { PageSnapshot } from './types.js';
+import type { LegalNoticeObservation, PageSnapshot } from './types.js';
 import { isFirstParty } from './url.js';
 
 /**
@@ -22,6 +22,7 @@ export async function capturePage(
   siteUrl: URL,
   options: ScanOptions,
   consentPath: ConsentPath,
+  legalNotice = false,
 ): Promise<PageSnapshot> {
   const checkConsent = consentPath !== 'none';
   const controlled = options.networkAdapter !== undefined;
@@ -123,6 +124,8 @@ export async function capturePage(
     const primary = /^[a-z]{2,3}/i.exec(language.trim())?.[0];
     if (primary !== undefined) snapshot.language = primary.toLowerCase();
     snapshot.forms = await readForms(page);
+    const notice = legalNotice ? await readLegalNotice(page, snapshot.finalUrl) : undefined;
+    if (notice !== undefined) snapshot.legalNotice = notice;
     snapshot.resourceHints = await page.$$eval('link[rel][href]', (elements) =>
       elements.map((link) => ({
         rel: (link.getAttribute('rel') ?? '').toLowerCase(),
@@ -223,4 +226,24 @@ export async function capturePage(
     diagnostics: diagnostics.data,
   };
   return snapshot;
+}
+
+/** Characters of the legal notice text kept for legal-notice-content; enough for any imprint. */
+const MAX_LEGAL_NOTICE_TEXT = 20_000;
+
+/** The visible text of the legal notice page and whether it links an e-mail address. */
+async function readLegalNotice(
+  page: Page,
+  url: string,
+): Promise<LegalNoticeObservation | undefined> {
+  return page
+    .evaluate((max) => {
+      const doc = globalThis.document;
+      return {
+        text: (doc.body?.innerText ?? '').slice(0, max),
+        mailto: doc.querySelector('a[href^="mailto:" i]') !== null,
+      };
+    }, MAX_LEGAL_NOTICE_TEXT)
+    .then((read) => ({ url, ...read }))
+    .catch(() => undefined);
 }

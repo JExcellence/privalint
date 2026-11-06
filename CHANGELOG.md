@@ -11,11 +11,17 @@ Upgrade notes:
 - On sites with subdomains, the first crawled page of up to five other hosts (`docs.`, `blog.`)
   now gets the consent, banner and HTTPS checks too. That can add findings and one consent run
   per host. `--host-checks main` or `"hostChecks": "main"` keeps the previous behaviour.
+- The legal notice linked from the start page is loaded once more for the new
+  `legal-notice-content` rule. That is one extra page load per scan, also through a network
+  adapter, and can add findings. Deselect the rule to skip the load.
 - Scans with the settings check can report the new `consent-preselected` error on banners whose
   settings layer starts with optional categories switched on.
 
 ### Added
 
+- New rule `legal-notice-content`: the legal notice linked from the start page gives no postal
+  address or e-mail address (warning), or names a registered legal form without a register entry
+  (info). Postcodes of Germany, Austria, Switzerland and Hungary are recognised (#104)
 - New rule `third-country-providers` (info): error monitoring, performance monitoring, feature
   flag and backend services outside the EU/EEA contacted before consent, such as Sentry on
   `ingest.us.sentry.io` or a Supabase project. Region hosts in the EU are not reported (#109)

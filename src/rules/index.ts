@@ -9,6 +9,7 @@ import { formPrivacyNotice } from './form-privacy-notice.js';
 import { googleFonts } from './google-fonts.js';
 import { httpsTransport } from './https-transport.js';
 import { impressumLink } from './impressum-link.js';
+import { legalNoticeContent } from './legal-notice-content.js';
 import { preConsentTrackers } from './pre-consent-trackers.js';
 import { privacyPolicyLink } from './privacy-policy-link.js';
 import { rejectLessProminent } from './reject-less-prominent.js';
@@ -38,6 +39,7 @@ export const defaultRules: readonly Rule[] = [
   thirdCountryProviders,
   trackingCookieLifetime,
   impressumLink,
+  legalNoticeContent,
   privacyPolicyLink,
   formPrivacyNotice,
   httpsTransport,
@@ -56,6 +58,7 @@ export {
   googleFonts,
   httpsTransport,
   impressumLink,
+  legalNoticeContent,
   preConsentTrackers,
   privacyPolicyLink,
   rejectLessProminent,

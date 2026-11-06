@@ -27,6 +27,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'third-country-providers': ['network'],
   'tracking-cookie-lifetime': ['network'],
   'impressum-link': ['document'],
+  'legal-notice-content': ['document'],
   'privacy-policy-link': ['document'],
   'reject-option': ['consent'],
   'reject-less-prominent': ['consent'],

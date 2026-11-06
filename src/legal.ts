@@ -141,6 +141,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 32. cikk'],
     eu: ['Art. 32 GDPR'],
   },
+  // What the legal notice has to say: name, address, fast electronic contact, register entry.
+  'legal-notice-content': {
+    de: ['§ 5 Abs. 1 Nr. 1, 2 und 4 DDG'],
+    at: ['§ 5 Abs. 1 ECG', '§ 14 UGB'],
+    ch: ['Art. 3 Abs. 1 lit. s UWG'],
+    hu: ['Ekertv. 4. §'],
+    eu: ['Art. 5(1) Directive 2000/31/EC (e-commerce)'],
+  },
   // Transfers of personal data to third countries need an adequacy decision or safeguards.
   'third-country-providers': {
     de: ['Art. 44 DSGVO', 'Art. 45 DSGVO', 'Art. 46 DSGVO'],
@@ -243,6 +251,7 @@ const SOFTER_IN_SWITZERLAND = new Set([
   'google-fonts',
   'adobe-fonts',
   'impressum-link',
+  'legal-notice-content',
   'banner-legal-links',
   'withdrawal-button',
   'accessibility-statement',

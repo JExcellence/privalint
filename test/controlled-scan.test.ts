@@ -267,7 +267,9 @@ describe('controlled capture', () => {
                 (_, i) => `<script async src="/resource-${i}.js"></script>`,
               ).join(''),
             )
-          : { status: 200, body: '', headers: { 'content-type': 'text/javascript' } };
+          : url === `${origin}/impressum`
+            ? html('Beispiel GmbH, Musterweg 1, 10115 Berlin, info@example.de, HRB 1')
+            : { status: 200, body: '', headers: { 'content-type': 'text/javascript' } };
       } finally {
         active--;
       }
@@ -277,7 +279,8 @@ describe('controlled capture', () => {
       networkAdapter: adapter,
       networkLimits: { concurrency: 2 },
     });
-    expect(calls).toBe(48);
+    // 48 for the page, one for the legal notice it links.
+    expect(calls).toBe(49);
     expect(peak).toBe(2);
     expect(active).toBe(0);
     expect(result.pages[0]?.capture).toMatchObject({

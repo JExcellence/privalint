@@ -9,10 +9,14 @@ import { networkLimits } from './network.js';
 import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
 import { summarizeRules } from './rule-summary.js';
+import { LEGAL_NOTICE } from './rules/impressum-link.js';
 import { defaultRules } from './rules/index.js';
+import { legalNoticeContent } from './rules/legal-notice-content.js';
+import { linkMatches } from './rules/links.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import type {
   ConsentSummary,
+  LegalNoticeObservation,
   OffSiteRedirect,
   PageSnapshot,
   ScanProgressEvent,
@@ -166,6 +170,10 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           snapshot.consent?.bannerFound === true
         ) {
           snapshot.consent.settings = await checkSettings(browser, url, siteUrl, options);
+        }
+        if (isStart && rules.some((rule) => rule.id === legalNoticeContent.id)) {
+          const notice = await readLegalNotice(browser, snapshot, options);
+          if (notice !== undefined) snapshot.legalNotice = notice;
         }
         return { url, snapshot, isStart, hostStart, pageIndex, captureId };
       });
@@ -342,6 +350,24 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
 }
 
 /** Runs the settings path on the start page in a fresh context, after the reject path. */
+/**
+ * Loads the legal notice the start page links to, on the same site, and returns its text. One
+ * extra load that doesn't count as a crawled page, like the settings check.
+ */
+async function readLegalNotice(
+  browser: Browser,
+  start: PageSnapshot,
+  options: ScanOptions,
+): Promise<LegalNoticeObservation | undefined> {
+  const startUrl = new URL(start.finalUrl);
+  const link = start.links.find(linkMatches(LEGAL_NOTICE));
+  const target = link === undefined ? undefined : crawlTarget(link.href, startUrl);
+  if (target === undefined || target === withoutHash(start.finalUrl)) return undefined;
+  const page = await capturePage(browser, target, startUrl, options, 'none', true);
+  if (page.error !== undefined || !isFirstParty(page.finalUrl, startUrl)) return undefined;
+  return page.legalNotice;
+}
+
 async function checkSettings(
   browser: Browser,
   url: string,

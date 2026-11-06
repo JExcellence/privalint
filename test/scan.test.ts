@@ -120,6 +120,30 @@ describe('scan', () => {
     ]);
   });
 
+  it('reads the legal notice linked from the start page without counting it as a page', async () => {
+    const notices: string[] = [];
+    const clean = await scan(`${origin}/clean/`, {
+      ...options,
+      onPage: (page) => {
+        if (page.legalNotice !== undefined)
+          notices.push(page.legalNotice.url, page.legalNotice.text);
+      },
+    });
+    expect(clean.pages).toHaveLength(1);
+    expect(clean.findings).toEqual([]);
+    expect(notices[0]).toBe(`${origin}/clean/impressum.html`);
+    expect(notices[1]).toContain('HRB 123456');
+
+    const formOnly = await scan(`${origin}/legal-notice/`, { ...options, region: 'hu' });
+    const findings = formOnly.findings.filter((f) => f.ruleId === 'legal-notice-content');
+    expect(findings.map(({ severity, message }) => `${severity}: ${message}`)).toEqual([
+      'warning: The legal notice gives no postal address and no e-mail address.',
+      'info: The legal notice names the legal form Kft. but no register entry.',
+    ]);
+    expect(findings[0]?.pageUrl).toBe(`${origin}/legal-notice/`);
+    expect(findings[0]?.evidence[0]).toBe(`legal notice: ${origin}/legal-notice/imprint.html`);
+  });
+
   it('never puts URL credentials into the report', async () => {
     const withAuth = origin.replace('http://', 'http://scanner:s3cret@');
     const result = await scan(`${withAuth}/leaky/`, options);
