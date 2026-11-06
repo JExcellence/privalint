@@ -16,8 +16,12 @@ würde. 1.3.0 ergänzt die optionale Prüfung der Einstellungsebene: `consent.se
 IAB-TCF-Consent-Tool nach dem Ablehnen und nach dem Abwählen von allem meldet. 1.5.0 ergänzt die
 Berichtssprache `hu` (`lang` und `options.lang`), die Beobachtungsart `linked-page` für Regeln,
 die das von der Startseite verlinkte Impressum oder die Datenschutzerklärung lesen, den Grund
-`no-linked-page` und die Erklärungen `no-linked-page` und `linked-page-not-loaded`; ein
-1.4.0-Validator würde all das ablehnen.
+`no-linked-page` und die Erklärungen `no-linked-page` und `linked-page-not-loaded`, das optionale
+`options.device` eines Scans mit `--device` und die optionale Liste `thirdParties`: jeder Host
+außerhalb der Website, der auf eine Anfrage geantwortet hat, mit registrierbarer Domain, der Seite,
+auf der er zuerst auftrat, den Phasen (`before-consent`, `after-reject`, `after-settings`), der
+Anzahl der Anfragen und dem Anbieter, als den privalint ihn kennt. Sie enthält nur Hosts, nie Pfade
+oder Query-Strings. Ein 1.4.0-Validator würde all das ablehnen.
 Paket-/Scanner-Version und Schemaversion sind unabhängig. Ohne `schemaVersion` ist ein Bericht
 Legacy; unbekannte Versionen müssen ausdrücklich unterstützt werden. Alte Daten bekommen nicht
 einfach eine neue Version zugewiesen, damit sie validieren.

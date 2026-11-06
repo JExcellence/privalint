@@ -30,7 +30,7 @@ export function isFirstParty(url: string, siteUrl: URL): boolean {
   return domain === siteDomain;
 }
 
-function registrableDomain(host: string): string | null {
+export function registrableDomain(host: string): string | null {
   return getDomain(host, { allowPrivateDomains: true });
 }
 

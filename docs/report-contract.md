@@ -17,7 +17,12 @@ the timeout `stage` (`queued` or `fetching`) on adapter diagnostics, the optiona
 and after everything was switched off. 1.5.0 adds the report language `hu` (`lang` and
 `options.lang`), the observation kind `linked-page` for rules that read the legal notice or
 privacy policy linked from the start page, the skip reason `no-linked-page` and the explanations
-`no-linked-page` and `linked-page-not-loaded`, all of which a 1.4.0 validator would reject.
+`no-linked-page` and `linked-page-not-loaded`, the optional `options.device` of a scan with
+`--device`, and the optional `thirdParties` inventory: every host outside the site that answered
+a request, with its registrable domain, the page it was first seen on, the phases
+(`before-consent`, `after-reject`, `after-settings`), the number of requests and the vendor
+privalint knows it as. It holds hosts only, never paths or query strings. A 1.4.0 validator would
+reject all of these.
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;
 unknown versions are unsupported. Never assign a schema version to old data merely to validate it.
 

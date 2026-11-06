@@ -483,6 +483,24 @@ function reportSchema(version) {
               consentByHost: { type: 'object', additionalProperties: ref('consent') },
             }
           : {}),
+        // Added in 1.5.0; optional, absent when no host outside the site answered.
+        ...(version === '1.5.0'
+          ? {
+              thirdParties: array(
+                object(
+                  {
+                    host: string,
+                    site: string,
+                    firstPageId: string,
+                    phases: array(choices('before-consent', 'after-reject', 'after-settings')),
+                    requests: positive,
+                    vendor: string,
+                  },
+                  ['host', 'site', 'phases', 'requests'],
+                ),
+              ),
+            }
+          : {}),
         consent: ref('consent'),
         findings: array(ref('finding')),
         rules: array(ref('rule')),

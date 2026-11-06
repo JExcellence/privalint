@@ -30,6 +30,10 @@ Upgrade notes:
 
 ### Added
 
+- Reports list every host outside the site that answered a request in `thirdParties`: registrable
+  domain, first page, phases, request count and the vendor privalint knows it as, hosts only. The
+  Markdown report shows it as a collapsed table, a starting point for the privacy policy and for
+  new list entries (#127)
 - `--device <name>` (config `device`, Action input `device`) emulates a Playwright device such as
   "iPhone 15": viewport, user agent and touch, so banners are checked in their mobile layout, where
   the reject button is often hidden or smaller. The report records it in `options.device`

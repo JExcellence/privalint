@@ -506,6 +506,11 @@ export interface ScanResult {
    * none. Since scanner 0.10.0.
    */
   consentByHost?: Record<string, ConsentSummary>;
+  /**
+   * Every host outside the site that answered a request, busiest first, at most 200. Absent when
+   * there was none, and in reports before schema 1.5.0.
+   */
+  thirdParties?: ThirdPartyHost[];
   /** Outcome of the consent check on the start page. */
   consent?: ConsentSummary;
   findings: Finding[];
@@ -579,4 +584,20 @@ export interface ReportOptions {
   selectedRules: string[];
   ruleSettings: RuleSettings;
   allowedVendors: string[];
+}
+
+export type ThirdPartyPhase = 'before-consent' | 'after-reject' | 'after-settings';
+
+/** One host outside the site, with what privalint knows about it. Hosts only, never paths. */
+export interface ThirdPartyHost {
+  host: string;
+  /** Registrable domain (eTLD+1), or the host itself when it has none. */
+  site: string;
+  /** The page where the host was first seen. */
+  firstPageId?: string;
+  phases: ThirdPartyPhase[];
+  /** Requests that got a response, over all pages and phases. */
+  requests: number;
+  /** The vendor privalint's lists name for it; absent for hosts on no list. */
+  vendor?: string;
 }

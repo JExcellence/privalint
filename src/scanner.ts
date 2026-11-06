@@ -18,6 +18,7 @@ import { privacyPolicyContent } from './rules/privacy-policy-content.js';
 import { PRIVACY_POLICY } from './rules/privacy-policy-link.js';
 import { privacyPolicyVendors } from './rules/privacy-policy-vendors.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
+import { thirdPartyInventory } from './third-party-inventory.js';
 import type {
   ConsentSummary,
   LinkedPageMissing,
@@ -336,6 +337,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       })),
       ...(offSite.length === 0 ? {} : { offSiteRedirects: offSite }),
       ...consentByHost(snapshots.filter((page) => hostStarts.has(page))),
+      ...inventoryOf(snapshots, siteUrl),
       ...consentSummary(snapshots[0]),
       findings: applyPolicy(
         applyRegion(
@@ -638,4 +640,12 @@ function redactReport(result: ScanResult): ScanResult {
       ...(finding.fix === undefined ? {} : { fix: redactText(finding.fix) }),
     })),
   };
+}
+
+function inventoryOf(
+  pages: readonly PageSnapshot[],
+  siteUrl: URL,
+): Pick<ScanResult, 'thirdParties'> {
+  const thirdParties = thirdPartyInventory(pages, siteUrl);
+  return thirdParties.length === 0 ? {} : { thirdParties };
 }

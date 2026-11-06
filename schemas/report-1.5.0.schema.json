@@ -143,6 +143,47 @@
         "$ref": "#/$defs/consent"
       }
     },
+    "thirdParties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "site": {
+            "type": "string"
+          },
+          "firstPageId": {
+            "type": "string"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "before-consent",
+                "after-reject",
+                "after-settings"
+              ]
+            }
+          },
+          "requests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "vendor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "site",
+          "phases",
+          "requests"
+        ]
+      }
+    },
     "consent": {
       "$ref": "#/$defs/consent"
     },
