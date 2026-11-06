@@ -13,6 +13,12 @@ loads that page once more after the start page, without counting it as a crawled
 its visible text. The findings are reported on the start page, with the legal notice URL as
 evidence.
 
+When the start page has no legal notice link at all, privalint reads a page behind a vague legal
+link ("Rechtliche Hinweise", "Rechtliches", "Jogi tudnivalók", "Legal") instead, or else the
+privacy policy, since some sites put the provider details there. Everything found on such a page
+is reported as `info`, because the page may not be meant as a legal notice. The privacy policy is
+loaded only once, also when the privacy policy rules need it.
+
 | Detail                     | How it is found                                                                          | Missing                                                                                                 |
 | -------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Postal address             | a postcode and place, with a street and house number on that line or the line above      | `warning`                                                                                               |

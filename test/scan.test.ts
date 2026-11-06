@@ -14,10 +14,13 @@ const TYPES: Record<string, string> = { '.html': 'text/html', '.css': 'text/css'
 let server: Server;
 let origin: string;
 let onceServed = false;
+/** How often each path was requested. */
+const hits = new Map<string, number>();
 
 beforeAll(async () => {
   server = createServer(async (req, res) => {
     const path = new URL(req.url ?? '/', 'http://localhost').pathname;
+    hits.set(path, (hits.get(path) ?? 0) + 1);
     if (path === '/old-about') {
       res.writeHead(301, { location: '/clean/about.html' }).end();
       return;
@@ -143,6 +146,44 @@ describe('scan', () => {
     ]);
     expect(findings[0]?.pageUrl).toBe(`${origin}/legal-notice/`);
     expect(findings[0]?.evidence[0]).toBe(`legal notice: ${origin}/legal-notice/imprint.html`);
+  });
+
+  it('reads a vague legal page or the privacy policy when no legal notice is linked', async () => {
+    const pages: PageSnapshot[] = [];
+    const vague = await scan(`${origin}/provider-details/vague.html`, {
+      ...options,
+      onPage: (page) => pages.push(page),
+    });
+    expect(pages[0]?.legalNotice?.readAs).toEqual({
+      source: 'legal-link',
+      label: 'Rechtliche Hinweise',
+    });
+    expect(vague.findings.filter((f) => f.ruleId === 'legal-notice-content')).toEqual([]);
+
+    const before = hits.get('/provider-details/datenschutz.html') ?? 0;
+    const policyOnly = await scan(`${origin}/provider-details/policy-only.html`, {
+      ...options,
+      onPage: (page) => pages.push(page),
+    });
+    expect(pages[1]?.legalNotice?.readAs).toEqual({ source: 'privacy-policy' });
+    expect(pages[1]?.privacyPolicy?.url).toBe(`${origin}/provider-details/datenschutz.html`);
+    expect(
+      policyOnly.findings.filter(
+        (f) => f.ruleId.startsWith('legal-notice') || f.ruleId.startsWith('privacy-policy-content'),
+      ),
+    ).toEqual([]);
+    // Read once for both rules.
+    expect(hits.get('/provider-details/datenschutz.html')).toBe(before + 1);
+  });
+
+  it('notes template text and an unreachable data protection officer in the privacy policy', async () => {
+    const result = await scan(`${origin}/provider-details/template.html`, options);
+    const findings = result.findings.filter((f) => f.ruleId === 'privacy-policy-content');
+    expect(findings.map((f) => `${f.severity}:${f.subject}`)).toEqual([
+      'warning:placeholder',
+      'info:dpo',
+    ]);
+    expect(findings[0]?.message).toContain('"[Firmenname]", "Musterstraße"');
   });
 
   it('skips links that lead nowhere and never reads an error page as a legal page', async () => {

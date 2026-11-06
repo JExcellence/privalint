@@ -364,6 +364,11 @@ export interface LinkedPageText {
   unread?: string[];
   /** False when a request of the page never finished: what's missing may not have loaded. */
   complete?: boolean;
+  /**
+   * Set when the page was read in place of a missing legal notice: a page behind a vague legal
+   * link ("Rechtliche Hinweise"), or the privacy policy.
+   */
+  readAs?: { source: 'legal-link'; label: string } | { source: 'privacy-policy' };
 }
 
 /**

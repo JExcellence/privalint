@@ -11,6 +11,7 @@ import { httpsTransport } from './https-transport.js';
 import { impressumLink } from './impressum-link.js';
 import { legalNoticeContent } from './legal-notice-content.js';
 import { preConsentTrackers } from './pre-consent-trackers.js';
+import { privacyPolicyContent } from './privacy-policy-content.js';
 import { privacyPolicyLink } from './privacy-policy-link.js';
 import { privacyPolicyVendors } from './privacy-policy-vendors.js';
 import { rejectLessProminent } from './reject-less-prominent.js';
@@ -43,6 +44,7 @@ export const defaultRules: readonly Rule[] = [
   legalNoticeContent,
   privacyPolicyLink,
   privacyPolicyVendors,
+  privacyPolicyContent,
   formPrivacyNotice,
   httpsTransport,
   withdrawalButton,
@@ -62,6 +64,7 @@ export {
   impressumLink,
   legalNoticeContent,
   preConsentTrackers,
+  privacyPolicyContent,
   privacyPolicyLink,
   privacyPolicyVendors,
   rejectLessProminent,

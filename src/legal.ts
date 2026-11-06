@@ -149,6 +149,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 13. cikk (1) bekezdés e) pont'],
     eu: ['Art. 13(1)(e) GDPR'],
   },
+  // Who is responsible for the data and how to reach them and the data protection officer.
+  'privacy-policy-content': {
+    de: ['Art. 13 Abs. 1 lit. a und b DSGVO'],
+    at: ['Art. 13 Abs. 1 lit. a und b DSGVO'],
+    ch: ['Art. 19 Abs. 2 lit. a DSG'],
+    hu: ['GDPR 13. cikk (1) bekezdés a) és b) pont'],
+    eu: ['Art. 13(1)(a) and (b) GDPR'],
+  },
   // What the legal notice has to say: name, address, fast electronic contact, register entry.
   'legal-notice-content': {
     de: ['§ 5 Abs. 1 Nr. 1, 2 und 4 DDG'],

@@ -30,6 +30,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'legal-notice-content': ['linked-page'],
   'privacy-policy-link': ['document'],
   'privacy-policy-vendors': ['network', 'linked-page'],
+  'privacy-policy-content': ['linked-page'],
   'reject-option': ['consent'],
   'reject-less-prominent': ['consent'],
   'trackers-after-reject': ['after-reject'],
@@ -43,6 +44,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
 const LINKED_PAGES: Partial<Record<string, 'legalNotice' | 'privacyPolicy'>> = {
   'legal-notice-content': 'legalNotice',
   'privacy-policy-vendors': 'privacyPolicy',
+  'privacy-policy-content': 'privacyPolicy',
 };
 
 export interface AssessmentContext {

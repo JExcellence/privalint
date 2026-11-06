@@ -15,7 +15,7 @@ Upgrade notes:
   now gets the consent, banner and HTTPS checks too. That can add findings and one consent run
   per host. `--host-checks main` or `"hostChecks": "main"` keeps the previous behaviour.
 - The legal notice and the privacy policy linked from the start page are loaded once more for the
-  new `legal-notice-content` and `privacy-policy-vendors` rules, plus a cookie policy the privacy
+  new `legal-notice-content`, `privacy-policy-vendors` and `privacy-policy-content` rules, plus a cookie policy the privacy
   policy links. That is up to three extra page loads per scan, also through a network adapter,
   and can add findings. Deselect a rule to skip its load.
 - Scans with the settings check can report the new `consent-preselected` error on banners whose
@@ -23,6 +23,12 @@ Upgrade notes:
 
 ### Added
 
+- New rule `privacy-policy-content`: the privacy policy gives no e-mail or postal address of the
+  controller, or still contains template text such as `[Firmenname]` or "Musterstraße" (warning);
+  a data protection officer named without contact details is info (#116)
+- `legal-notice-content` reads a page behind a vague legal link ("Rechtliche Hinweise") or the
+  privacy policy when the start page links no legal notice, and reports what it misses there as
+  info (#114)
 - Trackers from the vendors' own documentation: Google Ads conversions on `www.google.com`,
   Reddit Pixel, VWO (hosts and cookies), Microsoft Xandr universal pixel and the Amazon Associates
   oneTag (#71)

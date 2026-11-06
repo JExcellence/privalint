@@ -32,7 +32,7 @@ beforeAll(async () => {
       );
       return;
     }
-    if (request.url === '/impressum') {
+    if (request.url === '/impressum' || request.url === '/privacy') {
       response.writeHead(200, { 'content-type': 'text/html' }).end(IMPRINT_TEXT);
       return;
     }

@@ -11,6 +11,7 @@ import {
   impressumLink,
   legalNoticeContent,
   preConsentTrackers,
+  privacyPolicyContent,
   privacyPolicyLink,
   privacyPolicyVendors,
   rejectLessProminent,
@@ -837,6 +838,128 @@ describe('legal-notice-content', () => {
 
   it('stays quiet on pages that are not the legal notice', () => {
     expect(run(legalNoticeContent, snapshot())).toEqual([]);
+  });
+});
+
+describe('legal-notice-content, read in place of a legal notice', () => {
+  const NL = String.fromCharCode(10);
+  const check = (
+    text: string,
+    readAs: NonNullable<NonNullable<PageSnapshot['legalNotice']>['readAs']>,
+  ) =>
+    legalNoticeContent.check({
+      siteUrl: SITE,
+      page: snapshot({
+        legalNotice: { url: 'https://example.de/datenschutz', text, mailto: false, readAs },
+      }),
+      lang: 'en',
+      region: 'de',
+    });
+
+  it('passes a privacy policy that holds the provider details', () => {
+    const text = [
+      'Verantwortlich:',
+      'Beispiel GmbH',
+      'Musterweg 3',
+      '50667 Köln',
+      'info@beispiel.de',
+      'HRB 1, Amtsgericht Köln',
+    ].join(NL);
+    expect(check(text, { source: 'privacy-policy' })).toEqual([]);
+  });
+
+  it('notes missing details only as info, naming the page that was read', () => {
+    const findings = check('We take privacy seriously.', { source: 'privacy-policy' });
+    expect(findings.map((f) => f.severity)).toEqual(['info']);
+    expect(findings[0]?.message).toBe(
+      'The privacy policy, read because no legal notice is linked, gives no postal address and no e-mail address.',
+    );
+    expect(findings[0]?.evidence[0]).toBe(
+      'privacy policy, read instead: https://example.de/datenschutz',
+    );
+    const legal = check('Haftungsausschluss', {
+      source: 'legal-link',
+      label: 'Rechtliche Hinweise',
+    });
+    expect(legal[0]?.message).toMatch(/^The page "Rechtliche Hinweise", read because/);
+    expect(legal[0]?.severity).toBe('info');
+  });
+});
+
+describe('privacy-policy-content', () => {
+  const NL = String.fromCharCode(10);
+  const check = (lines: string[], mailto = false, lang: Lang = 'en') =>
+    privacyPolicyContent.check({
+      siteUrl: SITE,
+      page: snapshot({
+        privacyPolicy: { url: 'https://example.de/datenschutz', text: lines.join(NL), mailto },
+      }),
+      lang,
+      region: 'de',
+    });
+  const subjects = (findings: { severity: string; subject?: string }[]) =>
+    findings.map((f) => `${f.severity}:${f.subject}`);
+  const CONTROLLER = [
+    'Verantwortlicher:',
+    'Beispiel GmbH',
+    'Hauptstraße 5',
+    '10115 Berlin',
+    'datenschutz@beispiel.de',
+  ];
+
+  it('passes a complete policy', () => {
+    expect(
+      check([
+        ...CONTROLLER,
+        'Unseren Datenschutzbeauftragten erreichen Sie unter:',
+        'dsb@beispiel.de',
+      ]),
+    ).toEqual([]);
+  });
+
+  it('warns when no contact of the controller is given', () => {
+    const findings = check(['We use cookies.', 'Contact us via the form.']);
+    expect(subjects(findings)).toEqual(['warning:contact']);
+    expect(check(['Kontakt: E-Mail schreiben'], true)).toEqual([]);
+  });
+
+  it('warns about template placeholders', () => {
+    const findings = check([
+      '[Firmenname]',
+      'Musterstraße 1',
+      '12345 Musterstadt',
+      'E-Mail: info@example.com',
+    ]);
+    expect(subjects(findings)).toEqual(['warning:placeholder']);
+    expect(findings[0]?.message).toBe(
+      'The privacy policy still contains template text: "[Firmenname]", "Musterstraße", "example.com".',
+    );
+  });
+
+  it('notes a data protection officer without contact details', () => {
+    expect(subjects(check([...CONTROLLER, '', 'Data protection officer', 'Dr. Jane Roe']))).toEqual(
+      ['info:dpo'],
+    );
+    // A statement that there is none, or a phone number, is fine.
+    expect(check([...CONTROLLER, 'Wir haben keinen Datenschutzbeauftragten bestellt.'])).toEqual(
+      [],
+    );
+    expect(
+      check([...CONTROLLER, 'Adatvédelmi tisztviselő: Kovács Anna', 'Telefon: +36 1 234 5678']),
+    ).toEqual([]);
+  });
+
+  it('says it in German and Hungarian', () => {
+    expect(check(['Text'], false, 'de')[0]?.message).toBe(
+      'Die Datenschutzerklärung nennt weder eine E-Mail-Adresse noch eine Postanschrift des Verantwortlichen.',
+    );
+    expect(check(['Text'], false, 'hu')[0]?.evidence).toEqual([
+      'adatvédelmi tájékoztató: https://example.de/datenschutz',
+    ]);
+  });
+
+  it('stays quiet without a privacy policy', () => {
+    expect(run(privacyPolicyContent, snapshot())).toEqual([]);
   });
 });
 

@@ -13,6 +13,12 @@ privalint diese Seite nach der Startseite zusätzlich, ohne sie als gecrawlte Se
 liest ihren sichtbaren Text. Die Befunde stehen bei der Startseite, mit der Impressums-URL als
 Beleg.
 
+Hat die Startseite gar keinen Impressums-Link, liest privalint stattdessen eine Seite hinter einem
+unklaren Rechts-Link („Rechtliche Hinweise“, „Rechtliches“, „Jogi tudnivalók“, „Legal“) oder
+sonst die Datenschutzerklärung, weil manche Websites die Anbieterangaben dort nennen. Alles, was
+dort fehlt, wird als `info` gemeldet, da die Seite nicht als Impressum gedacht sein muss. Die
+Datenschutzerklärung wird nur einmal geladen, auch wenn die Datenschutz-Regeln sie brauchen.
+
 | Angabe                   | Wie sie erkannt wird                                                                     | Fehlt                                                                                                          |
 | ------------------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Postanschrift            | Postleitzahl und Ort, mit Straße und Hausnummer in dieser oder der Zeile darüber         | `warning`                                                                                                      |

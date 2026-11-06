@@ -299,7 +299,7 @@ describe('controlled capture', () => {
                 (_, i) => `<script async src="/resource-${i}.js"></script>`,
               ).join(''),
             )
-          : url === `${origin}/impressum`
+          : url === `${origin}/impressum` || url.endsWith('/privacy')
             ? html('Beispiel GmbH, Musterweg 1, 10115 Berlin, info@example.de, HRB 1')
             : { status: 200, body: '', headers: { 'content-type': 'text/javascript' } };
       } finally {
