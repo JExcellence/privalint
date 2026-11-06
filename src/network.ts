@@ -77,11 +77,26 @@ interface PausedRequest {
     postDataEntries?: Array<{ bytes?: string }>;
   };
 }
+const MEDIA_TYPES = new Set(['media', 'image', 'font']);
+
+/** Headers of a response whose body was dropped: its length and encoding no longer apply. */
+function withoutLengthHeaders(
+  headers: NetworkResponse['headers'],
+): Record<string, string | string[]> {
+  return Object.fromEntries(
+    Object.entries(headers ?? {}).filter(
+      ([name]) => !['content-length', 'content-encoding'].includes(name.toLowerCase()),
+    ),
+  );
+}
+
 interface InterceptedRequest {
   event: PausedRequest;
   session: CDPSession;
   redirects: number;
   redirectCounts: Map<string, number>;
+  /** performance.now() when the request joined the queue. */
+  queuedAt?: number;
 }
 
 function requestBody(request: PausedRequest['request']): Uint8Array | null {
@@ -156,6 +171,7 @@ export class ControlledNetwork {
   }
 
   private enqueue(request: InterceptedRequest): void {
+    request.queuedAt = performance.now();
     this.queue.push(request);
     const timing = this.diagnostics.timing;
     timing.peakQueued = Math.max(timing.peakQueued ?? 0, this.queue.length);
@@ -242,6 +258,11 @@ export class ControlledNetwork {
     const signal = AbortSignal.any([this.signal, timeout, controller.signal]);
     let response: NetworkResponse;
     let body: Buffer;
+    const started = performance.now();
+    let headersAt: number | undefined;
+    let bodyDoneAt: number | undefined;
+    // Only requests the adapter was asked for count; refusals before that took no adapter time.
+    let asked = false;
     this.fetching.set(request.url, (this.fetching.get(request.url) ?? 0) + 1);
     try {
       if (!/^https?:$/.test(new URL(request.url).protocol))
@@ -250,18 +271,37 @@ export class ControlledNetwork {
         throw new NetworkError('resource-limit', 'redirects');
       if (this.diagnostics.data.bytes >= this.limits.maxTotalBytes)
         throw new NetworkError('resource-limit', 'total-bytes');
+      const requestBytes = requestBody(request);
+      asked = true;
       response = await withSignal(
         this.adapter({
           url: request.url,
           method: request.method,
           headers: request.headers,
-          body: requestBody(request),
+          body: requestBytes,
           resourceType: event.resourceType.toLowerCase(),
           signal,
         }),
         signal,
       );
-      body = await this.readBody(response.body, signal);
+      headersAt = performance.now();
+      // No rule reads the bytes of a video, image or font; their URL, status and headers (cookies
+      // included) are what counts. Such a file over the size limit is delivered empty instead of
+      // failing, so one background video doesn't make the whole page partial.
+      const read = await this.readBody(
+        response.body,
+        signal,
+        MEDIA_TYPES.has(event.resourceType.toLowerCase()),
+      );
+      body = read.bytes;
+      if (read.cut) {
+        this.diagnostics.add('resource-limit', request.url, {
+          limit: 'response-bytes',
+          skippedReason: 'policy',
+        });
+        response = { ...response, headers: withoutLengthHeaders(response.headers) };
+      }
+      bodyDoneAt = performance.now();
       signal.throwIfAborted();
       if (!Number.isInteger(response.status) || response.status < 200 || response.status > 599)
         throw new NetworkError('browser-failure');
@@ -280,6 +320,14 @@ export class ControlledNetwork {
       }
       return;
     } finally {
+      if (asked)
+        this.diagnostics.adapterRequest(request.url, {
+          queuedMs: Math.round(started - (intercepted.queuedAt ?? started)),
+          ...(headersAt === undefined ? {} : { headersMs: Math.round(headersAt - started) }),
+          ...(headersAt === undefined || bodyDoneAt === undefined
+            ? {}
+            : { bodyMs: Math.round(bodyDoneAt - headersAt) }),
+        });
       controller.abort();
       if (event.networkId !== undefined) this.inflight.delete(event.networkId);
       const left = (this.fetching.get(request.url) ?? 1) - 1;
@@ -315,25 +363,36 @@ export class ControlledNetwork {
       .catch(() => {});
   }
 
-  private async readBody(body: NetworkResponse['body'], signal: AbortSignal): Promise<Buffer> {
+  /**
+   * Reads a response body within the budgets. With `cutOff`, a body over `maxResponseBytes` is
+   * dropped instead of failing the request; `cut` then says so.
+   */
+  private async readBody(
+    body: NetworkResponse['body'],
+    signal: AbortSignal,
+    cutOff = false,
+  ): Promise<{ bytes: Buffer; cut: boolean }> {
     const chunks: Uint8Array[] = [];
     let size = 0;
+    let cut = false;
     const append = (chunk: Uint8Array) => {
       size += chunk.byteLength;
       this.diagnostics.data.bytes += chunk.byteLength;
-      if (size > this.limits.maxResponseBytes)
-        throw new NetworkError('resource-limit', 'response-bytes');
+      if (size > this.limits.maxResponseBytes) {
+        if (!cutOff) throw new NetworkError('resource-limit', 'response-bytes');
+        cut = true;
+      }
       if (this.diagnostics.data.bytes > this.limits.maxTotalBytes)
         throw new NetworkError('resource-limit', 'total-bytes');
       chunks.push(chunk);
     };
-    if (body === undefined) return Buffer.alloc(0);
+    if (body === undefined) return { bytes: Buffer.alloc(0), cut };
     if (typeof body === 'string' || body instanceof Uint8Array) {
       append(typeof body === 'string' ? Buffer.from(body) : body);
     } else {
       const iterator = body[Symbol.asyncIterator]();
       try {
-        while (true) {
+        while (!cut) {
           const chunk = await withSignal(iterator.next(), signal);
           if (chunk.done) break;
           append(chunk.value);
@@ -342,7 +401,7 @@ export class ControlledNetwork {
         void iterator.return?.().catch(() => {});
       }
     }
-    return Buffer.concat(chunks, size);
+    return cut ? { bytes: Buffer.alloc(0), cut } : { bytes: Buffer.concat(chunks, size), cut };
   }
 
   private async abort(

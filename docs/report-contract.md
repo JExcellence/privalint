@@ -10,7 +10,9 @@ reject. 1.3.0 adds the opt-in settings-layer check: `consent.settings`, `options
 the observation kind `after-settings`, the skip reason `settings-check-disabled` and its
 explanations, and the region `hu`, all of which a 1.2.0 validator would reject. 1.4.0 adds
 `capture.diagnostics.timing` (`loadMs`, `networkIdleMs` and, for adapter scans, `peakQueued`),
-the timeout `stage` (`queued` or `fetching`) on adapter diagnostics, and
+the timeout `stage` (`queued` or `fetching`) on adapter diagnostics, the optional
+`capture.diagnostics.timing.adapter` and top-level `offSiteRedirects` (added in scanner 0.9.1 and
+0.10.0 without breaking 1.4.0 validators), and
 `consent.tcf` and `consent.settings.tcf`, what an IAB TCF consent manager reports after rejecting
 and after everything was switched off.
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;

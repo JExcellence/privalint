@@ -98,6 +98,10 @@ All transport budgets apply per crawled page, across initial loading and the rej
 an adapter. Limit values are validated before launching Chromium. Streaming stops at a byte limit,
 signals are aborted and body iterators are returned. The chunk that exceeds the budget is counted
 but not retained. Up to the request budget's evidence records are retained (5000 in native mode).
+A video, image or font over `maxResponseBytes` is delivered to the page without its body instead
+of failing: no rule reads those bytes, and its status and headers, cookies included, are kept. The
+issue is recorded as `resource-limit` with `skippedReason: 'policy'` and doesn't make the page
+partial. Documents, scripts, styles and API responses over the limit still fail and do.
 These limits do not bound arbitrary page JavaScript/DOM memory; also apply worker memory/CPU quotas.
 
 ## Diagnostics and counters
@@ -141,6 +145,12 @@ through the adapter like the page's own requests; `test/controlled-scan.test.ts`
   Adapter scans add `peakQueued`, the most requests that waited for an adapter slot at once. Many
   `queued` timeouts with a high `peakQueued` point to adapter concurrency; `fetching` timeouts
   point to the target, a CDN rate limit or the adapter's transport.
+- `timing.adapter` (adapter scans): how many requests the adapter got, the median and 95th
+  percentile time until it returned the response headers, and the five slowest requests with
+  `queuedMs` (waiting for a slot), `headersMs` (until the headers) and `bodyMs` (reading the
+  body). A missing `headersMs` or `bodyMs` means that part never finished. When the same pages
+  load quickly in a native scan, a high p95 or slow headers point to the adapter's environment.
+  The text and Markdown reports print this on pages with timeouts.
 
 Legacy `PageSummary.requestCount` counts initial-phase requests. It does not include rejection;
 use `capture.diagnostics.requests` for the combined count. Evidence arrays may be bounded while

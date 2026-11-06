@@ -1,4 +1,4 @@
-import type { RuleExplanation, ScanResult } from '../types.js';
+import type { AdapterTiming, RuleExplanation, ScanResult } from '../types.js';
 
 export function isPartial(result: ScanResult): boolean {
   return (
@@ -38,6 +38,10 @@ export function captureLines(result: ScanResult): string[] {
           `  ${issue.phase}: ${issue.kind}${issue.skippedReason ? ` (${issue.skippedReason})` : ''}${issue.limit ? ` (${issue.limit})` : ''}${issue.status ? ` HTTP ${issue.status}` : ''} ${issue.url}`,
         );
       }
+      const adapter = data.timing?.adapter;
+      if (adapter !== undefined && data.issues.some((issue) => issue.kind === 'timeout')) {
+        lines.push(`  ${adapterLine(adapter, german)}`);
+      }
       if (data.dropped)
         lines.push(
           `  ${data.dropped} ${german ? 'weitere Diagnosen nicht gespeichert' : 'additional issue details omitted'}.`,
@@ -50,6 +54,29 @@ export function captureLines(result: ScanResult): string[] {
     }
   }
   return lines;
+}
+
+/** Where the adapter's time went, shown on pages with timeouts so slow adapters stand out. */
+function adapterLine(adapter: AdapterTiming, german: boolean): string {
+  const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+  const slow = adapter.slowest[0];
+  const parts = [
+    german
+      ? `Adapter: ${adapter.requests} Anfragen, Antwortkopf nach ${seconds(adapter.headersP50Ms ?? 0)} (Median), ${seconds(adapter.headersP95Ms ?? 0)} (95 %)`
+      : `Adapter: ${adapter.requests} requests, headers after ${seconds(adapter.headersP50Ms ?? 0)} (median), ${seconds(adapter.headersP95Ms ?? 0)} (95th percentile)`,
+  ];
+  if (slow !== undefined) {
+    const headers =
+      slow.headersMs === undefined
+        ? german
+          ? 'kein Antwortkopf'
+          : 'no headers'
+        : `${german ? 'Antwortkopf' : 'headers'} ${seconds(slow.headersMs)}`;
+    parts.push(
+      `${german ? 'langsamste' : 'slowest'} ${slow.url}: ${german ? 'wartete' : 'queued'} ${seconds(slow.queuedMs)}, ${headers}`,
+    );
+  }
+  return parts.join('; ');
 }
 
 function outcomeLabel(outcome: string, german: boolean): string {

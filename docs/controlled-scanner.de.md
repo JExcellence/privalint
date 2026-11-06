@@ -97,6 +97,11 @@ bereitgestellten Bytes, einschließlich des überschreitenden Chunks. Bei Stream
 Puffern abgebrochen. Bereits gepufferte Antworten hat der Adapter vorher allokiert. Komprimierte Bytes
 und Content-Encoding müssen zusammenpassen; spätere Browser-Dekompression und DOM-/JavaScript-Speicher
 sind nicht durch diese Budgets begrenzt. Worker benötigen zusätzliche CPU-/Speicherquoten.
+Ein Video, Bild oder eine Schrift über `maxResponseBytes` erhält die Seite ohne Body, statt dass
+die Anfrage scheitert: Keine Regel liest diese Bytes, Status und Header einschließlich Cookies
+bleiben erhalten. Die Diagnose lautet `resource-limit` mit `skippedReason: 'policy'` und macht die
+Seite nicht unvollständig. Dokumente, Skripte, Styles und API-Antworten über dem Limit scheitern
+weiterhin und machen sie unvollständig.
 
 ## Zähler und Datenschutz
 
@@ -138,6 +143,12 @@ wie die eigenen Anfragen der Seite über den Adapter; `test/controlled-scan.test
   Adapter-Platz wartenden Anfragen. Viele `queued`-Timeouts bei hohem `peakQueued` sprechen für
   zu wenig Adapter-Parallelität, `fetching`-Timeouts für das Ziel, ein CDN-Limit oder den
   Transport des Adapters.
+- `timing.adapter` (Adapter-Scans): wie viele Anfragen der Adapter bekam, Median und
+  95-%-Perzentil der Zeit bis zum Antwortkopf und die fünf langsamsten Anfragen mit `queuedMs`
+  (Warten auf einen Platz), `headersMs` (bis zum Antwortkopf) und `bodyMs` (Lesen des Bodys).
+  Fehlt `headersMs` oder `bodyMs`, wurde dieser Teil nie fertig. Laden dieselben Seiten in einem
+  nativen Scan schnell, sprechen ein hohes 95-%-Perzentil oder langsame Antwortköpfe für die
+  Umgebung des Adapters. Text- und Markdown-Bericht zeigen das auf Seiten mit Timeouts.
 
 `PageSummary.requestCount` zählt wie bisher nur die initiale Phase, der neue Diagnosezähler beide
 Phasen. Gespeicherte Anfrage-Evidenz ist im Adapter-Modus durch das Anfragebudget begrenzt

@@ -126,10 +126,29 @@ function definitions(version) {
         issues: array(ref('diagnostic')),
         ...(timed
           ? {
-              timing: object({ loadMs: count, networkIdleMs: count, peakQueued: count }, [
-                'loadMs',
-                'networkIdleMs',
-              ]),
+              timing: object(
+                {
+                  loadMs: count,
+                  networkIdleMs: count,
+                  peakQueued: count,
+                  // Added within 1.4.0 (scanner 0.10.0); optional.
+                  adapter: object(
+                    {
+                      requests: count,
+                      headersP50Ms: count,
+                      headersP95Ms: count,
+                      slowest: array(
+                        object({ url: string, queuedMs: count, headersMs: count, bodyMs: count }, [
+                          'url',
+                          'queuedMs',
+                        ]),
+                      ),
+                    },
+                    ['requests', 'slowest'],
+                  ),
+                },
+                ['loadMs', 'networkIdleMs'],
+              ),
             }
           : {}),
       },
