@@ -33,6 +33,11 @@ Upgrade notes:
 
 ### Added
 
+- `--baseline <report.json>` (Action input `baseline`) compares the findings with an earlier JSON
+  report: each finding is marked `new` or `existing` by rule, page and subject (the SARIF
+  fingerprint), `baseline.fixed` lists the findings that are gone, and `--fail-on` counts new
+  findings only. Text and Markdown show the counts, SARIF sets `baselineState`. A baseline with
+  another schema major version is rejected (#128)
 - New opt-in rule `gpc-signal` (`--gpc`, config `gpc`, Action input `gpc`): privalint loads the
   start page once more with Global Privacy Control (`Sec-GPC: 1` and
   `navigator.globalPrivacyControl`) and notes as info whether the banner hides and trackers stay

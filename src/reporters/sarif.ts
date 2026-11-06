@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { findingFingerprint } from '../baseline.js';
 import { legalReferences } from '../legal.js';
 import { REPOSITORY_URL, ruleDocsUrl, VERSION } from '../meta.js';
 import type { Finding, ScanResult, Severity } from '../types.js';
@@ -92,6 +92,9 @@ function toResult(finding: Finding, redacted: boolean) {
     ruleId: finding.ruleId,
     properties: { pageId: finding.pageId, policy: finding.policy },
     level: LEVELS[finding.severity],
+    ...(finding.baseline === undefined
+      ? {}
+      : { baselineState: finding.baseline === 'new' ? 'new' : 'unchanged' }),
     message: {
       text: [
         finding.message,
@@ -119,12 +122,7 @@ function toResult(finding: Finding, redacted: boolean) {
     ...(redacted
       ? {}
       : {
-          partialFingerprints: {
-            primaryLocationLineHash: createHash('sha256')
-              .update(`${finding.ruleId}\n${finding.pageUrl}\n${finding.subject ?? ''}`)
-              .digest('hex')
-              .slice(0, 32),
-          },
+          partialFingerprints: { primaryLocationLineHash: findingFingerprint(finding) },
         }),
   };
 }

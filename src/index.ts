@@ -1,3 +1,4 @@
+export { applyBaseline, findingFingerprint, readBaseline } from './baseline.js';
 export { loadConfig, type PrivalintConfig, parseConfig } from './config.js';
 export { type ConsentCheckOptions, observeConsent } from './consent.js';
 export { assessCoverage, type CoverageAssessment, type CoverageIssue } from './coverage.js';

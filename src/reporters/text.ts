@@ -59,6 +59,7 @@ export function formatText(result: ScanResult, color = false): string {
   if (result.consent !== undefined) {
     lines.push(paint('dim', m.consent(result.consent)));
   }
+  if (result.baseline !== undefined) lines.push(m.baseline(result.baseline));
   if (result.findings.length === 0 && !isPartial(result)) {
     lines.push(paint('green', `✔ ${m.noProblems(pages, duration)}`));
   } else if (result.findings.length > 0) {
@@ -77,7 +78,10 @@ function formatFinding(
   m: ReportMessages,
 ): string[] {
   const [mark, style] = MARKS[finding.severity];
-  const lines = [`  ${paint(style, mark)} ${finding.message} ${paint('dim', finding.ruleId)}`];
+  const fresh = finding.baseline === 'new' ? ` ${paint('magenta', `[${m.newFinding}]`)}` : '';
+  const lines = [
+    `  ${paint(style, mark)} ${finding.message} ${paint('dim', finding.ruleId)}${fresh}`,
+  ];
   if (finding.policy)
     lines.push(
       paint('dim', `      ${m.policy(finding.policy.allowed, finding.policy.originalSeverity)}`),

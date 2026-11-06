@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { stat, writeFile } from 'node:fs/promises';
+import { readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
+import { applyBaseline, readBaseline } from './baseline.js';
 import { loadConfig } from './config.js';
 import { assessCoverage } from './coverage.js';
 import { diagnosticUrl } from './diagnostics.js';
@@ -41,6 +42,8 @@ Options
                           per-page rule results out of JSON; the per-rule
                           summary stays
       --fail-on <level>   error | warning | never (default error)
+      --baseline <file>   Compare with an earlier JSON report: mark findings as new or
+                          existing, list fixed ones; --fail-on counts new findings only
       --fail-on-incomplete  Exit 3 if required observation coverage is incomplete
       --allow-incomplete    Override failOnIncomplete from JSON config
       --disable <rules>   Comma-separated rule ids to skip
@@ -101,6 +104,7 @@ async function main(argv: string[]): Promise<number> {
       output: { type: 'string', short: 'o', multiple: true },
       'fail-on': { type: 'string', default: 'error' },
       'fail-on-incomplete': { type: 'boolean' },
+      baseline: { type: 'string' },
       'allow-incomplete': { type: 'boolean' },
       disable: { type: 'string' },
       config: { type: 'string' },
@@ -158,11 +162,13 @@ async function main(argv: string[]): Promise<number> {
     throw new Error('Use either --consent or --skip-consent, not both.');
   }
 
+  // Read the baseline before the scan: a wrong file fails now, not after minutes of scanning.
+  const baseline = values.baseline === undefined ? undefined : await loadBaseline(values.baseline);
   const outputs = values.output ?? [];
   // A scan can take minutes; a bad output path fails now, not after it.
   await checkOutputDirectories(outputs);
 
-  const result = await scan(target.href, {
+  const scanned = await scan(target.href, {
     rules,
     ...(config.rules === undefined ? {} : { ruleSettings: config.rules }),
     ...(config.allow === undefined ? {} : { allow: config.allow }),
@@ -201,6 +207,7 @@ async function main(argv: string[]): Promise<number> {
       ),
   });
 
+  const result = baseline === undefined ? scanned : applyBaseline(scanned, baseline);
   const written: string[] = [];
   const unwritten: string[] = [];
   for (const file of outputs) {
@@ -229,12 +236,29 @@ async function main(argv: string[]): Promise<number> {
   }
 
   if (unwritten.length > 0) return EXIT_ERROR;
-  if (shouldFail(result.findings, failOn)) return EXIT_FINDINGS;
+  // With a baseline, only findings it doesn't have fail the run.
+  const failing = result.findings.filter((finding) => finding.baseline !== 'existing');
+  if (shouldFail(failing, failOn)) return EXIT_FINDINGS;
   if (failOnIncomplete && !assessCoverage(result).complete) {
     process.stderr.write('privalint: required observation coverage is incomplete (exit 3).\n');
     return EXIT_INCOMPLETE;
   }
   return EXIT_OK;
+}
+
+async function loadBaseline(file: string): Promise<Finding[]> {
+  let text: string;
+  try {
+    text = await readFile(file, 'utf8');
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`--baseline: could not read ${file}: ${reason}`);
+  }
+  try {
+    return readBaseline(text);
+  } catch (error) {
+    throw new Error(`--baseline ${file}: ${error instanceof Error ? error.message : error}`);
+  }
 }
 
 async function checkOutputDirectories(files: readonly string[]): Promise<void> {

@@ -123,6 +123,7 @@ Inputs left empty are not passed to privalint, so `privalint.config.json` in you
 | `concurrency`        | config, else `1`     | Pages loaded at the same time; same report as with 1.                          |
 | `fail-on`            | `error`              | `error`, `warning` or `never`.                                                 |
 | `fail-on-incomplete` | config, else off     | `true` or `false`: fail separately for incomplete observations.                |
+| `baseline`           | none                 | Earlier JSON report; only findings it lacks fail the run.                      |
 | `check-settings`     | config, else off     | `true` also tests the banner's settings layer.                                 |
 | `check-close`        | config, else off     | `true` also closes the banner with its close button and checks what loads.     |
 | `check-accept`       | config, else off     | `true` also accepts and checks the privacy policy for services loaded then.    |
@@ -163,6 +164,8 @@ privalint <url> [options]
                           per-page rule results out of JSON; the per-rule
                           summary stays
       --fail-on <level>   error | warning | never (default error)
+      --baseline <file>   Compare with an earlier JSON report: mark findings as new or
+                          existing, list fixed ones; --fail-on counts new findings only
       --fail-on-incomplete  Exit 3 for incomplete required observations (opt-in)
       --allow-incomplete    Override failOnIncomplete from JSON config
       --config <file>     Select a JSON configuration file
@@ -199,6 +202,13 @@ privalint <url> [options]
 Exit codes: `0` nothing at or above `--fail-on`, `1` findings, `2` bad arguments or a failed scan.
 With `--fail-on-incomplete`, exit `3` means incomplete required observation. Findings exit `1`
 takes precedence; intentional disabled-rule/consent exclusions are ignored by this gate.
+
+With `--baseline report.json`, privalint compares the findings with an earlier JSON report of the
+same schema major version. A finding is the same when rule, page URL and subject (such as the
+vendor) match, the same identity as SARIF's `partialFingerprints`. Each finding gets
+`baseline: "new"` or `"existing"`, the report lists the counts and the findings that are gone
+(`baseline.fixed`), and `--fail-on` counts new findings only. SARIF results carry
+`baselineState`. A file that is not such a report exits `2` before the scan starts.
 
 The first run needs a browser. If Playwright hasn't installed one yet:
 

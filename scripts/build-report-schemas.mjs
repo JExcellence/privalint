@@ -316,6 +316,7 @@ function definitions(version) {
         subject: string,
         references: array(string),
         policy: object({ allowed: boolean, originalSeverity: severity }),
+        ...(version === '1.5.0' ? { baseline: choices('new', 'existing') } : {}),
       },
       [...Object.keys(pageIdentity), 'ruleId', 'severity', 'message', 'pageUrl', 'evidence'],
     ),
@@ -581,6 +582,24 @@ function reportSchema(version) {
           : {}),
         consent: ref('consent'),
         findings: array(ref('finding')),
+        // Added in 1.5.0; present only when the scan was compared with a baseline report.
+        ...(version === '1.5.0'
+          ? {
+              baseline: object(
+                {
+                  new: count,
+                  existing: count,
+                  fixed: array(
+                    object({ ruleId: string, pageUrl: string, subject: string }, [
+                      'ruleId',
+                      'pageUrl',
+                    ]),
+                  ),
+                },
+                ['new', 'existing', 'fixed'],
+              ),
+            }
+          : {}),
         rules: array(ref('rule')),
         coverage: choices('complete', 'partial'),
       },

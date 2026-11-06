@@ -25,6 +25,7 @@ export function formatMarkdown(result: ScanResult): string {
   if (result.consent !== undefined) {
     lines.push('', escapeText(m.consent(result.consent)));
   }
+  if (result.baseline !== undefined) lines.push('', escapeText(m.baseline(result.baseline)));
   if (isPartial(result)) lines.push('', escapeText(coverageMessage(result)));
   const observations = captureLines(result);
   if (observations.length > 0) {
@@ -45,9 +46,10 @@ export function formatMarkdown(result: ScanResult): string {
   for (const [pageUrl, findings] of groupByPage(perPage)) {
     lines.push('', `#### ${code(pageUrl)}`, '', `| | ${m.rule} | ${m.finding} |`, '|---|---|---|');
     for (const finding of findings) {
-      const policy = finding.policy
-        ? ` [${m.policy(finding.policy.allowed, finding.policy.originalSeverity)}]`
-        : '';
+      const policy =
+        (finding.policy
+          ? ` [${m.policy(finding.policy.allowed, finding.policy.originalSeverity)}]`
+          : '') + (finding.baseline === 'new' ? ` [${m.newFinding}]` : '');
       lines.push(
         `| ${ICONS[finding.severity]} | \`${finding.ruleId}\` | ${escapeText(finding.message + policy)}${evidenceCell(finding.evidence)} |`,
       );

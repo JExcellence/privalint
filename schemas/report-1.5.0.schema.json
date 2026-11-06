@@ -195,6 +195,45 @@
         "$ref": "#/$defs/finding"
       }
     },
+    "baseline": {
+      "type": "object",
+      "properties": {
+        "new": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "existing": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fixed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ruleId": {
+                "type": "string"
+              },
+              "pageUrl": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ruleId",
+              "pageUrl"
+            ]
+          }
+        }
+      },
+      "required": [
+        "new",
+        "existing",
+        "fixed"
+      ]
+    },
     "rules": {
       "type": "array",
       "items": {
@@ -816,6 +855,13 @@
           "required": [
             "allowed",
             "originalSeverity"
+          ]
+        },
+        "baseline": {
+          "type": "string",
+          "enum": [
+            "new",
+            "existing"
           ]
         }
       },

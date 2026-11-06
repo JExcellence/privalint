@@ -660,6 +660,13 @@
             "allowed",
             "originalSeverity"
           ]
+        },
+        "baseline": {
+          "type": "string",
+          "enum": [
+            "new",
+            "existing"
+          ]
         }
       },
       "required": [

@@ -295,4 +295,44 @@ describe('JSON configuration', () => {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
   });
+  it('fails only on findings the baseline report does not have', async () => {
+    const cwd = await directory();
+    const server = createServer((request, response) => {
+      const body =
+        request.url === '/impressum' || request.url === '/privacy'
+          ? IMPRINT_TEXT
+          : '<a href="/impressum">Impressum</a><a href="/privacy">Privacy policy</a>' +
+            '<div>Cookies <button>Accept all</button></div>';
+      response.writeHead(200, { 'content-type': 'text/html' }).end(body);
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
+    await writeFile(
+      join(cwd, 'privalint.config.json'),
+      JSON.stringify({ rules: { 'reject-option': 'error' } }),
+    );
+    const run = (...args: string[]) =>
+      promisify(execFile)(
+        process.execPath,
+        [cli, url, '--settle', '0', '--format', 'json', ...args],
+        {
+          cwd,
+        },
+      ).then(
+        (output) => ({ code: 0, stdout: output.stdout }),
+        (error: { code: number; stdout: string }) => ({ code: error.code, stdout: error.stdout }),
+      );
+    try {
+      const first = await run();
+      expect(first.code).toBe(1);
+      await writeFile(join(cwd, 'baseline.json'), first.stdout);
+      const compared = await run('--baseline', 'baseline.json');
+      expect(compared.code).toBe(0);
+      expect(JSON.parse(compared.stdout).baseline).toMatchObject({ new: 0, fixed: [] });
+      await writeFile(join(cwd, 'not-a-report.json'), 'nope');
+      expect((await run('--baseline', 'not-a-report.json')).code).toBe(2);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
 });
