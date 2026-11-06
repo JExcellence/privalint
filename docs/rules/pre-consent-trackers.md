@@ -27,6 +27,37 @@ A tag manager container is a warning because loading it already transfers the IP
 third party, but whether it fires tags without consent depends on its configuration. Any tag it
 fires that matches the list is reported separately as an error.
 
+### Proxied endpoints
+
+Some sites route tracking through their own domain: a server-side Google Tag Manager container on
+`metrics.example.com`, or a reverse proxy at `/g/collect`. Such requests look first-party, so they
+are also recognised by their path and parameters on any host. Each signature needs the vendor's
+own parameter format, so an unrelated `/collect` endpoint doesn't match:
+
+| Vendor             | Path and parameters                                 |
+| ------------------ | --------------------------------------------------- |
+| Google Analytics   | `…/g/collect?v=2&tid=G-…`, `…/collect?v=1&tid=UA-…` |
+| Google Analytics   | `…/gtag/js?id=G-…` (also `AW-`, `DC-`)              |
+| Google Tag Manager | `…/gtm.js?id=GTM-…`                                 |
+| Meta Pixel         | `…/tr?id=<numeric pixel id>&ev=…`                   |
+
+The evidence then names the host the requests went through ("proxied through metrics.example.com").
+A server-side container still needs consent for what it forwards.
+
+### CNAME-cloaked trackers
+
+A subdomain such as `metrics.example.com` can be a CNAME to a tracker, so its requests and cookies
+look first-party. In native scans privalint resolves the CNAME chain (up to five hops) of every
+first-party subdomain other than the scanned host that received a request, and reports a chain
+that reaches a tracker domain as that tracker, with the chain as evidence:
+"request https://metrics.example.com/… (CNAME metrics.example.com → example.com.eulerian.net)".
+
+The targets come from the tracker list and from AdGuard's MIT-licensed
+[cname-trackers list](https://github.com/AdguardTeam/cname-trackers) (Adobe Experience Cloud,
+Eulerian, Criteo, Keyade, AT Internet, Commanders Act, Oracle Eloqua, Wizaly, Ingenious
+Technologies, Pardot). Scans through a network adapter and offline fixtures make no DNS lookups.
+At most 20 subdomains are resolved, each lookup limited to three seconds.
+
 ## Why
 
 Two things need consent here, and a tracker usually does both:

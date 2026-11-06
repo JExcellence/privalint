@@ -35,6 +35,7 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'mixed-content': ['document'],
   'referrer-policy': ['network'],
   'third-party-personal-data': ['network'],
+  fingerprinting: ['network'],
   'reject-option': ['consent'],
   'reject-less-prominent': ['consent'],
   'trackers-after-reject': ['after-reject'],

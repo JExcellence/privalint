@@ -1,3 +1,4 @@
+import type { TrackerCategory } from './data/trackers.js';
 import type { Lang } from './i18n.js';
 import type { Region } from './legal.js';
 
@@ -404,6 +405,10 @@ export interface PageSnapshot {
   cookies: RecordedCookie[];
   /** Forms that collect personal data. Internal input for form-privacy-notice. */
   forms?: FormObservation[];
+  /** First-party subdomains this page used that are CNAMEs to a tracker. Native scans. Internal. */
+  cnameCloaks?: CnameCloak[];
+  /** Calls to fingerprinting APIs before consent and the script that made each. Internal. */
+  fingerprinting?: FingerprintRead[];
   /** Scripts, images, frames and stylesheets the page references over http://, at most ten. */
   insecureResources?: string[];
   /** The referrer policy the page sets by response header and by meta tag, as written. */
@@ -639,4 +644,20 @@ export interface ThirdPartyHost {
   requests: number;
   /** The vendor privalint's lists name for it; absent for hosts on no list. */
   vendor?: string;
+}
+
+/** A call to an API fingerprinting reads its signals from, and the script that made it. */
+export interface FingerprintRead {
+  api: 'canvas' | 'webgl' | 'audio';
+  /** URL of the calling script, from the stack; the page URL for inline scripts. */
+  script: string;
+}
+
+/** A first-party subdomain whose CNAME chain leads to a tracker. */
+export interface CnameCloak {
+  host: string;
+  /** The CNAME targets in order, starting with the first record of `host`. */
+  chain: string[];
+  vendor: string;
+  category: TrackerCategory;
 }

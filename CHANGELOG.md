@@ -19,6 +19,8 @@ Upgrade notes:
   cookie policy the privacy policy links. That is up to three extra page loads per scan, also
   through a network adapter, and can add findings. Deselect a rule to skip its load. Without a
   legal notice link, a page behind a vague legal link or the privacy policy is read instead.
+- Native scans make DNS lookups for up to 20 first-party subdomains that received requests, to
+  find CNAME-cloaked trackers. Scans through a network adapter make none.
 - New rules run by default and can add findings: `mixed-content` reports a form that submits over
   HTTP as an error, so scans with the default `--fail-on error` can fail on it;
   `form-preticked-consent`, `privacy-policy-content` and `third-party-personal-data` add warnings,
@@ -30,6 +32,18 @@ Upgrade notes:
 
 ### Added
 
+- CNAME-cloaked trackers: native scans resolve the CNAME chain of first-party subdomains that
+  received requests and report a chain that reaches a tracker (from the tracker list and AdGuard's
+  cname-trackers list) through `pre-consent-trackers`, with the chain as evidence. No DNS lookups
+  through a network adapter or offline (#126)
+- New rule `fingerprinting` (warning): a third-party script reads back a canvas, the unmasked WebGL
+  renderer or an offline audio rendering before consent. Charts that only draw are not reported;
+  reCAPTCHA, hCaptcha and Turnstile are info. The Fingerprint agent hosts are on the tracker list
+  (#124)
+- Trackers routed through the site's own domain are recognised by their path and parameters on
+  any host: GA4 `/g/collect?v=2&tid=G-…`, Universal Analytics collect hits, server-side Google Tag
+  Manager `gtm.js?id=GTM-…` and `gtag/js?id=G-…`, and Meta Pixel `/tr?id=…&ev=…`. The evidence names
+  the host they were proxied through (#125)
 - New opt-in rule `trackers-after-close` (`--check-close`, config `closeCheck`, Action input
   `check-close`): privalint closes the banner with its close button ("×", "Schließen") in a fresh
   browser, reloads and reports trackers that load then as errors, since closing is no choice. A

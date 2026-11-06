@@ -181,6 +181,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 32. cikk'],
     eu: ['Art. 32 GDPR'],
   },
+  // Reading device information needs consent like storing a cookie (EDPB Guidelines 2/2023).
+  fingerprinting: {
+    de: ['§ 25 Abs. 1 TDDDG'],
+    at: ['§ 165 Abs. 3 TKG 2021'],
+    ch: ['Art. 45c FMG'],
+    hu: ['Eht. 155. § (4)'],
+    eu: ['Art. 5(3) ePrivacy Directive', 'EDPB Guidelines 2/2023'],
+  },
   // Personal data beyond the IP address sent to other sites.
   'third-party-personal-data': {
     de: ['Art. 5 Abs. 1 lit. c, Art. 6 Abs. 1 DSGVO'],

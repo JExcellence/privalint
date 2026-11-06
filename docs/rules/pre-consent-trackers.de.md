@@ -24,6 +24,38 @@ Ein Tag-Manager-Container ist nur eine Warnung: Schon sein Laden überträgt die
 einen Dritten, ob er aber ohne Einwilligung Tags auslöst, hängt von seiner Konfiguration ab.
 Jedes ausgelöste Tag, das auf der Liste steht, wird gesondert als Fehler gemeldet.
 
+### Weitergeleitete Endpunkte
+
+Manche Websites leiten Tracking über die eigene Domain: ein serverseitiger Google-Tag-Manager-
+Container auf `metrics.example.com` oder ein Reverse Proxy unter `/g/collect`. Solche Anfragen
+wirken wie eigene, deshalb werden sie zusätzlich an Pfad und Parametern auf jedem Host erkannt.
+Jede Signatur verlangt das Parameterformat des Anbieters, ein beliebiger `/collect`-Endpunkt
+passt also nicht:
+
+| Anbieter           | Pfad und Parameter                                  |
+| ------------------ | --------------------------------------------------- |
+| Google Analytics   | `…/g/collect?v=2&tid=G-…`, `…/collect?v=1&tid=UA-…` |
+| Google Analytics   | `…/gtag/js?id=G-…` (auch `AW-`, `DC-`)              |
+| Google Tag Manager | `…/gtm.js?id=GTM-…`                                 |
+| Meta Pixel         | `…/tr?id=<numerische Pixel-ID>&ev=…`                |
+
+Der Beleg nennt dann den Host, über den die Anfragen liefen („über metrics.example.com
+weitergeleitet“). Auch ein serverseitiger Container braucht für das Weitergeleitete eine
+Einwilligung.
+
+### Per CNAME getarnte Tracker
+
+Eine Subdomain wie `metrics.example.com` kann ein CNAME auf einen Tracker sein; ihre Anfragen und
+Cookies wirken dann wie eigene. In nativen Scans löst privalint die CNAME-Kette (bis zu fünf
+Schritte) jeder eigenen Subdomain außer dem gescannten Host auf, an die eine Anfrage ging, und meldet
+eine Kette, die eine Tracker-Domain erreicht, als diesen Tracker, mit der Kette als Beleg.
+
+Die Ziele stammen aus der Tracker-Liste und aus AdGuards MIT-lizenzierter
+[cname-trackers-Liste](https://github.com/AdguardTeam/cname-trackers) (Adobe Experience Cloud,
+Eulerian, Criteo, Keyade, AT Internet, Commanders Act, Oracle Eloqua, Wizaly, Ingenious
+Technologies, Pardot). Scans über einen Netzwerk-Adapter und Offline-Fixtures stellen keine
+DNS-Anfragen. Höchstens 20 Subdomains werden aufgelöst, jede Anfrage auf drei Sekunden begrenzt.
+
 ## Warum
 
 Einwilligungspflichtig sind hier zwei Dinge, und ein Tracker tut meist beides:

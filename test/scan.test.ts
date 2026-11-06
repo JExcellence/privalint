@@ -155,6 +155,17 @@ describe('scan', () => {
     ]);
   });
 
+  it('recognises trackers proxied through the site itself', async () => {
+    const result = await scan(`${origin}/leaky/proxied.html`, { ...options, consentCheck: false });
+    const trackers = result.findings.filter((f) => f.ruleId === 'pre-consent-trackers');
+    expect(trackers.map((f) => f.subject).sort()).toEqual([
+      'Google Analytics',
+      'Google Tag Manager',
+    ]);
+    expect(trackers.flatMap((f) => f.evidence).join(' ')).toContain('(proxied through 127.0.0.1)');
+    expect(JSON.stringify(trackers)).not.toContain('/api/collect');
+  });
+
   it('redacts e-mail hashes in request URLs from every finding', async () => {
     const result = await scan(`${origin}/leaky/pixel.html`, { ...options, consentCheck: false });
     const report = JSON.stringify(result);

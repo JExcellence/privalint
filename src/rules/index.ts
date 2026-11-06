@@ -6,6 +6,7 @@ import { bannerLegalLinks } from './banner-legal-links.js';
 import { consentBannerMissing } from './consent-banner-missing.js';
 import { consentPreselected } from './consent-preselected.js';
 import { consentSettingsLink } from './consent-settings-link.js';
+import { fingerprinting } from './fingerprinting.js';
 import { formPretickedConsent } from './form-preticked-consent.js';
 import { formPrivacyNotice } from './form-privacy-notice.js';
 import { googleFonts } from './google-fonts.js';
@@ -48,6 +49,7 @@ export const defaultRules: readonly Rule[] = [
   thirdPartyCdns,
   thirdCountryProviders,
   thirdPartyPersonalData,
+  fingerprinting,
   trackingCookieLifetime,
   impressumLink,
   legalNoticeContent,
@@ -71,6 +73,7 @@ export {
   consentBannerMissing,
   consentPreselected,
   consentSettingsLink,
+  fingerprinting,
   formPretickedConsent,
   formPrivacyNotice,
   googleFonts,

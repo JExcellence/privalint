@@ -47,6 +47,11 @@ export interface ScanOptions {
    * loads (trackers-after-close). One extra page load.
    */
   closeCheck?: boolean | undefined;
+  /**
+   * Resolves CNAME records to find trackers behind first-party subdomains. Defaults to the system
+   * resolver in native scans; never used with a network adapter. Tests pass a stub.
+   */
+  resolveCname?: ((host: string) => Promise<string[]>) | undefined;
   headed?: boolean | undefined;
   channel?: string | undefined;
   /**

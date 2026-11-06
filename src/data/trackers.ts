@@ -7,7 +7,8 @@ export type TrackerCategory =
   | 'session-replay'
   | 'social'
   | 'marketing-automation'
-  | 'tag-manager';
+  | 'tag-manager'
+  | 'fingerprinting';
 
 /** Who set a cookie and why. Cookies from the Open Cookie Database carry no hosts. */
 export interface CookieTracker {
@@ -21,6 +22,78 @@ export interface Tracker extends HostPattern, CookieTracker {
    * Strings are name prefixes; use a RegExp where a prefix would be too broad.
    */
   cookies?: Array<string | RegExp>;
+  /**
+   * Set on a match found by path and parameters on a host that isn't the vendor's own: a
+   * server-side tagging container or a proxy on the site's domain.
+   */
+  proxied?: boolean;
+}
+
+/**
+ * Collection endpoints recognised by their path and parameters on any host, for vendors whose
+ * requests sites route through their own domain (server-side Google Tag Manager, reverse proxies).
+ * Each needs the vendor's own parameter format, so an unrelated `/collect` endpoint doesn't match.
+ */
+const PROXIED_ENDPOINTS: ReadonlyArray<{
+  vendor: string;
+  category: TrackerCategory;
+  matches: (url: URL) => boolean;
+}> = [
+  {
+    // GA4 measurement protocol as sent by gtag.js: /g/collect?v=2&tid=G-XXXX.
+    vendor: 'Google Analytics',
+    category: 'analytics',
+    matches: (url) =>
+      /\/g\/collect$/.test(url.pathname) &&
+      url.searchParams.get('v') === '2' &&
+      /^G-[A-Z0-9]+$/i.test(url.searchParams.get('tid') ?? ''),
+  },
+  {
+    // Universal Analytics hits: /collect?v=1&tid=UA-XXXX-Y.
+    vendor: 'Google Analytics',
+    category: 'analytics',
+    matches: (url) =>
+      /\/(?:r\/)?collect$/.test(url.pathname) &&
+      url.searchParams.get('v') === '1' &&
+      /^UA-\d+-\d+$/i.test(url.searchParams.get('tid') ?? ''),
+  },
+  {
+    // A web container served by a server-side tagging server: /gtm.js?id=GTM-XXXX.
+    vendor: 'Google Tag Manager',
+    category: 'tag-manager',
+    matches: (url) =>
+      /\/gtm\.js$/.test(url.pathname) && /^GTM-[A-Z0-9]+$/i.test(url.searchParams.get('id') ?? ''),
+  },
+  {
+    // gtag.js through a tagging server: /gtag/js?id=G-XXXX (or AW-, DC-).
+    vendor: 'Google Analytics',
+    category: 'analytics',
+    matches: (url) =>
+      /\/gtag\/js$/.test(url.pathname) &&
+      /^(?:G|AW|DC)-[A-Z0-9]+$/i.test(url.searchParams.get('id') ?? ''),
+  },
+  {
+    // Meta Pixel events through a proxy: /tr?id=<pixel id>&ev=PageView.
+    vendor: 'Meta Pixel',
+    category: 'advertising',
+    matches: (url) =>
+      /\/tr\/?$/.test(url.pathname) &&
+      /^\d{6,}$/.test(url.searchParams.get('id') ?? '') &&
+      (url.searchParams.get('ev') ?? '') !== '',
+  },
+];
+
+/** A vendor endpoint on a host that isn't the vendor's, found by its path and parameters. */
+export function findProxiedTracker(url: string): Tracker | undefined {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return undefined;
+  }
+  const endpoint = PROXIED_ENDPOINTS.find((entry) => entry.matches(parsed));
+  if (endpoint === undefined) return undefined;
+  return { vendor: endpoint.vendor, category: endpoint.category, domains: [], proxied: true };
 }
 
 /**
@@ -316,6 +389,13 @@ export const trackers: readonly Tracker[] = [
     domains: ['ib.adnxs.com'],
     paths: ['/pixie'],
   },
+  // Fingerprint (FingerprintJS Pro): script CDNs and the identification API, from the vendor's
+  // CSP guide https://docs.fingerprint.com/docs/js-agent-csp (2026-11-06).
+  {
+    vendor: 'Fingerprint',
+    category: 'fingerprinting',
+    domains: ['fpjscdn.net', 'fpnpmcdn.net', 'api.fpjs.io'],
+  },
   {
     vendor: 'Amazon Associates',
     category: 'advertising',
@@ -325,7 +405,7 @@ export const trackers: readonly Tracker[] = [
 ];
 
 export function findTrackerByUrl(url: string): Tracker | undefined {
-  return findByUrl(trackers, url);
+  return findByUrl(trackers, url) ?? findProxiedTracker(url);
 }
 
 // The generated list, indexed once. Exact names are looked up directly; prefixes are tried

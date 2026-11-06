@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { type Browser, chromium } from 'playwright';
 import { assessPage } from './assessment.js';
 import { capturePage, deviceOptions } from './capture.js';
+import { findCnameCloaks } from './cname.js';
 import { diagnosticUrl } from './diagnostics.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
@@ -281,6 +282,10 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       }
     }
     throwIfAborted(options.signal);
+    // DNS lookups belong to native scans: an adapter owns the network, an offline fixture has none.
+    if (!options.networkAdapter && (options.resolveCname !== undefined || !options.offline)) {
+      await findCnameCloaks(snapshots, siteUrl, options.resolveCname);
+    }
     const assessments = snapshots.map((page, index) => {
       emit({
         stage: 'evaluating-rules',
