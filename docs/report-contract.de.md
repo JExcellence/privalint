@@ -27,9 +27,11 @@ Global-Privacy-Control-Prüfung (`options.gpc`, `consent.gpc`, die Beobachtungsa
 `gpc-sent`) und die optionale Liste
 `thirdParties`: jeder Host
 außerhalb der Website, der auf eine Anfrage geantwortet hat, mit registrierbarer Domain, der Seite,
-auf der er zuerst auftrat, den Phasen (`before-consent`, `after-reject`, `after-settings`, `after-close`), der
+auf der er zuerst auftrat, den Phasen (`before-consent`, `after-reject`, `after-settings`, `after-close`, `after-accept`), der
 Anzahl der Anfragen und dem Anbieter, als den privalint ihn kennt. Sie enthält nur Hosts, nie Pfade
-oder Query-Strings. Ein 1.4.0-Validator würde all das ablehnen.
+oder Query-Strings. Ein 1.4.0-Validator würde all das ablehnen. Ein mit `--baseline` verglichener Bericht hat außerdem
+`baseline` (`new` oder `existing`) an jedem Befund und ein `baseline` auf oberster Ebene mit den
+Zahlen `new` und `existing` und den behobenen Befunden `fixed` (`ruleId`, `pageUrl`, `subject`).
 Paket-/Scanner-Version und Schemaversion sind unabhängig. Ohne `schemaVersion` ist ein Bericht
 Legacy; unbekannte Versionen müssen ausdrücklich unterstützt werden. Alte Daten bekommen nicht
 einfach eine neue Version zugewiesen, damit sie validieren.

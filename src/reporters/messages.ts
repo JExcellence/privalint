@@ -1,5 +1,5 @@
 import type { Lang } from '../i18n.js';
-import type { ConsentSummary } from '../types.js';
+import type { BaselineSummary, ConsentSummary } from '../types.js';
 
 /** Fixed wording of the text and Markdown reports. */
 export interface ReportMessages {
@@ -24,6 +24,8 @@ export interface ReportMessages {
   disclaimer: string;
   policy(allowed: boolean, originalSeverity: string): string;
   consent(consent: ConsentSummary): string;
+  baseline(summary: BaselineSummary): string;
+  newFinding: string;
 }
 
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -49,6 +51,9 @@ const en: ReportMessages = {
   thirdParties: (n) => `Hosts outside the site (${n})`,
   thirdPartyColumns: ['Host', 'Known as', 'Requests', 'When'],
   disclaimer: 'Automated checks only. A clean result is not proof of GDPR compliance.',
+  baseline: (b) =>
+    `Compared with the baseline: ${b.new} new, ${b.existing} existing, ${b.fixed.length} fixed`,
+  newFinding: 'new',
   policy: (allowed, severity) =>
     allowed
       ? 'Local policy: vendor allowed; retained as info. Not legal approval.'
@@ -92,6 +97,9 @@ const de: ReportMessages = {
   howToFix: 'So beheben Sie es',
   thirdParties: (n) => `Hosts außerhalb der Website (${n})`,
   thirdPartyColumns: ['Host', 'Bekannt als', 'Anfragen', 'Wann'],
+  baseline: (b) =>
+    `Verglichen mit der Baseline: ${b.new} neu, ${b.existing} bestehend, ${b.fixed.length} behoben`,
+  newFinding: 'neu',
   disclaimer:
     'Nur automatisierte Prüfungen. Ein sauberes Ergebnis ist kein Nachweis der DSGVO-Konformität.',
   policy: (allowed, severity) =>
@@ -137,6 +145,9 @@ const hu: ReportMessages = {
   howToFix: 'Javítás módja',
   thirdParties: (n) => `A webhelyen kívüli kiszolgálók (${n})`,
   thirdPartyColumns: ['Kiszolgáló', 'Ismert név', 'Kérések', 'Mikor'],
+  baseline: (b) =>
+    `Összevetés az alapjelentéssel: ${b.new} új, ${b.existing} meglévő, ${b.fixed.length} javítva`,
+  newFinding: 'új',
   disclaimer:
     'Csak automatikus ellenőrzés. A hibátlan eredmény nem bizonyítja a GDPR-nak való megfelelést.',
   policy: (allowed, severity) =>

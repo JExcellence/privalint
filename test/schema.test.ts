@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { describe, expect, it } from 'vitest';
+import { applyBaseline } from '../src/baseline.js';
 import { assessCoverage } from '../src/coverage.js';
 import { identifyReportSchema, REPORT_SCHEMA_VERSION } from '../src/report-contract.js';
 import { formatSarif } from '../src/reporters/sarif.js';
@@ -111,6 +112,19 @@ describe('standalone report contracts', () => {
     expect(schemas.get('1.5.0')?.report(hungarian('1.5.0'))).toBe(true);
     expect(schemas.get('1.4.0')?.report(hungarian('1.4.0'))).toBe(false);
     expect(schemas.get('1.5.0')?.report({ ...value, schemaVersion: '1.5.0' })).toBe(true);
+  });
+
+  it('accepts baseline marks and the fixed list in schema 1.5.0', async () => {
+    const value = (await fixture('policy-overridden')) as ScanResult;
+    const [first] = value.findings;
+    if (first === undefined) throw new Error('Expected a finding');
+    const compared = (version: string) =>
+      applyBaseline({ ...value, schemaVersion: version }, [
+        first,
+        { ...first, subject: 'Gone vendor' },
+      ]);
+    const validator = schemas.get('1.5.0')?.report;
+    expect(validator?.(compared('1.5.0')), JSON.stringify(validator?.errors)).toBe(true);
   });
 
   it('accepts capture timing, timeout stages and the TCF readout only from schema 1.4.0 on', async () => {

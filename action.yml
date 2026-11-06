@@ -33,6 +33,9 @@ inputs:
   check-settings:
     description: true also switches off every category in the banner settings, saves and checks again (trackers-after-settings). Empty uses settingsCheck from the config file.
     default: ""
+  baseline:
+    description: Path to an earlier JSON report. Findings it has are marked existing and do not fail the run; fixed ones are listed. Empty compares with nothing.
+    default: ""
   check-close:
     description: true also closes the banner with its close button, reloads and checks whether that counts as consent (trackers-after-close). Empty uses closeCheck from the config file.
     default: ""
@@ -100,6 +103,7 @@ runs:
         DEVICE: ${{ inputs.device }}
         SITEMAP: ${{ inputs.sitemap }}
         CHECK_CLOSE: ${{ inputs.check-close }}
+        BASELINE: ${{ inputs.baseline }}
         CHECK_ACCEPT: ${{ inputs.check-accept }}
         GPC: ${{ inputs.gpc }}
         CONFIG: ${{ inputs.config }}
@@ -138,6 +142,7 @@ runs:
         if [[ -n "$DEVICE" ]]; then args+=(--device "$DEVICE"); fi
         if [[ "$SITEMAP" == "true" ]]; then args+=(--sitemap); fi
         if [[ "$CHECK_CLOSE" == "true" ]]; then args+=(--check-close); fi
+        if [[ -n "$BASELINE" ]]; then args+=(--baseline "$BASELINE"); fi
         if [[ "$CHECK_ACCEPT" == "true" ]]; then args+=(--check-accept); fi
         if [[ "$GPC" == "true" ]]; then args+=(--gpc); fi
         if [[ -n "$DISABLE" ]]; then args+=(--disable "$DISABLE"); fi

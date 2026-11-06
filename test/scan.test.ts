@@ -460,6 +460,19 @@ describe('scan', () => {
     expect(result.pages).toHaveLength(1);
   });
 
+  it('reads a cookie policy published as a PDF on the same site', async () => {
+    const youtube = (result: Awaited<ReturnType<typeof scan>>) =>
+      result.findings.filter(
+        (f) => f.ruleId === 'privacy-policy-vendors' && f.subject === 'YouTube',
+      );
+    // The PDF names YouTube: no finding.
+    expect(youtube(await scan(`${origin}/policy-vendors/pdf/index.html`, options))).toEqual([]);
+    // A PDF that can't be downloaded stays unread, which makes a finding info and says so.
+    const [unread] = youtube(await scan(`${origin}/policy-vendors/pdf/broken.html`, options));
+    expect(unread?.severity).toBe('info');
+    expect(unread?.evidence.at(-1)).toBe(`not read: ${origin}/policy-vendors/pdf/missing.pdf`);
+  });
+
   it('with --check-accept, also looks for services that load only after accepting', async () => {
     const vendors = (result: Awaited<ReturnType<typeof scan>>) =>
       result.findings

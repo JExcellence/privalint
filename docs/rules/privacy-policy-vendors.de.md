@@ -45,9 +45,12 @@ der Übermittlung außerhalb der EU. Wird ein Dienst nicht mehr gebraucht, ihn s
 ## Grenzen
 
 - Nur Dienste, die auf der Startseite ohne Einwilligung oder nach dem Ablehnen laden, werden
-  gesehen. privalint stimmt nie zu, Dienste, die erst nach der Einwilligung laden, werden daher
-  nicht geprüft.
+  gesehen. Dienste, die erst nach der Einwilligung laden, werden nur mit `--check-accept`
+  geprüft.
 - Ein Name in der Erklärung reicht; ob die Beschreibung stimmt, wird nicht geprüft.
-- Erklärungen auf einer anderen Domain, als PDF oder verteilt auf mehr als eine verlinkte Seite
-  werden nur teilweise gelesen. Verlinkt die Erklärung eine Cookie-Richtlinie, die sich nicht lesen
-  lässt, etwa ein PDF, sinkt jeder Befund auf `info` und nennt den ungelesenen Link.
+- Eine Cookie-Richtlinie, die als PDF auf derselben Website liegt, wird heruntergeladen (bis 5 MB)
+  und ihr Text mit pdf.js gelesen; gescannte PDFs ohne Textebene enthalten keinen lesbaren Text.
+  Eine Datenschutzerklärung, die selbst ein PDF ist, Erklärungen auf einer anderen Domain und
+  Erklärungen, die auf mehr als eine verlinkte Seite verteilt sind, werden nur teilweise gelesen.
+  Verlinkt die Erklärung eine Cookie-Richtlinie, die sich nicht lesen lässt, etwa ein PDF über
+  5 MB, sinkt jeder Befund auf `info` und nennt den ungelesenen Link.

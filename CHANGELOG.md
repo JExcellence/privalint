@@ -19,6 +19,9 @@ Upgrade notes:
   cookie policy the privacy policy links. That is up to three extra page loads per scan, also
   through a network adapter, and can add findings. Deselect a rule to skip its load. Without a
   legal notice link, a page behind a vague legal link or the privacy policy is read instead.
+- New dependency `pdfjs-dist` (5.1.x, the last line that supports Node 20.12) to read PDF cookie
+  policies. It brings the optional `@napi-rs/canvas`, which privalint does not use; install with
+  `--omit=optional` to skip it.
 - Native scans make DNS lookups for up to 20 first-party subdomains that received requests, to
   find CNAME-cloaked trackers. Scans through a network adapter make none.
 - New rules run by default and can add findings: `mixed-content` reports a form that submits over
@@ -33,6 +36,18 @@ Upgrade notes:
 
 ### Added
 
+- `privacy-policy-vendors` reads a cookie policy published as a PDF on the same site: it is
+  downloaded (up to 5 MB, through the network adapter when there is one) and its text extracted
+  with pdf.js, without running code from the file. A PDF that fails or is larger stays unread as
+  before (#113)
+- `--format html` (and `-o report.html`) writes a self-contained HTML report with inline CSS for
+  light and dark: findings by page and severity, evidence in collapsible sections, fixes, legal
+  basis and the disclaimer. Every scanned value is escaped, and the page loads nothing (#129)
+- `--baseline <report.json>` (Action input `baseline`) compares the findings with an earlier JSON
+  report: each finding is marked `new` or `existing` by rule, page and subject (the SARIF
+  fingerprint), `baseline.fixed` lists the findings that are gone where the rule ran again, and `--fail-on` counts new
+  findings only. Text and Markdown show the counts, SARIF sets `baselineState`. A baseline with
+  another schema major version is rejected (#128)
 - New opt-in rule `gpc-signal` (`--gpc`, config `gpc`, Action input `gpc`): privalint loads the
   start page once more with Global Privacy Control (`Sec-GPC: 1` and
   `navigator.globalPrivacyControl`) and notes as info whether the banner hides and trackers stay

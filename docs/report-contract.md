@@ -26,9 +26,11 @@ the `thirdParties` phase `after-accept`), the opt-in Global Privacy Control chec
 `consent.gpc`, the observation kind `gpc`, the skip reason `gpc-check-disabled` and the explanations
 `gpc-check-disabled`, `missing-gpc-observation` and `gpc-sent`), and the optional `thirdParties` inventory: every host outside the site that answered
 a request, with its registrable domain, the page it was first seen on, the phases
-(`before-consent`, `after-reject`, `after-settings`, `after-close`), the number of requests and the vendor
+(`before-consent`, `after-reject`, `after-settings`, `after-close`, `after-accept`), the number of requests and the vendor
 privalint knows it as. It holds hosts only, never paths or query strings. A 1.4.0 validator would
-reject all of these.
+reject all of these. A report compared with `--baseline` also has `baseline` (`new` or
+`existing`) on each finding and a top-level `baseline` with the counts `new` and `existing` and the
+`fixed` findings (`ruleId`, `pageUrl`, `subject`).
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;
 unknown versions are unsupported. Never assign a schema version to old data merely to validate it.
 

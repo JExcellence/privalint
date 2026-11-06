@@ -1,4 +1,5 @@
 import type { Browser } from 'playwright';
+import { adapterFetchBytes, browserFetchBytes, type FetchBytes } from './fetch.js';
 import type { NetworkAdapter } from './network.js';
 import { crawlTarget, isFirstParty } from './url.js';
 
@@ -9,7 +10,6 @@ export type FetchText = (url: string) => Promise<string | undefined>;
 const MAX_SITEMAPS = 4;
 const MAX_BYTES = 5_000_000;
 const MAX_URLS = 5_000;
-const TIMEOUT_MS = 10_000;
 
 /** Pages likely to hold forms, embeds or checkout steps, read first. */
 const PRIORITY =
@@ -100,53 +100,17 @@ function decodeXml(text: string): string {
 
 /** Reads text files with the browser's request context, like the transport check. */
 export function browserFetchText(browser: Browser): FetchText {
-  return async (url) => {
-    const context = await browser.newContext();
-    try {
-      const response = await context.request.get(url, {
-        timeout: TIMEOUT_MS,
-        maxRedirects: 3,
-        failOnStatusCode: false,
-      });
-      if (response.status() !== 200) return undefined;
-      const body = await response.body();
-      return body.byteLength > MAX_BYTES ? undefined : body.toString('utf8');
-    } catch {
-      return undefined;
-    } finally {
-      await context.close();
-    }
-  };
+  return decoded(browserFetchBytes(browser, MAX_BYTES));
 }
 
 /** Reads text files through the network adapter: one hop, no redirects followed. */
 export function adapterFetchText(adapter: NetworkAdapter): FetchText {
+  return decoded(adapterFetchBytes(adapter, MAX_BYTES));
+}
+
+function decoded(fetchBytes: FetchBytes): FetchText {
   return async (url) => {
-    try {
-      const response = await adapter({
-        url,
-        method: 'GET',
-        headers: {},
-        body: null,
-        resourceType: 'other',
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
-      if (response.status !== 200 || response.body === undefined) return undefined;
-      const body = response.body;
-      if (typeof body === 'string') return body.length > MAX_BYTES ? undefined : body;
-      if (body instanceof Uint8Array) {
-        return body.byteLength > MAX_BYTES ? undefined : new TextDecoder().decode(body);
-      }
-      const chunks: Uint8Array[] = [];
-      let size = 0;
-      for await (const chunk of body) {
-        size += chunk.byteLength;
-        if (size > MAX_BYTES) return undefined;
-        chunks.push(chunk);
-      }
-      return new TextDecoder().decode(Buffer.concat(chunks));
-    } catch {
-      return undefined;
-    }
+    const bytes = await fetchBytes(url);
+    return bytes === undefined ? undefined : new TextDecoder().decode(bytes);
   };
 }

@@ -471,6 +471,22 @@ export interface Finding {
   subject?: string;
   /** Legal basis in the country the scan was run for. */
   references?: string[];
+  /** With --baseline: whether the baseline report had this finding. Since schema 1.5.0. */
+  baseline?: 'new' | 'existing';
+}
+
+/** A finding of the baseline report that the scan no longer found. */
+export interface BaselineFixed {
+  ruleId: string;
+  pageUrl: string;
+  subject?: string;
+}
+
+/** With --baseline: how the findings compare with an earlier report. Since schema 1.5.0. */
+export interface BaselineSummary {
+  new: number;
+  existing: number;
+  fixed: BaselineFixed[];
 }
 
 export interface RuleContext {
@@ -628,6 +644,8 @@ export interface ScanResult {
   /** Outcome of the consent check on the start page. */
   consent?: ConsentSummary;
   findings: Finding[];
+  /** Present when the scan was compared with a baseline report. Since schema 1.5.0. */
+  baseline?: BaselineSummary;
   rules: Array<Omit<Rule, 'check'>>;
   /** Observation coverage, not a legal compliance judgement. */
   coverage?: 'complete' | 'partial';

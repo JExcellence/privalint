@@ -4,9 +4,11 @@ import { assessPage } from './assessment.js';
 import { capturePage, deviceOptions } from './capture.js';
 import { findCnameCloaks } from './cname.js';
 import { diagnosticUrl } from './diagnostics.js';
+import { adapterFetchBytes, browserFetchBytes } from './fetch.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
 import { networkLimits } from './network.js';
+import { MAX_PDF_BYTES, pdfText } from './pdf.js';
 import { redactPersonalDataInText } from './personal-data.js';
 import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
@@ -545,6 +547,18 @@ async function readPolicyAndCookies(
   const { page: text, links } = policy;
   const cookieLink = links.find(linkMatches(COOKIE_POLICY));
   if (cookieLink === undefined) return policy;
+  const pdf = await readPdfPolicy(browser, cookieLink.href, new URL(text.url), options);
+  if (pdf !== undefined) {
+    return {
+      page: {
+        ...text,
+        text: `${text.text}\n${pdf.text}`,
+        ...(pdf.read ? {} : { unread: [pdf.url] }),
+      },
+      links,
+      label: policy.label,
+    };
+  }
   const cookies = await readLinkedPage(
     browser,
     { finalUrl: text.url, links },
@@ -565,6 +579,35 @@ async function readPolicyAndCookies(
   return target === withoutHash(text.url)
     ? policy
     : { page: { ...text, unread: [cookieLink.href] }, links, label: policy.label };
+}
+
+/**
+ * A cookie policy published as a PDF on the same site, read with pdf.js. Undefined when the link
+ * is no PDF (by its path), so the caller loads it as a page; `read: false` when the PDF couldn't
+ * be downloaded or read, or is larger than 5 MB.
+ */
+async function readPdfPolicy(
+  browser: Browser,
+  href: string,
+  from: URL,
+  options: ScanOptions,
+): Promise<{ url: string; text: string; read: boolean } | undefined> {
+  let url: URL;
+  try {
+    url = new URL(href, from);
+  } catch {
+    return undefined;
+  }
+  if (!/\.pdf$/i.test(url.pathname) || !isFirstParty(url.href, from)) return undefined;
+  url.hash = '';
+  const fetchBytes = options.networkAdapter
+    ? adapterFetchBytes(options.networkAdapter, MAX_PDF_BYTES)
+    : browserFetchBytes(browser, MAX_PDF_BYTES);
+  const bytes = await fetchBytes(url.href);
+  const text = bytes === undefined ? undefined : await pdfText(bytes);
+  return text === undefined
+    ? { url: url.href, text: '', read: false }
+    : { url: url.href, text, read: true };
 }
 
 /** Loads the start page in a fresh context that sends Global Privacy Control, without clicking. */
