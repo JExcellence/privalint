@@ -1,31 +1,8 @@
-import { huArticle, type Lang, say } from '../i18n.js';
+import { huArticle, type Lang, say, type Text } from '../i18n.js';
 import type { Finding, Rule } from '../types.js';
+import { hasAddress, hasEmail } from './contact-details.js';
 
 const ID = 'legal-notice-content';
-
-/**
- * Postcode and place: five digits in Germany, four in Austria, Switzerland and Hungary, optionally
- * with a country prefix ("D-", "A-", "CH-", "H-"), and the Hungarian order "Budapest, 1061". Every
- * format counts in every region: a Hungarian site may well be run from Germany.
- */
-const POSTCODE =
-  /\b(?:[A-Z]{1,2}-?\s?)?\d{4,5}\s+\p{Lu}|\p{Lu}\p{Ll}+,?\s+\d{4}\b|\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b|\b[AC-FHKNPRTV-Y]\d[\dW]\s?[AC-FHKNPRTV-Y\d]{4}\b/u;
-// The last two: UK postcodes ("SW1A 2AA") and Irish Eircodes ("D04 E5W5").
-
-/** A street with a house number, such as "Musterstraße 12", "Váci út 1." or "12 Main Street". */
-const STREET =
-  /\p{L}[\p{L}.'-]*(?:straße|strasse|str\.|weg|gasse|platz|allee|ring|damm|ufer|utca|út|tér|körút|street|road|avenue|lane|rue|via)?\s+\d+\s?[a-z]?\b|\b\d+[a-z]?,?\s+\p{L}+\s+(?:street|road|avenue|lane|st\.|rd\.)/iu;
-
-/**
- * Numbers that look like a postcode or a house number but aren't: phone and fax numbers, tax and
- * register numbers, a copyright year. Removed before looking for the address.
- */
-const NOT_ADDRESS =
-  /\b(?:tel(?:efon)?|fax|phone|mobil(?:e)?|ust-?id\w*|vat|steuer\w*|adószám|hr[ab]|cg|fn|iban|bic)\b\.?:?\s*[^\n,;]*|(?:©|\bcopyright\b)[^\n]*/giu;
-
-/** "(at)" and "[dot]" spellings count; a dot needs a letter right after it, as in a domain. */
-const EMAIL =
-  /[\w.+-]+\s?(?:@|\(at\)|\[at\]|\{at\}|\s(?:at|kukac)\s)\s?[\w-]+(?:(?:\.(?=\w)|\s?\(dot\)\s?|\s?\[dot\]\s?|\s(?:dot|pont)\s)[\w-]+)+/i;
 
 /**
  * Legal forms that are entered in a commercial or association register. Not right after a number,
@@ -33,20 +10,6 @@ const EMAIL =
  */
 const REGISTERED_FORM =
   /(?<!\d[.,/]?\s?)\b(?:GmbH|gGmbH|UG|AG|KG|OHG|OG|e\.\s?K\.|e\.\s?Kfr\.|e\.\s?V\.|SE|PartG|KGaA|Kft\.?|Zrt\.?|Nyrt\.?|Bt\.?|Kkt\.?|Ltd\.?|Limited|S\.?à\s?r\.?l\.?|SARL)(?=[\s,.)]|$)/u;
-
-/**
- * A postcode with a street on the same line or the line right above it, as in an address block
- * ("Musterstraße 12" over "10115 Berlin"). A blank line, the end of a paragraph, ends the block, so
- * a number in one paragraph and a year in the next don't make an address.
- */
-function hasAddress(text: string): boolean {
-  const lines = text.replace(NOT_ADDRESS, ' ').split('\n');
-  return lines.some((line, index) => {
-    if (!POSTCODE.test(line)) return false;
-    const above = lines[index - 1] ?? '';
-    return STREET.test(line) || (above.trim() !== '' && STREET.test(above));
-  });
-}
 
 /** Lines about other companies: the host, the web designer, image credits. */
 const THIRD_PARTY_LINE =
@@ -73,7 +36,7 @@ export const legalNoticeContent: Rule = {
     'quickly by e-mail, and a register entry where the legal form has one. privalint reads the ' +
     'legal notice page linked from the start page and looks for these details.',
   references: ['§ 5 DDG', '§ 5 ECG', 'Ekertv. 4. §', 'Art. 5 Directive 2000/31/EC'],
-  check({ page, lang }) {
+  check({ page, lang, region }) {
     const notice = page.legalNotice;
     if (notice === undefined) return [];
     const text = notice.text;
@@ -85,7 +48,7 @@ export const legalNoticeContent: Rule = {
         say(lang, { en: 'postal address', de: 'keine Postanschrift', hu: 'postai címet' }),
       );
     }
-    if (!(notice.mailto || EMAIL.test(text))) {
+    if (!hasEmail(text, notice.mailto)) {
       missing.push(
         say(lang, { en: 'e-mail address', de: 'keine E-Mail-Adresse', hu: 'e-mail-címet' }),
       );
@@ -141,9 +104,78 @@ export const legalNoticeContent: Rule = {
         }),
       });
     }
+    findings.push(...regionDetails(region, form, text, lang, page.finalUrl, notice.url));
     return findings;
   },
 };
+
+/** Hungarian tax numbers: 8 digits, the VAT code and the county code ("12345678-2-42"). */
+const HU_TAX_NUMBER = /adószám|\b\d{8}-\d-\d{2}\b/i;
+const AT_MEDIA_DISCLOSURE = /offenlegung|§\s?25\s?medieng|mediengesetz/i;
+
+/**
+ * Details only some regions ask for: the tax number of a Hungarian business (Ekertv. 4. §) and the
+ * Austrian media disclosure (§ 25 MedienG). Noted as info.
+ */
+function regionDetails(
+  region: string | undefined,
+  form: string | undefined,
+  text: string,
+  lang: Lang,
+  pageUrl: string,
+  noticeUrl: string,
+): Finding[] {
+  const finding = (subject: string, message: Text, fix: Text): Finding => ({
+    ruleId: ID,
+    severity: 'info',
+    subject,
+    message: say(lang, message),
+    pageUrl,
+    evidence: [
+      say(lang, {
+        en: `legal notice: ${noticeUrl}`,
+        de: `Impressum: ${noticeUrl}`,
+        hu: `impresszum: ${noticeUrl}`,
+      }),
+    ],
+    fix: say(lang, fix),
+  });
+  if (region === 'hu' && form !== undefined && !HU_TAX_NUMBER.test(text)) {
+    return [
+      finding(
+        'tax-number',
+        {
+          en: `The legal notice names the legal form ${form} but no tax number.`,
+          de: `Das Impressum nennt die Rechtsform ${form}, aber keine Steuernummer.`,
+          hu: `Az impresszum megnevezi ${huArticle(form)} ${form} cégformát, de adószámot nem.`,
+        },
+        {
+          en: 'Add the tax number (adószám) of the business, as Ekertv. 4. § asks for it.',
+          de: 'Die Steuernummer (adószám) des Unternehmens ergänzen, wie es Ekertv. 4. § verlangt.',
+          hu: 'Adja meg a vállalkozás adószámát, ahogy az Ekertv. 4. §-a előírja.',
+        },
+      ),
+    ];
+  }
+  if (region === 'at' && !AT_MEDIA_DISCLOSURE.test(text)) {
+    return [
+      finding(
+        'media-disclosure',
+        {
+          en: 'The legal notice has no media disclosure (Offenlegung).',
+          de: 'Das Impressum enthält keine Offenlegung nach dem Mediengesetz.',
+          hu: 'Az impresszum nem tartalmaz médiatörvény szerinti közzétételt (Offenlegung).',
+        },
+        {
+          en: 'Add a disclosure under § 25 MedienG: owner, purpose of the site and its basic direction. Most Austrian websites need one.',
+          de: 'Eine Offenlegung nach § 25 MedienG ergänzen: Medieninhaber, Unternehmensgegenstand und grundlegende Richtung. Die meisten österreichischen Websites brauchen sie.',
+          hu: 'Egészítse ki a § 25 MedienG szerinti közzététellel: médiatulajdonos, tevékenység és alapvető irány. A legtöbb osztrák webhelynek szüksége van rá.',
+        },
+      ),
+    ];
+  }
+  return [];
+}
 
 function evidence(lang: Lang, url: string, text: string): string[] {
   const words = text.trim().split(/\s+/).filter(Boolean).length;

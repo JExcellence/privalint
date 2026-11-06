@@ -139,6 +139,7 @@ describe('scan', () => {
     expect(findings.map(({ severity, message }) => `${severity}: ${message}`)).toEqual([
       'warning: The legal notice gives no postal address and no e-mail address.',
       'info: The legal notice names the legal form Kft. but no register entry.',
+      'info: The legal notice names the legal form Kft. but no tax number.',
     ]);
     expect(findings[0]?.pageUrl).toBe(`${origin}/legal-notice/`);
     expect(findings[0]?.evidence[0]).toBe(`legal notice: ${origin}/legal-notice/imprint.html`);
@@ -637,7 +638,7 @@ describe('consent check', () => {
         saveLabel: 'Elfogadom a kiválasztottakat',
         switchedOff: 2,
       });
-      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected', 'legal-notice-content']);
     });
 
     it('picks the narrowest level when categories are radio buttons (otpbank.hu)', async () => {
@@ -728,7 +729,7 @@ describe('consent check', () => {
         },
       });
       expect(result.region).toBe('hu');
-      expect(ruleIds(result.findings)).toEqual(['consent-preselected']);
+      expect(ruleIds(result.findings)).toEqual(['consent-preselected', 'legal-notice-content']);
     });
 
     it('reports a banner without a settings control', async () => {

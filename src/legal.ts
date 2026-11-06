@@ -152,7 +152,7 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
   // What the legal notice has to say: name, address, fast electronic contact, register entry.
   'legal-notice-content': {
     de: ['§ 5 Abs. 1 Nr. 1, 2 und 4 DDG'],
-    at: ['§ 5 Abs. 1 ECG', '§ 14 UGB'],
+    at: ['§ 5 Abs. 1 ECG', '§ 14 UGB', '§ 25 MedienG'],
     ch: ['Art. 3 Abs. 1 lit. s UWG'],
     hu: ['Ekertv. 4. §'],
     eu: ['Art. 5(1) Directive 2000/31/EC (e-commerce)'],

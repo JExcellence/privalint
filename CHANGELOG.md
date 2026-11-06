@@ -35,7 +35,9 @@ Upgrade notes:
   other listed services as info. Names match as whole words, with known other names (#105)
 - New rule `legal-notice-content`: the legal notice linked from the start page gives no postal
   address or e-mail address (warning), or names a registered legal form without a register entry
-  (info). Postcodes of Germany, Austria, Switzerland and Hungary are recognised (#104)
+  (info). Postcodes of Germany, Austria, Switzerland and Hungary are recognised (#104). With
+  `--region hu` a missing tax number of a company, with `--region at` a missing media disclosure
+  (Offenlegung) is noted as info (#115)
 - New rule `third-country-providers` (info): error monitoring, performance monitoring, feature
   flag and backend services outside the EU/EEA contacted before consent, such as Sentry on
   `ingest.us.sentry.io` or a Supabase project. Region hosts in the EU are not reported (#109)

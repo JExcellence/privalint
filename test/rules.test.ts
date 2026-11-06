@@ -693,6 +693,7 @@ describe('privacy-policy-vendors', () => {
 });
 
 describe('legal-notice-content', () => {
+  const NL = String.fromCharCode(10);
   const check = (text: string, region: Region = 'de', mailto = false) =>
     legalNoticeContent.check({
       siteUrl: SITE,
@@ -712,7 +713,9 @@ describe('legal-notice-content', () => {
     [
       'at',
       'at',
-      'Beispiel GmbH\nMariahilfer Straße 1\nA-1060 Wien\noffice (at) example.at\nFN 123456a, Handelsgericht Wien',
+      'Beispiel GmbH\nMariahilfer Straße 1\nA-1060 Wien\noffice (at) example.at\nFN 123456a, Handelsgericht Wien' +
+        NL +
+        'Offenlegung nach § 25 MedienG: Unternehmenswebsite',
     ],
     [
       'ch',
@@ -722,12 +725,16 @@ describe('legal-notice-content', () => {
     [
       'hu',
       'hu',
-      'Példa Kft.\n1051 Budapest, Váci út 1.\nE-mail: info@example.hu\nCégjegyzékszám: Cg. 01-09-123456',
+      'Példa Kft.\n1051 Budapest, Váci út 1.\nE-mail: info@example.hu\nCégjegyzékszám: Cg. 01-09-123456' +
+        NL +
+        'Adószám: 12345678-2-42',
     ],
     [
       'en, Hungarian address',
       'hu',
-      'Example Kft.\nAndrássy út 12, Budapest, 1061\nhello@example.com\nCompany registration number: 01-09-123456',
+      'Example Kft.\nAndrássy út 12, Budapest, 1061\nhello@example.com\nCompany registration number: 01-09-123456' +
+        NL +
+        'Tax number 12345678-2-42',
     ],
   ])('passes a complete legal notice (%s)', (_, region, text) => {
     expect(check(text, region)).toEqual([]);
@@ -795,6 +802,37 @@ describe('legal-notice-content', () => {
 
   it('does not ask a sole trader without a legal form for a register entry', () => {
     expect(check('Max Muster\nMusterweg 3\n50667 Köln\nmail@muster.de')).toEqual([]);
+  });
+
+  it('notes a Hungarian business without a tax number', () => {
+    const findings = check(
+      'Példa Kft.' +
+        NL +
+        '1051 Budapest, Váci út 1.' +
+        NL +
+        'info@example.hu' +
+        NL +
+        'Cg. 01-09-123456',
+      'hu',
+    );
+    expect(summary(findings)).toEqual(['info:tax-number']);
+    expect(findings[0]?.message).toBe(
+      'The legal notice names the legal form Kft. but no tax number.',
+    );
+    // A Hungarian sole trader without a legal form is not asked, nor is a business in Germany.
+    expect(
+      check('Kovács János' + NL + '1051 Budapest, Váci út 1.' + NL + 'jk@example.hu', 'hu'),
+    ).toEqual([]);
+  });
+
+  it('notes an Austrian legal notice without a media disclosure', () => {
+    const text =
+      'Max Muster' + NL + 'Mariahilfer Straße 1' + NL + '1060 Wien' + NL + 'max@muster.at';
+    expect(summary(check(text, 'at'))).toEqual(['info:media-disclosure']);
+    expect(check(text + NL + 'Grundlegende Richtung nach Mediengesetz: Information', 'at')).toEqual(
+      [],
+    );
+    expect(check(text, 'de')).toEqual([]);
   });
 
   it('stays quiet on pages that are not the legal notice', () => {

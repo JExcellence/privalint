@@ -13,11 +13,13 @@ loads that page once more after the start page, without counting it as a crawled
 its visible text. The findings are reported on the start page, with the legal notice URL as
 evidence.
 
-| Detail         | How it is found                                                                          | Missing                                                                                                 |
-| -------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Postal address | a postcode and place, with a street and house number on that line or the line above      | `warning`                                                                                               |
-| E-mail         | a `mailto:` link or an address in the text, also written as `(at)` / `[at]`              | `warning`                                                                                               |
-| Register entry | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE number, "company number", … | `info`, only when a registered legal form (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., …) is named |
+| Detail                     | How it is found                                                                          | Missing                                                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Postal address             | a postcode and place, with a street and house number on that line or the line above      | `warning`                                                                                               |
+| E-mail                     | a `mailto:` link or an address in the text, also written as `(at)` / `[at]`              | `warning`                                                                                               |
+| Register entry             | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE number, "company number", … | `info`, only when a registered legal form (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., …) is named |
+| Tax number (Hungary)       | "adószám" or a number like `12345678-2-42`                                               | `info`, only with `--region hu` and a registered legal form                                             |
+| Media disclosure (Austria) | "Offenlegung", "§ 25 MedienG" or "Mediengesetz"                                          | `info`, only with `--region at`                                                                         |
 
 Postcodes with five digits (Germany) or four (Austria, Switzerland, Hungary), optionally with a
 country prefix such as `A-` or `H-`, count in every region, as does the Hungarian order
@@ -30,9 +32,9 @@ and quickly by e-mail. A contact form alone is not enough. Registered companies 
 register and number.
 
 - § 5 Abs. 1 Nr. 1, 2 und 4 DDG (Germany)
-- § 5 Abs. 1 ECG, § 14 UGB (Austria)
+- § 5 Abs. 1 ECG, § 14 UGB, § 25 MedienG (Austria)
 - Art. 3 Abs. 1 lit. s UWG (Switzerland, for e-commerce)
-- Ekertv. 4. § (Hungary)
+- Ekertv. 4. § (Hungary, including the tax number)
 - Art. 5(1) Directive 2000/31/EC (e-commerce)
 
 ## How to fix
