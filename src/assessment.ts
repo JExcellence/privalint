@@ -41,7 +41,9 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'consent-settings-link': ['after-reject'],
   'trackers-after-settings': ['after-settings'],
   'consent-preselected': ['after-settings'],
+  'trackers-after-close': ['after-close'],
   'consent-banner-missing': ['network', 'banner-search'],
+  'banner-language': ['consent'],
 };
 
 /** Rules that read a page linked from the start page, and which one. */
@@ -59,6 +61,7 @@ export interface AssessmentContext {
   /** Every rule the scan knows, including custom ones that weren't selected. */
   catalog?: readonly Rule[];
   settingsEnabled?: boolean;
+  closeEnabled?: boolean;
   transportEnabled?: boolean;
 }
 
@@ -75,6 +78,7 @@ export function assessPage(
     consentEnabled,
     catalog = rules,
     settingsEnabled = false,
+    closeEnabled = false,
     transportEnabled = false,
   } = context;
   const findings: Finding[] = [];
@@ -96,6 +100,11 @@ export function assessPage(
       validPage && page.consent?.bannerFound === true && page.consent.acceptLabel !== undefined,
     'after-reject': validPage && page.consent?.rejected === true,
     'after-settings': validPage && page.consent?.settings?.afterSave !== undefined,
+    // A banner without a close button can't treat closing as consent: nothing left to check.
+    'after-close':
+      validPage &&
+      (page.consent?.close?.afterClose !== undefined ||
+        page.consent?.close?.outcome === 'no-close-control'),
     // A failed interaction says nothing about whether a banner was there.
     'banner-search':
       validPage && page.consent !== undefined && page.consent.state !== 'interaction-failed',
@@ -129,6 +138,7 @@ export function assessPage(
         kind === 'consent' ||
         kind === 'after-reject' ||
         kind === 'after-settings' ||
+        kind === 'after-close' ||
         kind === 'banner-search',
     );
   const detectedBy = new Map<string, Finding[]>();
@@ -154,6 +164,17 @@ export function assessPage(
         partial: false,
         outcome: 'not-evaluable',
         explanation: !isStart ? 'not-start-page' : 'consent-disabled',
+        findingCount: 0,
+      };
+    }
+    if (requirements.includes('after-close') && !closeEnabled) {
+      return {
+        ruleId: rule.id,
+        status: 'skipped',
+        reason: 'close-check-disabled',
+        partial: false,
+        outcome: 'not-evaluable',
+        explanation: 'close-check-disabled',
         findingCount: 0,
       };
     }
@@ -232,15 +253,17 @@ export function assessPage(
         reason: 'missing-observation',
         partial: true,
         outcome: 'not-evaluable',
-        explanation: requirements.includes('after-settings')
-          ? (page.consent?.settings?.reason ?? 'missing-settings-observation')
-          : requirements.includes('after-reject')
-            ? (page.consent?.reason ?? 'missing-reject-observation')
-            : requirements.includes('consent') || requirements.includes('banner-search')
-              ? (page.consent?.reason ?? 'missing-consent-observation')
-              : requirements.includes('linked-page')
-                ? 'linked-page-not-loaded'
-                : 'incomplete-document',
+        explanation: requirements.includes('after-close')
+          ? (page.consent?.close?.reason ?? 'missing-close-observation')
+          : requirements.includes('after-settings')
+            ? (page.consent?.settings?.reason ?? 'missing-settings-observation')
+            : requirements.includes('after-reject')
+              ? (page.consent?.reason ?? 'missing-reject-observation')
+              : requirements.includes('consent') || requirements.includes('banner-search')
+                ? (page.consent?.reason ?? 'missing-consent-observation')
+                : requirements.includes('linked-page')
+                  ? 'linked-page-not-loaded'
+                  : 'incomplete-document',
         findingCount: 0,
       };
     }
@@ -259,11 +282,13 @@ export function assessPage(
       };
     }
     detectedBy.set(rule.id, detected);
-    const partial = requirements.includes('after-settings')
-      ? page.consent?.settings?.afterSaveComplete === false
-      : requirements.includes('after-reject')
-        ? page.consent?.afterRejectComplete === false
-        : !complete;
+    const partial = requirements.includes('after-close')
+      ? page.consent?.close?.afterCloseComplete === false
+      : requirements.includes('after-settings')
+        ? page.consent?.settings?.afterSaveComplete === false
+        : requirements.includes('after-reject')
+          ? page.consent?.afterRejectComplete === false
+          : !complete;
     return {
       ruleId: rule.id,
       status: 'executed',

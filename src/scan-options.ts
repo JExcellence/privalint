@@ -32,6 +32,21 @@ export interface ScanOptions {
    * hosts. `main`: only the start page.
    */
   hostChecks?: 'each' | 'main' | undefined;
+  /**
+   * A Playwright device name such as "iPhone 15" or "Pixel 7": viewport, user agent, touch and
+   * scale factor of that device, so banners are checked in their mobile layout.
+   */
+  device?: string | undefined;
+  /**
+   * Choose the pages after the start page from the sitemap (robots.txt `Sitemap:`, else
+   * /sitemap.xml), spread over the site and pages with forms first, before following links.
+   */
+  sitemap?: boolean | undefined;
+  /**
+   * Opt-in: close the banner with its close button in a fresh browser, reload and check what
+   * loads (trackers-after-close). One extra page load.
+   */
+  closeCheck?: boolean | undefined;
   headed?: boolean | undefined;
   channel?: string | undefined;
   /**

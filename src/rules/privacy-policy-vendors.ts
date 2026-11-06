@@ -8,7 +8,7 @@ import { hostMatches } from '../url.js';
 
 const ID = 'privacy-policy-vendors';
 
-const FONT_SERVICES = [
+export const FONT_SERVICES = [
   { vendor: 'Google Fonts', hosts: ['fonts.googleapis.com', 'fonts.gstatic.com'] },
   { vendor: 'Adobe Fonts', hosts: ['use.typekit.net', 'p.typekit.net'] },
 ];

@@ -30,6 +30,28 @@ Upgrade notes:
 
 ### Added
 
+- New opt-in rule `trackers-after-close` (`--check-close`, config `closeCheck`, Action input
+  `check-close`): privalint closes the banner with its close button ("×", "Schließen") in a fresh
+  browser, reloads and reports trackers that load then as errors, since closing is no choice. A
+  banner without a close button counts as checked. The result is in `consent.close` (schema
+  1.5.0) (#121)
+- New rule `banner-language` (info): the consent banner is in another language than the page's
+  `<html lang>`, guessed from common words of eight languages. A banner in the language of the
+  browser locale is not reported, since many consent managers follow it (#123)
+- `--sitemap` (config `sitemap`, Action input `sitemap`) chooses the pages after the start page from
+  the sitemap: `Sitemap:` lines in robots.txt, else `/sitemap.xml`, with sitemap indexes one level
+  deep. Up to half the pages go to pages likely to hold forms or checkout steps (`/kontakt`,
+  `/newsletter`, `/checkout`, …), shallowest first and one per section; the rest take one page per
+  section in turn. Same-site pages only, within `maxPages`; without
+  a sitemap the crawl follows links as before (#133)
+- Reports list every host outside the site that answered a request in `thirdParties`: registrable
+  domain, first page, phases, request count and the vendor privalint knows it as, hosts only. The
+  Markdown report shows it as a collapsed table, a starting point for the privacy policy and for
+  new list entries (#127)
+- `--device <name>` (config `device`, Action input `device`) emulates a Playwright device such as
+  "iPhone 15": viewport, user agent and touch, so banners are checked in their mobile layout, where
+  the reject button is often hidden or smaller. The report records it in `options.device`
+  (schema 1.5.0) (#130)
 - New rule `third-party-personal-data` (warning): requests to other sites carry e-mail
   addresses or phone numbers in their query string, plain or as SHA-256 hashes in parameters
   such as `em` or `ud[em]`. Only parameter names are reported, and the values are replaced by

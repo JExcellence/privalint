@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { type Browser, chromium } from 'playwright';
 import { assessPage } from './assessment.js';
-import { capturePage } from './capture.js';
+import { capturePage, deviceOptions } from './capture.js';
 import { diagnosticUrl } from './diagnostics.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
@@ -18,7 +18,10 @@ import { privacyPolicyContent } from './rules/privacy-policy-content.js';
 import { PRIVACY_POLICY } from './rules/privacy-policy-link.js';
 import { privacyPolicyVendors } from './rules/privacy-policy-vendors.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
+import { adapterFetchText, browserFetchText, sitemapPages } from './sitemap.js';
+import { thirdPartyInventory } from './third-party-inventory.js';
 import type {
+  CloseObservation,
   ConsentSummary,
   LinkedPageMissing,
   LinkedPageText,
@@ -125,6 +128,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     const queue = [siteUrl.href];
     const seen = new Set(queue);
     const hostChecks = options.hostChecks ?? 'each';
+    // Fails early with a clear message, before a browser is started for nothing.
+    deviceOptions(options.device);
     // Queue indexes whose page is the first of its host; decided in queue order, so concurrent
     // and sequential crawls agree.
     const hostStartIndexes = new Set<number>();
@@ -175,6 +180,14 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           snapshot.consent?.bannerFound === true
         ) {
           snapshot.consent.settings = await checkSettings(browser, url, siteUrl, options);
+        }
+        if (
+          isStart &&
+          options.closeCheck === true &&
+          options.consentCheck !== false &&
+          snapshot.consent?.bannerFound === true
+        ) {
+          snapshot.consent.close = await checkClose(browser, url, siteUrl, options);
         }
         if (isStart) {
           const wants = (id: string) => rules.some((rule) => rule.id === id);
@@ -241,22 +254,30 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         snapshots.push(snapshot);
         if (hostStart) hostStarts.add(snapshot);
         options.onPage?.(snapshot);
-        for (const link of snapshot.links) {
-          const next = crawlTarget(link.href, siteUrl);
-          if (next !== undefined && !seen.has(next)) {
-            seen.add(next);
-            queue.push(next);
-            const host = new URL(next).host;
-            if (
-              hostChecks === 'each' &&
-              !hostsSeen.has(host) &&
-              hostStartIndexes.size < MAX_HOST_STARTS
-            ) {
-              hostsSeen.add(host);
-              hostStartIndexes.add(queue.length - 1);
-            }
+        const enqueue = (next: string | undefined) => {
+          if (next === undefined || seen.has(next)) return;
+          seen.add(next);
+          queue.push(next);
+          const host = new URL(next).host;
+          if (
+            hostChecks === 'each' &&
+            !hostsSeen.has(host) &&
+            hostStartIndexes.size < MAX_HOST_STARTS
+          ) {
+            hostsSeen.add(host);
+            hostStartIndexes.add(queue.length - 1);
+          }
+        };
+        // Pages from the sitemap go first, spread over the site; links fill the rest.
+        if (isStart && options.sitemap === true && maxPages > 1) {
+          const fetchText = options.networkAdapter
+            ? adapterFetchText(options.networkAdapter)
+            : browserFetchText(browser);
+          for (const page of await sitemapPages(siteUrl, fetchText, maxPages - 1)) {
+            enqueue(crawlTarget(page, siteUrl));
           }
         }
+        for (const link of snapshot.links) enqueue(crawlTarget(link.href, siteUrl));
       }
     }
     throwIfAborted(options.signal);
@@ -275,6 +296,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         consentEnabled: options.consentCheck !== false,
         catalog: configuredRules,
         settingsEnabled: options.settingsCheck === true,
+        closeEnabled: options.closeCheck === true,
         transportEnabled: !options.networkAdapter && !options.offline,
       });
     });
@@ -299,6 +321,9 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         consentCheck: options.consentCheck !== false,
         settingsCheck: options.settingsCheck === true,
         hostChecks,
+        ...(options.device === undefined ? {} : { device: options.device }),
+        ...(options.sitemap === true ? { sitemap: true } : {}),
+        ...(options.closeCheck === true ? { closeCheck: true } : {}),
         headed: options.headed === true,
         channel: options.channel ?? 'chromium',
         sandbox: options.sandbox === true,
@@ -333,6 +358,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       })),
       ...(offSite.length === 0 ? {} : { offSiteRedirects: offSite }),
       ...consentByHost(snapshots.filter((page) => hostStarts.has(page))),
+      ...inventoryOf(snapshots, siteUrl),
       ...consentSummary(snapshots[0]),
       findings: applyPolicy(
         applyRegion(
@@ -515,6 +541,20 @@ async function readPolicyAndCookies(
     : { page: { ...text, unread: [cookieLink.href] }, links, label: policy.label };
 }
 
+/** Runs the close path on the start page in a fresh context: close the banner, reload, observe. */
+async function checkClose(
+  browser: Browser,
+  url: string,
+  siteUrl: URL,
+  options: ScanOptions,
+): Promise<CloseObservation> {
+  const capture = await capturePage(browser, url, siteUrl, options, 'close');
+  if (capture.consent?.close !== undefined) return capture.consent.close;
+  return capture.error === undefined
+    ? { outcome: 'banner-not-shown', reason: 'banner-not-shown' }
+    : { outcome: 'interaction-failed', reason: 'browser-interaction-failed', error: capture.error };
+}
+
 /** Runs the settings path on the start page in a fresh context, after the reject path. */
 
 async function checkSettings(
@@ -539,12 +579,15 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
     bannerLinks: _bannerLinks,
     bannerBlocking: _bannerBlocking,
     bannerControls: _bannerControls,
+    bannerText: _bannerText,
     settings,
     ...summary
   } = start.consent;
-  if (settings === undefined) return { consent: summary };
+  const { close, ...rest } = summary;
+  const closeSummary = close === undefined ? {} : { close: withoutAfterClose(close) };
+  if (settings === undefined) return { consent: { ...rest, ...closeSummary } };
   const { afterSave: _afterSave, ...settingsSummary } = settings;
-  return { consent: { ...summary, settings: settingsSummary } };
+  return { consent: { ...rest, ...closeSummary, settings: settingsSummary } };
 }
 
 function consentByHost(pages: readonly PageSnapshot[]): Pick<ScanResult, 'consentByHost'> {
@@ -635,4 +678,17 @@ function redactReport(result: ScanResult): ScanResult {
       ...(finding.fix === undefined ? {} : { fix: redactText(finding.fix) }),
     })),
   };
+}
+
+function inventoryOf(
+  pages: readonly PageSnapshot[],
+  siteUrl: URL,
+): Pick<ScanResult, 'thirdParties'> {
+  const thirdParties = thirdPartyInventory(pages, siteUrl);
+  return thirdParties.length === 0 ? {} : { thirdParties };
+}
+
+function withoutAfterClose(close: CloseObservation): Omit<CloseObservation, 'afterClose'> {
+  const { afterClose: _afterClose, ...summary } = close;
+  return summary;
 }

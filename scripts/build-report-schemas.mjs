@@ -68,7 +68,7 @@ function definitions(version) {
   if (timed) observationKinds.push('banner-search', 'transport');
   // 1.5.0 added the legal notice and privacy policy read next to the start page.
   const linked = version === '1.5.0';
-  if (linked) observationKinds.push('linked-page');
+  if (linked) observationKinds.push('linked-page', 'after-close');
   const pageIdentity = identified ? { pageId: uuid } : {};
   return {
     diagnostic: object(
@@ -224,7 +224,7 @@ function definitions(version) {
             ...(identified ? EXPLANATIONS : []),
             ...(settingsAware ? ['settings-check-disabled'] : []),
             ...(timed ? ['transport-not-checked'] : []),
-            ...(linked ? ['no-linked-page'] : []),
+            ...(linked ? ['no-linked-page', 'close-check-disabled'] : []),
           ),
           partial: boolean,
           outcome: choices('checked-no-finding', 'finding-detected', 'not-evaluable'),
@@ -236,7 +236,16 @@ function definitions(version) {
                   ...EXPLANATIONS,
                   ...(settingsAware ? SETTINGS_EXPLANATIONS : []),
                   ...(timed ? ['banner-not-shown', 'transport-not-checked'] : []),
-                  ...(linked ? ['no-linked-page', 'linked-page-not-loaded'] : []),
+                  ...(linked
+                    ? [
+                        'no-linked-page',
+                        'linked-page-not-loaded',
+                        'close-check-disabled',
+                        'missing-close-observation',
+                        'no-close-control',
+                        'banner-closed-and-reloaded',
+                      ]
+                    : []),
                 ],
               }
             : explanation,
@@ -373,6 +382,31 @@ function definitions(version) {
             }
           : {}),
         ...(timed ? { tcf: ref('tcf'), bannerWaitMs: count } : {}),
+        // Added in 1.5.0 with the opt-in close-button check.
+        ...(version === '1.5.0'
+          ? {
+              close: object(
+                {
+                  outcome: choices(
+                    'no-close-control',
+                    'interaction-failed',
+                    'closed',
+                    'banner-not-shown',
+                  ),
+                  reason: choices(
+                    'no-close-control',
+                    'browser-interaction-failed',
+                    'banner-closed-and-reloaded',
+                    'banner-not-shown',
+                  ),
+                  closeLabel: string,
+                  afterCloseComplete: boolean,
+                  error: string,
+                },
+                ['outcome', 'reason'],
+              ),
+            }
+          : {}),
         error: string,
       },
       ['bannerFound', 'rejected', 'state', 'outcome', 'reason'],
@@ -404,6 +438,8 @@ function definitions(version) {
         lang: langFor(version),
         // Added within 1.4.0 (scanner 0.10.0); optional.
         ...(LATEST_14.includes(version) ? { hostChecks: choices('each', 'main') } : {}),
+        // Added in 1.5.0; optional, only when a device was emulated.
+        ...(version === '1.5.0' ? { device: string, sitemap: boolean, closeCheck: boolean } : {}),
       },
       Object.keys(reportOptions),
     ),
@@ -479,6 +515,26 @@ function reportSchema(version) {
               ),
               evaluations: choices('full', 'summary'),
               consentByHost: { type: 'object', additionalProperties: ref('consent') },
+            }
+          : {}),
+        // Added in 1.5.0; optional, absent when no host outside the site answered.
+        ...(version === '1.5.0'
+          ? {
+              thirdParties: array(
+                object(
+                  {
+                    host: string,
+                    site: string,
+                    firstPageId: string,
+                    phases: array(
+                      choices('before-consent', 'after-reject', 'after-settings', 'after-close'),
+                    ),
+                    requests: positive,
+                    vendor: string,
+                  },
+                  ['host', 'site', 'phases', 'requests'],
+                ),
+              ),
             }
           : {}),
         consent: ref('consent'),

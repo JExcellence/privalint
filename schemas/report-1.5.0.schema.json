@@ -143,6 +143,48 @@
         "$ref": "#/$defs/consent"
       }
     },
+    "thirdParties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "site": {
+            "type": "string"
+          },
+          "firstPageId": {
+            "type": "string"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "before-consent",
+                "after-reject",
+                "after-settings",
+                "after-close"
+              ]
+            }
+          },
+          "requests": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "vendor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "site",
+          "phases",
+          "requests"
+        ]
+      }
+    },
     "consent": {
       "$ref": "#/$defs/consent"
     },
@@ -539,7 +581,8 @@
             "no-consent-needed",
             "settings-check-disabled",
             "transport-not-checked",
-            "no-linked-page"
+            "no-linked-page",
+            "close-check-disabled"
           ]
         },
         "partial": {
@@ -579,7 +622,11 @@
             "banner-not-shown",
             "transport-not-checked",
             "no-linked-page",
-            "linked-page-not-loaded"
+            "linked-page-not-loaded",
+            "close-check-disabled",
+            "missing-close-observation",
+            "no-close-control",
+            "banner-closed-and-reloaded"
           ]
         },
         "findingCount": {
@@ -922,6 +969,42 @@
           "type": "integer",
           "minimum": 0
         },
+        "close": {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "no-close-control",
+                "interaction-failed",
+                "closed",
+                "banner-not-shown"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "no-close-control",
+                "browser-interaction-failed",
+                "banner-closed-and-reloaded",
+                "banner-not-shown"
+              ]
+            },
+            "closeLabel": {
+              "type": "string"
+            },
+            "afterCloseComplete": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "outcome",
+            "reason"
+          ]
+        },
         "error": {
           "type": "string"
         }
@@ -964,7 +1047,8 @@
               "after-settings",
               "banner-search",
               "transport",
-              "linked-page"
+              "linked-page",
+              "after-close"
             ]
           }
         }
@@ -1139,6 +1223,15 @@
             "each",
             "main"
           ]
+        },
+        "device": {
+          "type": "string"
+        },
+        "sitemap": {
+          "type": "boolean"
+        },
+        "closeCheck": {
+          "type": "boolean"
         }
       },
       "required": [

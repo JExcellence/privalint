@@ -82,6 +82,24 @@ export function formatMarkdown(result: ScanResult): string {
     lines.push('', '</details>');
   }
 
+  const thirdParties = result.thirdParties ?? [];
+  if (thirdParties.length > 0) {
+    const [host, vendor, requests, phases] = m.thirdPartyColumns;
+    lines.push(
+      '',
+      `<details><summary>${m.thirdParties(thirdParties.length)}</summary>`,
+      '',
+      `| ${host} | ${vendor} | ${requests} | ${phases} |`,
+      '|---|---|---|---|',
+    );
+    for (const entry of thirdParties) {
+      lines.push(
+        `| ${code(entry.host)} | ${escapeText(entry.vendor ?? '')} | ${entry.requests} | ${entry.phases.join(', ')} |`,
+      );
+    }
+    lines.push('', '</details>');
+  }
+
   lines.push('', `<sub>${m.disclaimer}</sub>`);
   return `${lines.join('\n')}\n`;
 }

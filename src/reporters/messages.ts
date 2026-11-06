@@ -19,6 +19,8 @@ export interface ReportMessages {
   rule: string;
   finding: string;
   howToFix: string;
+  thirdParties(count: number): string;
+  thirdPartyColumns: [host: string, vendor: string, requests: string, phases: string];
   disclaimer: string;
   policy(allowed: boolean, originalSeverity: string): string;
   consent(consent: ConsentSummary): string;
@@ -44,6 +46,8 @@ const en: ReportMessages = {
   rule: 'Rule',
   finding: 'Finding',
   howToFix: 'How to fix',
+  thirdParties: (n) => `Hosts outside the site (${n})`,
+  thirdPartyColumns: ['Host', 'Known as', 'Requests', 'When'],
   disclaimer: 'Automated checks only. A clean result is not proof of GDPR compliance.',
   policy: (allowed, severity) =>
     allowed
@@ -86,6 +90,8 @@ const de: ReportMessages = {
   rule: 'Regel',
   finding: 'Befund',
   howToFix: 'So beheben Sie es',
+  thirdParties: (n) => `Hosts außerhalb der Website (${n})`,
+  thirdPartyColumns: ['Host', 'Bekannt als', 'Anfragen', 'Wann'],
   disclaimer:
     'Nur automatisierte Prüfungen. Ein sauberes Ergebnis ist kein Nachweis der DSGVO-Konformität.',
   policy: (allowed, severity) =>
@@ -129,6 +135,8 @@ const hu: ReportMessages = {
   rule: 'Szabály',
   finding: 'Megállapítás',
   howToFix: 'Javítás módja',
+  thirdParties: (n) => `A webhelyen kívüli kiszolgálók (${n})`,
+  thirdPartyColumns: ['Kiszolgáló', 'Ismert név', 'Kérések', 'Mikor'],
   disclaimer:
     'Csak automatikus ellenőrzés. A hibátlan eredmény nem bizonyítja a GDPR-nak való megfelelést.',
   policy: (allowed, severity) =>

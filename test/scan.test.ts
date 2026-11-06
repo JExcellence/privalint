@@ -38,6 +38,18 @@ beforeAll(async () => {
       res.writeHead(200, { 'content-type': 'text/html' }).end(await readFile(join(FIXTURES, file)));
       return;
     }
+    if (path === '/sitemap.xml' || path === '/sitemap-pages.xml') {
+      // A sitemap index pointing to one sitemap, like most CMS generate.
+      const base = `http://${req.headers.host}`;
+      const body =
+        path === '/sitemap.xml'
+          ? `<sitemapindex><sitemap><loc>${base}/sitemap-pages.xml</loc></sitemap></sitemapindex>`
+          : `<urlset>${['blog/a', 'blog/b', 'blog/c', 'shop/x', 'kontakt']
+              .map((page) => `<url><loc>${base}/sitemap/${page}.html</loc></url>`)
+              .join('')}</urlset>`;
+      res.writeHead(200, { 'content-type': 'application/xml' }).end(body);
+      return;
+    }
     if (path === '/hang') {
       // Never answers, like a stuck backend.
       return;
@@ -267,6 +279,84 @@ describe('scan', () => {
       explanation: 'linked-page-not-loaded',
     });
     expect(evaluation('privacy-policy-vendors')).toMatchObject({ outcome: 'checked-no-finding' });
+  });
+
+  it('chooses pages from the sitemap, pages with forms first, then by section', async () => {
+    const start = `${origin}/sitemap/index.html`;
+    const withSitemap = await scan(start, { ...options, maxPages: 4, sitemap: true });
+    expect(withSitemap.pages.map((page) => new URL(page.url).pathname)).toEqual([
+      '/sitemap/index.html',
+      '/sitemap/kontakt.html',
+      '/sitemap/blog/a.html',
+      '/sitemap/shop/x.html',
+    ]);
+    expect(withSitemap.options?.sitemap).toBe(true);
+    const links = await scan(start, { ...options, maxPages: 2 });
+    expect(links.pages.map((page) => new URL(page.url).pathname)).toEqual([
+      '/sitemap/index.html',
+      '/sitemap/blog/a.html',
+    ]);
+  });
+
+  it('notes a banner in another language than the page', async () => {
+    const mismatch = await scan(`${origin}/consent/banner-language.html`, options);
+    expect(mismatch.findings.filter((f) => f.ruleId === 'banner-language')).toEqual([
+      expect.objectContaining({ evidence: ['<html lang="hu">', 'banner: en'] }),
+    ]);
+    const match = await scan(`${origin}/consent/good.html`, options);
+    expect(match.findings.filter((f) => f.ruleId === 'banner-language')).toEqual([]);
+    expect(JSON.stringify(match)).not.toContain('bannerText');
+  });
+
+  it('closes the banner with its close button and reports trackers that load then', async () => {
+    const evaluation = (result: Awaited<ReturnType<typeof scan>>) =>
+      result.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === 'trackers-after-close');
+    const accepts = await scan(`${origin}/consent/close-accepts.html`, {
+      ...options,
+      closeCheck: true,
+    });
+    expect(accepts.consent?.close).toMatchObject({
+      outcome: 'closed',
+      reason: 'banner-closed-and-reloaded',
+      closeLabel: '×',
+      afterCloseComplete: true,
+    });
+    expect(JSON.stringify(accepts.consent)).not.toContain('afterClose"');
+    const closeFindings = accepts.findings.filter((f) => f.ruleId === 'trackers-after-close');
+    expect(closeFindings.length).toBeGreaterThan(0);
+    expect(closeFindings[0]?.message).toContain('after closing the banner with "×"');
+    expect(accepts.options?.closeCheck).toBe(true);
+    expect(accepts.thirdParties?.some((entry) => entry.phases.includes('after-close'))).toBe(true);
+
+    const rejects = await scan(`${origin}/consent/close-rejects.html`, {
+      ...options,
+      closeCheck: true,
+    });
+    expect(rejects.findings.filter((f) => f.ruleId === 'trackers-after-close')).toEqual([]);
+    expect(evaluation(rejects)).toMatchObject({ outcome: 'checked-no-finding' });
+
+    const noClose = await scan(`${origin}/consent/good.html`, { ...options, closeCheck: true });
+    expect(noClose.consent?.close).toEqual({
+      outcome: 'no-close-control',
+      reason: 'no-close-control',
+    });
+    expect(evaluation(noClose)).toMatchObject({ outcome: 'checked-no-finding' });
+
+    const off = await scan(`${origin}/consent/close-accepts.html`, options);
+    expect(evaluation(off)).toMatchObject({ status: 'skipped', reason: 'close-check-disabled' });
+  });
+
+  it('checks the mobile layout of the banner with --device', async () => {
+    const url = `${origin}/consent/mobile-reject.html`;
+    const desktop = await scan(url, options);
+    expect(desktop.findings.filter((f) => f.ruleId === 'reject-option')).toEqual([]);
+    expect(desktop.options?.device).toBeUndefined();
+    const phone = await scan(url, { ...options, device: 'iPhone 15' });
+    expect(phone.findings.map((f) => f.ruleId)).toContain('reject-option');
+    expect(phone.options?.device).toBe('iPhone 15');
+    await expect(scan(url, { ...options, device: 'Nokia 3310' })).rejects.toThrow(
+      'Unknown device "Nokia 3310".',
+    );
   });
 
   it('skips the linked-page rules without a link, and on every page but the start page', async () => {

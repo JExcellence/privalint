@@ -1,5 +1,5 @@
-import type { Browser, Page } from 'playwright';
-import { observeConsent, observeSettings } from './consent.js';
+import { type Browser, devices, type Page } from 'playwright';
+import { observeClose, observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
 import { readForms } from './forms.js';
 import { ControlledNetwork, networkLimits, watchPageCancellations } from './network.js';
@@ -13,7 +13,7 @@ import { isFirstParty } from './url.js';
  * Which consent path to test on the page: none, the reject button, or the settings layer.
  * Settings runs in its own capture because a stored reject would hide the banner.
  */
-export type ConsentPath = 'none' | 'reject' | 'settings';
+export type ConsentPath = 'none' | 'reject' | 'settings' | 'close';
 
 /** Always owns and closes its context. Each crawl page starts without cookies/storage. */
 export async function capturePage(
@@ -27,6 +27,7 @@ export async function capturePage(
   const checkConsent = consentPath !== 'none';
   const controlled = options.networkAdapter !== undefined;
   const context = await browser.newContext({
+    ...deviceOptions(options.device),
     locale: options.locale ?? DEFAULTS.locale,
     serviceWorkers: controlled ? 'block' : 'allow',
     // fulfill() works offline. Unhandled browser HTTP traffic has no network fallback.
@@ -123,6 +124,8 @@ export async function capturePage(
       .catch(() => '');
     const primary = /^[a-z]{2,3}/i.exec(language.trim())?.[0];
     if (primary !== undefined) snapshot.language = primary.toLowerCase();
+    snapshot.browserLanguage =
+      (options.locale ?? DEFAULTS.locale).split('-')[0]?.toLowerCase() ?? '';
     snapshot.forms = await readForms(page);
     const security = await readPageSecurity(page);
     if (security.insecure.length > 0) snapshot.insecureResources = security.insecure;
@@ -173,7 +176,14 @@ export async function capturePage(
         },
         onTimeout: () => diagnostics.add('timeout', page.url()),
       };
-      if (consentPath === 'settings') {
+      if (consentPath === 'close') {
+        const close = await observeClose(page, context, requests, consentOptions);
+        snapshot.consent = {
+          bannerFound: close !== undefined,
+          rejected: false,
+          ...(close === undefined ? {} : { close }),
+        };
+      } else if (consentPath === 'settings') {
         const settings = await observeSettings(page, context, requests, consentOptions);
         snapshot.consent = {
           bannerFound: settings !== undefined,
@@ -224,6 +234,10 @@ export async function capturePage(
   if (snapshot.consent?.rejected) {
     snapshot.consent.afterRejectComplete = !diagnostics.hasIssues('after-reject');
   }
+  // The close path, too, reuses the after-reject phase for what loads after closing.
+  if (snapshot.consent?.close?.afterClose !== undefined) {
+    snapshot.consent.close.afterCloseComplete = !diagnostics.hasIssues('after-reject');
+  }
   // The settings path reuses the after-reject phase for what loads after saving.
   if (snapshot.consent?.settings?.afterSave !== undefined) {
     snapshot.consent.settings.afterSaveComplete = !diagnostics.hasIssues('after-reject');
@@ -271,4 +285,16 @@ async function readPageSecurity(page: Page): Promise<{ insecure: string[]; refer
     })
     .catch(() => ({ insecure: [] as string[] }));
   return read;
+}
+
+/**
+ * The browser context options of a Playwright device. The scan always runs Chromium, so the device's
+ * own default browser is left out; Chromium emulates viewport, touch and the mobile user agent.
+ */
+export function deviceOptions(name: string | undefined): Record<string, unknown> {
+  if (name === undefined) return {};
+  const descriptor = devices[name];
+  if (descriptor === undefined) throw new Error(`Unknown device "${name}".`);
+  const { defaultBrowserType: _browser, ...options } = descriptor;
+  return options;
 }

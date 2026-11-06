@@ -220,6 +220,25 @@ describe('standalone report contracts', () => {
     const validator = schemas.get(REPORT_SCHEMA_VERSION)?.report;
     expect(validator?.(value), JSON.stringify(validator?.errors)).toBe(true);
   });
+  it('validates live output with a third-party inventory and an emulated device', async () => {
+    const value = await scan('https://schema.invalid/', {
+      settleMs: 0,
+      consentCheck: false,
+      device: 'Pixel 7',
+      networkAdapter: async ({ url }) =>
+        url.startsWith('https://schema.invalid/')
+          ? {
+              status: 200,
+              headers: { 'content-type': 'text/html' },
+              body: '<img src="https://widgets.example.net/pixel.gif"><a href="/impressum">Impressum</a><a href="/privacy">Privacy policy</a>',
+            }
+          : { status: 200, headers: { 'content-type': 'image/gif' }, body: '' },
+    });
+    expect(value.thirdParties?.map((entry) => entry.host)).toEqual(['widgets.example.net']);
+    expect(value.options?.device).toBe('Pixel 7');
+    const validator = schemas.get(REPORT_SCHEMA_VERSION)?.report;
+    expect(validator?.(value), JSON.stringify(validator?.errors)).toBe(true);
+  });
   it('ships schemas as addressable package artifacts without a runtime validator dependency', () => {
     const require = createRequire(import.meta.url);
     expect(require.resolve('privalint/schemas/report-1.1.0.schema.json')).toContain(

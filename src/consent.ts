@@ -2,6 +2,7 @@ import type { BrowserContext, Frame, Locator, Page } from 'playwright';
 import { classifyLoadError } from './diagnostics.js';
 import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
+  CloseObservation,
   ConsentObservation,
   ControlLook,
   PageLink,
@@ -260,6 +261,7 @@ export async function observeConsent(
     ...(banner.rejectLabel === undefined ? {} : { rejectLabel: banner.rejectLabel }),
     ...(banner.payOrOk ? { payOrOk: true } : {}),
     ...(banner.links === undefined ? {} : { bannerLinks: banner.links }),
+    ...(banner.text === undefined ? {} : { bannerText: banner.text }),
     ...(banner.blocking === undefined ? {} : { bannerBlocking: banner.blocking }),
     ...(banner.controls === undefined ? {} : { bannerControls: banner.controls }),
   };
@@ -307,6 +309,108 @@ export async function observeConsent(
       error: classifyLoadError(error),
     };
   }
+}
+
+/**
+ * Closes the banner with its close button ("×", "Schließen", "Close"), reloads the page and records
+ * what loads then. Closing is no choice, so anything that needs consent loading afterwards treats
+ * it as one. Use a fresh browser context. Returns undefined when there is no banner.
+ */
+export async function observeClose(
+  page: Page,
+  context: BrowserContext,
+  requests: RecordedRequest[],
+  options: ConsentCheckOptions,
+): Promise<CloseObservation | undefined> {
+  if (options.signal?.aborted) throw new DOMException('Close check aborted', 'AbortError');
+  const { found: banner } = await waitFor(page, options, () => findBanner(page));
+  if (banner?.accept === undefined) return undefined;
+  const closeLabel = await banner.accept.evaluate(markCloseControl).catch(() => undefined);
+  if (closeLabel === undefined) return { outcome: 'no-close-control', reason: 'no-close-control' };
+  try {
+    const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
+    const storageBefore = await readStorageKeys(page);
+    const firstRequest = requests.length;
+    let control: Locator | undefined;
+    for (const frame of page.frames()) {
+      const candidate = frame.locator(`[${CLOSE_MARK}]`).first();
+      if ((await candidate.count()) > 0) {
+        control = candidate;
+        break;
+      }
+    }
+    if (control === undefined) return { outcome: 'no-close-control', reason: 'no-close-control' };
+    options.onReject?.();
+    await control.click({ timeout: Math.min(5_000, options.timeoutMs) });
+    await settle(page, options);
+    const response = await page.reload({ waitUntil: 'load', timeout: options.timeoutMs });
+    if (response === null || response.status() >= 400) throw new Error('HTTP reload failed');
+    await settle(page, options);
+    const cookies: RecordedCookie[] = (await context.cookies())
+      .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
+      .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    const storage = newStorageKeys(storageBefore, await readStorageKeys(page));
+    return {
+      outcome: 'closed',
+      reason: 'banner-closed-and-reloaded',
+      closeLabel,
+      afterClose: { requests: requests.slice(firstRequest), cookies, storage },
+    };
+  } catch (error) {
+    return {
+      outcome: 'interaction-failed',
+      reason: 'browser-interaction-failed',
+      closeLabel,
+      error: classifyLoadError(error),
+    };
+  }
+}
+
+const CLOSE_MARK = 'data-privalint-close';
+
+/**
+ * Runs in the page. Finds the banner's close control, marks it with a data attribute so it can be
+ * clicked, and returns its label. A close control is a visible control in the banner layer whose
+ * whole text is a close sign or word, or whose aria-label or title says "close".
+ */
+function markCloseControl(accept: Element): string | undefined {
+  const parentOf = (node: Element): Element | null => {
+    const root = node.getRootNode();
+    return node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+  };
+  let container: Element = accept.parentElement ?? accept;
+  for (let node: Element | null = accept; node !== null; node = parentOf(node)) {
+    if (node === document.body || node === document.documentElement) break;
+    const position = getComputedStyle(node).position;
+    if (
+      /^(alert)?dialog$/.test(node.getAttribute('role') ?? '') ||
+      node.getAttribute('aria-modal') === 'true' ||
+      position === 'fixed' ||
+      position === 'sticky'
+    ) {
+      container = node;
+    }
+  }
+  const words =
+    'close|schließen|schliessen|bezár|bezárás|fermer|chiudi|cerrar|sluiten|zamknij|dismiss';
+  const sign = new RegExp(`^(?:[×✕✖✗xX]|${words})$`, 'i');
+  const named = new RegExp(`(?:^|\\s)(?:${words})(?:\\s|$)`, 'i');
+  const candidates = [
+    ...container.querySelectorAll('button, [role="button"], a, [aria-label], [title]'),
+  ].filter((element) => element !== accept && element.getClientRects().length > 0);
+  for (const element of candidates) {
+    const text = (element.textContent ?? '').replace(/\s+/g, ' ').trim();
+    const name = [element.getAttribute('aria-label'), element.getAttribute('title')]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    // An icon-only control ("×" drawn with CSS or an SVG) is known by its aria-label or title.
+    if (sign.test(text) || (text.length <= 2 && named.test(name))) {
+      element.setAttribute('data-privalint-close', '1');
+      return (text || name).slice(0, 80);
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -701,6 +805,7 @@ async function objectToLegitimateInterest(
 }
 
 interface Banner {
+  accept?: Locator;
   cmp?: string;
   acceptLabel?: string;
   rejectLabel?: string;
@@ -708,6 +813,7 @@ interface Banner {
   payOrOk?: boolean;
   links?: PageLink[];
   blocking?: boolean;
+  text?: string;
   controls?: { accept: ControlLook; reject: ControlLook };
 }
 
@@ -755,7 +861,11 @@ function bannerLayout(accept: Element, max: number) {
       .trim()
       .slice(0, 200),
   }));
-  return { links, blocking };
+  const text = ((container as HTMLElement).innerText ?? container.textContent ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 2_000);
+  return { links, blocking, text };
 }
 
 async function findBanner(page: Page): Promise<Banner | undefined> {
@@ -860,11 +970,12 @@ async function findSettingsControl(page: Page): Promise<string | undefined> {
 }
 
 async function describe(accept: Locator, reject: Locator | undefined, cmp?: string) {
-  const banner: Banner = { acceptLabel: await label(accept) };
+  const banner: Banner = { accept, acceptLabel: await label(accept) };
   const layout = await accept.evaluate(bannerLayout, MAX_BANNER_LINKS).catch(() => undefined);
   if (layout !== undefined) {
     banner.links = layout.links;
     banner.blocking = layout.blocking;
+    if (layout.text) banner.text = layout.text;
   }
   if (reject === undefined && (await offersSubscription(accept))) {
     banner.payOrOk = true;

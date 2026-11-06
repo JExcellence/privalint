@@ -125,7 +125,9 @@ export type ObservationKind =
   /** How the start page travels: HTTPS, HSTS, plain HTTP. Native scans only. Since 1.4.0. */
   | 'transport'
   /** The legal notice or privacy policy the start page links, loaded separately. Since 1.5.0. */
-  | 'linked-page';
+  | 'linked-page'
+  /** What loads after closing the banner with its close button. Opt-in. Since 1.5.0. */
+  | 'after-close';
 
 export interface RuleEvaluation {
   pageId?: string;
@@ -143,7 +145,9 @@ export interface RuleEvaluation {
     /** Adapter and offline scans make no extra request to http://. Since schema 1.4.0. */
     | 'transport-not-checked'
     /** The start page links no such page on the same site. Since schema 1.5.0. */
-    | 'no-linked-page';
+    | 'no-linked-page'
+    /** The close-button check is opt-in. Since schema 1.5.0. */
+    | 'close-check-disabled';
   /** Executed against available positive evidence, without ruling out additional findings. */
   partial: boolean;
   outcome?: 'checked-no-finding' | 'finding-detected' | 'not-evaluable';
@@ -177,6 +181,10 @@ export type RuleExplanation =
   | 'banner-not-shown'
   | 'transport-not-checked'
   // Since schema 1.5.0:
+  | 'close-check-disabled'
+  | 'missing-close-observation'
+  | 'no-close-control'
+  | 'banner-closed-and-reloaded'
   | 'no-linked-page'
   | 'linked-page-not-loaded';
 
@@ -269,6 +277,8 @@ export interface ConsentObservation {
   bannerWaitMs?: number;
   /** Links inside the banner. Internal input for banner-legal-links, not in the report. */
   bannerLinks?: PageLink[];
+  /** Visible text of the banner, at most 2,000 characters. Internal input for banner-language. */
+  bannerText?: string;
   /** Whether the open banner keeps the visitor from the rest of the page. Internal. */
   bannerBlocking?: boolean;
   /** How the first-layer accept and reject controls look. Internal input for reject-less-prominent. */
@@ -291,6 +301,8 @@ export interface ConsentObservation {
   tcf?: TcfObservation;
   /** Only present when the settings-layer check ran. Since schema 1.3.0. */
   settings?: SettingsObservation;
+  /** Only present when the close-button check ran. Since schema 1.5.0. */
+  close?: CloseObservation;
   error?: string;
 }
 
@@ -417,6 +429,8 @@ export interface PageSnapshot {
   linkedPageMissing?: { legalNotice?: LinkedPageMissing; privacyPolicy?: LinkedPageMissing };
   /** Primary language subtag of `<html lang>`, lowercase, such as `en` or `hu`. */
   language?: string;
+  /** Primary language subtag of the browser locale the page was loaded with, such as `de`. */
+  browserLanguage?: string;
   resourceHints: ResourceHint[];
   /** Only present on the start page, unless the consent check was skipped. */
   consent?: ConsentObservation;
@@ -473,9 +487,30 @@ export interface PageSummary {
   ruleEvaluations?: RuleEvaluation[];
 }
 
-export type ConsentSummary = Omit<ConsentObservation, 'afterReject' | 'settings'> & {
+export type ConsentSummary = Omit<ConsentObservation, 'afterReject' | 'settings' | 'close'> & {
   settings?: Omit<SettingsObservation, 'afterSave'>;
+  close?: Omit<CloseObservation, 'afterClose'>;
 };
+
+/**
+ * What happened when privalint closed the banner with its close button ("X", "Schließen") in a
+ * fresh browser context and reloaded the page.
+ */
+export interface CloseObservation {
+  outcome: 'no-close-control' | 'interaction-failed' | 'closed' | 'banner-not-shown';
+  reason:
+    | 'no-close-control'
+    | 'browser-interaction-failed'
+    | 'banner-closed-and-reloaded'
+    | 'banner-not-shown';
+  /** The close control's label, such as "×" or "Schließen". */
+  closeLabel?: string;
+  /** Requests made and cookies newly set after closing, including the reload. Internal. */
+  afterClose?: { requests: RecordedRequest[]; cookies: RecordedCookie[]; storage?: StorageKey[] };
+  /** True only if the window after closing completed without load issues. */
+  afterCloseComplete?: boolean;
+  error?: string;
+}
 
 export interface ScanResult {
   scanId?: string;
@@ -506,6 +541,11 @@ export interface ScanResult {
    * none. Since scanner 0.10.0.
    */
   consentByHost?: Record<string, ConsentSummary>;
+  /**
+   * Every host outside the site that answered a request, busiest first, at most 200. Absent when
+   * there was none, and in reports before schema 1.5.0.
+   */
+  thirdParties?: ThirdPartyHost[];
   /** Outcome of the consent check on the start page. */
   consent?: ConsentSummary;
   findings: Finding[];
@@ -565,6 +605,12 @@ export interface ReportOptions {
   settingsCheck?: boolean;
   /** Absent in reports from scanners before 0.10.0, which checked only the main host. */
   hostChecks?: 'each' | 'main';
+  /** The emulated Playwright device, when the scan used one. Absent before schema 1.5.0. */
+  device?: string;
+  /** True when the pages were chosen from the sitemap. Absent before schema 1.5.0. */
+  sitemap?: boolean;
+  /** True when the close-button check ran. Absent before schema 1.5.0. */
+  closeCheck?: boolean;
   headed: boolean;
   channel: string;
   /** Absent in reports from scanners before 0.5.0. */
@@ -577,4 +623,20 @@ export interface ReportOptions {
   selectedRules: string[];
   ruleSettings: RuleSettings;
   allowedVendors: string[];
+}
+
+export type ThirdPartyPhase = 'before-consent' | 'after-reject' | 'after-settings' | 'after-close';
+
+/** One host outside the site, with what privalint knows about it. Hosts only, never paths. */
+export interface ThirdPartyHost {
+  host: string;
+  /** Registrable domain (eTLD+1), or the host itself when it has none. */
+  site: string;
+  /** The page where the host was first seen. */
+  firstPageId?: string;
+  phases: ThirdPartyPhase[];
+  /** Requests that got a response, over all pages and phases. */
+  requests: number;
+  /** The vendor privalint's lists name for it; absent for hosts on no list. */
+  vendor?: string;
 }

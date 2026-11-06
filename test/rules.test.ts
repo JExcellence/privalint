@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { huArticle, type Lang } from '../src/i18n.js';
+import { guessLanguage, KNOWN_LANGUAGES, LANGUAGE_WORDS } from '../src/language.js';
 import type { Region } from '../src/legal.js';
 import {
   personalParameters,
@@ -9,6 +10,7 @@ import {
 import {
   accessibilityStatement,
   adobeFonts,
+  bannerLanguage,
   consentBannerMissing,
   consentPreselected,
   consentSettingsLink,
@@ -1154,6 +1156,53 @@ describe('third-party-personal-data', () => {
     expect(findings[0]?.evidence).toEqual([
       'www.facebook.com: ud[ph] (phone, hashed), ud[em] (e-mail, hashed)',
     ]);
+  });
+});
+
+describe('banner-language', () => {
+  const banner = (language: string | undefined, bannerText: string, browserLanguage = 'de') =>
+    run(
+      bannerLanguage,
+      snapshot({
+        ...(language === undefined ? {} : { language }),
+        browserLanguage,
+        consent: { bannerFound: true, rejected: false, acceptLabel: 'OK', bannerText },
+      }),
+    );
+  const ENGLISH =
+    'We use cookies to improve your experience. You can accept or reject them in the settings.';
+
+  it('guesses only with enough distinct words', () => {
+    expect(guessLanguage(ENGLISH)).toBe('en');
+    expect(
+      guessLanguage(
+        'Wir verwenden Cookies, um die Nutzung der Website zu analysieren und für Werbung.',
+      ),
+    ).toBe('de');
+    expect(
+      guessLanguage('Sütiket használunk, hogy a weboldal működjön. Elfogadom vagy elutasítom.'),
+    ).toBe('hu');
+    expect(guessLanguage('OK')).toBeUndefined();
+    expect(guessLanguage('the and to und der das')).toBeUndefined();
+  });
+
+  it('keeps every word in one language list only', () => {
+    const words = Object.values(LANGUAGE_WORDS).flat();
+    expect(new Set(words).size).toBe(words.length);
+    expect(KNOWN_LANGUAGES).toContain('hu');
+  });
+
+  it('notes an English banner on a Hungarian page', () => {
+    const findings = banner('hu', ENGLISH);
+    expect(findings.map((f) => f.severity)).toEqual(['info']);
+    expect(findings[0]?.message).toBe('The page is in "hu", but its consent banner is in "en".');
+  });
+
+  it('stays quiet when languages match, are unknown, or follow the browser locale', () => {
+    expect(banner('en', ENGLISH)).toEqual([]);
+    expect(banner(undefined, ENGLISH)).toEqual([]);
+    expect(banner('hu', 'OK')).toEqual([]);
+    expect(banner('hu', ENGLISH, 'en')).toEqual([]);
   });
 });
 
