@@ -45,10 +45,19 @@ const report = await scan(targetUrl, {
 
 `policy`, `targetUrl` and `clientDisconnected` above belong to the hosting application. For an
 executable transport implementation see [examples/controlled-scanner.ts](../examples/controlled-scanner.ts).
-It permits GET/HEAD to exact administrator-configured hostname origins with pinned socket IPs, retains
-normal TLS certificate/hostname verification and never follows redirects itself. Validate the
+It forwards the methods a page sends itself (GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS) to
+exact administrator-configured hostname origins with pinned socket IPs, retains normal TLS
+certificate/hostname verification and never follows redirects itself. Validate the
 trusted pins before deployment; never let scan submitters populate them. The example does not
 attempt to discover all public IP ranges or implement your organization's egress policy.
+
+Forward the body of a page's own POST requests too. An adapter that refuses them with
+`unsupported-method` makes every page with an API or analytics call partial, because privalint can't
+see what the response would have set or loaded. Error reports to Sentry, Bugsnag, Rollbar and
+Datadog are the exception and never make a page partial. The browser only sends what the page's
+scripts send, as for any visitor; privalint never submits forms. One kind of body can't be
+forwarded at all: a streamed upload (`fetch` with a `ReadableStream` body) is not exposed by
+Chromium and is reported as `unsupported-method`.
 
 The adapter receives raw URL, method, headers and body for trusted processing; none are logged by
 PrivaLint. Return `{ status, headers, body }`; repeated headers such as Set-Cookie can be arrays.
@@ -113,6 +122,7 @@ and limit name. They are technical observations, not findings.
 
 Requests from cross-origin iframes, which Chromium runs in their own process, and from workers go
 through the adapter like the page's own requests; `test/controlled-scan.test.ts` covers both.
+
 - `failed` (legacy aggregate): `requestfailed` events plus requests still pending at observation end. Each request
   contributes once; `requests = finished + failed` in a finalized capture.
 - `blocked`: subset of failed requests explicitly denied as `security-blocked`.

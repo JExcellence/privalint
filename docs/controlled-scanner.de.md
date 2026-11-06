@@ -40,10 +40,20 @@ const report = await scan(targetUrl, {
 
 `policy`, `targetUrl` und `clientDisconnected` stellt die Anwendung bereit. Das
 [typgeprüfte Beispiel](../examples/controlled-scanner.ts) enthält einen ausführbaren Transport:
-GET/HEAD, exakt freigegebene Hostname-Origins, feste Socket-IP-Adressen, normale TLS-Prüfung und keine
+die Methoden, die eine Seite selbst sendet (GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS), exakt
+freigegebene Hostname-Origins, feste Socket-IP-Adressen, normale TLS-Prüfung und keine
 eigenständige Redirect-Verfolgung. Die IPs müssen vorher vom Betreiber geprüft werden. Die
 Allowlist darf niemals vom Scan-Nutzer stammen. Damit findet während des Requests keine
 neue DNS-Auflösung statt; die Beispiel-Allowlist ersetzt keine allgemeine Egress-Policy.
+
+Auch den Body der POST-Anfragen, die eine Seite selbst stellt, sollte der Adapter weiterreichen. Lehnt
+er sie mit `unsupported-method` ab, ist jede Seite mit einem API- oder Analyse-Aufruf nur teilweise
+erfasst, weil privalint nicht sieht, was die Antwort gesetzt oder nachgeladen hätte. Fehlerberichte
+an Sentry, Bugsnag, Rollbar und Datadog sind die Ausnahme und machen eine Seite nie unvollständig.
+Der Browser sendet nur, was die Skripte der Seite senden, wie bei jedem Besucher; Formulare schickt
+privalint nie ab. Eine Art Body lässt sich gar nicht weiterreichen: einen gestreamten Upload
+(`fetch` mit einem `ReadableStream` als Body) gibt Chromium nicht heraus, er erscheint als
+`unsupported-method`.
 
 Context-Netzwerk bleibt im Adapter-Modus offline, Service Worker sind deaktiviert und WebSockets
 werden mit Diagnose abgelehnt. Chromium-Interception erfasst Redirects, die Playwrights normaler

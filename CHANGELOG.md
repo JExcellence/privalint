@@ -13,6 +13,10 @@ All notable changes are listed here. The format follows
   and "Adatkezelési tájékoztató" on a Hungarian one, "Impressum" and "Datenschutzerklärung" on a
   German one. Without a declared language the region decides. The BGH two-click ruling is only
   cited with `--region de` (#96)
+- The example adapter in `examples/controlled-scanner.ts` forwards the page's own POST, PUT,
+  PATCH, DELETE and OPTIONS requests with their body instead of refusing them. Refused API and
+  analytics calls made every page with one partial. The controlled-scanning docs explain why an
+  adapter should do the same (#98)
 
 ### Fixed
 
