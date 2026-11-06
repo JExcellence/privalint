@@ -773,6 +773,16 @@ describe('legal-notice-content', () => {
     expect(check(text, 'eu')).toEqual([]);
   });
 
+  it('needs postcode and street in one address block', () => {
+    const findings = check(
+      'Example Ltd\nVersion 2 of our app\n\n2024 Neue Funktionen\ninfo@example.de',
+    );
+    expect(findings[0]?.message).toBe('The legal notice gives no postal address.');
+    expect(check('Beispiel GmbH, Musterstraße 12, 10115 Berlin, info@example.de, HRB 1')).toEqual(
+      [],
+    );
+  });
+
   it('does not take a copyright year and a phone number for an address', () => {
     const findings = check('© 2025 Musterfirma\nTelefon 030 123456\ninfo@musterfirma.de');
     expect(findings[0]?.message).toBe('The legal notice gives no postal address.');

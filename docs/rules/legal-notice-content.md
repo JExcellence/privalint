@@ -15,7 +15,7 @@ evidence.
 
 | Detail         | How it is found                                                                          | Missing                                                                                                 |
 | -------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Postal address | a postcode followed by a place, plus a street with a house number                        | `warning`                                                                                               |
+| Postal address | a postcode and place, with a street and house number on that line or the line above      | `warning`                                                                                               |
 | E-mail         | a `mailto:` link or an address in the text, also written as `(at)` / `[at]`              | `warning`                                                                                               |
 | Register entry | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE number, "company number", … | `info`, only when a registered legal form (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., …) is named |
 

@@ -68,6 +68,8 @@ Upgrade notes:
 
 ### Fixed
 
+- `legal-notice-content` only accepts an address when the street sits on the postcode's line or
+  the line above it, so a stray number and a year in other paragraphs no longer pass (#142)
 - `legal-notice-content` and `privacy-policy-vendors` no longer say "checked, no finding" when
   they had nothing to read: on other pages they are skipped (`not-start-page`), without a link
   they are skipped (`no-linked-page`), and when the page didn't load they are not evaluable

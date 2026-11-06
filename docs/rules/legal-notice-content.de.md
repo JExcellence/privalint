@@ -15,7 +15,7 @@ Beleg.
 
 | Angabe          | Wie sie erkannt wird                                                                     | Fehlt                                                                                                          |
 | --------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Postanschrift   | eine Postleitzahl mit Ort, dazu eine Straße mit Hausnummer                               | `warning`                                                                                                      |
+| Postanschrift   | Postleitzahl und Ort, mit Straße und Hausnummer in dieser oder der Zeile darüber         | `warning`                                                                                                      |
 | E-Mail          | ein `mailto:`-Link oder eine Adresse im Text, auch als `(at)` / `[at]` geschrieben       | `warning`                                                                                                      |
 | Registereintrag | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE-Nummer, „company number“, … | `info`, nur wenn eine eingetragene Rechtsform (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., …) genannt ist |
 

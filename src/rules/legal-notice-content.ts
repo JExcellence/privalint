@@ -34,6 +34,20 @@ const EMAIL =
 const REGISTERED_FORM =
   /(?<!\d[.,/]?\s?)\b(?:GmbH|gGmbH|UG|AG|KG|OHG|OG|e\.\s?K\.|e\.\s?Kfr\.|e\.\s?V\.|SE|PartG|KGaA|Kft\.?|Zrt\.?|Nyrt\.?|Bt\.?|Kkt\.?|Ltd\.?|Limited|S\.?à\s?r\.?l\.?|SARL)(?=[\s,.)]|$)/u;
 
+/**
+ * A postcode with a street on the same line or the line right above it, as in an address block
+ * ("Musterstraße 12" over "10115 Berlin"). A blank line, the end of a paragraph, ends the block, so
+ * a number in one paragraph and a year in the next don't make an address.
+ */
+function hasAddress(text: string): boolean {
+  const lines = text.replace(NOT_ADDRESS, ' ').split('\n');
+  return lines.some((line, index) => {
+    if (!POSTCODE.test(line)) return false;
+    const above = lines[index - 1] ?? '';
+    return STREET.test(line) || (above.trim() !== '' && STREET.test(above));
+  });
+}
+
 /** Lines about other companies: the host, the web designer, image credits. */
 const THIRD_PARTY_LINE =
   /hosting|hoster|webdesign|design|realisierung|umsetzung|programmierung|entwicklung|developed|foto|bild|photo|image|credits|icons?|google|tárhely|kivitelez/i;
@@ -66,8 +80,7 @@ export const legalNoticeContent: Rule = {
     const findings: Finding[] = [];
 
     const missing: string[] = [];
-    const addressText = text.replace(NOT_ADDRESS, ' ');
-    if (!(POSTCODE.test(addressText) && STREET.test(addressText))) {
+    if (!hasAddress(text)) {
       missing.push(
         say(lang, { en: 'postal address', de: 'keine Postanschrift', hu: 'postai címet' }),
       );
