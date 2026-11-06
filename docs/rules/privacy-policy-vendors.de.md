@@ -12,7 +12,9 @@ Erklärung eine eigene Cookie-Richtlinie („Cookie-Richtlinie“, „Cookie pol
 …), wird auch diese gelesen, eine Ebene tief.
 
 Jeder Dienst, den die Startseite vor der Einwilligung und nach dem Ablehnen kontaktiert hat, wird
-dann in diesem Text gesucht:
+dann in diesem Text gesucht. Mit `--check-accept` akzeptiert privalint zusätzlich in einem frischen
+Browser, lädt neu und nimmt die Dienste hinzu, die erst mit Einwilligung laden. Die erteilte
+Einwilligung bleibt in diesem Browser, der danach geschlossen wird.
 
 | Dienst                                                                                                                               | Fehlt in der Erklärung |
 | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |

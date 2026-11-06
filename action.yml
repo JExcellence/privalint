@@ -36,6 +36,12 @@ inputs:
   check-close:
     description: true also closes the banner with its close button, reloads and checks whether that counts as consent (trackers-after-close). Empty uses closeCheck from the config file.
     default: ""
+  check-accept:
+    description: true also accepts in a fresh browser and records what loads then, so privacy-policy-vendors covers services that need consent. Empty uses acceptCheck from the config file.
+    default: ""
+  gpc:
+    description: true also loads the start page with Global Privacy Control (Sec-GPC 1) and reports whether the site reacts (gpc-signal). Empty uses gpc from the config file.
+    default: ""
   sitemap:
     description: true chooses the pages to scan from sitemap.xml, spread over the site and pages with forms first. Empty uses the config file.
     default: ""
@@ -94,6 +100,8 @@ runs:
         DEVICE: ${{ inputs.device }}
         SITEMAP: ${{ inputs.sitemap }}
         CHECK_CLOSE: ${{ inputs.check-close }}
+        CHECK_ACCEPT: ${{ inputs.check-accept }}
+        GPC: ${{ inputs.gpc }}
         CONFIG: ${{ inputs.config }}
         DISABLE: ${{ inputs.disable }}
         REPORT_LANG: ${{ inputs.lang }}
@@ -130,6 +138,8 @@ runs:
         if [[ -n "$DEVICE" ]]; then args+=(--device "$DEVICE"); fi
         if [[ "$SITEMAP" == "true" ]]; then args+=(--sitemap); fi
         if [[ "$CHECK_CLOSE" == "true" ]]; then args+=(--check-close); fi
+        if [[ "$CHECK_ACCEPT" == "true" ]]; then args+=(--check-accept); fi
+        if [[ "$GPC" == "true" ]]; then args+=(--gpc); fi
         if [[ -n "$DISABLE" ]]; then args+=(--disable "$DISABLE"); fi
         if [[ -n "$SARIF_FILE" ]]; then args+=(--output "$SARIF_FILE"); fi
 

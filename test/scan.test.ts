@@ -16,11 +16,13 @@ let origin: string;
 let onceServed = false;
 /** How often each path was requested. */
 const hits = new Map<string, number>();
+const gpcPaths = new Set<string>();
 
 beforeAll(async () => {
   server = createServer(async (req, res) => {
     const path = new URL(req.url ?? '/', 'http://localhost').pathname;
     hits.set(path, (hits.get(path) ?? 0) + 1);
+    if (req.headers['sec-gpc'] === '1') gpcPaths.add(path);
     if (path === '/old-about') {
       res.writeHead(301, { location: '/clean/about.html' }).end();
       return;
@@ -319,6 +321,57 @@ describe('scan', () => {
     expect(JSON.stringify(match)).not.toContain('bannerText');
   });
 
+  it('warns when the reject control cannot be reached with the Tab key', async () => {
+    const unreachable = await scan(`${origin}/consent/keyboard-unreachable.html`, options);
+    const [finding] = unreachable.findings.filter((f) => f.ruleId === 'banner-keyboard');
+    expect(finding).toMatchObject({ severity: 'warning' });
+    expect(finding?.evidence[0]).toBe('reject control: <div role="button"> "Reject all"');
+    expect(finding?.evidence[1]).toBe('not focused after 60 Tab presses');
+    expect(finding?.evidence[2]).toBe('accept control focused after 4 Tab presses');
+    expect(JSON.stringify(unreachable)).not.toContain('rejectTabs');
+    // The probe must not keep the reject click from working.
+    expect(unreachable.consent?.rejected).toBe(true);
+    const reachable = await scan(`${origin}/consent/good.html`, options);
+    expect(reachable.findings.filter((f) => f.ruleId === 'banner-keyboard')).toEqual([]);
+  });
+
+  it('with --gpc, reports whether the site honours Global Privacy Control', async () => {
+    const gpc = (result: Awaited<ReturnType<typeof scan>>) =>
+      result.findings.filter((f) => f.ruleId === 'gpc-signal');
+    const honours = await scan(`${origin}/consent/gpc.html`, { ...options, gpc: true });
+    expect(gpc(honours)).toEqual([
+      expect.objectContaining({
+        severity: 'info',
+        message:
+          'The site honours Global Privacy Control: the consent banner is hidden and no trackers load.',
+        evidence: [
+          'banner without GPC: shown',
+          'banner with GPC: hidden',
+          'trackers without GPC: Google Analytics',
+          'trackers with GPC: none',
+        ],
+      }),
+    ]);
+    expect(gpc(honours)[0]?.fix).toBeUndefined();
+    expect(honours.consent?.gpc).toEqual({
+      outcome: 'observed',
+      reason: 'gpc-sent',
+      bannerShown: false,
+      signal: true,
+      afterGpcComplete: true,
+    });
+    expect(honours.options?.gpc).toBe(true);
+    expect(gpcPaths.has('/consent/gpc.html')).toBe(true);
+    const ignores = await scan(`${origin}/consent/good.html`, { ...options, gpc: true });
+    expect(gpc(ignores).map((f) => f.evidence[1])).toEqual(['banner with GPC: shown']);
+    const off = await scan(`${origin}/consent/gpc.html`, options);
+    expect(gpc(off)).toEqual([]);
+    expect(off.consent?.gpc).toBeUndefined();
+    expect(
+      off.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === 'gpc-signal'),
+    ).toMatchObject({ status: 'skipped', reason: 'gpc-check-disabled' });
+  });
+
   it('closes the banner with its close button and reports trackers that load then', async () => {
     const evaluation = (result: Awaited<ReturnType<typeof scan>>) =>
       result.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === 'trackers-after-close');
@@ -405,6 +458,28 @@ describe('scan', () => {
       },
     ]);
     expect(result.pages).toHaveLength(1);
+  });
+
+  it('with --check-accept, also looks for services that load only after accepting', async () => {
+    const vendors = (result: Awaited<ReturnType<typeof scan>>) =>
+      result.findings
+        .filter((f) => f.ruleId === 'privacy-policy-vendors')
+        .map(({ subject }) => subject);
+    const start = `${origin}/policy-vendors/accept.html`;
+    expect(vendors(await scan(start, options))).toEqual([]);
+    const result = await scan(start, { ...options, acceptCheck: true });
+    expect(vendors(result)).toEqual(['Hotjar']);
+    expect(result.consent?.accept).toEqual({
+      outcome: 'accepted',
+      reason: 'accept-clicked-and-reloaded',
+      acceptLabel: 'Accept all',
+      afterAcceptComplete: true,
+    });
+    expect(result.options?.acceptCheck).toBe(true);
+    expect(result.thirdParties?.find((host) => host.host === 'static.hotjar.com')?.phases).toEqual([
+      'after-accept',
+    ]);
+    expect(JSON.stringify(result)).not.toContain('afterAccept"');
   });
 
   it('never puts URL credentials into the report', async () => {

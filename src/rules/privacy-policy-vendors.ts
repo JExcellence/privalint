@@ -57,11 +57,18 @@ export const privacyPolicyVendors: Rule = {
     const policy = page.privacyPolicy;
     if (policy === undefined) return [];
     const text = policy.text;
+    // With --check-accept, the services that load only after consent count as well.
+    const accepted = page.consent?.accept?.afterAccept;
     const requests = observedRequests([
       ...page.requests,
       ...(page.consent?.afterReject?.requests ?? []),
+      ...(accepted?.requests ?? []),
     ]);
-    const cookies = [...page.cookies, ...(page.consent?.afterReject?.cookies ?? [])];
+    const cookies = [
+      ...page.cookies,
+      ...(page.consent?.afterReject?.cookies ?? []),
+      ...(accepted?.cookies ?? []),
+    ];
     const cookieHosts = cookies.map((cookie) => cookie.domain.replace(/^\./, ''));
 
     const seen = new Map<string, Seen>();

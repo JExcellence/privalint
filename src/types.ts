@@ -128,7 +128,9 @@ export type ObservationKind =
   /** The legal notice or privacy policy the start page links, loaded separately. Since 1.5.0. */
   | 'linked-page'
   /** What loads after closing the banner with its close button. Opt-in. Since 1.5.0. */
-  | 'after-close';
+  | 'after-close'
+  /** The start page loaded with Global Privacy Control. Opt-in. Since 1.5.0. */
+  | 'gpc';
 
 export interface RuleEvaluation {
   pageId?: string;
@@ -148,7 +150,9 @@ export interface RuleEvaluation {
     /** The start page links no such page on the same site. Since schema 1.5.0. */
     | 'no-linked-page'
     /** The close-button check is opt-in. Since schema 1.5.0. */
-    | 'close-check-disabled';
+    | 'close-check-disabled'
+    /** The Global Privacy Control check is opt-in. Since schema 1.5.0. */
+    | 'gpc-check-disabled';
   /** Executed against available positive evidence, without ruling out additional findings. */
   partial: boolean;
   outcome?: 'checked-no-finding' | 'finding-detected' | 'not-evaluable';
@@ -187,7 +191,10 @@ export type RuleExplanation =
   | 'no-close-control'
   | 'banner-closed-and-reloaded'
   | 'no-linked-page'
-  | 'linked-page-not-loaded';
+  | 'linked-page-not-loaded'
+  | 'gpc-check-disabled'
+  | 'missing-gpc-observation'
+  | 'gpc-sent';
 
 export interface CaptureObservation {
   complete: boolean;
@@ -284,6 +291,8 @@ export interface ConsentObservation {
   bannerBlocking?: boolean;
   /** How the first-layer accept and reject controls look. Internal input for reject-less-prominent. */
   bannerControls?: { accept: ControlLook; reject: ControlLook };
+  /** Whether the first-layer controls can be reached with the Tab key. Internal input for banner-keyboard. */
+  keyboard?: KeyboardReach;
   /** True once the reject button was clicked and the page reloaded. */
   rejected: boolean;
   /** Requests made and cookies newly set after rejecting, including the reload. */
@@ -304,6 +313,10 @@ export interface ConsentObservation {
   settings?: SettingsObservation;
   /** Only present when the close-button check ran. Since schema 1.5.0. */
   close?: CloseObservation;
+  /** Only present when the accept check ran. Since schema 1.5.0. */
+  accept?: AcceptObservation;
+  /** Only present when the Global Privacy Control check ran. Since schema 1.5.0. */
+  gpc?: GpcObservation;
   error?: string;
 }
 
@@ -492,10 +505,71 @@ export interface PageSummary {
   ruleEvaluations?: RuleEvaluation[];
 }
 
-export type ConsentSummary = Omit<ConsentObservation, 'afterReject' | 'settings' | 'close'> & {
+/**
+ * After how many Tab presses the banner's reject and accept controls had focus, starting where the
+ * page put focus when it loaded.
+ */
+export interface KeyboardReach {
+  /** Tab presses made, at most 60. */
+  presses: number;
+  /** The press that focused the reject control; absent when none did. */
+  rejectTabs?: number;
+  /** The press that focused the accept control, null when none did. Absent without an accept control. */
+  acceptTabs?: number | null;
+  /** The reject control's element, role and tabindex, as evidence. */
+  reject: { tag: string; role?: string; tabindex?: string };
+}
+
+export type ConsentSummary = Omit<
+  ConsentObservation,
+  'afterReject' | 'settings' | 'close' | 'keyboard' | 'accept' | 'gpc'
+> & {
   settings?: Omit<SettingsObservation, 'afterSave'>;
   close?: Omit<CloseObservation, 'afterClose'>;
+  accept?: Omit<AcceptObservation, 'afterAccept'>;
+  gpc?: Omit<GpcObservation, 'afterGpc'>;
 };
+
+/**
+ * What the start page did in a fresh browser context that sent Global Privacy Control
+ * (`Sec-GPC: 1` and `navigator.globalPrivacyControl`), without any click.
+ */
+export interface GpcObservation {
+  outcome: 'observed' | 'interaction-failed' | 'banner-not-shown';
+  reason: 'gpc-sent' | 'browser-interaction-failed' | 'banner-not-shown';
+  /** Whether a consent banner showed with the signal. */
+  bannerShown?: boolean;
+  /** Whether the page saw `navigator.globalPrivacyControl` as true. */
+  signal?: boolean;
+  /** Requests and cookies of the load with the signal. Internal input for gpc-signal. */
+  afterGpc?: {
+    requests: RecordedRequest[];
+    cookies: RecordedCookie[];
+    storage?: StorageKey[];
+  };
+  /** True only if the load with the signal completed without load issues. */
+  afterGpcComplete?: boolean;
+  error?: string;
+}
+
+/**
+ * What happened when privalint clicked the banner's accept button in a fresh browser context and
+ * reloaded the page. The stored consent stays in that context.
+ */
+export interface AcceptObservation {
+  outcome: 'accepted' | 'interaction-failed' | 'banner-not-shown';
+  reason: 'accept-clicked-and-reloaded' | 'browser-interaction-failed' | 'banner-not-shown';
+  acceptLabel?: string;
+  /** Requests made and cookies newly set after accepting, including the reload. Internal. */
+  afterAccept?: {
+    requests: RecordedRequest[];
+    cookies: RecordedCookie[];
+    storage?: StorageKey[];
+  };
+  /** True only if the observation window after accepting completed without load issues. */
+  afterAcceptComplete?: boolean;
+  error?: string;
+}
 
 /**
  * What happened when privalint closed the banner with its close button ("X", "Schließen") in a
@@ -616,6 +690,10 @@ export interface ReportOptions {
   sitemap?: boolean;
   /** True when the close-button check ran. Absent before schema 1.5.0. */
   closeCheck?: boolean;
+  /** True when the accept check ran. Absent before schema 1.5.0. */
+  acceptCheck?: boolean;
+  /** True when the Global Privacy Control check ran. Absent before schema 1.5.0. */
+  gpc?: boolean;
   headed: boolean;
   channel: string;
   /** Absent in reports from scanners before 0.5.0. */
@@ -630,7 +708,12 @@ export interface ReportOptions {
   allowedVendors: string[];
 }
 
-export type ThirdPartyPhase = 'before-consent' | 'after-reject' | 'after-settings' | 'after-close';
+export type ThirdPartyPhase =
+  | 'before-consent'
+  | 'after-reject'
+  | 'after-settings'
+  | 'after-close'
+  | 'after-accept';
 
 /** One host outside the site, with what privalint knows about it. Hosts only, never paths. */
 export interface ThirdPartyHost {

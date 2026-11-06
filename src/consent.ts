@@ -2,9 +2,11 @@ import type { BrowserContext, Frame, Locator, Page } from 'playwright';
 import { classifyLoadError } from './diagnostics.js';
 import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
+  AcceptObservation,
   CloseObservation,
   ConsentObservation,
   ControlLook,
+  KeyboardReach,
   PageLink,
   RecordedCookie,
   RecordedRequest,
@@ -269,6 +271,8 @@ export async function observeConsent(
     if (banner.acceptLabel === undefined) observation.reason = 'unsupported-banner-markup';
     return observation;
   }
+  const keyboard = await probeKeyboard(page, banner.accept, banner.reject).catch(() => undefined);
+  if (keyboard !== undefined) observation.keyboard = keyboard;
 
   try {
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
@@ -366,7 +370,159 @@ export async function observeClose(
   }
 }
 
+/**
+ * Whether a consent banner shows on the loaded page, waiting like the reject path does. For the
+ * Global Privacy Control path, which only looks.
+ */
+export async function bannerShown(page: Page, options: ConsentCheckOptions): Promise<boolean> {
+  const { found } = await waitFor(page, options, () => findBanner(page));
+  return found !== undefined;
+}
+
+/**
+ * Clicks the banner's accept button, reloads the page and records what loads then: the services
+ * the site runs with consent. Use a fresh browser context, so the stored consent stays in it.
+ * Returns undefined when there is no banner with an accept button.
+ */
+export async function observeAccept(
+  page: Page,
+  context: BrowserContext,
+  requests: RecordedRequest[],
+  options: ConsentCheckOptions,
+): Promise<AcceptObservation | undefined> {
+  if (options.signal?.aborted) throw new DOMException('Accept check aborted', 'AbortError');
+  const { found: banner } = await waitFor(page, options, () => findBanner(page));
+  if (banner?.accept === undefined) return undefined;
+  const label = banner.acceptLabel === undefined ? {} : { acceptLabel: banner.acceptLabel };
+  try {
+    const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
+    const storageBefore = await readStorageKeys(page);
+    const firstRequest = requests.length;
+    options.onReject?.();
+    await banner.accept.click({ timeout: Math.min(5_000, options.timeoutMs) });
+    await settle(page, options);
+    const response = await page.reload({ waitUntil: 'load', timeout: options.timeoutMs });
+    if (response === null || response.status() >= 400) throw new Error('HTTP reload failed');
+    await settle(page, options);
+    const cookies: RecordedCookie[] = (await context.cookies())
+      .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
+      .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
+    const storage = newStorageKeys(storageBefore, await readStorageKeys(page));
+    return {
+      outcome: 'accepted',
+      reason: 'accept-clicked-and-reloaded',
+      ...label,
+      afterAccept: { requests: requests.slice(firstRequest), cookies, storage },
+    };
+  } catch (error) {
+    return {
+      outcome: 'interaction-failed',
+      reason: 'browser-interaction-failed',
+      ...label,
+      error: classifyLoadError(error),
+    };
+  }
+}
+
 const CLOSE_MARK = 'data-privalint-close';
+
+const KEYBOARD_MARK = 'data-privalint-key';
+/** Tab presses before a control counts as out of keyboard reach. */
+const MAX_TABS = 60;
+
+/**
+ * Presses Tab up to 60 times, starting where the page put focus when it loaded, and records after
+ * how many presses the reject (and accept) control had focus. A control a keyboard user can't
+ * reach can only be clicked with a mouse or touch. Runs before the reject click.
+ */
+async function probeKeyboard(
+  page: Page,
+  accept: Locator | undefined,
+  reject: Locator,
+): Promise<KeyboardReach> {
+  const look = await reject.evaluate((element, mark) => {
+    element.setAttribute(mark, 'reject');
+    return {
+      tag: element.tagName.toLowerCase(),
+      role: element.getAttribute('role'),
+      tabindex: element.getAttribute('tabindex'),
+    };
+  }, KEYBOARD_MARK);
+  await accept
+    ?.evaluate((element, mark) => element.setAttribute(mark, 'accept'), KEYBOARD_MARK)
+    .catch(() => undefined);
+  const frames: Frame[] = [];
+  for (const frame of page.frames()) {
+    const marked = await frame
+      .locator(`[${KEYBOARD_MARK}]`)
+      .count()
+      .catch(() => 0);
+    if (marked > 0) frames.push(frame);
+  }
+  let rejectTabs: number | undefined;
+  let acceptTabs: number | undefined;
+  let presses = 0;
+  try {
+    while (
+      presses < MAX_TABS &&
+      (rejectTabs === undefined || (accept !== undefined && acceptTabs === undefined))
+    ) {
+      await page.keyboard.press('Tab');
+      presses++;
+      for (const frame of frames) {
+        const focused = await frame.evaluate(focusedMark, KEYBOARD_MARK).catch(() => undefined);
+        if (focused === 'reject') rejectTabs ??= presses;
+        if (focused === 'accept') acceptTabs ??= presses;
+      }
+    }
+  } finally {
+    for (const frame of frames) {
+      await frame
+        .evaluate((mark) => {
+          for (const element of document.querySelectorAll(`[${mark}]`)) {
+            element.removeAttribute(mark);
+          }
+        }, KEYBOARD_MARK)
+        .catch(() => undefined);
+    }
+    // Shadow DOM marks are out of querySelectorAll's reach; remove them through the locators.
+    await reject.evaluate((element, mark) => element.removeAttribute(mark), KEYBOARD_MARK);
+    await accept
+      ?.evaluate((element, mark) => element.removeAttribute(mark), KEYBOARD_MARK)
+      .catch(() => undefined);
+  }
+  return {
+    presses,
+    ...(rejectTabs === undefined ? {} : { rejectTabs }),
+    ...(accept === undefined ? {} : { acceptTabs: acceptTabs ?? null }),
+    reject: {
+      tag: look.tag,
+      ...(look.role === null ? {} : { role: look.role }),
+      ...(look.tabindex === null ? {} : { tabindex: look.tabindex }),
+    },
+  };
+}
+
+/**
+ * Runs in a frame. The mark of the control that has focus: the focused element itself, an
+ * ancestor of it (a button inside the marked container), or the marked element inside a focused
+ * button or link (the selector matched a span in it). Follows focus into shadow roots.
+ */
+function focusedMark(mark: string): string | undefined {
+  let active: Element | null = document.activeElement;
+  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+  if (active === null || active === document.body) return undefined;
+  for (let node: Element | null = active; node !== null && node !== document.body; ) {
+    const value = node.getAttribute(mark);
+    if (value !== null) return value;
+    const root = node.getRootNode();
+    node = node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+  }
+  if (active.matches('button, a[href], [role="button"], [role="link"]')) {
+    return active.querySelector(`[${mark}]`)?.getAttribute(mark) ?? undefined;
+  }
+  return undefined;
+}
 
 /**
  * Runs in the page. Finds the banner's close control, marks it with a data attribute so it can be

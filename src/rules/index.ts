@@ -1,6 +1,7 @@
 import type { Rule } from '../types.js';
 import { accessibilityStatement } from './accessibility-statement.js';
 import { adobeFonts } from './adobe-fonts.js';
+import { bannerKeyboard } from './banner-keyboard.js';
 import { bannerLanguage } from './banner-language.js';
 import { bannerLegalLinks } from './banner-legal-links.js';
 import { consentBannerMissing } from './consent-banner-missing.js';
@@ -10,6 +11,7 @@ import { fingerprinting } from './fingerprinting.js';
 import { formPretickedConsent } from './form-preticked-consent.js';
 import { formPrivacyNotice } from './form-privacy-notice.js';
 import { googleFonts } from './google-fonts.js';
+import { gpcSignal } from './gpc-signal.js';
 import { httpsTransport } from './https-transport.js';
 import { impressumLink } from './impressum-link.js';
 import { legalNoticeContent } from './legal-notice-content.js';
@@ -43,6 +45,8 @@ export const defaultRules: readonly Rule[] = [
   consentBannerMissing,
   bannerLegalLinks,
   bannerLanguage,
+  bannerKeyboard,
+  gpcSignal,
   googleFonts,
   adobeFonts,
   thirdPartyEmbeds,
@@ -68,6 +72,7 @@ export const defaultRules: readonly Rule[] = [
 export {
   accessibilityStatement,
   adobeFonts,
+  bannerKeyboard,
   bannerLanguage,
   bannerLegalLinks,
   consentBannerMissing,
@@ -77,6 +82,7 @@ export {
   formPretickedConsent,
   formPrivacyNotice,
   googleFonts,
+  gpcSignal,
   httpsTransport,
   impressumLink,
   legalNoticeContent,

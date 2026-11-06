@@ -20,7 +20,12 @@ die das von der Startseite verlinkte Impressum oder die Datenschutzerklärung le
 `options.device` eines Scans mit `--device`, `options.sitemap`, die optionale Schließen-Prüfung
 (`options.closeCheck`, `consent.close`, die Beobachtungsart `after-close`, den Grund
 `close-check-disabled` und die Erklärungen `close-check-disabled`, `missing-close-observation`,
-`no-close-control` und `banner-closed-and-reloaded`) und die optionale Liste `thirdParties`: jeder Host
+`no-close-control` und `banner-closed-and-reloaded`), die optionale Akzeptieren-Prüfung
+(`options.acceptCheck`, `consent.accept` und die `thirdParties`-Phase `after-accept`), die optionale
+Global-Privacy-Control-Prüfung (`options.gpc`, `consent.gpc`, die Beobachtungsart `gpc`, den Grund
+`gpc-check-disabled` und die Erklärungen `gpc-check-disabled`, `missing-gpc-observation` und
+`gpc-sent`) und die optionale Liste
+`thirdParties`: jeder Host
 außerhalb der Website, der auf eine Anfrage geantwortet hat, mit registrierbarer Domain, der Seite,
 auf der er zuerst auftrat, den Phasen (`before-consent`, `after-reject`, `after-settings`, `after-close`), der
 Anzahl der Anfragen und dem Anbieter, als den privalint ihn kennt. Sie enthält nur Hosts, nie Pfade

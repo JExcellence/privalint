@@ -22,8 +22,10 @@ import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import { adapterFetchText, browserFetchText, sitemapPages } from './sitemap.js';
 import { thirdPartyInventory } from './third-party-inventory.js';
 import type {
+  AcceptObservation,
   CloseObservation,
   ConsentSummary,
+  GpcObservation,
   LinkedPageMissing,
   LinkedPageText,
   OffSiteRedirect,
@@ -190,6 +192,22 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ) {
           snapshot.consent.close = await checkClose(browser, url, siteUrl, options);
         }
+        if (
+          isStart &&
+          options.acceptCheck === true &&
+          options.consentCheck !== false &&
+          snapshot.consent?.bannerFound === true
+        ) {
+          snapshot.consent.accept = await checkAccept(browser, url, siteUrl, options);
+        }
+        if (
+          isStart &&
+          options.gpc === true &&
+          options.consentCheck !== false &&
+          snapshot.consent?.bannerFound === true
+        ) {
+          snapshot.consent.gpc = await checkGpc(browser, url, siteUrl, options);
+        }
         if (isStart) {
           const wants = (id: string) => rules.some((rule) => rule.id === id);
           await readLegalPages(browser, snapshot, options, {
@@ -302,6 +320,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         catalog: configuredRules,
         settingsEnabled: options.settingsCheck === true,
         closeEnabled: options.closeCheck === true,
+        gpcEnabled: options.gpc === true,
         transportEnabled: !options.networkAdapter && !options.offline,
       });
     });
@@ -329,6 +348,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ...(options.device === undefined ? {} : { device: options.device }),
         ...(options.sitemap === true ? { sitemap: true } : {}),
         ...(options.closeCheck === true ? { closeCheck: true } : {}),
+        ...(options.acceptCheck === true ? { acceptCheck: true } : {}),
+        ...(options.gpc === true ? { gpc: true } : {}),
         headed: options.headed === true,
         channel: options.channel ?? 'chromium',
         sandbox: options.sandbox === true,
@@ -546,6 +567,38 @@ async function readPolicyAndCookies(
     : { page: { ...text, unread: [cookieLink.href] }, links, label: policy.label };
 }
 
+/** Loads the start page in a fresh context that sends Global Privacy Control, without clicking. */
+async function checkGpc(
+  browser: Browser,
+  url: string,
+  siteUrl: URL,
+  options: ScanOptions,
+): Promise<GpcObservation> {
+  const capture = await capturePage(browser, url, siteUrl, options, 'gpc');
+  if (capture.error !== undefined) {
+    return {
+      outcome: 'interaction-failed',
+      reason: 'browser-interaction-failed',
+      error: capture.error,
+    };
+  }
+  return capture.consent?.gpc ?? { outcome: 'banner-not-shown', reason: 'banner-not-shown' };
+}
+
+/** Runs the accept path on the start page in a fresh context: accept, reload, observe. */
+async function checkAccept(
+  browser: Browser,
+  url: string,
+  siteUrl: URL,
+  options: ScanOptions,
+): Promise<AcceptObservation> {
+  const capture = await capturePage(browser, url, siteUrl, options, 'accept');
+  if (capture.consent?.accept !== undefined) return capture.consent.accept;
+  return capture.error === undefined
+    ? { outcome: 'banner-not-shown', reason: 'banner-not-shown' }
+    : { outcome: 'interaction-failed', reason: 'browser-interaction-failed', error: capture.error };
+}
+
 /** Runs the close path on the start page in a fresh context: close the banner, reload, observe. */
 async function checkClose(
   browser: Browser,
@@ -585,14 +638,19 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
     bannerBlocking: _bannerBlocking,
     bannerControls: _bannerControls,
     bannerText: _bannerText,
+    keyboard: _keyboard,
     settings,
     ...summary
   } = start.consent;
-  const { close, ...rest } = summary;
+  const { close, accept, gpc, ...rest } = summary;
   const closeSummary = close === undefined ? {} : { close: withoutAfterClose(close) };
-  if (settings === undefined) return { consent: { ...rest, ...closeSummary } };
+  const acceptSummary = {
+    ...(accept === undefined ? {} : { accept: withoutAfterAccept(accept) }),
+    ...(gpc === undefined ? {} : { gpc: withoutAfterGpc(gpc) }),
+  };
+  if (settings === undefined) return { consent: { ...rest, ...closeSummary, ...acceptSummary } };
   const { afterSave: _afterSave, ...settingsSummary } = settings;
-  return { consent: { ...rest, ...closeSummary, settings: settingsSummary } };
+  return { consent: { ...rest, ...closeSummary, ...acceptSummary, settings: settingsSummary } };
 }
 
 function consentByHost(pages: readonly PageSnapshot[]): Pick<ScanResult, 'consentByHost'> {
@@ -691,6 +749,16 @@ function inventoryOf(
 ): Pick<ScanResult, 'thirdParties'> {
   const thirdParties = thirdPartyInventory(pages, siteUrl);
   return thirdParties.length === 0 ? {} : { thirdParties };
+}
+
+function withoutAfterGpc(gpc: GpcObservation): Omit<GpcObservation, 'afterGpc'> {
+  const { afterGpc: _afterGpc, ...summary } = gpc;
+  return summary;
+}
+
+function withoutAfterAccept(accept: AcceptObservation): Omit<AcceptObservation, 'afterAccept'> {
+  const { afterAccept: _afterAccept, ...summary } = accept;
+  return summary;
 }
 
 function withoutAfterClose(close: CloseObservation): Omit<CloseObservation, 'afterClose'> {
