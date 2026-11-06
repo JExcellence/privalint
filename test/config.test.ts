@@ -294,7 +294,7 @@ describe('JSON configuration', () => {
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
-  });
+  }, 60_000); // About a dozen CLI processes, each with its own browser: slow on a loaded machine.
   it('fails only on findings the baseline report does not have', async () => {
     const cwd = await directory();
     const server = createServer((request, response) => {

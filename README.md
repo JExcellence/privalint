@@ -156,9 +156,9 @@ privalint <url> [options]
   -p, --max-pages <n>     Crawl up to n pages of the same site (default 1)
       --concurrency <n>   Load up to n pages at the same time (default 1).
                           The report is the same as with 1
-  -f, --format <format>   text | json | markdown | sarif (default text)
+  -f, --format <format>   text | json | markdown | sarif | html (default text)
   -o, --output <file>     Write the report to a file and print a text summary.
-                          Repeatable; .sarif, .json and .md pick their format,
+                          Repeatable; .sarif, .json, .md and .html pick their format,
                           other extensions use --format
       --evaluations <mode>  full | summary (default full). summary leaves the
                           per-page rule results out of JSON; the per-rule
@@ -202,6 +202,10 @@ privalint <url> [options]
 Exit codes: `0` nothing at or above `--fail-on`, `1` findings, `2` bad arguments or a failed scan.
 With `--fail-on-incomplete`, exit `3` means incomplete required observation. Findings exit `1`
 takes precedence; intentional disabled-rule/consent exclusions are ignored by this gate.
+
+`--format html` (or `-o report.html`) writes one self-contained page to hand to a client or attach
+to a ticket: findings by page with severity, evidence, fix and legal basis, in light and dark. It
+loads nothing: no scripts, fonts or images, and a Content-Security-Policy blocks any request.
 
 With `--baseline report.json`, privalint compares the findings with an earlier JSON report of the
 same schema major version. A finding is the same when rule, page URL and subject (such as the

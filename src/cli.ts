@@ -36,7 +36,7 @@ Options
                           The report is the same as with 1
   -f, --format <format>   ${FORMATS.join(' | ')} (default text)
   -o, --output <file>     Write the report to a file and print a text summary.
-                          Repeatable; .sarif, .json and .md pick their format,
+                          Repeatable; .sarif, .json, .md and .html pick their format,
                           other extensions use --format
       --evaluations <mode>  full | summary (default full). summary leaves the
                           per-page rule results out of JSON; the per-rule
@@ -90,6 +90,8 @@ const FORMAT_BY_EXTENSION: Record<string, Format> = {
   '.sarif': 'sarif',
   '.json': 'json',
   '.md': 'markdown',
+  '.html': 'html',
+  '.htm': 'html',
 };
 
 async function main(argv: string[]): Promise<number> {

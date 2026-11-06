@@ -33,6 +33,9 @@ Upgrade notes:
 
 ### Added
 
+- `--format html` (and `-o report.html`) writes a self-contained HTML report with inline CSS for
+  light and dark: findings by page and severity, evidence in collapsible sections, fixes, legal
+  basis and the disclaimer. Every scanned value is escaped, and the page loads nothing (#129)
 - `--baseline <report.json>` (Action input `baseline`) compares the findings with an earlier JSON
   report: each finding is marked `new` or `existing` by rule, page and subject (the SARIF
   fingerprint), `baseline.fixed` lists the findings that are gone, and `--fail-on` counts new
