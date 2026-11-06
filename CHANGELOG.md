@@ -8,8 +8,9 @@ All notable changes are listed here. The format follows
 
 Upgrade notes:
 
-- New reports carry `schemaVersion: "1.5.0"`. It only adds the report language `hu`. Consumers
-  that accept 1.4.0 only must add 1.5.0 (`schemas/report-1.5.0.schema.json`).
+- New reports carry `schemaVersion: "1.5.0"`. It adds the report language `hu` and the
+  `linked-page` observation with its reasons. Consumers that accept 1.4.0 only must add 1.5.0
+  (`schemas/report-1.5.0.schema.json`).
 - On sites with subdomains, the first crawled page of up to five other hosts (`docs.`, `blog.`)
   now gets the consent, banner and HTTPS checks too. That can add findings and one consent run
   per host. `--host-checks main` or `"hostChecks": "main"` keeps the previous behaviour.
@@ -67,6 +68,11 @@ Upgrade notes:
 
 ### Fixed
 
+- `legal-notice-content` and `privacy-policy-vendors` no longer say "checked, no finding" when
+  they had nothing to read: on other pages they are skipped (`not-start-page`), without a link
+  they are skipped (`no-linked-page`), and when the page didn't load they are not evaluable
+  (`linked-page-not-loaded`). A finding about something missing from a page that didn't load
+  completely is not evaluable either (#141)
 - A request that never finishes no longer makes every document rule not evaluable. When the page
   itself was read, a rule that finds what it looks for (the Impressum link, the privacy link)
   counts as checked; a finding about something missing stays not evaluable, since the missing

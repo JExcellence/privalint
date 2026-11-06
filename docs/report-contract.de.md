@@ -14,8 +14,10 @@ würde. 1.3.0 ergänzt die optionale Prüfung der Einstellungsebene: `consent.se
 `fetching`) in Adapter-Diagnosen, die optionalen Felder `capture.diagnostics.timing.adapter` und
 `offSiteRedirects` (mit Scanner 0.9.1 und 0.10.0 ergänzt, ohne 1.4.0-Validatoren zu brechen) sowie `consent.tcf` und `consent.settings.tcf`: was ein
 IAB-TCF-Consent-Tool nach dem Ablehnen und nach dem Abwählen von allem meldet. 1.5.0 ergänzt die
-Berichtssprache `hu` (`lang` und `options.lang`), die ein 1.4.0-Validator ablehnen würde; die
-Struktur ist sonst gleich.
+Berichtssprache `hu` (`lang` und `options.lang`), die Beobachtungsart `linked-page` für Regeln,
+die das von der Startseite verlinkte Impressum oder die Datenschutzerklärung lesen, den Grund
+`no-linked-page` und die Erklärungen `no-linked-page` und `linked-page-not-loaded`; ein
+1.4.0-Validator würde all das ablehnen.
 Paket-/Scanner-Version und Schemaversion sind unabhängig. Ohne `schemaVersion` ist ein Bericht
 Legacy; unbekannte Versionen müssen ausdrücklich unterstützt werden. Alte Daten bekommen nicht
 einfach eine neue Version zugewiesen, damit sie validieren.

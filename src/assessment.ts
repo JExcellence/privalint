@@ -27,9 +27,9 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'third-country-providers': ['network'],
   'tracking-cookie-lifetime': ['network'],
   'impressum-link': ['document'],
-  'legal-notice-content': ['document'],
+  'legal-notice-content': ['linked-page'],
   'privacy-policy-link': ['document'],
-  'privacy-policy-vendors': ['network'],
+  'privacy-policy-vendors': ['network', 'linked-page'],
   'reject-option': ['consent'],
   'reject-less-prominent': ['consent'],
   'trackers-after-reject': ['after-reject'],
@@ -37,6 +37,12 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'trackers-after-settings': ['after-settings'],
   'consent-preselected': ['after-settings'],
   'consent-banner-missing': ['network', 'banner-search'],
+};
+
+/** Rules that read a page linked from the start page, and which one. */
+const LINKED_PAGES: Partial<Record<string, 'legalNotice' | 'privacyPolicy'>> = {
+  'legal-notice-content': 'legalNotice',
+  'privacy-policy-vendors': 'privacyPolicy',
 };
 
 export interface AssessmentContext {
@@ -88,13 +94,21 @@ export function assessPage(
     'banner-search':
       validPage && page.consent !== undefined && page.consent.state !== 'interaction-failed',
     transport: validPage && page.transport !== undefined,
+    // Which linked page depends on the rule; see availableFor.
+    'linked-page': false,
   };
   // Pre-selected categories are read when the settings layer opens, before anything is saved, so
   // the rule needs the opened layer, not a completed save.
-  const availableFor = (rule: Rule, kind: ObservationKind): boolean =>
-    kind === 'after-settings' && rule.id === 'consent-preselected'
-      ? validPage && page.consent?.settings?.preselected !== undefined
-      : available[kind];
+  const availableFor = (rule: Rule, kind: ObservationKind): boolean => {
+    if (kind === 'after-settings' && rule.id === 'consent-preselected') {
+      return validPage && page.consent?.settings?.preselected !== undefined;
+    }
+    if (kind === 'linked-page') {
+      const linked = LINKED_PAGES[rule.id];
+      return validPage && linked !== undefined && page[linked] !== undefined;
+    }
+    return available[kind];
+  };
   const input: PageSnapshot = {
     ...page,
     requests: observedRequests(page.requests),
@@ -148,6 +162,24 @@ export function assessPage(
         findingCount: 0,
       };
     }
+    if (requirements.includes('linked-page') && !availableFor(rule, 'linked-page')) {
+      // Read from a page the start page links: other pages have nothing to check, and a start page
+      // without such a link leaves nothing to check either (other rules report the missing link).
+      const linked = LINKED_PAGES[rule.id];
+      const missing = linked === undefined ? undefined : page.linkedPageMissing?.[linked];
+      if (!isStart || missing === 'no-link') {
+        const reason = isStart ? 'no-linked-page' : 'not-start-page';
+        return {
+          ruleId: rule.id,
+          status: 'skipped',
+          reason,
+          partial: false,
+          outcome: 'not-evaluable',
+          explanation: reason,
+          findingCount: 0,
+        };
+      }
+    }
     if (requirements.includes('transport') && (!isStart || !transportEnabled)) {
       // Checked on the start page of native scans only, by design: not a gap in coverage.
       const reason = isStart ? 'transport-not-checked' : 'not-start-page';
@@ -200,11 +232,26 @@ export function assessPage(
             ? (page.consent?.reason ?? 'missing-reject-observation')
             : requirements.includes('consent') || requirements.includes('banner-search')
               ? (page.consent?.reason ?? 'missing-consent-observation')
-              : 'incomplete-document',
+              : requirements.includes('linked-page')
+                ? 'linked-page-not-loaded'
+                : 'incomplete-document',
         findingCount: 0,
       };
     }
     const detected = rule.check({ page: input, siteUrl, lang, region });
+    const linked = LINKED_PAGES[rule.id];
+    if (detected.length > 0 && linked !== undefined && page[linked]?.complete === false) {
+      // Something missing from a linked page that didn't load completely may be a loading gap.
+      return {
+        ruleId: rule.id,
+        status: 'not-evaluable',
+        reason: 'missing-observation',
+        partial: true,
+        outcome: 'not-evaluable',
+        explanation: 'incomplete-observation',
+        findingCount: 0,
+      };
+    }
     detectedBy.set(rule.id, detected);
     const partial = requirements.includes('after-settings')
       ? page.consent?.settings?.afterSaveComplete === false

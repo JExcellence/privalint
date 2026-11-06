@@ -146,7 +146,7 @@ describe('scan', () => {
 
   it('skips links that lead nowhere and never reads an error page as a legal page', async () => {
     let start: PageSnapshot | undefined;
-    await scan(`${origin}/legal-notice/links.html`, {
+    const result = await scan(`${origin}/legal-notice/links.html`, {
       ...options,
       onPage: (page) => {
         start ??= page;
@@ -154,8 +154,35 @@ describe('scan', () => {
     });
     // "Privacy settings" with href="#" comes first; the policy behind it is still read.
     expect(start?.privacyPolicy?.url).toBe(`${origin}/policy-vendors/privacy.html`);
-    // The Imprint link answers 404.
+    // The Imprint link answers 404: not evaluable, not "checked".
     expect(start?.legalNotice).toBeUndefined();
+    const evaluation = (ruleId: string) =>
+      result.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === ruleId);
+    expect(evaluation('legal-notice-content')).toMatchObject({
+      status: 'not-evaluable',
+      explanation: 'linked-page-not-loaded',
+    });
+    expect(evaluation('privacy-policy-vendors')).toMatchObject({ outcome: 'checked-no-finding' });
+  });
+
+  it('skips the linked-page rules without a link, and on every page but the start page', async () => {
+    const result = await scan(`${origin}/consent/good.html`, { ...options, maxPages: 1 });
+    const start = result.pages[0]?.ruleEvaluations ?? [];
+    // good.html links the Impressum and privacy policy of the clean fixture: both read.
+    expect(start.find((rule) => rule.ruleId === 'legal-notice-content')).toMatchObject({
+      outcome: 'checked-no-finding',
+    });
+    const crawl = await scan(`${origin}/clean/`, { ...options, maxPages: 2 });
+    const second = crawl.pages[1]?.ruleEvaluations ?? [];
+    expect(second.find((rule) => rule.ruleId === 'legal-notice-content')).toMatchObject({
+      status: 'skipped',
+      explanation: 'not-start-page',
+    });
+    const bare = await scan(`${origin}/legal-notice/imprint.html`, options);
+    // Its only "Imprint" link points to the page itself: no legal notice to read.
+    expect(
+      bare.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === 'legal-notice-content'),
+    ).toMatchObject({ status: 'skipped', explanation: 'no-linked-page' });
   });
 
   it('looks for every service the start page uses in its privacy policy and cookie policy', async () => {
