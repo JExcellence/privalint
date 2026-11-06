@@ -101,7 +101,8 @@ Upgrade notes:
   they had nothing to read: on other pages they are skipped (`not-start-page`), without a link
   they are skipped (`no-linked-page`), and when the page didn't load they are not evaluable
   (`linked-page-not-loaded`). A finding about something missing from a page that didn't load
-  completely is not evaluable either (#141)
+  completely is not evaluable either (#141). A start page without such a link does not count as incomplete for
+  `--fail-on-incomplete`; `impressum-link` and `privacy-policy-link` report the missing link
 - A request that never finishes no longer makes every document rule not evaluable. When the page
   itself was read, a rule that finds what it looks for (the Impressum link, the privacy link)
   counts as checked; a finding about something missing stays not evaluable, since the missing

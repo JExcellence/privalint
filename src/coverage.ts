@@ -70,6 +70,8 @@ export function assessCoverage(result: ScanResult): CoverageAssessment {
           'settings-check-disabled',
           // Adapter and offline scans make no extra request to http:// by design.
           'transport-not-checked',
+          // No legal notice or privacy policy linked: impressum-link and privacy-policy-link report it.
+          'no-linked-page',
         ].includes(evaluation.reason ?? '')
       ) {
         continue;

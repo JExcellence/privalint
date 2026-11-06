@@ -87,20 +87,22 @@ describe('required observation coverage', () => {
       );
     },
   );
-  it('ignores intentional disabled/consent-disabled/non-start-page exclusions', async () => {
+  it('ignores intentional disabled/consent-disabled/non-start-page/no-linked-page exclusions', async () => {
     const value = await report();
     value.coverage = 'partial'; // The broader observation report may still mention untested consent.
     const page = value.pages[0];
     if (!page) throw new Error('Missing fixture page');
     if (!page.ruleEvaluations) throw new Error('Missing fixture evaluations');
     page.ruleEvaluations = page.ruleEvaluations.map((evaluation, index) =>
-      index > 2
+      index > 3
         ? evaluation
         : {
             ...evaluation,
             status: 'skipped',
             reason:
-              (['disabled', 'consent-disabled', 'not-start-page'] as const)[index] ?? 'disabled',
+              (['disabled', 'consent-disabled', 'not-start-page', 'no-linked-page'] as const)[
+                index
+              ] ?? 'disabled',
             outcome: 'not-evaluable',
             findingCount: 0,
             partial: false,
