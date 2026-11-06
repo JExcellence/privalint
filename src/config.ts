@@ -19,6 +19,7 @@ export interface PrivalintConfig {
   settingsCheck?: boolean;
   closeCheck?: boolean;
   acceptCheck?: boolean;
+  gpc?: boolean;
   hostChecks?: 'each' | 'main';
   device?: string;
   sitemap?: boolean;
@@ -40,6 +41,7 @@ const KEYS = [
   'settingsCheck',
   'closeCheck',
   'acceptCheck',
+  'gpc',
   'hostChecks',
   'device',
   'sitemap',
@@ -88,6 +90,7 @@ export function parseConfig(value: unknown): PrivalintConfig {
   if (value.settingsCheck !== undefined && typeof value.settingsCheck !== 'boolean') invalid();
   if (value.closeCheck !== undefined && typeof value.closeCheck !== 'boolean') invalid();
   if (value.acceptCheck !== undefined && typeof value.acceptCheck !== 'boolean') invalid();
+  if (value.gpc !== undefined && typeof value.gpc !== 'boolean') invalid();
   if (value.hostChecks !== undefined && !['each', 'main'].includes(value.hostChecks as string))
     invalid();
   if (value.device !== undefined && (typeof value.device !== 'string' || value.device === ''))

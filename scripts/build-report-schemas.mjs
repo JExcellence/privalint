@@ -68,7 +68,7 @@ function definitions(version) {
   if (timed) observationKinds.push('banner-search', 'transport');
   // 1.5.0 added the legal notice and privacy policy read next to the start page.
   const linked = version === '1.5.0';
-  if (linked) observationKinds.push('linked-page', 'after-close');
+  if (linked) observationKinds.push('linked-page', 'after-close', 'gpc');
   const pageIdentity = identified ? { pageId: uuid } : {};
   return {
     diagnostic: object(
@@ -224,7 +224,7 @@ function definitions(version) {
             ...(identified ? EXPLANATIONS : []),
             ...(settingsAware ? ['settings-check-disabled'] : []),
             ...(timed ? ['transport-not-checked'] : []),
-            ...(linked ? ['no-linked-page', 'close-check-disabled'] : []),
+            ...(linked ? ['no-linked-page', 'close-check-disabled', 'gpc-check-disabled'] : []),
           ),
           partial: boolean,
           outcome: choices('checked-no-finding', 'finding-detected', 'not-evaluable'),
@@ -244,6 +244,9 @@ function definitions(version) {
                         'missing-close-observation',
                         'no-close-control',
                         'banner-closed-and-reloaded',
+                        'gpc-check-disabled',
+                        'missing-gpc-observation',
+                        'gpc-sent',
                       ]
                     : []),
                 ],
@@ -419,6 +422,17 @@ function definitions(version) {
                 },
                 ['outcome', 'reason'],
               ),
+              gpc: object(
+                {
+                  outcome: choices('observed', 'interaction-failed', 'banner-not-shown'),
+                  reason: choices('gpc-sent', 'browser-interaction-failed', 'banner-not-shown'),
+                  bannerShown: boolean,
+                  signal: boolean,
+                  afterGpcComplete: boolean,
+                  error: string,
+                },
+                ['outcome', 'reason'],
+              ),
             }
           : {}),
         error: string,
@@ -454,7 +468,13 @@ function definitions(version) {
         ...(LATEST_14.includes(version) ? { hostChecks: choices('each', 'main') } : {}),
         // Added in 1.5.0; optional, only when a device was emulated.
         ...(version === '1.5.0'
-          ? { device: string, sitemap: boolean, closeCheck: boolean, acceptCheck: boolean }
+          ? {
+              device: string,
+              sitemap: boolean,
+              closeCheck: boolean,
+              acceptCheck: boolean,
+              gpc: boolean,
+            }
           : {}),
       },
       Object.keys(reportOptions),

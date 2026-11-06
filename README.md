@@ -44,6 +44,7 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 | [`reject-less-prominent`](docs/rules/reject-less-prominent.md)         | info     | A reject control shown as plain text, much smaller, or with much lower contrast than the accept button.                                                           |
 | [`banner-language`](docs/rules/banner-language.md)                     | info     | A consent banner in another language than the page.                                                                                                               |
 | [`banner-keyboard`](docs/rules/banner-keyboard.md)                     | warning  | A reject control that the Tab key never reaches, such as a `<div>` with a click handler.                                                                          |
+| [`gpc-signal`](docs/rules/gpc-signal.md)                               | info     | Opt-in (`--gpc`): whether the site hides its banner and blocks trackers under Global Privacy Control.                                                             |
 | [`consent-banner-missing`](docs/rules/consent-banner-missing.md)       | warning  | Trackers run and no consent banner was found at all, so visitors can't give or refuse consent.                                                                    |
 | [`banner-legal-links`](docs/rules/banner-legal-links.md)               | warning  | A banner that blocks the page and links neither the privacy policy nor the Impressum.                                                                             |
 | [`consent-settings-link`](docs/rules/consent-settings-link.md)         | warning  | No visible link or button to reopen the cookie settings after rejecting.                                                                                          |
@@ -125,6 +126,7 @@ Inputs left empty are not passed to privalint, so `privalint.config.json` in you
 | `check-settings`     | config, else off     | `true` also tests the banner's settings layer.                                 |
 | `check-close`        | config, else off     | `true` also closes the banner with its close button and checks what loads.     |
 | `check-accept`       | config, else off     | `true` also accepts and checks the privacy policy for services loaded then.    |
+| `gpc`                | config, else off     | `true` also loads the start page with Global Privacy Control (`gpc-signal`).   |
 | `sitemap`            | config, else off     | `true` chooses pages from `sitemap.xml`, pages with forms first.               |
 | `device`             | config, else desktop | Playwright device to emulate, such as `iPhone 15`, to check the mobile banner. |
 | `disable`            |                      | Comma-separated rule ids to skip.                                              |
@@ -178,6 +180,8 @@ privalint <url> [options]
       --check-accept      Also accept in a fresh browser and record what loads then, so
                           the privacy policy check covers services that need consent
                           (loads the start page again)
+      --gpc               Also load the start page with Global Privacy Control and
+                          report whether the site reacts (loads the start page again)
       --host-checks <mode>  each | main (default each). each also runs the consent,
                           banner and HTTPS checks on the first page of up to five
                           other hosts of the site, such as docs. or blog.

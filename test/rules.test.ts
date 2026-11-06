@@ -18,6 +18,7 @@ import {
   fingerprinting,
   formPretickedConsent,
   googleFonts,
+  gpcSignal,
   impressumLink,
   legalNoticeContent,
   mixedContent,
@@ -36,7 +37,13 @@ import {
   withdrawalButton,
 } from '../src/rules/index.js';
 import { newStorageKeys } from '../src/storage.js';
-import type { ControlLook, KeyboardReach, PageSnapshot, Rule } from '../src/types.js';
+import type {
+  ControlLook,
+  GpcObservation,
+  KeyboardReach,
+  PageSnapshot,
+  Rule,
+} from '../src/types.js';
 import { cookie, request, SITE, snapshot } from './helpers.js';
 
 const run = (rule: Rule, page = snapshot(), lang: Lang = 'en') =>
@@ -1322,6 +1329,55 @@ describe('banner-keyboard', () => {
       'Das Ablehnen-Element „Ablehnen“ ist mit der Tab-Taste nicht erreichbar.',
     );
     expect(finding?.evidence).toHaveLength(2);
+  });
+});
+
+describe('gpc-signal', () => {
+  const ga = 'https://www.google-analytics.com/g/collect?v=2&tid=G-X';
+  const page = (gpc: GpcObservation | undefined, plain = [request(ga)]) =>
+    snapshot({
+      requests: plain,
+      consent: {
+        bannerFound: true,
+        rejected: true,
+        state: 'reject-tested',
+        ...(gpc === undefined ? {} : { gpc }),
+      },
+    });
+  const observed = (bannerShown: boolean, requests: ReturnType<typeof request>[]) => ({
+    outcome: 'observed' as const,
+    reason: 'gpc-sent' as const,
+    bannerShown,
+    signal: true,
+    afterGpc: { requests, cookies: [] },
+  });
+
+  it('is silent without the check and when the load with the signal failed', () => {
+    expect(run(gpcSignal, page(undefined))).toEqual([]);
+    const failed = { outcome: 'interaction-failed', reason: 'browser-interaction-failed' } as const;
+    expect(run(gpcSignal, page(failed))).toEqual([]);
+  });
+
+  it('notes a banner that hides under GPC while trackers still load, with a fix', () => {
+    const [finding] = run(gpcSignal, page(observed(false, [request(ga)])));
+    expect(finding).toMatchObject({ ruleId: 'gpc-signal', severity: 'info' });
+    expect(finding?.message).toBe(
+      'The site hides the consent banner under Global Privacy Control, but trackers still load: Google Analytics.',
+    );
+    expect(finding?.fix).toBeDefined();
+  });
+
+  it('notes a site that ignores the signal, in German', () => {
+    const [finding] = run(gpcSignal, page(observed(true, [request(ga)])), 'de');
+    expect(finding?.message).toBe(
+      'Die Website reagiert nicht auf Global Privacy Control: das Consent-Banner erscheint weiterhin.',
+    );
+    expect(finding?.evidence).toEqual([
+      'banner without GPC: shown',
+      'banner with GPC: shown',
+      'trackers without GPC: Google Analytics',
+      'trackers with GPC: Google Analytics',
+    ]);
   });
 });
 

@@ -583,7 +583,8 @@
             "settings-check-disabled",
             "transport-not-checked",
             "no-linked-page",
-            "close-check-disabled"
+            "close-check-disabled",
+            "gpc-check-disabled"
           ]
         },
         "partial": {
@@ -627,7 +628,10 @@
             "close-check-disabled",
             "missing-close-observation",
             "no-close-control",
-            "banner-closed-and-reloaded"
+            "banner-closed-and-reloaded",
+            "gpc-check-disabled",
+            "missing-gpc-observation",
+            "gpc-sent"
           ]
         },
         "findingCount": {
@@ -1040,6 +1044,43 @@
             "reason"
           ]
         },
+        "gpc": {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "observed",
+                "interaction-failed",
+                "banner-not-shown"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "gpc-sent",
+                "browser-interaction-failed",
+                "banner-not-shown"
+              ]
+            },
+            "bannerShown": {
+              "type": "boolean"
+            },
+            "signal": {
+              "type": "boolean"
+            },
+            "afterGpcComplete": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "outcome",
+            "reason"
+          ]
+        },
         "error": {
           "type": "string"
         }
@@ -1083,7 +1124,8 @@
               "banner-search",
               "transport",
               "linked-page",
-              "after-close"
+              "after-close",
+              "gpc"
             ]
           }
         }
@@ -1269,6 +1311,9 @@
           "type": "boolean"
         },
         "acceptCheck": {
+          "type": "boolean"
+        },
+        "gpc": {
           "type": "boolean"
         }
       },

@@ -33,6 +33,10 @@ Upgrade notes:
 
 ### Added
 
+- New opt-in rule `gpc-signal` (`--gpc`, config `gpc`, Action input `gpc`): privalint loads the
+  start page once more with Global Privacy Control (`Sec-GPC: 1` and
+  `navigator.globalPrivacyControl`) and notes as info whether the banner hides and trackers stay
+  away. The outcome is in `consent.gpc` (schema 1.5.0) (#132)
 - `--check-accept` (config `acceptCheck`, Action input `check-accept`): privalint also accepts in a
   fresh browser, reloads and records what loads then. `privacy-policy-vendors` then also looks for
   services that run only with consent, and `thirdParties` lists them with the phase

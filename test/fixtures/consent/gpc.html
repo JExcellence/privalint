@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Honours Global Privacy Control</title>
+  </head>
+  <body>
+    <h1>Welcome</h1>
+    <footer>
+      <a href="/clean/impressum.html">Imprint</a>
+      <a href="/clean/datenschutz.html">Privacy policy</a>
+    </footer>
+    <div id="banner" role="dialog" aria-label="Cookie settings" hidden>
+      <p>We use cookies to understand how you use our site.</p>
+      <button id="accept">Accept all</button>
+      <button id="reject">Reject all</button>
+    </div>
+    <script>
+      // A consent manager that treats Global Privacy Control as a refusal.
+      const banner = document.getElementById('banner');
+      if (navigator.globalPrivacyControl === true) {
+        localStorage.setItem('consent', 'rejected');
+      }
+      const choice = localStorage.getItem('consent');
+      if (choice !== 'rejected') {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.googletagmanager.com/gtag/js?id=G-GPC';
+        document.head.append(tag);
+      }
+      if (!choice) banner.hidden = false;
+      document.getElementById('accept').onclick = () => {
+        localStorage.setItem('consent', 'accepted');
+        banner.remove();
+      };
+      document.getElementById('reject').onclick = () => {
+        localStorage.setItem('consent', 'rejected');
+        banner.remove();
+      };
+    </script>
+  </body>
+</html>

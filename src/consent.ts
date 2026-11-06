@@ -371,6 +371,15 @@ export async function observeClose(
 }
 
 /**
+ * Whether a consent banner shows on the loaded page, waiting like the reject path does. For the
+ * Global Privacy Control path, which only looks.
+ */
+export async function bannerShown(page: Page, options: ConsentCheckOptions): Promise<boolean> {
+  const { found } = await waitFor(page, options, () => findBanner(page));
+  return found !== undefined;
+}
+
+/**
  * Clicks the banner's accept button, reloads the page and records what loads then: the services
  * the site runs with consent. Use a fresh browser context, so the stored consent stays in it.
  * Returns undefined when there is no banner with an accept button.

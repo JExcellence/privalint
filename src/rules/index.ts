@@ -11,6 +11,7 @@ import { fingerprinting } from './fingerprinting.js';
 import { formPretickedConsent } from './form-preticked-consent.js';
 import { formPrivacyNotice } from './form-privacy-notice.js';
 import { googleFonts } from './google-fonts.js';
+import { gpcSignal } from './gpc-signal.js';
 import { httpsTransport } from './https-transport.js';
 import { impressumLink } from './impressum-link.js';
 import { legalNoticeContent } from './legal-notice-content.js';
@@ -45,6 +46,7 @@ export const defaultRules: readonly Rule[] = [
   bannerLegalLinks,
   bannerLanguage,
   bannerKeyboard,
+  gpcSignal,
   googleFonts,
   adobeFonts,
   thirdPartyEmbeds,
@@ -80,6 +82,7 @@ export {
   formPretickedConsent,
   formPrivacyNotice,
   googleFonts,
+  gpcSignal,
   httpsTransport,
   impressumLink,
   legalNoticeContent,

@@ -174,6 +174,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 4. cikk 11. pont, 7. cikk (3) bekezdés', '(EU) 2019/882 irányelv I. melléklet'],
     eu: ['Art. 4(11) and 7(3) GDPR', 'Annex I Directive (EU) 2019/882, EN 301 549 9.2.1.1'],
   },
+  // A browser signal can express a refusal; in the EU, no law makes a site follow GPC yet.
+  'gpc-signal': {
+    de: ['Art. 21 Abs. 5 DSGVO'],
+    at: ['Art. 21 Abs. 5 DSGVO'],
+    ch: ['Art. 30 Abs. 2 lit. b DSG'],
+    hu: ['GDPR 21. cikk (5) bekezdés'],
+    eu: ['Art. 21(5) GDPR', 'Cal. Civ. Code § 1798.135 (CCPA)'],
+  },
   // Consent is an active choice: no pre-ticked boxes, and advertising e-mails need it.
   'form-preticked-consent': {
     de: ['Art. 4 Nr. 11, Art. 7 DSGVO', 'EuGH C-673/17 (Planet49)', '§ 7 Abs. 2 UWG'],

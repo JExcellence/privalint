@@ -228,6 +228,21 @@ const EXPLANATIONS: Record<RuleExplanation, Text> = {
     de: 'Die verlinkte Seite ließ sich nicht laden',
     hu: 'A hivatkozott oldal nem tölthető be',
   },
+  'gpc-check-disabled': {
+    en: 'Global Privacy Control check not enabled (--gpc)',
+    de: 'Global-Privacy-Control-Prüfung nicht eingeschaltet (--gpc)',
+    hu: 'A Global Privacy Control ellenőrzése nincs bekapcsolva (--gpc)',
+  },
+  'missing-gpc-observation': {
+    en: 'Start page not observed with Global Privacy Control',
+    de: 'Startseite nicht mit Global Privacy Control beobachtet',
+    hu: 'A kezdőlap nem lett Global Privacy Control mellett megfigyelve',
+  },
+  'gpc-sent': {
+    en: 'Start page loaded with Global Privacy Control',
+    de: 'Startseite mit Global Privacy Control geladen',
+    hu: 'A kezdőlap Global Privacy Control mellett betöltve',
+  },
   'close-check-disabled': {
     en: 'Close-button check not enabled (--check-close)',
     de: 'Schließen-Prüfung nicht eingeschaltet (--check-close)',
