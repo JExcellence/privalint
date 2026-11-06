@@ -366,6 +366,8 @@ export interface LinkedPageText {
   mailto: boolean;
   /** Linked parts that could not be read, such as a cookie policy in a PDF. */
   unread?: string[];
+  /** Privacy policy only: further privacy documents it links that were not read, at most three. */
+  linkedDocuments?: string[];
   /** False when a request of the page never finished: what's missing may not have loaded. */
   complete?: boolean;
   /**

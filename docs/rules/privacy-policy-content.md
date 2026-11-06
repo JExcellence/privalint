@@ -17,6 +17,10 @@ privacy policy, on the same site, plus a cookie policy it links. Both rules shar
 | Template text           | bracketed fields such as `[Firmenname]` or `[Your name]`, "Musterstraße", "Max Mustermann", "Musterfirma", "Lorem ipsum", `example.com`               | `warning`, with up to three of the fragments found |
 | Data protection officer | "Datenschutzbeauftragte", "data protection officer", "DPO" or "adatvédelmi tisztviselő" with an e-mail, address or phone number in the next few lines | `info` when none follows                           |
 
+When the policy page is only an overview that links further privacy documents (its own sub-pages,
+or pages and PDFs labelled as privacy notices), a missing contact is `info` instead, with up to
+three of those links as "not read" evidence.
+
 A line saying that no data protection officer was appointed ("Wir haben keinen
 Datenschutzbeauftragten bestellt") is not reported.
 

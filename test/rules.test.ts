@@ -932,6 +932,27 @@ describe('privacy-policy-content', () => {
     expect(check(['Kontakt: E-Mail schreiben'], true)).toEqual([]);
   });
 
+  it('notes only info on an overview page that links further privacy documents', () => {
+    const findings = privacyPolicyContent.check({
+      siteUrl: SITE,
+      page: snapshot({
+        privacyPolicy: {
+          url: 'https://example.de/datenschutz',
+          text: 'Your data with us. Details below.',
+          mailto: false,
+          linkedDocuments: ['https://example.de/datenschutz/details'],
+        },
+      }),
+      lang: 'en',
+      region: 'de',
+    });
+    expect(findings.map((f) => `${f.severity}:${f.subject}`)).toEqual(['info:contact']);
+    expect(findings[0]?.evidence).toEqual([
+      'privacy policy: https://example.de/datenschutz',
+      'not read: https://example.de/datenschutz/details',
+    ]);
+  });
+
   it('warns about template placeholders', () => {
     const findings = check([
       '[Firmenname]',

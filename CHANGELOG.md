@@ -15,9 +15,16 @@ Upgrade notes:
   now gets the consent, banner and HTTPS checks too. That can add findings and one consent run
   per host. `--host-checks main` or `"hostChecks": "main"` keeps the previous behaviour.
 - The legal notice and the privacy policy linked from the start page are loaded once more for the
-  new `legal-notice-content`, `privacy-policy-vendors` and `privacy-policy-content` rules, plus a cookie policy the privacy
-  policy links. That is up to three extra page loads per scan, also through a network adapter,
-  and can add findings. Deselect a rule to skip its load.
+  new `legal-notice-content`, `privacy-policy-vendors` and `privacy-policy-content` rules, plus a
+  cookie policy the privacy policy links. That is up to three extra page loads per scan, also
+  through a network adapter, and can add findings. Deselect a rule to skip its load. Without a
+  legal notice link, a page behind a vague legal link or the privacy policy is read instead.
+- New rules run by default and can add findings: `mixed-content` reports a form that submits over
+  HTTP as an error, so scans with the default `--fail-on error` can fail on it;
+  `form-preticked-consent`, `privacy-policy-content` and `third-party-personal-data` add warnings,
+  `referrer-policy` info.
+- Values of e-mail and phone parameters in request addresses are replaced by `[redacted]` in
+  finding evidence, so evidence strings of native scans can differ from earlier reports.
 - Scans with the settings check can report the new `consent-preselected` error on banners whose
   settings layer starts with optional categories switched on.
 
@@ -37,7 +44,8 @@ Upgrade notes:
   header or meta tag and contacts other hosts, which then receive the full page address (#119)
 - New rule `privacy-policy-content`: the privacy policy gives no e-mail or postal address of the
   controller, or still contains template text such as `[Firmenname]` or "Musterstraße" (warning);
-  a data protection officer named without contact details is info (#116)
+  a data protection officer named without contact details is info. On an overview page that links
+  further privacy documents, a missing contact is info (#116)
 - `legal-notice-content` reads a page behind a vague legal link ("Rechtliche Hinweise") or the
   privacy policy when the start page links no legal notice, and reports what it misses there as
   info (#114)
@@ -70,7 +78,6 @@ Upgrade notes:
 - Start-page checks on other hosts of the site: consent, reject, banner and HTTPS rules run on the
   first crawled page of each subdomain, up to five. Their consent results are in `consentByHost`.
   `--host-checks main` turns it off (#103)
-
 - Every report has `ruleSummary`: per rule, pages with a finding, checked without one, not
   evaluable and skipped by reason, plus the page IDs worth a look. `--evaluations summary` writes
   JSON without the per-page rule evaluations; the coverage gate reads the summary then and gives

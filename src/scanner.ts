@@ -449,8 +449,41 @@ async function readLegalPages(
   }
 }
 
-/** The privacy policy, followed one level to a separate cookie policy it links. */
+/**
+ * The privacy policy and a cookie policy it links, plus the other privacy documents the policy page
+ * links but privalint doesn't read: sub-pages of the policy, and pages or PDFs labelled as privacy
+ * notices. A policy page that is only an overview keeps its details there.
+ */
 async function readPrivacyPolicy(
+  browser: Browser,
+  start: PageSnapshot,
+  options: ScanOptions,
+): Promise<LinkedPageResult> {
+  const result = await readPolicyAndCookies(browser, start, options);
+  if ('missing' in result) return result;
+  const policyUrl = new URL(result.page.url);
+  const subPages = `${policyUrl.pathname.replace(/\/$/, '')}/`;
+  const documents = new Set<string>();
+  for (const link of result.links) {
+    let target: URL;
+    try {
+      target = new URL(link.href, policyUrl);
+    } catch {
+      continue;
+    }
+    if (!/^https?:$/.test(target.protocol) || linkMatches(COOKIE_POLICY)(link)) continue;
+    target.hash = '';
+    if (target.href === withoutHash(policyUrl.href)) continue;
+    if (target.pathname.startsWith(subPages) || linkMatches(PRIVACY_POLICY)(link)) {
+      documents.add(target.href);
+    }
+  }
+  if (documents.size === 0) return result;
+  return { ...result, page: { ...result.page, linkedDocuments: [...documents].slice(0, 3) } };
+}
+
+/** The privacy policy, followed one level to a separate cookie policy it links. */
+async function readPolicyAndCookies(
   browser: Browser,
   start: PageSnapshot,
   options: ScanOptions,

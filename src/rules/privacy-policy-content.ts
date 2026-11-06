@@ -60,20 +60,36 @@ export const privacyPolicyContent: Rule = {
     });
 
     if (!hasEmail(text, policy.mailto) && !hasAddress(text)) {
+      // An overview page that links the actual notices may name the controller there.
+      const further = policy.linkedDocuments ?? [];
+      const notRead = further.map((url) =>
+        say(lang, {
+          en: `not read: ${url}`,
+          de: `nicht gelesen: ${url}`,
+          hu: `nem olvasva: ${url}`,
+        }),
+      );
       findings.push(
         finding(
-          'warning',
+          further.length > 0 ? 'info' : 'warning',
           'contact',
-          say(lang, {
-            en: 'The privacy policy gives no e-mail address and no postal address of the controller.',
-            de: 'Die Datenschutzerklärung nennt weder eine E-Mail-Adresse noch eine Postanschrift des Verantwortlichen.',
-            hu: 'Az adatvédelmi tájékoztató nem ad meg sem e-mail-címet, sem postai címet az adatkezelőről.',
-          }),
+          further.length > 0
+            ? say(lang, {
+                en: 'The privacy policy page gives no e-mail address and no postal address of the controller. It links further privacy documents, which may name them.',
+                de: 'Die Datenschutz-Seite nennt weder eine E-Mail-Adresse noch eine Postanschrift des Verantwortlichen. Sie verlinkt weitere Datenschutzdokumente, die sie nennen können.',
+                hu: 'Az adatvédelmi oldal nem ad meg sem e-mail-címet, sem postai címet az adatkezelőről. További adatvédelmi dokumentumokra hivatkozik, amelyek tartalmazhatják.',
+              })
+            : say(lang, {
+                en: 'The privacy policy gives no e-mail address and no postal address of the controller.',
+                de: 'Die Datenschutzerklärung nennt weder eine E-Mail-Adresse noch eine Postanschrift des Verantwortlichen.',
+                hu: 'Az adatvédelmi tájékoztató nem ad meg sem e-mail-címet, sem postai címet az adatkezelőről.',
+              }),
           say(lang, {
             en: 'Name the controller (the company or person running the site) with a postal address and an e-mail address in the privacy policy.',
             de: 'Den Verantwortlichen (Unternehmen oder Person hinter der Website) mit Postanschrift und E-Mail-Adresse in der Datenschutzerklärung nennen.',
             hu: 'Nevezze meg az adatvédelmi tájékoztatóban az adatkezelőt (a webhelyet üzemeltető céget vagy személyt) postai címmel és e-mail-címmel.',
           }),
+          notRead,
         ),
       );
     }

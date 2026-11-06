@@ -219,6 +219,25 @@ describe('scan', () => {
     expect(hits.get('/provider-details/datenschutz.html')).toBe(before + 1);
   });
 
+  it('lists further privacy documents an overview policy page links', async () => {
+    let start: PageSnapshot | undefined;
+    const result = await scan(`${origin}/provider-details/hub.html`, {
+      ...options,
+      onPage: (page) => {
+        start ??= page;
+      },
+    });
+    expect(start?.privacyPolicy?.linkedDocuments).toEqual([
+      `${origin}/provider-details/adatvedelem/reszletek`,
+      `${origin}/provider-details/adatkezelesi-tajekoztato.pdf`,
+    ]);
+    expect(
+      result.findings
+        .filter((f) => f.ruleId === 'privacy-policy-content')
+        .map((f) => `${f.severity}:${f.subject}`),
+    ).toEqual(['info:contact']);
+  });
+
   it('notes template text and an unreachable data protection officer in the privacy policy', async () => {
     const result = await scan(`${origin}/provider-details/template.html`, options);
     const findings = result.findings.filter((f) => f.ruleId === 'privacy-policy-content');

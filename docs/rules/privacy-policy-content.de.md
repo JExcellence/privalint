@@ -18,6 +18,10 @@ Beide Regeln teilen sich diesen einen Ladevorgang.
 | Vorlagentext                 | Felder in Klammern wie `[Firmenname]` oder `[Your name]`, „Musterstraße“, „Max Mustermann“, „Musterfirma“, „Lorem ipsum“, `example.com`                 | `warning`, mit bis zu drei gefundenen Stellen |
 | Datenschutzbeauftragter      | „Datenschutzbeauftragte“, „data protection officer“, „DPO“ oder „adatvédelmi tisztviselő“ mit E-Mail, Anschrift oder Telefonnummer in den Zeilen danach | `info`, wenn keine folgt                      |
 
+Ist die Datenschutz-Seite nur eine Übersicht, die weitere Datenschutzdokumente verlinkt (eigene
+Unterseiten oder als Datenschutzhinweise beschriftete Seiten und PDFs), ist ein fehlender Kontakt
+nur `info`, mit bis zu drei dieser Links als „nicht gelesen“.
+
 Eine Zeile, nach der kein Datenschutzbeauftragter bestellt ist („Wir haben keinen
 Datenschutzbeauftragten bestellt“), wird nicht gemeldet.
 
