@@ -8,7 +8,7 @@ Warns when a page has no link to an Impressum (legal notice).
 
 Every link on the page is matched by its text, `aria-label`, `title` and URL against common names
 for a legal notice: Impressum, Imprint, Legal notice, Site notice, Anbieterkennzeichnung,
-Mentions légales, Aviso legal, Note legali, Colofon and Informacje prawne.
+Mentions légales, Aviso legal, Note legali, Colofon, Informacje prawne and Impresszum.
 
 The rule runs on every crawled page, because the notice has to be reachable from all of them.
 
@@ -16,14 +16,22 @@ The rule runs on every crawled page, because the notice has to be reachable from
 | ------------------------------------------------------------------------------------ | -------- |
 | A link matching one of the names above                                               | passes   |
 | No such link, but "Rechtliche Hinweise", "Rechtliches", "Legal" or "Jogi tudnivalók" | info     |
-| No such link, but a "Kontakt" / "Contact" link                                       | info     |
+| No such link, but a link to the contact page                                         | info     |
 | None of these                                                                        | warning  |
 
 A vague legal link is only noted: the page behind it may hold the provider information or just a
 disclaimer, and the label alone can't tell. Check it, or label the link "Impressum".
 
+A contact page is a link labelled "Kontakt", "Contact" or "Kapcsolat", or one to `/kontakt`,
+`/contact`, `/contact-us` or `/kapcsolat` at the top of the site or under a language prefix such
+as `/en/`. A deeper page like `/blocks/contact` (a docs page about a contact form) is not one.
 privalint does not follow the contact link, so it cannot tell whether the Impressum is linked
 from there.
+
+The fix names the label in the language the page declares in `<html lang>`: "Impressum" on a
+German page, "Legal notice" on an English one, "Impresszum" on a Hungarian one. Without a
+declared language it uses the region's. The two-click ruling below is only cited for
+`--region de`.
 
 ## Why
 
@@ -42,4 +50,5 @@ off with `--disable impressum-link`, or `disable: impressum-link` in the Action.
 
 ## How to fix
 
-Add a link labelled "Impressum" to a part of your layout that appears on every page.
+Add a link labelled "Impressum" (or "Legal notice" on an English site) to a part of your layout
+that appears on every page.

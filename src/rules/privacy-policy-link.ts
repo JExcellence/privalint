@@ -1,5 +1,6 @@
 import { say } from '../i18n.js';
 import type { Rule } from '../types.js';
+import { legalLabels } from './legal-labels.js';
 import { linkMatches, linksChecked } from './links.js';
 
 const ID = 'privacy-policy-link';
@@ -14,10 +15,11 @@ export const privacyPolicyLink: Rule = {
     'Visitors must be told how their data is processed at the time it is collected. Since every ' +
     'page view already involves server logs, the privacy policy has to be reachable from every page.',
   references: ['Art. 12 GDPR', 'Art. 13 GDPR'],
-  check({ page, lang }) {
+  check({ page, lang, region = 'de' }) {
     if (page.links.some(linkMatches(PRIVACY_POLICY))) {
       return [];
     }
+    const { notice, privacy } = legalLabels(page.language, region);
     return [
       {
         ruleId: ID,
@@ -29,8 +31,8 @@ export const privacyPolicyLink: Rule = {
         pageUrl: page.finalUrl,
         evidence: [linksChecked(page.links.length, lang)],
         fix: say(lang, {
-          en: 'Add a link labelled "Datenschutz" or "Datenschutzerklärung" next to the Impressum link in the footer.',
-          de: 'Einen Link „Datenschutz“ oder „Datenschutzerklärung“ neben dem Impressum-Link in den Footer setzen.',
+          en: `Add a link labelled "${privacy}" next to the "${notice}" link in the footer.`,
+          de: `Einen Link „${privacy}“ neben dem Link „${notice}“ in den Footer setzen.`,
         }),
       },
     ];

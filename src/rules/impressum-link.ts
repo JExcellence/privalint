@@ -1,6 +1,7 @@
 import { say } from '../i18n.js';
-import type { Rule } from '../types.js';
-import { linkMatches, linksChecked } from './links.js';
+import type { PageLink, Rule } from '../types.js';
+import { legalLabels } from './legal-labels.js';
+import { linkMatches, linksChecked, pathOf } from './links.js';
 
 const ID = 'impressum-link';
 
@@ -19,7 +20,25 @@ export const LEGAL_NOTICE =
  */
 const VAGUE_LEGAL = /rechtliche[\s_-]?hinweise|rechtliches|jogi[\s_-]?tudnival|\blegal\b/i;
 
-const CONTACT = /kontakt|contact/i;
+const CONTACT = /kontakt|contact|kapcsolat/i;
+
+const CONTACT_SEGMENT = /^(?:kontakt|contact|contact[\s_-]?us|kapcsolat)(?:\.\w+)?$/i;
+const LANGUAGE_SEGMENT = /^[a-z]{2}(?:[-_][a-z]{2})?$/i;
+
+/**
+ * Links to the site's contact page. A contact page sits at the top of the site, or under a
+ * language prefix (`/kontakt`, `/en/contact-us`); a deeper path ending in the word, such as a docs
+ * page `/blocks/contact` about a contact form component, isn't one even when it is labelled
+ * "Contact". Other links count by their text ("Kontakt" pointing to `/ueber-uns`).
+ */
+function isContactLink(link: PageLink): boolean {
+  const segments = pathOf(link.href).split('/').filter(Boolean);
+  const last = segments.at(-1) ?? '';
+  if (!CONTACT_SEGMENT.test(last)) return CONTACT.test(link.text);
+  return (
+    segments.length === 1 || (segments.length === 2 && LANGUAGE_SEGMENT.test(segments[0] ?? ''))
+  );
+}
 
 export const impressumLink: Rule = {
   id: ID,
@@ -29,10 +48,11 @@ export const impressumLink: Rule = {
     'directly reachable and always available, which in practice means a link on every page. ' +
     'Disable this rule for purely private sites or sites outside its scope.',
   references: ['§ 5 DDG', 'BGH, 20.07.2006, Az. I ZR 228/03'],
-  check({ page, lang }) {
+  check({ page, lang, region = 'de' }) {
     if (page.links.some(linkMatches(LEGAL_NOTICE))) {
       return [];
     }
+    const { notice } = legalLabels(page.language, region);
 
     const legal = page.links.find(linkMatches(VAGUE_LEGAL));
     if (legal !== undefined) {
@@ -41,20 +61,20 @@ export const impressumLink: Rule = {
           ruleId: ID,
           severity: 'info',
           message: say(lang, {
-            en: `No link labelled "Impressum", but "${legal.text}" may lead to the provider information.`,
-            de: `Kein Link „Impressum“, aber „${legal.text}“ führt möglicherweise zu den Anbieterangaben.`,
+            en: `No link labelled "${notice}", but "${legal.text}" may lead to the provider information.`,
+            de: `Kein Link „${notice}“, aber „${legal.text}“ führt möglicherweise zu den Anbieterangaben.`,
           }),
           pageUrl: page.finalUrl,
           evidence: [say(lang, { en: 'legal link: ', de: 'Rechts-Link: ' }) + legal.href],
           fix: say(lang, {
-            en: 'Check that this page holds the full provider information (name, address, e-mail, register entry). Labelling the link "Impressum" makes it easy to recognise.',
-            de: 'Prüfen, ob diese Seite die vollständigen Anbieterangaben enthält (Name, Anschrift, E-Mail, Registereintrag). Die Beschriftung „Impressum“ macht den Link leicht erkennbar.',
+            en: `Check that this page holds the full provider information (name, address, e-mail, register entry). Labelling the link "${notice}" makes it easy to recognise.`,
+            de: `Prüfen, ob diese Seite die vollständigen Anbieterangaben enthält (Name, Anschrift, E-Mail, Registereintrag). Die Beschriftung „${notice}“ macht den Link leicht erkennbar.`,
           }),
         },
       ];
     }
 
-    const contact = page.links.find(linkMatches(CONTACT));
+    const contact = page.links.find(isContactLink);
     if (contact !== undefined) {
       return [
         {
@@ -66,10 +86,19 @@ export const impressumLink: Rule = {
           }),
           pageUrl: page.finalUrl,
           evidence: [say(lang, { en: 'contact link: ', de: 'Kontakt-Link: ' }) + contact.href],
-          fix: say(lang, {
-            en: 'Two clicks via "Kontakt" can be enough if the Impressum is clearly linked from there (BGH I ZR 228/03), but a direct "Impressum" link next to it is safer.',
-            de: 'Zwei Klicks über „Kontakt“ können reichen, wenn das Impressum dort klar verlinkt ist (BGH I ZR 228/03). Sicherer ist ein direkter Link „Impressum“ daneben.',
-          }),
+          // The two-click ruling is German case law; elsewhere only the safer advice applies.
+          fix: say(
+            lang,
+            region === 'de'
+              ? {
+                  en: `Two clicks via the contact page can be enough if the legal notice is clearly linked from there (BGH I ZR 228/03), but a direct "${notice}" link next to it is safer.`,
+                  de: `Zwei Klicks über die Kontaktseite können reichen, wenn das Impressum dort klar verlinkt ist (BGH I ZR 228/03). Sicherer ist ein direkter Link „${notice}“ daneben.`,
+                }
+              : {
+                  en: `A contact page may not count as directly reachable provider information. Add a direct "${notice}" link next to it.`,
+                  de: `Eine Kontaktseite gilt möglicherweise nicht als unmittelbar erreichbare Anbieterkennzeichnung. Einen direkten Link „${notice}“ daneben setzen.`,
+                },
+          ),
         },
       ];
     }
@@ -85,8 +114,8 @@ export const impressumLink: Rule = {
         pageUrl: page.finalUrl,
         evidence: [linksChecked(page.links.length, lang)],
         fix: say(lang, {
-          en: 'Add a link labelled "Impressum" to a part of the layout that appears on every page, usually the footer.',
-          de: 'Einen Link „Impressum“ in einen Bereich einbauen, der auf jeder Seite erscheint, meist den Footer.',
+          en: `Add a link labelled "${notice}" to a part of the layout that appears on every page, usually the footer.`,
+          de: `Einen Link „${notice}“ in einen Bereich einbauen, der auf jeder Seite erscheint, meist den Footer.`,
         }),
       },
     ];

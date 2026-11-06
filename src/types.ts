@@ -320,6 +320,8 @@ export interface PageSnapshot {
   /** localStorage and sessionStorage key names of the page's origin, never values. */
   storage?: StorageKey[];
   links: PageLink[];
+  /** Primary language subtag of `<html lang>`, lowercase, such as `en` or `hu`. */
+  language?: string;
   resourceHints: ResourceHint[];
   /** Only present on the start page, unless the consent check was skipped. */
   consent?: ConsentObservation;
@@ -349,6 +351,8 @@ export interface RuleContext {
   page: PageSnapshot;
   /** Language for messages and fixes. */
   lang: Lang;
+  /** Legal profile of the scan. Absent when a custom caller doesn't pass one. */
+  region?: Region;
 }
 
 export interface Rule {

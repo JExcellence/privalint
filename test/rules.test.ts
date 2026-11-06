@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Lang } from '../src/i18n.js';
+import type { Region } from '../src/legal.js';
 import {
   accessibilityStatement,
   adobeFonts,
@@ -453,6 +454,65 @@ describe('impressum-link', () => {
       links: [{ text: 'Kontakt', href: 'https://example.de/kontakt' }],
     });
     expect(run(impressumLink, page)[0]?.severity).toBe('info');
+  });
+
+  it.each([
+    ['Contact block', 'https://docs.example.com/blocks/contact', 'warning'],
+    ['Pricing', 'https://example.com/contact-sales/team', 'warning'],
+    ['', 'https://example.com/contact', 'info'],
+    ['Write to us', 'https://example.com/en/contact-us/', 'info'],
+    ['Kapcsolat', 'https://example.hu/rolunk', 'info'],
+    ['', 'https://example.hu/kapcsolat.html', 'info'],
+  ])('takes %j at %s for a contact page only when it is one (%s)', (text, href, severity) => {
+    const page = snapshot({ links: [{ text, href }] });
+    expect(run(impressumLink, page)[0]?.severity).toBe(severity);
+  });
+});
+
+describe('legal link labels', () => {
+  const check = (rule: Rule, language: string | undefined, region: Region) =>
+    rule.check({
+      siteUrl: SITE,
+      page: snapshot({ ...(language === undefined ? {} : { language }) }),
+      lang: 'en',
+      region,
+    })[0];
+
+  it.each([
+    ['en', 'hu', 'Legal notice', 'Privacy policy'],
+    ['en', 'de', 'Legal notice', 'Privacy policy'],
+    ['hu', 'hu', 'Impresszum', 'Adatkezelési tájékoztató'],
+    ['de', 'eu', 'Impressum', 'Datenschutzerklärung'],
+    [undefined, 'hu', 'Impresszum', 'Adatkezelési tájékoztató'],
+    [undefined, 'at', 'Impressum', 'Datenschutzerklärung'],
+    [undefined, 'eu', 'Legal notice', 'Privacy policy'],
+    ['ja', 'eu', 'Legal notice', 'Privacy policy'],
+  ] as const)(
+    'suggests the labels of a %s page in region %s',
+    (language, region, notice, privacy) => {
+      expect(check(impressumLink, language, region)?.fix).toContain(`"${notice}"`);
+      expect(check(privacyPolicyLink, language, region)?.fix).toContain(`"${privacy}"`);
+    },
+  );
+
+  it('cites the German two-click ruling only for German sites', () => {
+    const contact = (region: Region) =>
+      impressumLink.check({
+        siteUrl: SITE,
+        page: snapshot({ language: 'en', links: [{ text: 'Contact', href: SITE.href }] }),
+        lang: 'en',
+        region,
+      })[0]?.fix;
+    expect(contact('de')).toContain('BGH I ZR 228/03');
+    for (const region of ['at', 'ch', 'hu', 'eu'] as const) {
+      expect(contact(region)).not.toContain('BGH');
+      expect(contact(region)).toContain('"Legal notice"');
+    }
+  });
+
+  it('keeps the German labels when no region is passed, as before', () => {
+    const fix = impressumLink.check({ siteUrl: SITE, page: snapshot(), lang: 'de' })[0]?.fix;
+    expect(fix).toContain('„Impressum“');
   });
 });
 

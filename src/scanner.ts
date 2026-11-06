@@ -227,17 +227,15 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ...(page.pageId === undefined ? {} : { pageId: page.pageId }),
         pageUrl: diagnosticUrl(page.finalUrl),
       });
-      return assessPage(
-        page,
-        rules,
-        siteUrl,
+      return assessPage(page, rules, siteUrl, {
         lang,
-        index === 0,
-        options.consentCheck !== false,
-        configuredRules,
-        options.settingsCheck === true,
-        !options.networkAdapter && !options.offline,
-      );
+        region,
+        isStart: index === 0,
+        consentEnabled: options.consentCheck !== false,
+        catalog: configuredRules,
+        settingsEnabled: options.settingsCheck === true,
+        transportEnabled: !options.networkAdapter && !options.offline,
+      });
     });
     const partial =
       assessments.some((assessment) =>

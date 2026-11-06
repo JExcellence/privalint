@@ -27,6 +27,23 @@ describe('https-transport in adapter scans', () => {
   });
 });
 
+describe('labels in link fixes', () => {
+  it('follow the language the page declares, not only the region', async () => {
+    const result = await scan(origin, {
+      ...settings,
+      region: 'hu',
+      networkAdapter: async () => ({
+        status: 200,
+        headers: { 'content-type': 'text/html' },
+        body: '<!doctype html><html lang="en-GB"><a href="/about">About</a></html>',
+      }),
+    });
+    const fix = (ruleId: string) => result.findings.find((f) => f.ruleId === ruleId)?.fix;
+    expect(fix('impressum-link')).toContain('"Legal notice"');
+    expect(fix('privacy-policy-link')).toContain('"Privacy policy"');
+  });
+});
+
 describe('links that redirect to another site', () => {
   it('are listed, not scanned, and leave room for site pages', async () => {
     const result = await scan(origin, {

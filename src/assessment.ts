@@ -1,4 +1,5 @@
 import type { Lang } from './i18n.js';
+import type { Region } from './legal.js';
 import { observedRequests } from './observations.js';
 import { defaultRules } from './rules/index.js';
 import type {
@@ -32,17 +33,32 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'consent-banner-missing': ['network', 'banner-search'],
 };
 
+export interface AssessmentContext {
+  lang: Lang;
+  region: Region;
+  isStart: boolean;
+  consentEnabled: boolean;
+  /** Every rule the scan knows, including custom ones that weren't selected. */
+  catalog?: readonly Rule[];
+  settingsEnabled?: boolean;
+  transportEnabled?: boolean;
+}
+
 export function assessPage(
   page: PageSnapshot,
   rules: readonly Rule[],
   siteUrl: URL,
-  lang: Lang,
-  isStart: boolean,
-  consentEnabled: boolean,
-  catalog: readonly Rule[] = rules,
-  settingsEnabled = false,
-  transportEnabled = false,
+  context: AssessmentContext,
 ): { findings: Finding[]; evaluations: RuleEvaluation[] } {
+  const {
+    lang,
+    region,
+    isStart,
+    consentEnabled,
+    catalog = rules,
+    settingsEnabled = false,
+    transportEnabled = false,
+  } = context;
   const findings: Finding[] = [];
   const allRules = new Map([...defaultRules, ...catalog].map((rule) => [rule.id, rule]));
   const selected = new Set(rules.map((rule) => rule.id));
@@ -159,7 +175,7 @@ export function assessPage(
         findingCount: 0,
       };
     }
-    const detected = rule.check({ page: input, siteUrl, lang });
+    const detected = rule.check({ page: input, siteUrl, lang, region });
     detectedBy.set(rule.id, detected);
     const partial = requirements.includes('after-settings')
       ? page.consent?.settings?.afterSaveComplete === false
