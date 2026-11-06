@@ -4,8 +4,8 @@ import type { Finding, RecordedCookie, Rule } from '../types.js';
 
 const ID = 'tracking-cookie-lifetime';
 
-/** 13 months, the longest lifetime the CNIL recommends for tracking cookies. */
-const MAX_DAYS = 395;
+/** The longest lifetime the CNIL recommends for tracking cookies, in calendar months. */
+const MAX_MONTHS = 13;
 const DAY_SECONDS = 24 * 60 * 60;
 
 export const trackingCookieLifetime: Rule = {
@@ -18,6 +18,10 @@ export const trackingCookieLifetime: Rule = {
   references: ['Art. 5(1)(e) GDPR', 'CNIL recommendation on cookies, 17.09.2020'],
   check({ page, lang }) {
     const now = Date.now() / 1000;
+    // Calendar months, so a cookie set for exactly 13 months passes whatever the month lengths.
+    const limit = new Date();
+    limit.setMonth(limit.getMonth() + MAX_MONTHS);
+    const limitSeconds = limit.getTime() / 1000 + DAY_SECONDS;
     const cookies: RecordedCookie[] = [
       ...page.cookies,
       ...(page.consent?.afterReject?.cookies ?? []),
@@ -25,8 +29,8 @@ export const trackingCookieLifetime: Rule = {
     const byVendor = new Map<string, Map<string, number>>();
     for (const cookie of cookies) {
       if (cookie.expires < 0) continue;
+      if (cookie.expires <= limitSeconds) continue;
       const days = Math.round((cookie.expires - now) / DAY_SECONDS);
-      if (days <= MAX_DAYS) continue;
       const tracker = findTrackerByCookie(cookie.name, cookie.domain);
       if (tracker === undefined) continue;
       const found = byVendor.get(tracker.vendor) ?? new Map<string, number>();

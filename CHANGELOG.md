@@ -67,6 +67,20 @@ Upgrade notes:
 
 ### Fixed
 
+- Side loads of the legal notice and the privacy policy skip error pages (404, 500) and links that
+  lead nowhere, such as a "Privacy settings" button with `href="#"` before the policy link
+- `consent-preselected` only counts switches the visitor can actually switch off, and keeps what
+  it saw when a later step of the settings check fails
+- `legal-notice-content` recognises UK postcodes and Irish Eircodes, ignores floors written as
+  "OG"/"UG", legal forms of the host or web designer, copyright years, phone numbers and
+  "at office." when looking for address, e-mail and legal form
+- `privacy-policy-vendors` matches vendors named with a slash ("DoubleClick/Google Marketing")
+  and "X" as Twitter
+- `reject-less-prominent` measures translucent buttons on dark banners and `oklch()` colours
+- `tracking-cookie-lifetime` measures 13 calendar months, so a cookie set for exactly 13 months
+  is never reported
+- Hungarian report text uses the right article before abbreviations and numbers ("az SE", "az 5")
+- Grouped findings in text and Markdown reports keep different vendors with the same fix apart
 - `privacy-policy-vendors` drops to info when the privacy policy links a cookie policy it can't
   read, such as a PDF, and names that link
 - Text and Markdown reports also show a `third-country-providers` or `third-party-cdns` finding

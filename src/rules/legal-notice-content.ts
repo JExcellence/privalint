@@ -8,18 +8,45 @@ const ID = 'legal-notice-content';
  * with a country prefix ("D-", "A-", "CH-", "H-"), and the Hungarian order "Budapest, 1061". Every
  * format counts in every region: a Hungarian site may well be run from Germany.
  */
-const POSTCODE = /\b(?:[A-Z]{1,2}-?\s?)?\d{4,5}\s+\p{Lu}|\p{Lu}\p{Ll}+,?\s+\d{4}\b/u;
+const POSTCODE =
+  /\b(?:[A-Z]{1,2}-?\s?)?\d{4,5}\s+\p{Lu}|\p{Lu}\p{Ll}+,?\s+\d{4}\b|\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b|\b[AC-FHKNPRTV-Y]\d[\dW]\s?[AC-FHKNPRTV-Y\d]{4}\b/u;
+// The last two: UK postcodes ("SW1A 2AA") and Irish Eircodes ("D04 E5W5").
 
 /** A street with a house number, such as "Musterstraße 12", "Váci út 1." or "12 Main Street". */
 const STREET =
   /\p{L}[\p{L}.'-]*(?:straße|strasse|str\.|weg|gasse|platz|allee|ring|damm|ufer|utca|út|tér|körút|street|road|avenue|lane|rue|via)?\s+\d+\s?[a-z]?\b|\b\d+[a-z]?,?\s+\p{L}+\s+(?:street|road|avenue|lane|st\.|rd\.)/iu;
 
-const EMAIL =
-  /[\w.+-]+\s?(?:@|\(at\)|\[at\]|\{at\}|\s(?:at|kukac)\s)\s?[\w-]+(?:\s?(?:\.|\(dot\)|\[dot\]|\s(?:dot|pont)\s)\s?[\w-]+)+/i;
+/**
+ * Numbers that look like a postcode or a house number but aren't: phone and fax numbers, tax and
+ * register numbers, a copyright year. Removed before looking for the address.
+ */
+const NOT_ADDRESS =
+  /\b(?:tel(?:efon)?|fax|phone|mobil(?:e)?|ust-?id\w*|vat|steuer\w*|adószám|hr[ab]|cg|fn|iban|bic)\b\.?:?\s*[^\n,;]*|(?:©|\bcopyright\b)[^\n]*/giu;
 
-/** Legal forms that are entered in a commercial or association register. */
+/** "(at)" and "[dot]" spellings count; a dot needs a letter right after it, as in a domain. */
+const EMAIL =
+  /[\w.+-]+\s?(?:@|\(at\)|\[at\]|\{at\}|\s(?:at|kukac)\s)\s?[\w-]+(?:(?:\.(?=\w)|\s?\(dot\)\s?|\s?\[dot\]\s?|\s(?:dot|pont)\s)[\w-]+)+/i;
+
+/**
+ * Legal forms that are entered in a commercial or association register. Not right after a number,
+ * where "OG" and "UG" are floors ("12/3. OG").
+ */
 const REGISTERED_FORM =
-  /\b(?:GmbH|gGmbH|UG|AG|KG|OHG|OG|e\.\s?K\.|e\.\s?Kfr\.|e\.\s?V\.|SE|PartG|KGaA|Kft\.?|Zrt\.?|Nyrt\.?|Bt\.?|Kkt\.?|Ltd\.?|Limited|S\.?à\s?r\.?l\.?|SARL)(?=[\s,.)]|$)/u;
+  /(?<!\d[.,/]?\s?)\b(?:GmbH|gGmbH|UG|AG|KG|OHG|OG|e\.\s?K\.|e\.\s?Kfr\.|e\.\s?V\.|SE|PartG|KGaA|Kft\.?|Zrt\.?|Nyrt\.?|Bt\.?|Kkt\.?|Ltd\.?|Limited|S\.?à\s?r\.?l\.?|SARL)(?=[\s,.)]|$)/u;
+
+/** Lines about other companies: the host, the web designer, image credits. */
+const THIRD_PARTY_LINE =
+  /hosting|hoster|webdesign|design|realisierung|umsetzung|programmierung|entwicklung|developed|foto|bild|photo|image|credits|icons?|google|tárhely|kivitelez/i;
+
+/** The provider's legal form: the first one named outside lines about other companies. */
+function legalForm(text: string): string | undefined {
+  for (const line of text.split('\n')) {
+    if (THIRD_PARTY_LINE.test(line)) continue;
+    const form = REGISTERED_FORM.exec(line)?.[0];
+    if (form !== undefined) return form;
+  }
+  return undefined;
+}
 
 const REGISTER =
   /handelsregister|registergericht|amtsgericht|vereinsregister|firmenbuch|\bHR[AB]\s?\d|\bVR\s?\d|\bFN\s?\d+\s?[a-z]\b|cégjegyzék|\bCg\.\s?\d|company\s+(?:number|no\.?|registration)|registration\s+number|registered\s+in|\bCHE-?\d{3}\.?\d{3}\.?\d{3}|handelsregisteramt/iu;
@@ -39,7 +66,8 @@ export const legalNoticeContent: Rule = {
     const findings: Finding[] = [];
 
     const missing: string[] = [];
-    if (!(POSTCODE.test(text) && STREET.test(text))) {
+    const addressText = text.replace(NOT_ADDRESS, ' ');
+    if (!(POSTCODE.test(addressText) && STREET.test(addressText))) {
       missing.push(
         say(lang, { en: 'postal address', de: 'keine Postanschrift', hu: 'postai címet' }),
       );
@@ -69,7 +97,7 @@ export const legalNoticeContent: Rule = {
       });
     }
 
-    const form = REGISTERED_FORM.exec(text)?.[0];
+    const form = legalForm(text);
     if (form !== undefined && !REGISTER.test(text)) {
       findings.push({
         ruleId: ID,

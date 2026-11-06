@@ -370,11 +370,16 @@ async function readLinkedPage(
   pattern: RegExp,
 ): Promise<(LinkedPageText & { links: PageSnapshot['links'] }) | undefined> {
   const fromUrl = new URL(from.finalUrl);
-  const link = from.links.find(linkMatches(pattern));
-  const target = link === undefined ? undefined : crawlTarget(link.href, fromUrl);
-  if (target === undefined || target === withoutHash(from.finalUrl)) return undefined;
+  // "Privacy settings" with href="#" may come before the policy link: try the first real target.
+  const target = from.links
+    .filter(linkMatches(pattern))
+    .map((link) => crawlTarget(link.href, fromUrl))
+    .find((url) => url !== undefined && url !== withoutHash(from.finalUrl));
+  if (target === undefined) return undefined;
   const page = await capturePage(browser, target, fromUrl, options, 'none', true);
-  if (page.error !== undefined || !isFirstParty(page.finalUrl, fromUrl)) return undefined;
+  // A 404 or 500 page is no legal notice or policy, whatever it says.
+  const failed = page.error !== undefined || page.status === null || page.status >= 400;
+  if (failed || !isFirstParty(page.finalUrl, fromUrl)) return undefined;
   return page.pageText === undefined ? undefined : { ...page.pageText, links: page.links };
 }
 

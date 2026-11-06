@@ -536,6 +536,14 @@ describe('tracking-cookie-lifetime', () => {
 
   it.each([
     ['13 months', inDays(390)],
+    [
+      'exactly 13 calendar months',
+      (() => {
+        const date = new Date();
+        date.setMonth(date.getMonth() + 13);
+        return { ...cookie('_ga'), expires: Math.round(date.getTime() / 1000) };
+      })(),
+    ],
     ['a session cookie', { ...cookie('_ga'), expires: -1 }],
     ['a cookie not on the tracker list', { ...inDays(730), name: 'cart_id' }],
   ])('leaves %s alone', (_, entry) => {
@@ -561,6 +569,21 @@ describe('Hungarian text', () => {
       ['Adobe Fonts', 'YouTube', '„Impresszum”', 'Elutasítom', 'Hotjar'].map((w) => huArticle(w)),
     ).toEqual(['az', 'a', 'az', 'az', 'a']);
     expect(huArticle('Intercom', true)).toBe('Az');
+    expect(['X', 'SE', 'RD Station', 'Kft.', 'SAP', 'GTM'].map((w) => huArticle(w))).toEqual([
+      'az',
+      'az',
+      'az',
+      'a',
+      'az',
+      'a',
+    ]);
+    expect(['1', '5', '10', '1000', '2'].map((w) => huArticle(w))).toEqual([
+      'az',
+      'az',
+      'a',
+      'az',
+      'a',
+    ]);
   });
 
   it('writes findings and fixes in Hungarian', () => {
@@ -621,6 +644,16 @@ describe('privacy-policy-vendors', () => {
     ['the host', 'cdn.jsdelivr.net', 'https://cdn.jsdelivr.net/npm/x.js'],
   ])('accepts %s', (_, text, url) => {
     expect(run(privacyPolicyVendors, page(text, { requests: [request(url)] }))).toEqual([]);
+  });
+
+  it.each([
+    ['__gads', 'Wir nutzen Google AdSense und Google Ad Manager (DoubleClick).'],
+    ['MUID', 'Microsoft Advertising (Bing Ads)'],
+    ['guest_id', 'Twitter-Button von X (vormals Twitter)'],
+  ])('finds the vendor of cookie %s in "%s"', (name, text) => {
+    const domain = name === 'MUID' ? '.bing.com' : name === 'guest_id' ? '.x.com' : '.example.de';
+    const findings = run(privacyPolicyVendors, page(text, { cookies: [cookie(name, domain)] }));
+    expect(findings).toEqual([]);
   });
 
   it('matches whole words only', () => {
@@ -720,6 +753,34 @@ describe('legal-notice-content', () => {
       'legal notice: https://example.de/impressum',
       'legal form: Ltd.',
     ]);
+  });
+
+  it.each<[string, string]>([
+    [
+      'a UK address',
+      'Example Ltd\n10 Downing Street\nLondon SW1A 2AA\nhello@example.co.uk\nCompany number 01234567',
+    ],
+    [
+      'an Irish address',
+      'Example Limited\n1 Merrion Square\nDublin 2, D02 X285\nhello@example.ie\nRegistered in Ireland, number 123456',
+    ],
+    ['a floor written as OG', 'Max Muster\nMusterstraße 12/3. OG\n1010 Wien\nmax@muster.at'],
+    [
+      'a hoster with a legal form',
+      'Max Muster\nMusterweg 3\n50667 Köln\nmail@muster.de\nHosting: IONOS SE, Montabaur',
+    ],
+  ])('passes %s', (_, text) => {
+    expect(check(text, 'eu')).toEqual([]);
+  });
+
+  it('does not take a copyright year and a phone number for an address', () => {
+    const findings = check('© 2025 Musterfirma\nTelefon 030 123456\ninfo@musterfirma.de');
+    expect(findings[0]?.message).toBe('The legal notice gives no postal address.');
+  });
+
+  it('does not take "at office. Hours" for an e-mail address', () => {
+    const findings = check('Musterweg 3\n50667 Köln\nYou can reach us at office. Hours vary.');
+    expect(findings[0]?.message).toBe('The legal notice gives no e-mail address.');
   });
 
   it('does not ask a sole trader without a legal form for a register entry', () => {

@@ -32,6 +32,8 @@ const ALIASES: Record<string, readonly string[]> = {
   'Vercel Analytics': ['Vercel'],
   'OpenStreetMap tiles': ['OpenStreetMap'],
   'Zendesk Web Widget': ['Zendesk'],
+  // Too short to search on its own.
+  X: ['Twitter'],
 };
 
 /** Words that describe how a vendor is used, not who it is: "YouTube embed" is named as "YouTube". */
@@ -165,7 +167,7 @@ function namesFor(vendor: string, evidence: string): string[] {
   const base = vendor.replace(USAGE_SUFFIX, '');
   names.push(base);
   // "X (Twitter) embed": both "X" and "Twitter".
-  for (const part of base.split(/[()]/)) names.push(part);
+  for (const part of base.split(/[()/]/)) names.push(part);
   try {
     const host = new URL(evidence).hostname;
     names.push(host.replace(/^www\./, ''));

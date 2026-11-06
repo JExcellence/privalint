@@ -9,6 +9,10 @@
       .secondary { background: #1a56db; color: #ffffff; border: 0; padding: 12px 24px; font-size: 16px; }
       .link { background: none; border: 0; padding: 0; color: #1a56db; font-size: 12px; text-decoration: underline; }
       .grey { background: #ffffff; color: #d0d0d0; border: 1px solid #eeeeee; padding: 12px 24px; font-size: 16px; }
+      .dark #banner { background: #111111; }
+      .dark .primary { background: #ffffff; color: #111111; }
+      .ghost { background: rgba(255, 255, 255, 0.1); color: #ffffff; border: 0; padding: 12px 24px; font-size: 16px; }
+      .modern { background: transparent; color: oklch(0.3 0 0); border: 1px solid oklch(0.6 0.1 250); padding: 12px 24px; font-size: 16px; }
     </style>
   </head>
   <body>
@@ -35,6 +39,11 @@
         reject.replaceWith(link);
       }
       if (variant === 'grey') reject.className = 'grey';
+      if (variant === 'ghost') {
+        document.body.className = 'dark';
+        reject.className = 'ghost';
+      }
+      if (variant === 'modern') reject.className = 'modern';
       const banner = document.getElementById('banner');
       if (localStorage.getItem('consent')) banner.remove();
       document.getElementById('accept').onclick = () => {

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { assessCoverage } from '../src/coverage.js';
 import { scan } from '../src/scanner.js';
-import type { ScanResult } from '../src/types.js';
+import type { PageSnapshot, ScanResult } from '../src/types.js';
 
 const FIXTURES = fileURLToPath(new URL('./fixtures/', import.meta.url));
 const TYPES: Record<string, string> = { '.html': 'text/html', '.css': 'text/css' };
@@ -142,6 +142,20 @@ describe('scan', () => {
     ]);
     expect(findings[0]?.pageUrl).toBe(`${origin}/legal-notice/`);
     expect(findings[0]?.evidence[0]).toBe(`legal notice: ${origin}/legal-notice/imprint.html`);
+  });
+
+  it('skips links that lead nowhere and never reads an error page as a legal page', async () => {
+    let start: PageSnapshot | undefined;
+    await scan(`${origin}/legal-notice/links.html`, {
+      ...options,
+      onPage: (page) => {
+        start ??= page;
+      },
+    });
+    // "Privacy settings" with href="#" comes first; the policy behind it is still read.
+    expect(start?.privacyPolicy?.url).toBe(`${origin}/policy-vendors/privacy.html`);
+    // The Imprint link answers 404.
+    expect(start?.legalNotice).toBeUndefined();
   });
 
   it('looks for every service the start page uses in its privacy policy and cookie policy', async () => {
@@ -737,6 +751,14 @@ describe('consent check', () => {
         /^accept "Accept all": button, \d+×\d+ px, contrast [\d.]+:1$/,
       );
       expect(finding?.evidence[1]).toMatch(/^reject "Reject all": plain text, /);
+    });
+
+    it.each([
+      ['a translucent button on a dark banner', 'ghost'],
+      ['a button with an oklch() border', 'modern'],
+    ])('passes %s', async (_, variant) => {
+      const result = await scan(`${origin}/consent/prominence.html?variant=${variant}`, options);
+      expect(prominence(result)).toEqual([]);
     });
 
     it('notes a light-grey reject button', async () => {

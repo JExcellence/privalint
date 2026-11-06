@@ -37,7 +37,8 @@ export interface SiteWideFinding {
 }
 
 /**
- * Splits findings into those that repeat across pages (same rule, severity and fix) and the rest.
+ * Splits findings into those that repeat across pages (same rule, severity, subject and fix) and
+ * the rest.
  * Reports only: the JSON and SARIF keep one finding per page.
  */
 export function splitSiteWide(findings: readonly Finding[]): {
@@ -49,10 +50,14 @@ export function splitSiteWide(findings: readonly Finding[]): {
     if (!SITE_WIDE.has(finding.ruleId)) continue;
     const key = `${finding.ruleId}
 ${finding.severity}
+${finding.subject ?? ''}
 ${finding.fix ?? ''}`;
     groups.set(key, [...(groups.get(key) ?? []), finding]);
   }
-  const repeated = [...groups.values()].filter((group) => group.length > 1);
+  // Two findings of one group on the same page don't make it site-wide.
+  const repeated = [...groups.values()].filter(
+    (group) => new Set(group.map(pageLabel)).size > 1,
+  );
   const grouped = new Set(repeated.flat());
   return {
     siteWide: repeated.map((group) => ({

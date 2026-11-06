@@ -155,6 +155,28 @@ describe('footer findings on several pages', () => {
     expect(output).toContain('on 3 of 4 pages:');
   });
 
+  it('keep different vendors with the same fix apart', () => {
+    const cdn = (pageUrl: string, vendor: string) =>
+      finding({
+        ruleId: 'third-party-cdns',
+        severity: 'info',
+        subject: vendor,
+        message: `Files are loaded from ${vendor}.`,
+        pageUrl,
+        evidence: [],
+        fix: 'Bundle the library.',
+      });
+    const output = formatText({
+      ...grouped,
+      findings: [
+        ...pages.map((page) => cdn(page, 'jsDelivr')),
+        ...pages.map((page) => cdn(page, 'cdnjs')),
+      ],
+    });
+    expect(output).toContain('Files are loaded from jsDelivr.');
+    expect(output).toContain('Files are loaded from cdnjs.');
+  });
+
   it('on a single page stay with that page', () => {
     const output = formatText(result([missing('https://example.de/auth')]));
     expect(output).not.toContain('On several pages');
