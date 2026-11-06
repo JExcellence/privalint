@@ -6,6 +6,19 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- Adapter scans record how long the adapter took: `capture.diagnostics.timing.adapter` has the
+  number of requests, the median and 95th percentile time to the response headers, and the five
+  slowest requests split into queue, headers and body time. Text and Markdown reports print it on
+  pages with timeouts, so a slow adapter environment stands out (#99)
+
+### Fixed
+
+- A video, image or font over `maxResponseBytes` no longer makes an adapter scan page partial. It
+  is delivered without its body, with status and headers kept, and noted as `resource-limit` with
+  `skippedReason: 'policy'` (#100)
+
 ## 0.9.1 - 2026-11-06
 
 Upgrade notes:
