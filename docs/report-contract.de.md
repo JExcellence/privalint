@@ -17,9 +17,12 @@ IAB-TCF-Consent-Tool nach dem Ablehnen und nach dem Abwählen von allem meldet. 
 Berichtssprache `hu` (`lang` und `options.lang`), die Beobachtungsart `linked-page` für Regeln,
 die das von der Startseite verlinkte Impressum oder die Datenschutzerklärung lesen, den Grund
 `no-linked-page` und die Erklärungen `no-linked-page` und `linked-page-not-loaded`, das optionale
-`options.device` eines Scans mit `--device` und die optionale Liste `thirdParties`: jeder Host
+`options.device` eines Scans mit `--device`, `options.sitemap`, die optionale Schließen-Prüfung
+(`options.closeCheck`, `consent.close`, die Beobachtungsart `after-close`, den Grund
+`close-check-disabled` und die Erklärungen `close-check-disabled`, `missing-close-observation`,
+`no-close-control` und `banner-closed-and-reloaded`) und die optionale Liste `thirdParties`: jeder Host
 außerhalb der Website, der auf eine Anfrage geantwortet hat, mit registrierbarer Domain, der Seite,
-auf der er zuerst auftrat, den Phasen (`before-consent`, `after-reject`, `after-settings`), der
+auf der er zuerst auftrat, den Phasen (`before-consent`, `after-reject`, `after-settings`, `after-close`), der
 Anzahl der Anfragen und dem Anbieter, als den privalint ihn kennt. Sie enthält nur Hosts, nie Pfade
 oder Query-Strings. Ein 1.4.0-Validator würde all das ablehnen.
 Paket-/Scanner-Version und Schemaversion sind unabhängig. Ohne `schemaVersion` ist ein Bericht

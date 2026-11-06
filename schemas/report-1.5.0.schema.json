@@ -164,7 +164,8 @@
               "enum": [
                 "before-consent",
                 "after-reject",
-                "after-settings"
+                "after-settings",
+                "after-close"
               ]
             }
           },
@@ -580,7 +581,8 @@
             "no-consent-needed",
             "settings-check-disabled",
             "transport-not-checked",
-            "no-linked-page"
+            "no-linked-page",
+            "close-check-disabled"
           ]
         },
         "partial": {
@@ -620,7 +622,11 @@
             "banner-not-shown",
             "transport-not-checked",
             "no-linked-page",
-            "linked-page-not-loaded"
+            "linked-page-not-loaded",
+            "close-check-disabled",
+            "missing-close-observation",
+            "no-close-control",
+            "banner-closed-and-reloaded"
           ]
         },
         "findingCount": {
@@ -963,6 +969,42 @@
           "type": "integer",
           "minimum": 0
         },
+        "close": {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "no-close-control",
+                "interaction-failed",
+                "closed",
+                "banner-not-shown"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "no-close-control",
+                "browser-interaction-failed",
+                "banner-closed-and-reloaded",
+                "banner-not-shown"
+              ]
+            },
+            "closeLabel": {
+              "type": "string"
+            },
+            "afterCloseComplete": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "outcome",
+            "reason"
+          ]
+        },
         "error": {
           "type": "string"
         }
@@ -1005,7 +1047,8 @@
               "after-settings",
               "banner-search",
               "transport",
-              "linked-page"
+              "linked-page",
+              "after-close"
             ]
           }
         }
@@ -1185,6 +1228,9 @@
           "type": "string"
         },
         "sitemap": {
+          "type": "boolean"
+        },
+        "closeCheck": {
           "type": "boolean"
         }
       },

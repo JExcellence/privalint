@@ -68,6 +68,7 @@ export function assessCoverage(result: ScanResult): CoverageAssessment {
           'no-consent-needed',
           // Opt-in check; leaving it off is a choice, not a gap in the observation.
           'settings-check-disabled',
+          'close-check-disabled',
           // Adapter and offline scans make no extra request to http:// by design.
           'transport-not-checked',
           // No legal notice or privacy policy linked: impressum-link and privacy-policy-link report it.

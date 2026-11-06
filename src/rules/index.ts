@@ -24,6 +24,7 @@ import { thirdCountryProviders } from './third-country-providers.js';
 import { thirdPartyCdns } from './third-party-cdns.js';
 import { thirdPartyEmbeds } from './third-party-embeds.js';
 import { thirdPartyPersonalData } from './third-party-personal-data.js';
+import { trackersAfterClose } from './trackers-after-close.js';
 import { trackersAfterReject } from './trackers-after-reject.js';
 import { trackersAfterSettings } from './trackers-after-settings.js';
 import { trackingCookieLifetime } from './tracking-cookie-lifetime.js';
@@ -33,6 +34,7 @@ export const defaultRules: readonly Rule[] = [
   preConsentTrackers,
   trackersAfterReject,
   trackersAfterSettings,
+  trackersAfterClose,
   consentPreselected,
   rejectOption,
   rejectLessProminent,
@@ -87,6 +89,7 @@ export {
   thirdPartyCdns,
   thirdPartyEmbeds,
   thirdPartyPersonalData,
+  trackersAfterClose,
   trackersAfterReject,
   trackersAfterSettings,
   trackingCookieLifetime,

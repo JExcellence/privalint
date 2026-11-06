@@ -1,5 +1,5 @@
 import { type Browser, devices, type Page } from 'playwright';
-import { observeConsent, observeSettings } from './consent.js';
+import { observeClose, observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
 import { readForms } from './forms.js';
 import { ControlledNetwork, networkLimits, watchPageCancellations } from './network.js';
@@ -13,7 +13,7 @@ import { isFirstParty } from './url.js';
  * Which consent path to test on the page: none, the reject button, or the settings layer.
  * Settings runs in its own capture because a stored reject would hide the banner.
  */
-export type ConsentPath = 'none' | 'reject' | 'settings';
+export type ConsentPath = 'none' | 'reject' | 'settings' | 'close';
 
 /** Always owns and closes its context. Each crawl page starts without cookies/storage. */
 export async function capturePage(
@@ -176,7 +176,14 @@ export async function capturePage(
         },
         onTimeout: () => diagnostics.add('timeout', page.url()),
       };
-      if (consentPath === 'settings') {
+      if (consentPath === 'close') {
+        const close = await observeClose(page, context, requests, consentOptions);
+        snapshot.consent = {
+          bannerFound: close !== undefined,
+          rejected: false,
+          ...(close === undefined ? {} : { close }),
+        };
+      } else if (consentPath === 'settings') {
         const settings = await observeSettings(page, context, requests, consentOptions);
         snapshot.consent = {
           bannerFound: settings !== undefined,
@@ -226,6 +233,10 @@ export async function capturePage(
   beforeComplete = beforeComplete && !diagnostics.hasIssues('before-consent');
   if (snapshot.consent?.rejected) {
     snapshot.consent.afterRejectComplete = !diagnostics.hasIssues('after-reject');
+  }
+  // The close path, too, reuses the after-reject phase for what loads after closing.
+  if (snapshot.consent?.close?.afterClose !== undefined) {
+    snapshot.consent.close.afterCloseComplete = !diagnostics.hasIssues('after-reject');
   }
   // The settings path reuses the after-reject phase for what loads after saving.
   if (snapshot.consent?.settings?.afterSave !== undefined) {

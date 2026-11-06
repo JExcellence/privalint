@@ -21,6 +21,7 @@ import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import { adapterFetchText, browserFetchText, sitemapPages } from './sitemap.js';
 import { thirdPartyInventory } from './third-party-inventory.js';
 import type {
+  CloseObservation,
   ConsentSummary,
   LinkedPageMissing,
   LinkedPageText,
@@ -180,6 +181,14 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ) {
           snapshot.consent.settings = await checkSettings(browser, url, siteUrl, options);
         }
+        if (
+          isStart &&
+          options.closeCheck === true &&
+          options.consentCheck !== false &&
+          snapshot.consent?.bannerFound === true
+        ) {
+          snapshot.consent.close = await checkClose(browser, url, siteUrl, options);
+        }
         if (isStart) {
           const wants = (id: string) => rules.some((rule) => rule.id === id);
           await readLegalPages(browser, snapshot, options, {
@@ -287,6 +296,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         consentEnabled: options.consentCheck !== false,
         catalog: configuredRules,
         settingsEnabled: options.settingsCheck === true,
+        closeEnabled: options.closeCheck === true,
         transportEnabled: !options.networkAdapter && !options.offline,
       });
     });
@@ -313,6 +323,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         hostChecks,
         ...(options.device === undefined ? {} : { device: options.device }),
         ...(options.sitemap === true ? { sitemap: true } : {}),
+        ...(options.closeCheck === true ? { closeCheck: true } : {}),
         headed: options.headed === true,
         channel: options.channel ?? 'chromium',
         sandbox: options.sandbox === true,
@@ -530,6 +541,20 @@ async function readPolicyAndCookies(
     : { page: { ...text, unread: [cookieLink.href] }, links, label: policy.label };
 }
 
+/** Runs the close path on the start page in a fresh context: close the banner, reload, observe. */
+async function checkClose(
+  browser: Browser,
+  url: string,
+  siteUrl: URL,
+  options: ScanOptions,
+): Promise<CloseObservation> {
+  const capture = await capturePage(browser, url, siteUrl, options, 'close');
+  if (capture.consent?.close !== undefined) return capture.consent.close;
+  return capture.error === undefined
+    ? { outcome: 'banner-not-shown', reason: 'banner-not-shown' }
+    : { outcome: 'interaction-failed', reason: 'browser-interaction-failed', error: capture.error };
+}
+
 /** Runs the settings path on the start page in a fresh context, after the reject path. */
 
 async function checkSettings(
@@ -558,9 +583,11 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
     settings,
     ...summary
   } = start.consent;
-  if (settings === undefined) return { consent: summary };
+  const { close, ...rest } = summary;
+  const closeSummary = close === undefined ? {} : { close: withoutAfterClose(close) };
+  if (settings === undefined) return { consent: { ...rest, ...closeSummary } };
   const { afterSave: _afterSave, ...settingsSummary } = settings;
-  return { consent: { ...summary, settings: settingsSummary } };
+  return { consent: { ...rest, ...closeSummary, settings: settingsSummary } };
 }
 
 function consentByHost(pages: readonly PageSnapshot[]): Pick<ScanResult, 'consentByHost'> {
@@ -659,4 +686,9 @@ function inventoryOf(
 ): Pick<ScanResult, 'thirdParties'> {
   const thirdParties = thirdPartyInventory(pages, siteUrl);
   return thirdParties.length === 0 ? {} : { thirdParties };
+}
+
+function withoutAfterClose(close: CloseObservation): Omit<CloseObservation, 'afterClose'> {
+  const { afterClose: _afterClose, ...summary } = close;
+  return summary;
 }

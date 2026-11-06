@@ -30,6 +30,11 @@ Upgrade notes:
 
 ### Added
 
+- New opt-in rule `trackers-after-close` (`--check-close`, config `closeCheck`, Action input
+  `check-close`): privalint closes the banner with its close button ("×", "Schließen") in a fresh
+  browser, reloads and reports trackers that load then as errors, since closing is no choice. A
+  banner without a close button counts as checked. The result is in `consent.close` (schema
+  1.5.0) (#121)
 - New rule `banner-language` (info): the consent banner is in another language than the page's
   `<html lang>`, guessed from common words of eight languages. A banner in the language of the
   browser locale is not reported, since many consent managers follow it (#123)

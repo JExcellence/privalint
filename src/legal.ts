@@ -149,6 +149,14 @@ const LEGAL: Record<string, Record<Region, string[]>> = {
     hu: ['GDPR 13. cikk (1) bekezdés e) pont'],
     eu: ['Art. 13(1)(e) GDPR'],
   },
+  // Closing a banner is no choice; consent needs a clear affirmative act.
+  'trackers-after-close': {
+    de: ['§ 25 Abs. 1 TDDDG', 'Art. 4 Nr. 11 DSGVO'],
+    at: ['§ 165 Abs. 3 TKG 2021', 'Art. 4 Nr. 11 DSGVO'],
+    ch: ['Art. 45c FMG'],
+    hu: ['Eht. 155. § (4)', 'GDPR 4. cikk 11. pont'],
+    eu: ['Art. 5(3) ePrivacy Directive', 'Art. 4(11) GDPR'],
+  },
   // Informed consent: the visitor has to understand what they agree to.
   'banner-language': {
     de: ['Art. 4 Nr. 11, Art. 7 Abs. 2 DSGVO'],
@@ -300,6 +308,8 @@ export function applyRegion(findings: readonly Finding[], region: Region): Findi
  */
 const SOFTER_IN_SWITZERLAND = new Set([
   'pre-consent-trackers',
+  // Closing is no explicit refusal, so the opt-out model applies.
+  'trackers-after-close',
   'consent-preselected',
   'consent-banner-missing',
   'consent-settings-link',

@@ -39,6 +39,7 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 | [`trackers-after-reject`](docs/rules/trackers-after-reject.md)         | error    | Trackers that still load after clicking "reject" on the consent banner and reloading.                                                                             |
 | [`trackers-after-settings`](docs/rules/trackers-after-settings.md)     | error    | Opt-in (`--check-settings`): trackers that still load after switching off every category in the banner settings and saving.                                       |
 | [`consent-preselected`](docs/rules/consent-preselected.md)             | error    | Opt-in (`--check-settings`): optional categories already switched on when the banner settings open.                                                               |
+| [`trackers-after-close`](docs/rules/trackers-after-close.md)           | error    | Opt-in (`--check-close`): trackers that load after the banner was closed with its "×" button.                                                                     |
 | [`reject-option`](docs/rules/reject-option.md)                         | warning  | A banner with "accept" but no "reject" on its first layer. Pay-or-OK banners are noted as info.                                                                   |
 | [`reject-less-prominent`](docs/rules/reject-less-prominent.md)         | info     | A reject control shown as plain text, much smaller, or with much lower contrast than the accept button.                                                           |
 | [`banner-language`](docs/rules/banner-language.md)                     | info     | A consent banner in another language than the page.                                                                                                               |
@@ -120,6 +121,7 @@ Inputs left empty are not passed to privalint, so `privalint.config.json` in you
 | `fail-on`            | `error`              | `error`, `warning` or `never`.                                                 |
 | `fail-on-incomplete` | config, else off     | `true` or `false`: fail separately for incomplete observations.                |
 | `check-settings`     | config, else off     | `true` also tests the banner's settings layer.                                 |
+| `check-close`        | config, else off     | `true` also closes the banner with its close button and checks what loads.     |
 | `sitemap`            | config, else off     | `true` chooses pages from `sitemap.xml`, pages with forms first.               |
 | `device`             | config, else desktop | Playwright device to emulate, such as `iPhone 15`, to check the mobile banner. |
 | `disable`            |                      | Comma-separated rule ids to skip.                                              |
@@ -168,6 +170,8 @@ privalint <url> [options]
       --skip-consent      Don't click "reject" on the consent banner
       --check-settings    Also open the banner's settings, switch everything off and
                           save, then check what still loads (loads the start page again)
+      --check-close       Also close the banner with its "×" button, reload and check
+                          whether that counts as consent (loads the start page again)
       --host-checks <mode>  each | main (default each). each also runs the consent,
                           banner and HTTPS checks on the first page of up to five
                           other hosts of the site, such as docs. or blog.

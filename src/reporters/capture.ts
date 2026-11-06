@@ -228,6 +228,26 @@ const EXPLANATIONS: Record<RuleExplanation, Text> = {
     de: 'Die verlinkte Seite ließ sich nicht laden',
     hu: 'A hivatkozott oldal nem tölthető be',
   },
+  'close-check-disabled': {
+    en: 'Close-button check not enabled (--check-close)',
+    de: 'Schließen-Prüfung nicht eingeschaltet (--check-close)',
+    hu: 'A bezárásgomb ellenőrzése nincs bekapcsolva (--check-close)',
+  },
+  'missing-close-observation': {
+    en: 'Close path not observed',
+    de: 'Schließen-Pfad nicht beobachtet',
+    hu: 'A bezárás útvonala nincs megfigyelve',
+  },
+  'no-close-control': {
+    en: 'No close button found in the banner',
+    de: 'Keine Schließen-Schaltfläche im Banner gefunden',
+    hu: 'Nem található bezárás gomb a bannerben',
+  },
+  'banner-closed-and-reloaded': {
+    en: 'Banner closed and page reloaded',
+    de: 'Banner geschlossen und Seite neu geladen',
+    hu: 'Banner bezárva, oldal újratöltve',
+  },
   'reject-clicked-and-reloaded': {
     en: 'Reject clicked and page reloaded',
     de: 'Ablehnen geklickt und Seite neu geladen',

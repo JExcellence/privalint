@@ -42,6 +42,11 @@ export interface ScanOptions {
    * /sitemap.xml), spread over the site and pages with forms first, before following links.
    */
   sitemap?: boolean | undefined;
+  /**
+   * Opt-in: close the banner with its close button in a fresh browser, reload and check what
+   * loads (trackers-after-close). One extra page load.
+   */
+  closeCheck?: boolean | undefined;
   headed?: boolean | undefined;
   channel?: string | undefined;
   /**

@@ -308,6 +308,44 @@ describe('scan', () => {
     expect(JSON.stringify(match)).not.toContain('bannerText');
   });
 
+  it('closes the banner with its close button and reports trackers that load then', async () => {
+    const evaluation = (result: Awaited<ReturnType<typeof scan>>) =>
+      result.pages[0]?.ruleEvaluations?.find((rule) => rule.ruleId === 'trackers-after-close');
+    const accepts = await scan(`${origin}/consent/close-accepts.html`, {
+      ...options,
+      closeCheck: true,
+    });
+    expect(accepts.consent?.close).toMatchObject({
+      outcome: 'closed',
+      reason: 'banner-closed-and-reloaded',
+      closeLabel: '×',
+      afterCloseComplete: true,
+    });
+    expect(JSON.stringify(accepts.consent)).not.toContain('afterClose"');
+    const closeFindings = accepts.findings.filter((f) => f.ruleId === 'trackers-after-close');
+    expect(closeFindings.length).toBeGreaterThan(0);
+    expect(closeFindings[0]?.message).toContain('after closing the banner with "×"');
+    expect(accepts.options?.closeCheck).toBe(true);
+    expect(accepts.thirdParties?.some((entry) => entry.phases.includes('after-close'))).toBe(true);
+
+    const rejects = await scan(`${origin}/consent/close-rejects.html`, {
+      ...options,
+      closeCheck: true,
+    });
+    expect(rejects.findings.filter((f) => f.ruleId === 'trackers-after-close')).toEqual([]);
+    expect(evaluation(rejects)).toMatchObject({ outcome: 'checked-no-finding' });
+
+    const noClose = await scan(`${origin}/consent/good.html`, { ...options, closeCheck: true });
+    expect(noClose.consent?.close).toEqual({
+      outcome: 'no-close-control',
+      reason: 'no-close-control',
+    });
+    expect(evaluation(noClose)).toMatchObject({ outcome: 'checked-no-finding' });
+
+    const off = await scan(`${origin}/consent/close-accepts.html`, options);
+    expect(evaluation(off)).toMatchObject({ status: 'skipped', reason: 'close-check-disabled' });
+  });
+
   it('checks the mobile layout of the banner with --device', async () => {
     const url = `${origin}/consent/mobile-reject.html`;
     const desktop = await scan(url, options);
