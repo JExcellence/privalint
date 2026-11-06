@@ -1,4 +1,4 @@
-import type { Browser, Page } from 'playwright';
+import { type Browser, devices, type Page } from 'playwright';
 import { observeConsent, observeSettings } from './consent.js';
 import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js';
 import { readForms } from './forms.js';
@@ -27,6 +27,7 @@ export async function capturePage(
   const checkConsent = consentPath !== 'none';
   const controlled = options.networkAdapter !== undefined;
   const context = await browser.newContext({
+    ...deviceOptions(options.device),
     locale: options.locale ?? DEFAULTS.locale,
     serviceWorkers: controlled ? 'block' : 'allow',
     // fulfill() works offline. Unhandled browser HTTP traffic has no network fallback.
@@ -271,4 +272,16 @@ async function readPageSecurity(page: Page): Promise<{ insecure: string[]; refer
     })
     .catch(() => ({ insecure: [] as string[] }));
   return read;
+}
+
+/**
+ * The browser context options of a Playwright device. The scan always runs Chromium, so the device's
+ * own default browser is left out; Chromium emulates viewport, touch and the mobile user agent.
+ */
+export function deviceOptions(name: string | undefined): Record<string, unknown> {
+  if (name === undefined) return {};
+  const descriptor = devices[name];
+  if (descriptor === undefined) throw new Error(`Unknown device "${name}".`);
+  const { defaultBrowserType: _browser, ...options } = descriptor;
+  return options;
 }

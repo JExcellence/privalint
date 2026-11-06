@@ -30,6 +30,10 @@ Upgrade notes:
 
 ### Added
 
+- `--device <name>` (config `device`, Action input `device`) emulates a Playwright device such as
+  "iPhone 15": viewport, user agent and touch, so banners are checked in their mobile layout, where
+  the reject button is often hidden or smaller. The report records it in `options.device`
+  (schema 1.5.0) (#130)
 - New rule `third-party-personal-data` (warning): requests to other sites carry e-mail
   addresses or phone numbers in their query string, plain or as SHA-256 hashes in parameters
   such as `em` or `ud[em]`. Only parameter names are reported, and the values are replaced by

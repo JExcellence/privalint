@@ -110,21 +110,22 @@ preview URL from your hosting provider's deployment event or action output as `u
 Inputs left empty are not passed to privalint, so `privalint.config.json` in your workspace (or
 `config`) decides, and the CLI default applies when neither sets a value.
 
-| Input                | Default           |                                                                     |
-| -------------------- | ----------------- | ------------------------------------------------------------------- |
-| `url`                |                   | Page to scan. Required.                                             |
-| `config`             |                   | JSON config file. Empty reads `./privalint.config.json` if present. |
-| `max-pages`          | config, else `1`  | How many pages of the same site to crawl.                           |
-| `concurrency`        | config, else `1`  | Pages loaded at the same time; same report as with 1.               |
-| `fail-on`            | `error`           | `error`, `warning` or `never`.                                      |
-| `fail-on-incomplete` | config, else off  | `true` or `false`: fail separately for incomplete observations.     |
-| `check-settings`     | config, else off  | `true` also tests the banner's settings layer.                      |
-| `disable`            |                   | Comma-separated rule ids to skip.                                   |
-| `lang`               | config, else `en` | Language of the report: `en` or `de`.                               |
-| `region`             | config, else `de` | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.                    |
-| `sarif-file`         | `privalint.sarif` | Where to write SARIF. Empty to skip.                                |
-| `job-summary`        | `true`            | Add the Markdown report to the job summary.                         |
-| `pr-comment`         | `false`           | Create/update a same-repository PR report comment.                  |
+| Input                | Default              |                                                                                |
+| -------------------- | -------------------- | ------------------------------------------------------------------------------ |
+| `url`                |                      | Page to scan. Required.                                                        |
+| `config`             |                      | JSON config file. Empty reads `./privalint.config.json` if present.            |
+| `max-pages`          | config, else `1`     | How many pages of the same site to crawl.                                      |
+| `concurrency`        | config, else `1`     | Pages loaded at the same time; same report as with 1.                          |
+| `fail-on`            | `error`              | `error`, `warning` or `never`.                                                 |
+| `fail-on-incomplete` | config, else off     | `true` or `false`: fail separately for incomplete observations.                |
+| `check-settings`     | config, else off     | `true` also tests the banner's settings layer.                                 |
+| `device`             | config, else desktop | Playwright device to emulate, such as `iPhone 15`, to check the mobile banner. |
+| `disable`            |                      | Comma-separated rule ids to skip.                                              |
+| `lang`               | config, else `en`    | Language of the report: `en`, `de` or `hu`.                                    |
+| `region`             | config, else `de`    | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.                               |
+| `sarif-file`         | `privalint.sarif`    | Where to write SARIF. Empty to skip.                                           |
+| `job-summary`        | `true`               | Add the Markdown report to the job summary.                                    |
+| `pr-comment`         | `false`              | Create/update a same-repository PR report comment.                             |
 
 Outputs: `exit-code`, and `sarif-file` when a report was written.
 
@@ -168,6 +169,8 @@ privalint <url> [options]
       --host-checks <mode>  each | main (default each). each also runs the consent,
                           banner and HTTPS checks on the first page of up to five
                           other hosts of the site, such as docs. or blog.
+      --device <name>     Emulate a Playwright device, such as "iPhone 15" or "Pixel 7":
+                          viewport, user agent and touch, to see mobile banners
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
       --sandbox           Run Chromium with its sandbox (recommended for untrusted

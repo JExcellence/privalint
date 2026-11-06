@@ -269,6 +269,19 @@ describe('scan', () => {
     expect(evaluation('privacy-policy-vendors')).toMatchObject({ outcome: 'checked-no-finding' });
   });
 
+  it('checks the mobile layout of the banner with --device', async () => {
+    const url = `${origin}/consent/mobile-reject.html`;
+    const desktop = await scan(url, options);
+    expect(desktop.findings.filter((f) => f.ruleId === 'reject-option')).toEqual([]);
+    expect(desktop.options?.device).toBeUndefined();
+    const phone = await scan(url, { ...options, device: 'iPhone 15' });
+    expect(phone.findings.map((f) => f.ruleId)).toContain('reject-option');
+    expect(phone.options?.device).toBe('iPhone 15');
+    await expect(scan(url, { ...options, device: 'Nokia 3310' })).rejects.toThrow(
+      'Unknown device "Nokia 3310".',
+    );
+  });
+
   it('skips the linked-page rules without a link, and on every page but the start page', async () => {
     const result = await scan(`${origin}/consent/good.html`, { ...options, maxPages: 1 });
     const start = result.pages[0]?.ruleEvaluations ?? [];

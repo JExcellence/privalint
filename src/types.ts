@@ -565,6 +565,8 @@ export interface ReportOptions {
   settingsCheck?: boolean;
   /** Absent in reports from scanners before 0.10.0, which checked only the main host. */
   hostChecks?: 'each' | 'main';
+  /** The emulated Playwright device, when the scan used one. Absent before schema 1.5.0. */
+  device?: string;
   headed: boolean;
   channel: string;
   /** Absent in reports from scanners before 0.5.0. */

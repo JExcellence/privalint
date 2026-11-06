@@ -33,6 +33,9 @@ inputs:
   check-settings:
     description: true also switches off every category in the banner settings, saves and checks again (trackers-after-settings). Empty uses settingsCheck from the config file.
     default: ""
+  device:
+    description: Playwright device to emulate, such as "iPhone 15" or "Pixel 7", to check the mobile layout of the banner. Empty uses the config file, else a desktop browser.
+    default: ""
   config:
     description: Path of a JSON config file, relative to the workspace. Empty reads ./privalint.config.json when it exists.
     default: ""
@@ -82,6 +85,7 @@ runs:
         FAIL_ON: ${{ inputs.fail-on }}
         FAIL_ON_INCOMPLETE: ${{ inputs.fail-on-incomplete }}
         CHECK_SETTINGS: ${{ inputs.check-settings }}
+        DEVICE: ${{ inputs.device }}
         CONFIG: ${{ inputs.config }}
         DISABLE: ${{ inputs.disable }}
         REPORT_LANG: ${{ inputs.lang }}
@@ -115,6 +119,7 @@ runs:
         if [[ "$FAIL_ON_INCOMPLETE" == "true" ]]; then args+=(--fail-on-incomplete); fi
         if [[ "$FAIL_ON_INCOMPLETE" == "false" ]]; then args+=(--allow-incomplete); fi
         if [[ "$CHECK_SETTINGS" == "true" ]]; then args+=(--check-settings); fi
+        if [[ -n "$DEVICE" ]]; then args+=(--device "$DEVICE"); fi
         if [[ -n "$DISABLE" ]]; then args+=(--disable "$DISABLE"); fi
         if [[ -n "$SARIF_FILE" ]]; then args+=(--output "$SARIF_FILE"); fi
 

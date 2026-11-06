@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { type Browser, chromium } from 'playwright';
 import { assessPage } from './assessment.js';
-import { capturePage } from './capture.js';
+import { capturePage, deviceOptions } from './capture.js';
 import { diagnosticUrl } from './diagnostics.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
@@ -125,6 +125,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     const queue = [siteUrl.href];
     const seen = new Set(queue);
     const hostChecks = options.hostChecks ?? 'each';
+    // Fails early with a clear message, before a browser is started for nothing.
+    deviceOptions(options.device);
     // Queue indexes whose page is the first of its host; decided in queue order, so concurrent
     // and sequential crawls agree.
     const hostStartIndexes = new Set<number>();
@@ -299,6 +301,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         consentCheck: options.consentCheck !== false,
         settingsCheck: options.settingsCheck === true,
         hostChecks,
+        ...(options.device === undefined ? {} : { device: options.device }),
         headed: options.headed === true,
         channel: options.channel ?? 'chromium',
         sandbox: options.sandbox === true,

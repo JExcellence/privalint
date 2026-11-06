@@ -1025,6 +1025,9 @@
             "each",
             "main"
           ]
+        },
+        "device": {
+          "type": "string"
         }
       },
       "required": [

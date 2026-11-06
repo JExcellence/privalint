@@ -32,6 +32,11 @@ export interface ScanOptions {
    * hosts. `main`: only the start page.
    */
   hostChecks?: 'each' | 'main' | undefined;
+  /**
+   * A Playwright device name such as "iPhone 15" or "Pixel 7": viewport, user agent, touch and
+   * scale factor of that device, so banners are checked in their mobile layout.
+   */
+  device?: string | undefined;
   headed?: boolean | undefined;
   channel?: string | undefined;
   /**

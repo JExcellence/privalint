@@ -57,6 +57,8 @@ Options
       --host-checks <mode>  each | main (default each). each also runs the consent,
                           banner and HTTPS checks on the first page of up to five
                           other hosts of the site, such as docs. or blog.
+      --device <name>     Emulate a Playwright device, such as "iPhone 15" or "Pixel 7":
+                          viewport, user agent and touch, to see mobile banners
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
       --sandbox           Run Chromium with its sandbox (recommended for untrusted
@@ -102,6 +104,7 @@ async function main(argv: string[]): Promise<number> {
       consent: { type: 'boolean' },
       'check-settings': { type: 'boolean' },
       'host-checks': { type: 'string' },
+      device: { type: 'string' },
       headed: { type: 'boolean' },
       channel: { type: 'string' },
       sandbox: { type: 'boolean' },
@@ -168,6 +171,7 @@ async function main(argv: string[]): Promise<number> {
       values['host-checks'] === undefined
         ? config.hostChecks
         : oneOf(values['host-checks'], ['each', 'main'] as const, '--host-checks'),
+    device: values.device ?? config.device,
     headed: values.headed === true,
     channel:
       values.channel === undefined ? undefined : oneOf(values.channel, CHANNELS, '--channel'),
