@@ -132,6 +132,51 @@ describe('footer findings on several pages', () => {
     );
   });
 
+  it('also group a service the whole site loads, one group per vendor', () => {
+    const service = (pageUrl: string, vendor: string) =>
+      finding({
+        ruleId: 'third-country-providers',
+        severity: 'info',
+        subject: vendor,
+        message: `${vendor} (USA) receives data before consent.`,
+        pageUrl,
+        evidence: ['o1.ingest.us.sentry.io'],
+        fix: `Check that ${vendor} is certified.`,
+      });
+    const output = formatText({
+      ...grouped,
+      findings: [
+        ...pages.map((page) => service(page, 'Sentry')),
+        service(pages[0] ?? '', 'Supabase'),
+      ],
+    });
+    expect(output.split('Sentry (USA) receives')).toHaveLength(2);
+    expect(output.split('Supabase (USA) receives')).toHaveLength(2);
+    expect(output).toContain('on 3 of 4 pages:');
+  });
+
+  it('keep different vendors with the same fix apart', () => {
+    const cdn = (pageUrl: string, vendor: string) =>
+      finding({
+        ruleId: 'third-party-cdns',
+        severity: 'info',
+        subject: vendor,
+        message: `Files are loaded from ${vendor}.`,
+        pageUrl,
+        evidence: [],
+        fix: 'Bundle the library.',
+      });
+    const output = formatText({
+      ...grouped,
+      findings: [
+        ...pages.map((page) => cdn(page, 'jsDelivr')),
+        ...pages.map((page) => cdn(page, 'cdnjs')),
+      ],
+    });
+    expect(output).toContain('Files are loaded from jsDelivr.');
+    expect(output).toContain('Files are loaded from cdnjs.');
+  });
+
   it('on a single page stay with that page', () => {
     const output = formatText(result([missing('https://example.de/auth')]));
     expect(output).not.toContain('On several pages');
@@ -232,6 +277,24 @@ describe('German reports', () => {
     const output = formatMarkdown(german([finding()]));
     expect(output).toContain('| | Regel | Befund |');
     expect(output).toContain('<summary>So beheben Sie es</summary>');
+  });
+});
+
+describe('Hungarian reports', () => {
+  const hungarian = (findings: Finding[]): ScanResult => ({ ...result(findings), lang: 'hu' });
+
+  it('writes the text summary in Hungarian, with the noun singular after a number', () => {
+    const output = formatText(hungarian([finding(), finding({ severity: 'warning' })]));
+    expect(output).toContain('1 hiba, 1 figyelmeztetés · 1 oldal (1,2 mp).');
+    expect(output).toContain('megoldás: Self-host the font files.');
+    expect(output).toContain('nem bizonyítja a GDPR-nak való megfelelést');
+    expect(formatText(hungarian([]))).toContain('Nem található probléma (1 oldal, 1,2 mp).');
+  });
+
+  it('translates the Markdown headings', () => {
+    const output = formatMarkdown(hungarian([finding()]));
+    expect(output).toContain('| | Szabály | Megállapítás |');
+    expect(output).toContain('<summary>Javítás módja</summary>');
   });
 });
 

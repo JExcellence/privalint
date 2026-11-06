@@ -4,7 +4,7 @@
 
 ## Versioned validation
 
-New scans use schema **1.4.0**. Schemas 1.0.0 to 1.3.0 remain available for earlier
+New scans use schema **1.5.0**. Schemas 1.0.0 to 1.4.0 remain available for earlier
 versioned reports. 1.2.0 adds the skip reason `cancelled-by-page`, which a 1.1.0 validator would
 reject. 1.3.0 adds the opt-in settings-layer check: `consent.settings`, `options.settingsCheck`,
 the observation kind `after-settings`, the skip reason `settings-check-disabled` and its
@@ -14,7 +14,8 @@ the timeout `stage` (`queued` or `fetching`) on adapter diagnostics, the optiona
 `capture.diagnostics.timing.adapter` and top-level `offSiteRedirects` (added in scanner 0.9.1 and
 0.10.0 without breaking 1.4.0 validators), and
 `consent.tcf` and `consent.settings.tcf`, what an IAB TCF consent manager reports after rejecting
-and after everything was switched off.
+and after everything was switched off. 1.5.0 adds the report language `hu` (`lang` and
+`options.lang`), which a 1.4.0 validator would reject; the structure is otherwise the same.
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;
 unknown versions are unsupported. Never assign a schema version to old data merely to validate it.
 
@@ -25,11 +26,13 @@ The npm package ships self-contained JSON Schema 2020-12 files:
 - `privalint/schemas/report-1.2.0.schema.json`
 - `privalint/schemas/report-1.3.0.schema.json`
 - `privalint/schemas/report-1.4.0.schema.json`
+- `privalint/schemas/report-1.5.0.schema.json`
 - `privalint/schemas/sarif-properties-1.0.0.schema.json`
 - `privalint/schemas/sarif-properties-1.1.0.schema.json`
 - `privalint/schemas/sarif-properties-1.2.0.schema.json`
 - `privalint/schemas/sarif-properties-1.3.0.schema.json`
 - `privalint/schemas/sarif-properties-1.4.0.schema.json`
+- `privalint/schemas/sarif-properties-1.5.0.schema.json`
 
 SARIF extension schemas validate `runs[].properties`, not the entire SARIF standard. Required
 fields, types, outcomes and contradictions (for example a negative success with `partial: true`)

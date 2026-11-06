@@ -155,7 +155,7 @@ privalint <url> [options]
       --settle <ms>       Wait this long after load for late tags (default 2000)
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
-      --lang <lang>       Language of the report: en | de (default en)
+      --lang <lang>       Language of the report: en | de | hu (default en)
       --region <region>   Whose law to cite: de | at | ch | hu | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
       --check-settings    Also open the banner's settings, switch everything off and
@@ -201,6 +201,12 @@ site also targets visitors in the EU, scan it with `--region eu` as well.
 
 ```bash
 npx privalint https://ihre-seite.ch --region ch --lang de
+```
+
+`--lang hu` does the same in Hungarian, usually together with the Hungarian legal profile:
+
+```bash
+npx privalint https://pelda.hu --region hu --lang hu
 ```
 
 ## Use it from code

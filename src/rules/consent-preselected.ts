@@ -26,6 +26,7 @@ export const consentPreselected: Rule = {
         message: say(lang, {
           en: `${count} optional ${count === 1 ? 'category is' : 'categories are'} switched on in the cookie settings before the visitor chooses${names ? `: ${names}` : ''}.`,
           de: `In den Cookie-Einstellungen ${count === 1 ? 'ist 1 optionale Kategorie' : `sind ${count} optionale Kategorien`} schon vor der Wahl der Besucher eingeschaltet${names ? `: ${names}` : ''}.`,
+          hu: `A sütibeállításokban ${count} választható kategória már a látogató döntése előtt be van kapcsolva${names ? `: ${names}` : ''}.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [
@@ -35,6 +36,7 @@ export const consentPreselected: Rule = {
                 say(lang, {
                   en: `settings opened with "${settings.openLabel}"`,
                   de: `Einstellungen über „${settings.openLabel}“ geöffnet`,
+                  hu: `beállítások megnyitva ezzel: „${settings.openLabel}”`,
                 }),
               ]),
           ...preselected,
@@ -42,6 +44,7 @@ export const consentPreselected: Rule = {
         fix: say(lang, {
           en: 'Start every optional category switched off in the consent manager settings, so that only the visitor can switch it on.',
           de: 'In den Einstellungen des Consent-Tools jede optionale Kategorie ausgeschaltet starten lassen, damit nur Besucher sie einschalten.',
+          hu: 'A hozzájárulás-kezelő beállításaiban minden választható kategória kikapcsolva induljon, hogy csak a látogató kapcsolhassa be.',
         }),
       },
     ];

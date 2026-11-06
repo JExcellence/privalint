@@ -22,6 +22,12 @@ const FIX: Text = {
     'nach lokalem Hosting fragen, oder auf eine Schrift mit offener Lizenz (z. B. über Fontsource) ' +
     'wechseln und sie von der eigenen Domain ausliefern. Danach alle Verweise auf use.typekit.net ' +
     'und p.typekit.net entfernen.',
+  hu:
+    'Az Adobe Fonts betűtípusai webes használatra csak az Adobe szerverein keresztül licencelhetők, ' +
+    'ezért nem lehet őket egyszerűen saját szerveren tárolni. Licencelje a betűtípust saját ' +
+    'tárolásra a készítőjétől, kérdezze az Adobe értékesítését a helyi tárolásról, vagy váltson ' +
+    'nyílt licencű betűtípusra (pl. a Fontsource-ból), és szolgálja ki a saját domainről. Ezután ' +
+    'távolítson el minden hivatkozást a use.typekit.net és a p.typekit.net címre.',
 };
 
 const isAdobeFontUrl = (url: string): boolean => {
@@ -50,6 +56,7 @@ export const adobeFonts: Rule = {
           message: say(lang, {
             en: `Fonts are loaded from Adobe (${count} request${count === 1 ? '' : 's'}).`,
             de: `Schriften werden von Adobe geladen (${count} ${count === 1 ? 'Anfrage' : 'Anfragen'}).`,
+            hu: `Az oldal betűtípusokat tölt be az Adobe-tól (${count} kérés).`,
           }),
           pageUrl: page.finalUrl,
           evidence: [...new Set(requests.map((request) => request.url))].slice(0, 5),
@@ -70,12 +77,14 @@ export const adobeFonts: Rule = {
           message: say(lang, {
             en: 'The page preconnects to Adobe Fonts. No font was fetched, but the browser still opens a connection and transmits the IP address.',
             de: 'Die Seite baut vorab eine Verbindung zu Adobe Fonts auf. Es wurde keine Schrift geladen, aber der Browser öffnet trotzdem eine Verbindung und überträgt die IP-Adresse.',
+            hu: 'Az oldal előre kapcsolatot nyit az Adobe Fonts felé. Betűtípus nem töltődött le, de a böngésző így is kapcsolatot létesít, és továbbítja az IP-címet.',
           }),
           pageUrl: page.finalUrl,
           evidence: hints.map((hint) => `<link rel="${hint.rel}" href="${hint.href}">`),
           fix: say(lang, {
             en: 'Remove the leftover <link> tags pointing to Adobe Fonts.',
             de: 'Die übrig gebliebenen <link>-Tags zu Adobe Fonts entfernen.',
+            hu: 'Távolítsa el az Adobe Fonts felé mutató megmaradt <link> elemeket.',
           }),
         } satisfies Finding,
       ];

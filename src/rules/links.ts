@@ -9,7 +9,11 @@ export const linkMatches = (pattern: RegExp) => (link: PageLink) =>
   pattern.test(link.text) || pattern.test(pathOf(link.href));
 
 export const linksChecked = (count: number, lang: Lang) =>
-  say(lang, { en: `${count} links checked`, de: `${count} Links geprüft` });
+  say(lang, {
+    en: `${count} links checked`,
+    de: `${count} Links geprüft`,
+    hu: `${count} hivatkozás ellenőrizve`,
+  });
 
 export function pathOf(href: string): string {
   try {

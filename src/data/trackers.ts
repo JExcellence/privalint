@@ -276,6 +276,52 @@ export const trackers: readonly Tracker[] = [
     // _cs_optout is set when the visitor opts out and must not be reported as tracking.
     cookies: [/^_cs_(?!optout)/],
   },
+  // Hosts from the vendors' own documentation, checked 2026-11-06; sources in
+  // docs/rules/pre-consent-trackers.md.
+  {
+    // Some browsers send the conversion to www.google.com instead of googleadservices.com.
+    vendor: 'Google Ads',
+    category: 'advertising',
+    domains: ['google.com'],
+    paths: ['/pagead/1p-conversion/'],
+  },
+  {
+    vendor: 'Reddit Pixel',
+    category: 'advertising',
+    domains: ['alb.reddit.com', 'pixel-config.reddit.com'],
+  },
+  {
+    // dev.visualwebsiteoptimizer.com for accounts created before 14 June 2026, edge.wingify.net
+    // after; r1 to r3 take recordings, heatmaps and form analytics.
+    vendor: 'VWO',
+    category: 'analytics',
+    domains: [
+      'dev.visualwebsiteoptimizer.com',
+      'r1.visualwebsiteoptimizer.com',
+      'r2.visualwebsiteoptimizer.com',
+      'r3.visualwebsiteoptimizer.com',
+      'edge.wingify.net',
+    ],
+    cookies: ['_vwo_', '_vis_opt_', '_wingify_'],
+  },
+  {
+    vendor: 'Microsoft Xandr',
+    category: 'advertising',
+    domains: ['acdn.adnxs.com'],
+    paths: ['/dmp/up/'],
+  },
+  {
+    vendor: 'Microsoft Xandr',
+    category: 'advertising',
+    domains: ['ib.adnxs.com'],
+    paths: ['/pixie'],
+  },
+  {
+    vendor: 'Amazon Associates',
+    category: 'advertising',
+    domains: ['z-na.amazon-adsystem.com'],
+    paths: ['/widgets/onejs'],
+  },
 ];
 
 export function findTrackerByUrl(url: string): Tracker | undefined {

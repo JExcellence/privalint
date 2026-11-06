@@ -28,7 +28,7 @@ export function findTrackerHits(
   lang: Lang,
   storage: readonly StorageKey[] = [],
 ): TrackerHit[] {
-  const requestLabel = say(lang, { en: 'request', de: 'Anfrage' });
+  const requestLabel = say(lang, { en: 'request', de: 'Anfrage', hu: 'kérés' });
   const hits = new Map<string, { tracker: CookieTracker; evidence: Set<string> }>();
   const record = (tracker: CookieTracker, evidence: string) => {
     const hit = hits.get(tracker.vendor) ?? { tracker, evidence: new Set<string>() };
@@ -62,12 +62,16 @@ export function findTrackerHits(
 }
 
 const CATEGORY_LABELS: Record<TrackerCategory, Text> = {
-  analytics: { en: 'analytics', de: 'Analyse' },
-  advertising: { en: 'advertising', de: 'Werbung' },
-  'session-replay': { en: 'session-replay', de: 'Session-Replay' },
-  social: { en: 'social', de: 'Social Media' },
-  'marketing-automation': { en: 'marketing-automation', de: 'Marketing-Automatisierung' },
-  'tag-manager': { en: 'tag-manager', de: 'Tag-Manager' },
+  analytics: { en: 'analytics', de: 'Analyse', hu: 'analitika' },
+  advertising: { en: 'advertising', de: 'Werbung', hu: 'hirdetés' },
+  'session-replay': { en: 'session-replay', de: 'Session-Replay', hu: 'munkamenet-visszajátszás' },
+  social: { en: 'social', de: 'Social Media', hu: 'közösségi média' },
+  'marketing-automation': {
+    en: 'marketing-automation',
+    de: 'Marketing-Automatisierung',
+    hu: 'marketingautomatizálás',
+  },
+  'tag-manager': { en: 'tag-manager', de: 'Tag-Manager', hu: 'címkekezelő' },
 };
 
 export const categoryLabel = (category: TrackerCategory, lang: Lang) =>

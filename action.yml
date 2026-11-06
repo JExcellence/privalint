@@ -25,7 +25,7 @@ inputs:
     description: Comma-separated rule ids to skip.
     default: ""
   lang:
-    description: Language of the report and the job summary. One of en, de. Empty uses the config file, else en.
+    description: Language of the report and the job summary. One of en, de, hu. Empty uses the config file, else en.
     default: ""
   region:
     description: Tool reference and severity profile, not a determination of applicable law. One of de, at, ch, hu, eu. Empty uses the config file, else de.

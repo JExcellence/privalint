@@ -8,6 +8,8 @@ All notable changes are listed here. The format follows
 
 Upgrade notes:
 
+- New reports carry `schemaVersion: "1.5.0"`. It only adds the report language `hu`. Consumers
+  that accept 1.4.0 only must add 1.5.0 (`schemas/report-1.5.0.schema.json`).
 - On sites with subdomains, the first crawled page of up to five other hosts (`docs.`, `blog.`)
   now gets the consent, banner and HTTPS checks too. That can add findings and one consent run
   per host. `--host-checks main` or `"hostChecks": "main"` keeps the previous behaviour.
@@ -20,6 +22,13 @@ Upgrade notes:
 
 ### Added
 
+- Trackers from the vendors' own documentation: Google Ads conversions on `www.google.com`,
+  Reddit Pixel, VWO (hosts and cookies), Microsoft Xandr universal pixel and the Amazon Associates
+  oneTag (#71)
+- The Drupal banner EU Cookie Compliance is recognised by name, as seen on a Hungarian railway
+  site that offers only "accept all"
+- `--lang hu`: findings, fixes and the text, Markdown and SARIF reports in Hungarian, with
+  schema 1.5.0 for the new language value (#59)
 - New rule `privacy-policy-vendors`: trackers and cookie-setting embeds the start page uses that
   the privacy policy, or a cookie policy it links, doesn't name (warning); font services, CDNs and
   other listed services as info. Names match as whole words, with known other names (#105)
@@ -58,6 +67,26 @@ Upgrade notes:
 
 ### Fixed
 
+- Side loads of the legal notice and the privacy policy skip error pages (404, 500) and links that
+  lead nowhere, such as a "Privacy settings" button with `href="#"` before the policy link
+- `consent-preselected` only counts switches the visitor can actually switch off, and keeps what
+  it saw when a later step of the settings check fails
+- `legal-notice-content` recognises UK postcodes and Irish Eircodes, ignores floors written as
+  "OG"/"UG", legal forms of the host or web designer, copyright years, phone numbers and
+  "at office." when looking for address, e-mail and legal form
+- `privacy-policy-vendors` matches vendors named with a slash ("DoubleClick/Google Marketing")
+  and "X" as Twitter
+- `reject-less-prominent` measures translucent buttons on dark banners and `oklch()` colours
+- `tracking-cookie-lifetime` measures 13 calendar months, so a cookie set for exactly 13 months
+  is never reported
+- Hungarian report text uses the right article before abbreviations and numbers ("az SE", "az 5")
+- Grouped findings in text and Markdown reports keep different vendors with the same fix apart
+- `privacy-policy-vendors` drops to info when the privacy policy links a cookie policy it can't
+  read, such as a PDF, and names that link
+- Text and Markdown reports also show a `third-country-providers` or `third-party-cdns` finding
+  that repeats on several pages once per vendor
+- `consent-preselected` is evaluated whenever the settings layer opened, also when no save button
+  was found; before, it was not evaluable there
 - A video, image or font over `maxResponseBytes` no longer makes an adapter scan page partial. It
   is delivered without its body, with status and headers kept, and noted as `resource-limit` with
   `skippedReason: 'policy'` (#100)

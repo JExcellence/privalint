@@ -80,6 +80,14 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
   { name: 'iubenda', accept: '.iubenda-cs-accept-btn', reject: '.iubenda-cs-reject-btn' },
   { name: 'Klaro', accept: '.klaro .cm-btn-success', reject: '.klaro .cm-btn-decline' },
   {
+    // The Drupal module eu_cookie_compliance. The accept button was seen on mavcsoport.hu on
+    // 2026-11-06; that site shows no decline button, so the reject selector is unchecked and the
+    // label fallback still applies.
+    name: 'EU Cookie Compliance',
+    accept: '.eu-cookie-compliance-banner .agree-button',
+    reject: '.eu-cookie-compliance-banner .decline-button',
+  },
+  {
     name: 'CookieConsent',
     accept: '#cc-main [data-role="all"]',
     reject: '#cc-main [data-role="necessary"]',
@@ -319,6 +327,8 @@ export async function observeSettings(
     return { outcome: 'no-settings-control', reason: 'no-settings-control' };
   }
   const timeout = Math.min(5_000, options.timeoutMs);
+  // Kept when a later step fails: what was switched on in advance was seen all the same.
+  let seen: { openLabel: string; preselected: string[] } | undefined;
   try {
     const openLabel = await label(entry.open);
     await entry.open.click({ timeout });
@@ -330,6 +340,7 @@ export async function observeSettings(
       switchedOff += await switchOffOptional(frame, preselected);
       switchedOff += await selectNarrowestLevel(frame, preselected);
     }
+    seen = { openLabel, preselected };
     const legitimateInterest = await objectToLegitimateInterest(page, options);
     const save = await findSaveControl(page, entry.cmp);
     if (save === undefined) {
@@ -373,6 +384,7 @@ export async function observeSettings(
     return {
       outcome: 'interaction-failed',
       reason: 'browser-interaction-failed',
+      ...(seen ?? {}),
       error: classifyLoadError(error),
     };
   }
@@ -548,10 +560,7 @@ async function switchOffOptional(frame: Frame, preselected?: string[]): Promise<
     const inLayer =
       shown && (await handle.evaluate(inConsentLayer, CONSENT_CONTEXT.source).catch(() => false));
     if (inLayer) {
-      // The locator only matched switches that were on: an optional category chosen in advance.
-      if (preselected !== undefined && preselected.length < 10) {
-        preselected.push(await handle.evaluate(toggleLabel).catch(() => ''));
-      }
+      const name = await handle.evaluate(toggleLabel).catch(() => '');
       // A real click, not `.checked = false`: consent managers listen for click and change events.
       await handle.click({ force: true, timeout: 2_000 }).catch(() => undefined);
       const off = await handle
@@ -562,6 +571,9 @@ async function switchOffOptional(frame: Frame, preselected?: string[]): Promise<
         )
         .catch(() => false);
       if (off) changed++;
+      // The locator only matched switches that were on. One that the visitor can switch off was
+      // an optional category chosen in advance; one that stays on is locked, like "necessary".
+      if (off && preselected !== undefined && preselected.length < 10) preselected.push(name);
     }
     await handle.dispose();
   }
@@ -633,14 +645,16 @@ async function selectNarrowestLevel(frame: Frame, preselected?: string[]): Promi
   let changed = 0;
   for (const { narrowest, checked, chosen } of groups.values()) {
     if (narrowest !== undefined && !checked) {
-      // A wider level than necessary-only was selected before the visitor chose anything.
-      if (chosen !== undefined && preselected !== undefined) preselected.push(chosen.trim());
       // Styled radios hide the input; a forced click still fires the events the banner listens to.
       await narrowest.click({ force: true, timeout: 2_000 }).catch(() => undefined);
       const selected = await narrowest
         .evaluate((node) => (node as HTMLInputElement).checked)
         .catch(() => false);
       if (selected) changed++;
+      // A wider level than necessary-only was selected before the visitor chose anything.
+      if (selected && chosen !== undefined && preselected !== undefined) {
+        preselected.push(chosen.trim());
+      }
     }
   }
   await Promise.all(handles.map((handle) => handle.dispose()));
@@ -875,14 +889,23 @@ async function describe(accept: Locator, reject: Locator | undefined, cmp?: stri
  * contrast of its text against the first solid background behind it (white if there is none).
  */
 function controlLook(element: Element): ControlLook {
+  // A canvas converts any CSS colour (oklch(), color(), named) to sRGB; rgb() is parsed directly.
+  const context = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
   const rgba = (value: string): number[] | undefined => {
     const parts = /^rgba?\(([^)]*)\)$/
       .exec(value.trim())?.[1]
       ?.split(/[\s,/]+/)
       .filter((part) => part !== '')
       .map(Number);
-    if (parts === undefined || parts.length < 3 || parts.some(Number.isNaN)) return undefined;
-    return [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0, parts[3] ?? 1];
+    if (parts !== undefined && parts.length >= 3 && !parts.some(Number.isNaN)) {
+      return [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0, parts[3] ?? 1];
+    }
+    if (context === null || !CSS.supports('color', value)) return undefined;
+    context.clearRect(0, 0, 1, 1);
+    context.fillStyle = value;
+    context.fillRect(0, 0, 1, 1);
+    const [r = 0, g = 0, b = 0, a = 0] = context.getImageData(0, 0, 1, 1).data;
+    return [r, g, b, a / 255];
   };
   const over = (top: number[], bottom: number[]) =>
     [0, 1, 2].map((i) => (top[i] ?? 0) * (top[3] ?? 1) + (bottom[i] ?? 0) * (1 - (top[3] ?? 1)));
@@ -907,23 +930,23 @@ function controlLook(element: Element): ControlLook {
   );
   const filled = (own?.[3] ?? 0) > 0 || style.backgroundImage !== 'none';
 
-  let behind: number[] | undefined = [255, 255, 255];
+  // Backgrounds from the control outwards up to the first opaque one, then stacked from the
+  // outside in over white: a translucent button on a dark banner stays dark.
+  const layers: number[][] = [];
+  let measurable = true;
   for (let node: Element | null = element; node !== null; node = parentOf(node)) {
     const nodeStyle = getComputedStyle(node);
-    if (nodeStyle.backgroundImage !== 'none') {
-      behind = undefined;
-      break;
-    }
     const color = rgba(nodeStyle.backgroundColor);
-    if (color === undefined) {
-      behind = undefined;
+    if (nodeStyle.backgroundImage !== 'none' || color === undefined) {
+      measurable = false;
       break;
     }
-    if ((color[3] ?? 0) > 0) {
-      behind = over(color, [255, 255, 255]);
-      break;
-    }
+    if ((color[3] ?? 0) > 0) layers.push(color);
+    if ((color[3] ?? 0) >= 1) break;
   }
+  const behind = measurable
+    ? layers.reduceRight<number[]>((under, layer) => over(layer, under), [255, 255, 255])
+    : undefined;
   const text = rgba(style.color);
   const box = element.getBoundingClientRect();
   const look: ControlLook = {

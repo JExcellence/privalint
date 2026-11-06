@@ -1,12 +1,12 @@
 import { findProvider, isThirdCountry } from '../data/providers.js';
-import { say } from '../i18n.js';
+import { huArticle, say, type Text } from '../i18n.js';
 import { observedRequests } from '../observations.js';
 import type { Finding, Rule } from '../types.js';
 
 const ID = 'third-country-providers';
 const MAX_HOSTS = 5;
-const COUNTRY_NAMES: Record<string, { en: string; de: string }> = {
-  US: { en: 'USA', de: 'USA' },
+const COUNTRY_NAMES: Record<string, Text> = {
+  US: { en: 'USA', de: 'USA', hu: 'USA' },
 };
 
 export const thirdCountryProviders: Rule = {
@@ -38,6 +38,7 @@ export const thirdCountryProviders: Rule = {
         message: say(lang, {
           en: `${vendor} (${where}) receives data before consent. Transfers ${swiss ? 'abroad' : 'outside the EU/EEA'} need a legal basis.`,
           de: `${vendor} (${where}) erhält schon vor der Einwilligung Daten. Übermittlungen ${swiss ? 'ins Ausland' : 'außerhalb von EU/EWR'} brauchen eine Rechtsgrundlage.`,
+          hu: `${huArticle(vendor, true)} ${vendor} (${where}) már a hozzájárulás előtt adatokat kap. ${swiss ? 'A külföldre' : 'Az EU-n és az EGT-n kívülre'} irányuló adattovábbításhoz jogalap kell.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [...hosts].slice(0, MAX_HOSTS),
@@ -45,10 +46,12 @@ export const thirdCountryProviders: Rule = {
           ? say(lang, {
               en: `Check that ${vendor} is certified under the Swiss-US Data Privacy Framework or that contract clauses approved under Art. 16 DSG are in place, and name the transfer in the privacy policy.`,
               de: `Prüfen, ob ${vendor} unter dem Swiss-US Data Privacy Framework zertifiziert ist oder nach Art. 16 DSG anerkannte Vertragsklauseln vereinbart sind, und die Übermittlung in der Datenschutzerklärung nennen.`,
+              hu: `Ellenőrizze, hogy ${huArticle(vendor)} ${vendor} rendelkezik-e Swiss-US Data Privacy Framework tanúsítással, vagy alkalmaznak-e az Art. 16 DSG szerint elismert szerződéses kikötéseket, és nevezze meg az adattovábbítást az adatkezelési tájékoztatóban.`,
             })
           : say(lang, {
               en: `Check that ${vendor} is certified under the EU-US Data Privacy Framework or that standard contractual clauses are in place, and name the transfer in the privacy policy. Where the provider offers an EU region, using it avoids the transfer.`,
               de: `Prüfen, ob ${vendor} unter dem EU-US Data Privacy Framework zertifiziert ist oder Standardvertragsklauseln vereinbart sind, und die Übermittlung in der Datenschutzerklärung nennen. Bietet der Anbieter eine EU-Region an, vermeidet sie die Übermittlung.`,
+              hu: `Ellenőrizze, hogy ${huArticle(vendor)} ${vendor} rendelkezik-e EU-US Data Privacy Framework tanúsítással, vagy alkalmaznak-e általános adatvédelmi kikötéseket (SCC), és nevezze meg az adattovábbítást az adatkezelési tájékoztatóban. Ha a szolgáltató kínál EU-s régiót, annak használatával az adattovábbítás elkerülhető.`,
             }),
       };
     });

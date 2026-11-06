@@ -32,12 +32,14 @@ export const withdrawalButton: Rule = {
         message: say(lang, {
           en: 'This looks like an online shop, but no link to a withdrawal function ("withdraw from contract here") was found on the start page.',
           de: 'Die Seite sieht aus wie ein Onlineshop, aber auf der Startseite wurde kein Link zur Widerrufsfunktion („Vertrag widerrufen“) gefunden.',
+          hu: 'Az oldal webáruháznak tűnik, de a kezdőlapon nem található hivatkozás elállási funkcióra („Elállás a szerződéstől”).',
         }),
         pageUrl: page.finalUrl,
         evidence: [linksChecked(page.links.length, lang)],
         fix: say(lang, {
           en: 'Add a clearly labelled "Withdraw from contract here" link to the footer of every page, leading to a form that asks for the order and ends with a "Confirm withdrawal" button. A cancellation policy page alone is not enough.',
           de: 'Einen gut sichtbaren Link „Vertrag widerrufen“ in den Footer jeder Seite setzen, der zu einem Formular mit den Bestelldaten und der Schaltfläche „Widerruf bestätigen“ führt. Eine Widerrufsbelehrung allein reicht nicht.',
+          hu: 'Helyezzen el minden oldal láblécében egy jól látható „Elállás a szerződéstől” hivatkozást, amely a rendelés adatait bekérő űrlapra vezet, és „Elállás megerősítése” gombbal zárul. Az elállási tájékoztató önmagában nem elég.',
         }),
       },
     ];

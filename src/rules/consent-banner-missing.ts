@@ -29,20 +29,27 @@ export const consentBannerMissing: Rule = {
         message: say(lang, {
           en: `No consent banner was found, but ${list} run before any interaction. Visitors can't give or refuse consent.`,
           de: `Es wurde kein Cookie-Banner gefunden, aber ${list} laufen ohne jede Interaktion. Besucher können weder einwilligen noch ablehnen.`,
+          hu: `Nem található sütibanner, de a következők minden interakció előtt futnak: ${list}. A látogatók nem tudnak hozzájárulni vagy elutasítani.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [
           say(lang, {
             en: `Looked for a banner for ${page.consent.bannerWaitMs ?? 0} ms more after the page settled`,
             de: `Nach dem Laden noch ${page.consent.bannerWaitMs ?? 0} ms nach einem Banner gesucht`,
+            hu: `A betöltés után a privalint még ${page.consent.bannerWaitMs ?? 0} ms-ig keresett bannert`,
           }),
           ...vendors.map((vendor) =>
-            say(lang, { en: `Tracker: ${vendor}`, de: `Tracker: ${vendor}` }),
+            say(lang, {
+              en: `Tracker: ${vendor}`,
+              de: `Tracker: ${vendor}`,
+              hu: `Nyomkövető: ${vendor}`,
+            }),
           ),
         ],
         fix: say(lang, {
           en: 'Add a consent manager that blocks these tools until the visitor opts in, with "accept" and "reject" on its first layer. If a banner exists but privalint missed it, please report the site.',
           de: 'Ein Consent-Tool einbinden, das diese Dienste bis zur Einwilligung blockiert, mit „Akzeptieren“ und „Ablehnen“ auf der ersten Ebene. Gibt es ein Banner, das privalint übersehen hat, bitte die Seite melden.',
+          hu: 'Építsen be egy hozzájárulás-kezelőt, amely a hozzájárulásig blokkolja ezeket az eszközöket, és az első szinten „Elfogadom” és „Elutasítom” gombot kínál. Ha van banner, de a privalint nem találta meg, kérjük, jelezze az oldalt.',
         }),
       } satisfies Finding,
     ];

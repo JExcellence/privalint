@@ -1,4 +1,4 @@
-import { type Lang, say } from '../i18n.js';
+import { huArticle, type Lang, say } from '../i18n.js';
 import type { ControlLook, Rule } from '../types.js';
 
 const ID = 'reject-less-prominent';
@@ -29,7 +29,13 @@ export const rejectLessProminent: Rule = {
     const { accept, reject } = controls;
     const reasons: string[] = [];
     if (reject.style === 'text' && accept.style === 'button') {
-      reasons.push(say(lang, { en: 'shown as plain text', de: 'als bloßer Text dargestellt' }));
+      reasons.push(
+        say(lang, {
+          en: 'shown as plain text',
+          de: 'als bloßer Text dargestellt',
+          hu: 'egyszerű szövegként jelenik meg',
+        }),
+      );
     }
     const rejectArea = reject.width * reject.height;
     const acceptArea = accept.width * accept.height;
@@ -39,6 +45,7 @@ export const rejectLessProminent: Rule = {
         say(lang, {
           en: `the accept button is ${ratio} times its size`,
           de: `der Zustimmen-Button ist ${ratio}-mal so groß`,
+          hu: `az elfogadás gomb sokkal nagyobb (területarány ${ratio}:1)`,
         }),
       );
     }
@@ -52,6 +59,7 @@ export const rejectLessProminent: Rule = {
         say(lang, {
           en: `low text contrast (${reject.contrast}:1)`,
           de: `geringer Textkontrast (${reject.contrast}:1)`,
+          hu: `alacsony szövegkontraszt (${reject.contrast}:1)`,
         }),
       );
     }
@@ -66,15 +74,27 @@ export const rejectLessProminent: Rule = {
         message: say(lang, {
           en: `The reject control "${rejectLabel}" is less prominent than "${acceptLabel}": ${reasons.join('; ')}.`,
           de: `Die Ablehnen-Steuerung „${rejectLabel}“ fällt weniger auf als „${acceptLabel}“: ${reasons.join('; ')}.`,
+          hu: `${huArticle(rejectLabel, true)} „${rejectLabel}” elutasítási lehetőség kevésbé feltűnő, mint ${huArticle(acceptLabel)} „${acceptLabel}”: ${reasons.join('; ')}.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [
-          describe(lang, say(lang, { en: 'accept', de: 'Zustimmen' }), acceptLabel, accept),
-          describe(lang, say(lang, { en: 'reject', de: 'Ablehnen' }), rejectLabel, reject),
+          describe(
+            lang,
+            say(lang, { en: 'accept', de: 'Zustimmen', hu: 'elfogadás' }),
+            acceptLabel,
+            accept,
+          ),
+          describe(
+            lang,
+            say(lang, { en: 'reject', de: 'Ablehnen', hu: 'elutasítás' }),
+            rejectLabel,
+            reject,
+          ),
         ],
         fix: say(lang, {
           en: 'Give the reject control the same form, size and contrast as the accept button, for example two buttons of the same style side by side.',
           de: 'Der Ablehnen-Steuerung dieselbe Form, Größe und denselben Kontrast wie dem Zustimmen-Button geben, etwa zwei gleich gestaltete Buttons nebeneinander.',
+          hu: 'Adjon az elutasítási lehetőségnek ugyanolyan formát, méretet és kontrasztot, mint az elfogadás gombnak, például két egyforma stílusú gombot egymás mellett.',
         }),
       },
     ];
@@ -84,11 +104,15 @@ export const rejectLessProminent: Rule = {
 function describe(lang: Lang, role: string, label: string, look: ControlLook): string {
   const style =
     look.style === 'button'
-      ? say(lang, { en: 'button', de: 'Button' })
-      : say(lang, { en: 'plain text', de: 'Text' });
+      ? say(lang, { en: 'button', de: 'Button', hu: 'gomb' })
+      : say(lang, { en: 'plain text', de: 'Text', hu: 'szöveg' });
   const contrast =
     look.contrast === undefined
       ? ''
-      : say(lang, { en: `, contrast ${look.contrast}:1`, de: `, Kontrast ${look.contrast}:1` });
+      : say(lang, {
+          en: `, contrast ${look.contrast}:1`,
+          de: `, Kontrast ${look.contrast}:1`,
+          hu: `, kontraszt ${look.contrast}:1`,
+        });
   return `${role} "${label}": ${style}, ${look.width}×${look.height} px${contrast}`;
 }

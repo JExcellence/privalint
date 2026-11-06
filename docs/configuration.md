@@ -11,7 +11,7 @@ Files are limited to 64 KiB. Do not store credentials in config; URL credentials
 
 Supported fields: `url` (absolute HTTP(S)), `maxPages` (positive integer), `concurrency`
 (positive integer, pages loaded at the same time), `settleMs` (nonnegative),
-`timeoutMs` (positive), `locale`, `lang` (`en`/`de`), `region` (`de`/`at`/`ch`/`hu`/`eu`),
+`timeoutMs` (positive), `locale`, `lang` (`en`/`de`/`hu`), `region` (`de`/`at`/`ch`/`hu`/`eu`),
 `consentCheck`, `settingsCheck` and `failOnIncomplete` (booleans), `hostChecks` (`each`/`main`), `rules` (known IDs to `off`/`error`/`warning`/`info`) and
 `allow: { vendors: string[] }` (exact, case-sensitive finding `subject` names).
 

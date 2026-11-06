@@ -101,3 +101,19 @@ some of these tools on their own subdomain (CNAME); privalint can't recognise th
 | Chartbeat                                 | `static.chartbeat.com`, `ping.chartbeat.net`                                                        | [Chartbeat JavaScript](https://docs.chartbeat.com/cbp/tracking/standard-websites/our-javascript)                             |
 | Comscore                                  | `scorecardresearch.com`                                                                             | [Comscore support](https://direct-support.comscore.com/hc/en-us/articles/360002578333)                                       |
 | Facebook SDK                              | `connect.facebook.net/<locale>/sdk.js` (category social, apart from the Meta Pixel)                 | [Facebook JavaScript SDK quickstart](https://developers.facebook.com/docs/javascript/quickstart)                             |
+
+
+## Sources for the hosts added on 2026-11-06
+
+Read on 2026-11-06. Hosts the vendor doesn't name itself stay off the list: the Reddit script path,
+the Amazon Ads tag (named only in a GitHub template, not on an Amazon site) and ProvenExpert.
+
+| Vendor            | Hosts                                                | Source                                                                                                                   |
+| ----------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Google Ads        | `www.google.com/pagead/1p-conversion/`               | [Google Ads: verify conversion tracking](https://support.google.com/google-ads/answer/13258081)                          |
+| Reddit Pixel      | `alb.reddit.com`, `pixel-config.reddit.com`          | [About the Reddit Pixel](https://business.reddithelp.com/articles/Knowledge/reddit-pixel)                                |
+| VWO               | `dev.visualwebsiteoptimizer.com`, `edge.wingify.net` | [Wingify for WordPress](https://help.wingify.com/hc/en-us/articles/59247859917465-Integrate-Wingify-with-WordPress)      |
+| VWO               | `r1.` to `r3.visualwebsiteoptimizer.com`             | [Wingify reverse proxy](https://help.wingify.com/hc/en-us/articles/58762169770265-Reverse-Proxy-Methodology-for-Wingify) |
+| VWO               | cookies `_vwo_*`, `_vis_opt_*`, `_wingify_*`         | [Cookies stored by Wingify](https://help.wingify.com/hc/en-us/articles/58793798517785-Cookies-Stored-by-Wingify)         |
+| Microsoft Xandr   | `acdn.adnxs.com/dmp/up/`, `ib.adnxs.com/pixie`       | [Universal pixel code structure](https://learn.microsoft.com/en-us/xandr/monetize/universal-pixel-code-structure)        |
+| Amazon Associates | `z-na.amazon-adsystem.com/widgets/onejs`             | [Amazon Associates oneTag](https://affiliate-program.amazon.com/help/node/topic/GZ2P5RSW6AMWWKTM)                        |

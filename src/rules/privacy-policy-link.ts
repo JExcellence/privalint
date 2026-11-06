@@ -1,4 +1,4 @@
-import { say } from '../i18n.js';
+import { huArticle, say } from '../i18n.js';
 import type { Rule } from '../types.js';
 import { legalLabels } from './legal-labels.js';
 import { linkMatches, linksChecked } from './links.js';
@@ -27,12 +27,14 @@ export const privacyPolicyLink: Rule = {
         message: say(lang, {
           en: 'No link to a privacy policy was found.',
           de: 'Kein Link zur Datenschutzerklärung gefunden.',
+          hu: 'Nem található hivatkozás adatkezelési tájékoztatóra.',
         }),
         pageUrl: page.finalUrl,
         evidence: [linksChecked(page.links.length, lang)],
         fix: say(lang, {
           en: `Add a link labelled "${privacy}" next to the "${notice}" link in the footer.`,
           de: `Einen Link „${privacy}“ neben dem Link „${notice}“ in den Footer setzen.`,
+          hu: `Helyezzen el a láblécben egy „${privacy}” feliratú hivatkozást, ${huArticle(notice)} „${notice}” hivatkozás mellett.`,
         }),
       },
     ];

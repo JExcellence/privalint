@@ -45,4 +45,5 @@ the transfer outside the EU. If the site no longer needs a service, remove it in
   privalint never accepts a banner, so services that only load after consent are not checked.
 - A name in the policy is enough; whether the description is correct is not checked.
 - Policies on another domain, in a PDF or split over more than one linked page are only partly
-  read.
+  read. When the policy links a cookie policy that can't be read, such as a PDF, every finding
+  drops to `info` and names the unread link.

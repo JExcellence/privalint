@@ -110,6 +110,49 @@ const de: ReportMessages = {
   },
 };
 
-const MESSAGES: Record<Lang, ReportMessages> = { en, de };
+// Hungarian keeps the noun singular after a number: "3 hiba", "2 oldal".
+const hu: ReportMessages = {
+  errors: (n) => `${n} hiba`,
+  warnings: (n) => `${n} figyelmeztetés`,
+  pages: (n) => `${n} oldal`,
+  duration: (ms) => `${(ms / 1000).toFixed(1).replace('.', ',')} mp`,
+  noProblems: (pages, duration) => `Nem található probléma (${pages}, ${duration}).`,
+  on: '·',
+  scanned: (pages) => `${pages} ellenőrizve`,
+  couldNotScan: (n) => `${n} oldalt nem sikerült ellenőrizni:`,
+  severalPages: 'Több oldalon',
+  onPages: (n, total) => `${total} oldalból ${n} oldalon:`,
+  offSite: (n) =>
+    `Nincs ellenőrizve, ${n === 1 ? 'ez a hivatkozás másik webhelyre irányít' : 'ezek a hivatkozások másik webhelyre irányítanak'}:`,
+  fix: 'megoldás:',
+  legalBasis: 'jogalap:',
+  rule: 'Szabály',
+  finding: 'Megállapítás',
+  howToFix: 'Javítás módja',
+  disclaimer:
+    'Csak automatikus ellenőrzés. A hibátlan eredmény nem bizonyítja a GDPR-nak való megfelelést.',
+  policy: (allowed, severity) =>
+    allowed
+      ? 'Helyi szabályzat: a szolgáltató engedélyezve; tájékoztatásként megtartva. Nem jogi jóváhagyás.'
+      : `Helyi szabályzat: módosított súlyosság (eredetileg: ${severity}).`,
+  consent(consent) {
+    if (consent.state === 'interaction-failed') {
+      return `Hozzájárulás-ellenőrzés: a művelet sikertelen (${consent.error ?? 'browser-failure'}); az elutasítás nincs ellenőrizve`;
+    }
+    if (!consent.bannerFound) {
+      return 'Sütibanner: nem található; az elutasítás nincs ellenőrizve (nem adatvédelmi megállapítás)';
+    }
+    const vendor = consent.cmp === undefined ? '' : ` (${consent.cmp})`;
+    if (consent.error !== undefined) {
+      return `Sütibanner${vendor}: megtalálva, de az elutasítás sikertelen: ${consent.error}`;
+    }
+    if (consent.rejected) {
+      return `Sütibanner${vendor}: kattintás erre: „${consent.rejectLabel}”, majd újratöltés${consent.afterRejectComplete === false ? '; a megfigyelés hiányos' : ''}`;
+    }
+    return `Sütibanner${vendor}: megtalálva, de nincs támogatott elutasítási lehetőség; az elutasítás nincs ellenőrizve`;
+  },
+};
+
+const MESSAGES: Record<Lang, ReportMessages> = { en, de, hu };
 
 export const messagesFor = (lang: Lang): ReportMessages => MESSAGES[lang];

@@ -19,7 +19,16 @@ export function groupByPage(findings: readonly Finding[]): Map<string, Finding[]
  * Rules about something every page should have, such as the footer links. The same finding on
  * several pages has the same cause, usually one layout, so reports show it once.
  */
-const SITE_WIDE = new Set(['impressum-link', 'privacy-policy-link']);
+/**
+ * Rules whose finding is usually the same on every page: a footer link that is missing, or a
+ * service the whole site loads. Grouped by rule, severity and fix, so one vendor stays one group.
+ */
+const SITE_WIDE = new Set([
+  'impressum-link',
+  'privacy-policy-link',
+  'third-country-providers',
+  'third-party-cdns',
+]);
 
 export interface SiteWideFinding {
   /** The first page's finding. */
@@ -28,7 +37,8 @@ export interface SiteWideFinding {
 }
 
 /**
- * Splits findings into those that repeat across pages (same rule, severity and fix) and the rest.
+ * Splits findings into those that repeat across pages (same rule, severity, subject and fix) and
+ * the rest.
  * Reports only: the JSON and SARIF keep one finding per page.
  */
 export function splitSiteWide(findings: readonly Finding[]): {
@@ -40,10 +50,12 @@ export function splitSiteWide(findings: readonly Finding[]): {
     if (!SITE_WIDE.has(finding.ruleId)) continue;
     const key = `${finding.ruleId}
 ${finding.severity}
+${finding.subject ?? ''}
 ${finding.fix ?? ''}`;
     groups.set(key, [...(groups.get(key) ?? []), finding]);
   }
-  const repeated = [...groups.values()].filter((group) => group.length > 1);
+  // Two findings of one group on the same page don't make it site-wide.
+  const repeated = [...groups.values()].filter((group) => new Set(group.map(pageLabel)).size > 1);
   const grouped = new Set(repeated.flat());
   return {
     siteWide: repeated.map((group) => ({

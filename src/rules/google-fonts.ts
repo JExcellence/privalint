@@ -20,6 +20,11 @@ const FIX: Text = {
     'herunter und liefert sie von der eigenen Domain aus. Sonst die Schrift über @fontsource ' +
     'installieren oder mit dem google-webfonts-helper herunterladen und danach alle Verweise auf ' +
     'fonts.googleapis.com und fonts.gstatic.com entfernen.',
+  hu:
+    'Tárolja a betűtípusfájlokat a saját szerverén. Next.js-ben a next/font/google build közben ' +
+    'letölti a betűtípusokat, és a saját domainről szolgálja ki őket. Máshol telepítse a családot ' +
+    'a @fontsource csomagból, vagy töltse le a google-webfonts-helperrel, majd távolítson el minden ' +
+    'hivatkozást a fonts.googleapis.com és a fonts.gstatic.com címre.',
 };
 
 const isGoogleFontUrl = (url: string): boolean => {
@@ -47,6 +52,7 @@ export const googleFonts: Rule = {
           message: say(lang, {
             en: `Fonts are loaded from Google (${count} request${count === 1 ? '' : 's'}).`,
             de: `Schriften werden von Google geladen (${count} ${count === 1 ? 'Anfrage' : 'Anfragen'}).`,
+            hu: `Az oldal betűtípusokat tölt be a Google-tól (${count} kérés).`,
           }),
           pageUrl: page.finalUrl,
           evidence: [...new Set(requests.map((request) => request.url))].slice(0, 5),
@@ -68,12 +74,14 @@ export const googleFonts: Rule = {
           message: say(lang, {
             en: 'The page preconnects to Google Fonts. No font was fetched, but the browser still opens a connection and transmits the IP address.',
             de: 'Die Seite baut vorab eine Verbindung zu Google Fonts auf. Es wurde keine Schrift geladen, aber der Browser öffnet trotzdem eine Verbindung und überträgt die IP-Adresse.',
+            hu: 'Az oldal előre kapcsolatot nyit a Google Fonts felé. Betűtípus nem töltődött le, de a böngésző így is kapcsolatot létesít, és továbbítja az IP-címet.',
           }),
           pageUrl: page.finalUrl,
           evidence: hints.map((hint) => `<link rel="${hint.rel}" href="${hint.href}">`),
           fix: say(lang, {
             en: 'Remove the leftover <link> tags pointing to Google Fonts.',
             de: 'Die übrig gebliebenen <link>-Tags zu Google Fonts entfernen.',
+            hu: 'Távolítsa el a Google Fonts felé mutató megmaradt <link> elemeket.',
           }),
         } satisfies Finding,
       ];

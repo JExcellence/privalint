@@ -20,8 +20,12 @@ export const formPrivacyNotice: Rule = {
     if (bare.length === 0 || !page.links.some(linkMatches(PRIVACY_POLICY))) return [];
     const kinds = [...new Set(bare.map((form) => form.kind))].map((kind) =>
       kind === 'login'
-        ? say(lang, { en: 'login', de: 'Login' })
-        : say(lang, { en: 'contact or sign-up', de: 'Kontakt oder Anmeldung' }),
+        ? say(lang, { en: 'login', de: 'Login', hu: 'bejelentkezés' })
+        : say(lang, {
+            en: 'contact or sign-up',
+            de: 'Kontakt oder Anmeldung',
+            hu: 'kapcsolatfelvétel vagy regisztráció',
+          }),
     );
     return [
       {
@@ -30,17 +34,20 @@ export const formPrivacyNotice: Rule = {
         message: say(lang, {
           en: `${bare.length} form(s) collecting personal data (${kinds.join(', ')}) have no link to the privacy policy next to them.`,
           de: `${bare.length} Formular(e), die personenbezogene Daten erheben (${kinds.join(', ')}), haben keinen Link zur Datenschutzerklärung in der Nähe.`,
+          hu: `${bare.length} személyes adatokat gyűjtő űrlap (${kinds.join(', ')}) mellett nincs hivatkozás az adatkezelési tájékoztatóra.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [
           say(lang, {
             en: `${page.forms?.length ?? 0} forms with email, phone or password fields checked`,
             de: `${page.forms?.length ?? 0} Formulare mit E-Mail-, Telefon- oder Passwortfeld geprüft`,
+            hu: `${page.forms?.length ?? 0} e-mail-, telefon- vagy jelszómezőt tartalmazó űrlap ellenőrizve`,
           }),
         ],
         fix: say(lang, {
           en: 'Add a short line under the form, e.g. "We use your data to answer your request. Details: Privacy policy", with the link.',
           de: 'Unter dem Formular eine kurze Zeile ergänzen, z. B. „Wir verwenden Ihre Angaben, um Ihre Anfrage zu beantworten. Details: Datenschutzerklärung“, mit Link.',
+          hu: 'Helyezzen el egy rövid sort az űrlap alatt, pl. „Adatait a megkeresés megválaszolásához használjuk. Részletek: Adatkezelési tájékoztató”, hivatkozással.',
         }),
       },
     ];

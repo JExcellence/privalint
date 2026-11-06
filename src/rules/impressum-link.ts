@@ -1,4 +1,4 @@
-import { say } from '../i18n.js';
+import { huArticle, say } from '../i18n.js';
 import type { PageLink, Rule } from '../types.js';
 import { legalLabels } from './legal-labels.js';
 import { linkMatches, linksChecked, pathOf } from './links.js';
@@ -63,12 +63,17 @@ export const impressumLink: Rule = {
           message: say(lang, {
             en: `No link labelled "${notice}", but "${legal.text}" may lead to the provider information.`,
             de: `Kein Link „${notice}“, aber „${legal.text}“ führt möglicherweise zu den Anbieterangaben.`,
+            hu: `Nincs „${notice}” feliratú hivatkozás, de ${huArticle(legal.text)} „${legal.text}” hivatkozás a szolgáltató adataihoz vezethet.`,
           }),
           pageUrl: page.finalUrl,
-          evidence: [say(lang, { en: 'legal link: ', de: 'Rechts-Link: ' }) + legal.href],
+          evidence: [
+            say(lang, { en: 'legal link: ', de: 'Rechts-Link: ', hu: 'jogi hivatkozás: ' }) +
+              legal.href,
+          ],
           fix: say(lang, {
             en: `Check that this page holds the full provider information (name, address, e-mail, register entry). Labelling the link "${notice}" makes it easy to recognise.`,
             de: `Prüfen, ob diese Seite die vollständigen Anbieterangaben enthält (Name, Anschrift, E-Mail, Registereintrag). Die Beschriftung „${notice}“ macht den Link leicht erkennbar.`,
+            hu: `Ellenőrizze, hogy ez az oldal tartalmazza-e a szolgáltató összes adatát (név, cím, e-mail, cégjegyzékszám). ${huArticle(notice, true)} „${notice}” felirattal a hivatkozás könnyen felismerhető.`,
           }),
         },
       ];
@@ -83,9 +88,16 @@ export const impressumLink: Rule = {
           message: say(lang, {
             en: 'No direct Impressum link, only a contact link.',
             de: 'Kein direkter Impressum-Link, nur ein Kontakt-Link.',
+            hu: 'Nincs közvetlen impresszum-hivatkozás, csak kapcsolatfelvételi hivatkozás.',
           }),
           pageUrl: page.finalUrl,
-          evidence: [say(lang, { en: 'contact link: ', de: 'Kontakt-Link: ' }) + contact.href],
+          evidence: [
+            say(lang, {
+              en: 'contact link: ',
+              de: 'Kontakt-Link: ',
+              hu: 'kapcsolati hivatkozás: ',
+            }) + contact.href,
+          ],
           // The two-click ruling is German case law; elsewhere only the safer advice applies.
           fix: say(
             lang,
@@ -93,10 +105,12 @@ export const impressumLink: Rule = {
               ? {
                   en: `Two clicks via the contact page can be enough if the legal notice is clearly linked from there (BGH I ZR 228/03), but a direct "${notice}" link next to it is safer.`,
                   de: `Zwei Klicks über die Kontaktseite können reichen, wenn das Impressum dort klar verlinkt ist (BGH I ZR 228/03). Sicherer ist ein direkter Link „${notice}“ daneben.`,
+                  hu: `Két kattintás a kapcsolati oldalon keresztül elég lehet, ha onnan egyértelműen elérhető az impresszum (BGH I ZR 228/03), de biztonságosabb mellette egy közvetlen „${notice}” hivatkozás.`,
                 }
               : {
                   en: `A contact page may not count as directly reachable provider information. Add a direct "${notice}" link next to it.`,
                   de: `Eine Kontaktseite gilt möglicherweise nicht als unmittelbar erreichbare Anbieterkennzeichnung. Einen direkten Link „${notice}“ daneben setzen.`,
+                  hu: `Egy kapcsolati oldal nem feltétlenül számít közvetlenül elérhető szolgáltatói tájékoztatásnak. Helyezzen el mellette egy közvetlen „${notice}” hivatkozást.`,
                 },
           ),
         },
@@ -110,12 +124,14 @@ export const impressumLink: Rule = {
         message: say(lang, {
           en: 'No link to an Impressum or legal notice was found.',
           de: 'Kein Link zu einem Impressum gefunden.',
+          hu: 'Nem található hivatkozás impresszumra vagy jogi nyilatkozatra.',
         }),
         pageUrl: page.finalUrl,
         evidence: [linksChecked(page.links.length, lang)],
         fix: say(lang, {
           en: `Add a link labelled "${notice}" to a part of the layout that appears on every page, usually the footer.`,
           de: `Einen Link „${notice}“ in einen Bereich einbauen, der auf jeder Seite erscheint, meist den Footer.`,
+          hu: `Helyezzen el egy „${notice}” feliratú hivatkozást az elrendezés olyan részén, amely minden oldalon megjelenik, általában a láblécben.`,
         }),
       },
     ];
