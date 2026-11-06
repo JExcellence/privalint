@@ -36,6 +36,22 @@ describe('sitemap pages', () => {
     expect(await sitemapPages(SITE, files({}), 5)).toEqual([]);
   });
 
+  it('prefers shallow form pages from different sections, for half the pages at most', () => {
+    const urls = [
+      '/arena/studio/foglalas-torlese',
+      '/arena/studio/foglalas',
+      '/kontakt',
+      '/blog/a',
+      '/shop/b',
+    ].map((path) => new URL(path, SITE).href);
+    expect(choosePages(urls, SITE, 4)).toEqual([
+      'https://example.de/kontakt',
+      'https://example.de/arena/studio/foglalas-torlese',
+      'https://example.de/arena/studio/foglalas',
+      'https://example.de/blog/a',
+    ]);
+  });
+
   it('puts pages with forms first, then one page per section in turn', () => {
     const urls = [
       '/de/blog/1',

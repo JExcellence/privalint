@@ -50,23 +50,34 @@ export async function sitemapPages(
 }
 
 /**
- * Up to `limit` distinct pages: likely form pages first, then round-robin over sections. A section
- * is the directory a page sits in, so `/de/produkte/a` and `/de/produkte/b` share one while
- * `/de/kontakt` and `/de/blog/x` don't.
+ * Up to `limit` distinct pages. First, likely form pages, the shallowest first and at most one per
+ * section, for up to half the pages (at least one). Then the rest round-robin over sections. A
+ * section is the directory a page sits in, so `/de/produkte/a` and `/de/produkte/b` share one
+ * while `/de/kontakt` and `/de/blog/x` don't.
  */
 export function choosePages(urls: readonly string[], siteUrl: URL, limit: number): string[] {
   const start = crawlTarget(siteUrl.href, siteUrl);
   const candidates = [
     ...new Set(urls.map((url) => crawlTarget(url, siteUrl)).filter((url) => url !== undefined)),
   ].filter((url) => url !== start);
-  const priority = candidates.filter((url) => PRIORITY.test(new URL(url).pathname));
+  const sectionOf = (url: string) => new URL(url).pathname.replace(/\/[^/]*\/?$/, '');
+  const depth = (url: string) => new URL(url).pathname.split('/').filter(Boolean).length;
+  const chosen: string[] = [];
+  const prioritySections = new Set<string>();
+  const priority = candidates
+    .filter((url) => PRIORITY.test(new URL(url).pathname))
+    .sort((a, b) => depth(a) - depth(b));
+  for (const url of priority) {
+    if (chosen.length >= Math.max(1, Math.floor(limit / 2))) break;
+    if (prioritySections.has(sectionOf(url))) continue;
+    prioritySections.add(sectionOf(url));
+    chosen.push(url);
+  }
   const sections = new Map<string, string[]>();
   for (const url of candidates) {
-    if (priority.includes(url)) continue;
-    const section = new URL(url).pathname.replace(/\/[^/]*\/?$/, '');
-    sections.set(section, [...(sections.get(section) ?? []), url]);
+    if (chosen.includes(url)) continue;
+    sections.set(sectionOf(url), [...(sections.get(sectionOf(url)) ?? []), url]);
   }
-  const chosen = priority.slice(0, limit);
   const queues = [...sections.values()];
   while (chosen.length < limit && queues.some((queue) => queue.length > 0)) {
     for (const queue of queues) {
@@ -74,7 +85,7 @@ export function choosePages(urls: readonly string[], siteUrl: URL, limit: number
       if (next !== undefined && chosen.length < limit) chosen.push(next);
     }
   }
-  return chosen;
+  return chosen.slice(0, limit);
 }
 
 function decodeXml(text: string): string {
