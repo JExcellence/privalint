@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>OneTrust banner, Google Analytics not blocked</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ONETRUST"></script>
+  </head>
+  <body>
+    <h1>Welcome</h1>
+    <footer>
+      <a href="/clean/impressum.html">Imprint</a>
+      <a href="/clean/datenschutz.html">Privacy policy</a>
+      <button type="button" class="ot-sdk-show-settings">Cookie settings</button>
+    </footer>
+    <div id="onetrust-banner-sdk" role="dialog" aria-label="Cookie banner">
+      <p>We use cookies to understand how you use our site.</p>
+      <button id="onetrust-accept-btn-handler">Accept all</button>
+      <button id="onetrust-reject-all-handler">Reject all</button>
+    </div>
+    <script>
+      const banner = document.getElementById('onetrust-banner-sdk');
+      if (localStorage.getItem('consent')) banner.remove();
+      for (const id of ['onetrust-accept-btn-handler', 'onetrust-reject-all-handler']) {
+        document.getElementById(id).onclick = () => {
+          localStorage.setItem('consent', id);
+          banner.remove();
+        };
+      }
+    </script>
+  </body>
+</html>

@@ -88,6 +88,12 @@ npx privalint https://pelda.hu --region hu --lang hu
 
 Details, Hintergründe und Lösungen stehen auf den verlinkten Regelseiten in [`docs/rules`](docs/rules).
 
+Für [Cookiebot](docs/fixes/cookiebot.de.md), [Usercentrics](docs/fixes/usercentrics.de.md),
+[OneTrust](docs/fixes/onetrust.de.md) und [Complianz](docs/fixes/complianz.de.md) ordnet je eine
+Anleitung die Consent-Befunde der Einstellung im Consent-Manager zu, mit Links zu dessen
+Dokumentation. Erkennt privalint einen davon, verlinkt die Lösung jedes solchen Befunds den
+passenden Abschnitt.
+
 ## GitHub Action
 
 ```yaml

@@ -71,6 +71,11 @@ shortened. Regenerate it with <code>npm run demo</code>.</sub>
 
 Each rule is a small file with tests. Missing a check? See [Contributing](#contributing).
 
+Using [Cookiebot](docs/fixes/cookiebot.md), [Usercentrics](docs/fixes/usercentrics.md),
+[OneTrust](docs/fixes/onetrust.md) or [Complianz](docs/fixes/complianz.md)? Each guide maps the
+consent findings to the setting in that consent manager, with links to its documentation. When
+privalint recognises one of them, the fix of each such finding links the matching section.
+
 ## GitHub Action
 
 ```yaml

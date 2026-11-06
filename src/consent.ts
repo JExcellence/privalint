@@ -174,7 +174,8 @@ const REOPEN_CONTROLS = [
   '#CookiebotWidget',
   '.ot-sdk-show-settings, #ot-sdk-btn-floating',
   '[data-testid="uc-privacy-button"]',
-  '.cmplz-manage-consent',
+  // Complianz documents cmplz-show-banner for a custom link: complianz.io/add-a-link-to-show-the-cookie-banner/
+  '.cmplz-manage-consent, .cmplz-show-banner',
   '.cky-btn-revisit',
   '.iubenda-cs-preferences-link',
   '[data-cc="show-preferencesModal"], [data-cc="c-settings"]',

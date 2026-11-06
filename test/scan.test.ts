@@ -655,6 +655,17 @@ describe('consent check', () => {
     expect(result.findings).toEqual([]);
   });
 
+  it('links the fix guide of the consent manager from the findings it covers', async () => {
+    const result = await scan(`${origin}/consent/onetrust-leaky.html`, { ...options, lang: 'de' });
+    const fixes = result.findings
+      .filter((f) => f.ruleId === 'pre-consent-trackers' || f.ruleId === 'trackers-after-reject')
+      .map((f) => f.fix ?? '');
+    expect(fixes).toHaveLength(2);
+    const guide =
+      'So geht das in OneTrust: https://github.com/jexcellence/privalint/blob/main/docs/fixes/onetrust.de.md#';
+    for (const fix of fixes) expect(fix).toContain(guide);
+  });
+
   it('finds the reject button by label when a known selector is out of date', async () => {
     const result = await scan(`${origin}/consent/stale-reject-selector.html`, options);
     expect(result.consent).toMatchObject({
