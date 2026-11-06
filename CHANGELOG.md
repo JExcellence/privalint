@@ -6,7 +6,17 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+Upgrade notes:
+
+- On sites with subdomains, the first crawled page of up to five other hosts (`docs.`, `blog.`)
+  now gets the consent, banner and HTTPS checks too. That can add findings and one consent run
+  per host. `--host-checks main` or `"hostChecks": "main"` keeps the previous behaviour.
+
 ### Added
+
+- Start-page checks on other hosts of the site: consent, reject, banner and HTTPS rules run on the
+  first crawled page of each subdomain, up to five. Their consent results are in `consentByHost`.
+  `--host-checks main` turns it off (#103)
 
 - Every report has `ruleSummary`: per rule, pages with a finding, checked without one, not
   evaluable and skipped by reason, plus the page IDs worth a look. `--evaluations summary` writes

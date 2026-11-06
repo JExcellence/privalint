@@ -154,6 +154,9 @@ privalint <url> [options]
       --skip-consent      Don't click "reject" on the consent banner
       --check-settings    Also open the banner's settings, switch everything off and
                           save, then check what still loads (loads the start page again)
+      --host-checks <mode>  each | main (default each). each also runs the consent,
+                          banner and HTTPS checks on the first page of up to five
+                          other hosts of the site, such as docs. or blog.
       --headed            Open a visible browser window instead of running headless
       --channel <name>    Use an installed browser: chrome or msedge
       --sandbox           Run Chromium with its sandbox (recommended for untrusted

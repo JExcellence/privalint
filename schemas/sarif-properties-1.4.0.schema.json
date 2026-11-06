@@ -1007,6 +1007,13 @@
         },
         "settingsCheck": {
           "type": "boolean"
+        },
+        "hostChecks": {
+          "type": "string",
+          "enum": [
+            "each",
+            "main"
+          ]
         }
       },
       "required": [

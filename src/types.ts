@@ -430,6 +430,11 @@ export interface ScanResult {
    * summary`); `ruleSummary` then holds the result. Absent means full.
    */
   evaluations?: 'full' | 'summary';
+  /**
+   * Consent checks on the first page of other hosts of the site, by host. Absent when there were
+   * none. Since scanner 0.10.0.
+   */
+  consentByHost?: Record<string, ConsentSummary>;
   /** Outcome of the consent check on the start page. */
   consent?: ConsentSummary;
   findings: Finding[];
@@ -487,6 +492,8 @@ export interface ReportOptions {
   consentCheck: boolean;
   /** Absent in reports before schema 1.3.0. */
   settingsCheck?: boolean;
+  /** Absent in reports from scanners before 0.10.0, which checked only the main host. */
+  hostChecks?: 'each' | 'main';
   headed: boolean;
   channel: string;
   /** Absent in reports from scanners before 0.5.0. */

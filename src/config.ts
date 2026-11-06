@@ -17,6 +17,7 @@ export interface PrivalintConfig {
   region?: Region;
   consentCheck?: boolean;
   settingsCheck?: boolean;
+  hostChecks?: 'each' | 'main';
   failOnIncomplete?: boolean;
   rules?: RuleSettings;
   allow?: { vendors: string[] };
@@ -33,6 +34,7 @@ const KEYS = [
   'region',
   'consentCheck',
   'settingsCheck',
+  'hostChecks',
   'failOnIncomplete',
   'rules',
   'allow',
@@ -76,6 +78,8 @@ export function parseConfig(value: unknown): PrivalintConfig {
   if (value.region !== undefined && !REGIONS.includes(value.region as Region)) invalid();
   if (value.consentCheck !== undefined && typeof value.consentCheck !== 'boolean') invalid();
   if (value.settingsCheck !== undefined && typeof value.settingsCheck !== 'boolean') invalid();
+  if (value.hostChecks !== undefined && !['each', 'main'].includes(value.hostChecks as string))
+    invalid();
   if (value.failOnIncomplete !== undefined && typeof value.failOnIncomplete !== 'boolean')
     invalid();
   if (value.rules !== undefined) {

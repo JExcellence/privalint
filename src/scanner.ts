@@ -12,6 +12,7 @@ import { summarizeRules } from './rule-summary.js';
 import { defaultRules } from './rules/index.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import type {
+  ConsentSummary,
   OffSiteRedirect,
   PageSnapshot,
   ScanProgressEvent,
@@ -22,10 +23,15 @@ import { crawlTarget, isFirstParty, withoutHash } from './url.js';
 
 export type { ScanOptions } from './scan-options.js';
 
+/** Other hosts of the site whose first page gets the start-page checks, at most. */
+const MAX_HOST_STARTS = 5;
+
 interface Capture {
   url: string;
   snapshot: PageSnapshot;
   isStart: boolean;
+  /** The first page of another host of the site, checked like a start page. */
+  hostStart: boolean;
   pageIndex: number;
   captureId: string;
 }
@@ -109,6 +115,12 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     const offSite: OffSiteRedirect[] = [];
     const queue = [siteUrl.href];
     const seen = new Set(queue);
+    const hostChecks = options.hostChecks ?? 'each';
+    // Queue indexes whose page is the first of its host; decided in queue order, so concurrent
+    // and sequential crawls agree.
+    const hostStartIndexes = new Set<number>();
+    const hostsSeen = new Set([siteUrl.host]);
+    const hostStarts = new Set<PageSnapshot>();
     const pageIds = new Map<string, { pageId: string; pageIndex: number }>();
     // Captures run ahead of the queue head, but their results are committed strictly in queue
     // order. Pages, their order and the queue therefore match a sequential crawl exactly.
@@ -118,6 +130,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     const launch = (index: number): Promise<Capture> => {
       const url = queue[index] as string;
       const isStart = index === 0;
+      const hostStart = hostStartIndexes.has(index);
       const pageIndex = snapshots.length + (index - head);
       const captureId = randomUUID();
       emit({
@@ -143,7 +156,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
             }
           },
         },
-        isStart ? 'reject' : 'none',
+        isStart || hostStart ? 'reject' : 'none',
       ).then(async (snapshot) => {
         if (progressFailure) throw progressFailure.error;
         if (
@@ -154,7 +167,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ) {
           snapshot.consent.settings = await checkSettings(browser, url, siteUrl, options);
         }
-        return { url, snapshot, isStart, pageIndex, captureId };
+        return { url, snapshot, isStart, hostStart, pageIndex, captureId };
       });
       // Awaited in queue order below; this only keeps a page that fails while an earlier one is
       // still loading from becoming an unhandled rejection.
@@ -173,7 +186,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         pending.set(launched, launch(launched));
         launched += 1;
       }
-      const { url, snapshot, isStart, pageIndex, captureId } = await (pending.get(
+      const { url, snapshot, isStart, hostStart, pageIndex, captureId } = await (pending.get(
         head,
       ) as Promise<Capture>);
       pending.delete(head);
@@ -184,6 +197,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
           throw new Error(`Could not load ${diagnosticUrl(url)}: ${snapshot.error}`);
         }
         siteUrl = new URL(snapshot.finalUrl);
+        hostsSeen.add(siteUrl.host);
       } else if (!isFirstParty(snapshot.finalUrl, siteUrl)) {
         // A link that redirected to another site: its trackers and cookies aren't this site's.
         offSite.push({ url: snapshot.url, finalUrl: snapshot.finalUrl });
@@ -209,12 +223,22 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       if (existingPage === undefined) {
         seen.add(finalUrl);
         snapshots.push(snapshot);
+        if (hostStart) hostStarts.add(snapshot);
         options.onPage?.(snapshot);
         for (const link of snapshot.links) {
           const next = crawlTarget(link.href, siteUrl);
           if (next !== undefined && !seen.has(next)) {
             seen.add(next);
             queue.push(next);
+            const host = new URL(next).host;
+            if (
+              hostChecks === 'each' &&
+              !hostsSeen.has(host) &&
+              hostStartIndexes.size < MAX_HOST_STARTS
+            ) {
+              hostsSeen.add(host);
+              hostStartIndexes.add(queue.length - 1);
+            }
           }
         }
       }
@@ -231,7 +255,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
       return assessPage(page, rules, siteUrl, {
         lang,
         region,
-        isStart: index === 0,
+        isStart: index === 0 || hostStarts.has(page),
         consentEnabled: options.consentCheck !== false,
         catalog: configuredRules,
         settingsEnabled: options.settingsCheck === true,
@@ -258,6 +282,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         region,
         consentCheck: options.consentCheck !== false,
         settingsCheck: options.settingsCheck === true,
+        hostChecks,
         headed: options.headed === true,
         channel: options.channel ?? 'chromium',
         sandbox: options.sandbox === true,
@@ -291,6 +316,7 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
         ruleEvaluations: assessments[index]?.evaluations ?? [],
       })),
       ...(offSite.length === 0 ? {} : { offSiteRedirects: offSite }),
+      ...consentByHost(snapshots.filter((page) => hostStarts.has(page))),
       ...consentSummary(snapshots[0]),
       findings: applyPolicy(
         applyRegion(
@@ -345,6 +371,15 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
   return { consent: { ...summary, settings: settingsSummary } };
 }
 
+function consentByHost(pages: readonly PageSnapshot[]): Pick<ScanResult, 'consentByHost'> {
+  const byHost: Record<string, ConsentSummary> = {};
+  for (const page of pages) {
+    const { consent } = consentSummary(page);
+    if (consent !== undefined) byHost[new URL(page.finalUrl).host] = consent;
+  }
+  return Object.keys(byHost).length === 0 ? {} : { consentByHost: byHost };
+}
+
 const URL_CREDENTIALS = /(https?:\/\/)[^\s/?#@]+@/gi;
 
 /**
@@ -363,37 +398,45 @@ function withoutCredentials<T>(value: T): T {
   return value;
 }
 
+const redactText = (text: string) => text.replace(/https?:\/\/[^\s<>"']+/gi, diagnosticUrl);
+
+/** Button labels can quote URLs; adapter reports keep only their origin. */
+function redactConsent(consent: ConsentSummary): ConsentSummary {
+  return {
+    ...consent,
+    ...(consent.acceptLabel === undefined ? {} : { acceptLabel: redactText(consent.acceptLabel) }),
+    ...(consent.rejectLabel === undefined ? {} : { rejectLabel: redactText(consent.rejectLabel) }),
+    ...(consent.settings === undefined
+      ? {}
+      : {
+          settings: {
+            ...consent.settings,
+            ...(consent.settings.openLabel === undefined
+              ? {}
+              : { openLabel: redactText(consent.settings.openLabel) }),
+            ...(consent.settings.saveLabel === undefined
+              ? {}
+              : { saveLabel: redactText(consent.settings.saveLabel) }),
+          },
+        }),
+  };
+}
+
 /** Adapter reports omit URL credentials, paths, queries and fragments by default. */
 function redactReport(result: ScanResult): ScanResult {
-  const redactText = (text: string) => text.replace(/https?:\/\/[^\s<>"']+/gi, diagnosticUrl);
   return {
     ...result,
     siteUrl: diagnosticUrl(result.siteUrl),
-    ...(result.consent === undefined
+    ...(result.consent === undefined ? {} : { consent: redactConsent(result.consent) }),
+    ...(result.consentByHost === undefined
       ? {}
       : {
-          consent: {
-            ...result.consent,
-            ...(result.consent.acceptLabel === undefined
-              ? {}
-              : { acceptLabel: redactText(result.consent.acceptLabel) }),
-            ...(result.consent.rejectLabel === undefined
-              ? {}
-              : { rejectLabel: redactText(result.consent.rejectLabel) }),
-            ...(result.consent.settings === undefined
-              ? {}
-              : {
-                  settings: {
-                    ...result.consent.settings,
-                    ...(result.consent.settings.openLabel === undefined
-                      ? {}
-                      : { openLabel: redactText(result.consent.settings.openLabel) }),
-                    ...(result.consent.settings.saveLabel === undefined
-                      ? {}
-                      : { saveLabel: redactText(result.consent.settings.saveLabel) }),
-                  },
-                }),
-          },
+          consentByHost: Object.fromEntries(
+            Object.entries(result.consentByHost).map(([host, consent]) => [
+              host,
+              redactConsent(consent),
+            ]),
+          ),
         }),
     pages: result.pages.map((page) => ({
       ...page,
