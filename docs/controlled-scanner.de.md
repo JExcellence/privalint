@@ -97,6 +97,11 @@ bereitgestellten Bytes, einschließlich des überschreitenden Chunks. Bei Stream
 Puffern abgebrochen. Bereits gepufferte Antworten hat der Adapter vorher allokiert. Komprimierte Bytes
 und Content-Encoding müssen zusammenpassen; spätere Browser-Dekompression und DOM-/JavaScript-Speicher
 sind nicht durch diese Budgets begrenzt. Worker benötigen zusätzliche CPU-/Speicherquoten.
+Ein Video, Bild oder eine Schrift über `maxResponseBytes` erhält die Seite ohne Body, statt dass
+die Anfrage scheitert: Keine Regel liest diese Bytes, Status und Header einschließlich Cookies
+bleiben erhalten. Die Diagnose lautet `resource-limit` mit `skippedReason: 'policy'` und macht die
+Seite nicht unvollständig. Dokumente, Skripte, Styles und API-Antworten über dem Limit scheitern
+weiterhin und machen sie unvollständig.
 
 ## Zähler und Datenschutz
 

@@ -98,6 +98,10 @@ All transport budgets apply per crawled page, across initial loading and the rej
 an adapter. Limit values are validated before launching Chromium. Streaming stops at a byte limit,
 signals are aborted and body iterators are returned. The chunk that exceeds the budget is counted
 but not retained. Up to the request budget's evidence records are retained (5000 in native mode).
+A video, image or font over `maxResponseBytes` is delivered to the page without its body instead
+of failing: no rule reads those bytes, and its status and headers, cookies included, are kept. The
+issue is recorded as `resource-limit` with `skippedReason: 'policy'` and doesn't make the page
+partial. Documents, scripts, styles and API responses over the limit still fail and do.
 These limits do not bound arbitrary page JavaScript/DOM memory; also apply worker memory/CPU quotas.
 
 ## Diagnostics and counters

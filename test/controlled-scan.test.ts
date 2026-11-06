@@ -54,6 +54,49 @@ describe('adapter timing', () => {
   });
 });
 
+describe('large responses', () => {
+  const big = async function* () {
+    for (let i = 0; i < 6; i++) yield new Uint8Array(1024 * 1024);
+  };
+  const site = (tag: string, resource: string, contentType: string) =>
+    scan(origin, {
+      ...settings,
+      maxPages: 1,
+      consentCheck: false,
+      networkAdapter: async ({ url }) =>
+        url.endsWith(resource)
+          ? {
+              status: 200,
+              headers: {
+                'content-type': contentType,
+                'content-length': String(6 * 1024 * 1024),
+                'set-cookie': 'media_seen=1; Path=/',
+              },
+              body: big(),
+            }
+          : html(tag),
+    });
+
+  it('deliver a media file over the limit empty and keep the page complete', async () => {
+    const result = await site('<img src="/hero.png">', '/hero.png', 'image/png');
+    const page = result.pages[0];
+    expect(page?.capture?.complete).toBe(true);
+    expect(page?.cookieCount).toBe(1);
+    expect(page?.capture?.diagnostics.issues).toContainEqual(
+      expect.objectContaining({
+        kind: 'resource-limit',
+        limit: 'response-bytes',
+        skippedReason: 'policy',
+      }),
+    );
+  });
+
+  it('still make the page partial when a script is over the limit', async () => {
+    const result = await site('<script src="/app.js"></script>', '/app.js', 'text/javascript');
+    expect(result.pages[0]?.capture?.complete).toBe(false);
+  });
+});
+
 describe('https-transport in adapter scans', () => {
   it('is skipped by design and keeps the coverage complete', async () => {
     const result = await scan(origin, { ...settings, networkAdapter: async () => html() });

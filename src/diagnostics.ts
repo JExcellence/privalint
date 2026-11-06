@@ -257,7 +257,7 @@ export class Diagnostics {
   add(
     kind: LoadIssueKind,
     url: string,
-    extra: Pick<LoadDiagnostic, 'status' | 'limit'> = {},
+    extra: Pick<LoadDiagnostic, 'status' | 'limit' | 'skippedReason'> = {},
     phase = this.phase,
   ): void {
     if (!this.stopped) this.store({ kind, phase, url: diagnosticUrl(url), ...extra });
@@ -402,4 +402,6 @@ const isUnrestricting = (issue: LoadDiagnostic): boolean =>
   (issue.kind === 'skipped' &&
     (issue.skippedReason === 'beacon' || issue.skippedReason === 'cancelled-by-page')) ||
   ((issue.kind === 'skipped' || issue.kind === 'unsupported-method') &&
-    isErrorMonitoring(issue.url));
+    isErrorMonitoring(issue.url)) ||
+  // A video, image or font over the size limit, delivered without its body on purpose.
+  (issue.kind === 'resource-limit' && issue.skippedReason === 'policy');
