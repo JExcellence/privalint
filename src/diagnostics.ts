@@ -1,4 +1,5 @@
 import type { BrowserContext, Request } from 'playwright';
+import { REPOSITORY_URL } from './meta.js';
 import type {
   AdapterRequestTiming,
   CapturePhase,
@@ -18,6 +19,17 @@ export function diagnosticUrl(raw: string): string {
   } catch {
     return '[redacted]';
   }
+}
+
+/**
+ * Replaces every web address in report text by its origin, as reports of adapter scans do.
+ * privalint's own documentation links, such as the fix guides, stay whole, and "https://" followed
+ * by something that is no host, as in "https://-Adresse", is left as it is.
+ */
+export function redactUrlsInText(text: string): string {
+  return text.replace(/https?:\/\/[a-z0-9[][^\s<>"']*/gi, (url) =>
+    url.toLowerCase().startsWith(`${REPOSITORY_URL}/`) ? url : diagnosticUrl(url),
+  );
 }
 
 /** Classify known transport codes; never persist arbitrary exception messages. */

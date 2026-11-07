@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import type { BrowserContext, Request } from 'playwright';
 import { describe, expect, it } from 'vitest';
-import { Diagnostics } from '../src/diagnostics.js';
+import { Diagnostics, redactUrlsInText } from '../src/diagnostics.js';
 import type { RecordedRequest } from '../src/types.js';
 
 /** Just enough of Playwright's context and request for Diagnostics to listen to. */
@@ -26,6 +26,25 @@ function harness() {
   };
   return { context, diagnostics, request, answerThenAbort };
 }
+
+describe('redactUrlsInText', () => {
+  it('keeps only the origin of scanned addresses', () => {
+    expect(redactUrlsInText('request https://shop.example/checkout?mail=a@b.de failed')).toBe(
+      'request https://shop.example/[redacted] failed',
+    );
+  });
+
+  it('keeps privalint links and text that only looks like an address', () => {
+    const guide =
+      'How to do this in OneTrust: https://github.com/jexcellence/privalint/blob/main/docs/fixes/onetrust.md#reject-option';
+    expect(redactUrlsInText(guide)).toBe(guide);
+    const german = 'Das Formular an eine https://-Adresse senden.';
+    expect(redactUrlsInText(german)).toBe(german);
+    expect(redactUrlsInText('see https://github.com/other/repo/blob/x')).toBe(
+      'see https://github.com/[redacted]',
+    );
+  });
+});
 
 describe('Diagnostics', () => {
   it('does not turn a real failure into a cancel when two requests share a URL', () => {

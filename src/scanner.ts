@@ -3,7 +3,7 @@ import { type Browser, chromium } from 'playwright';
 import { assessPage } from './assessment.js';
 import { capturePage, deviceOptions } from './capture.js';
 import { findCnameCloaks } from './cname.js';
-import { diagnosticUrl } from './diagnostics.js';
+import { diagnosticUrl, redactUrlsInText } from './diagnostics.js';
 import { adapterFetchBytes, browserFetchBytes } from './fetch.js';
 import { withFixGuides } from './fix-guides.js';
 import { applyRegion } from './legal.js';
@@ -733,7 +733,7 @@ function withoutCredentials<T>(value: T): T {
   return value;
 }
 
-const redactText = (text: string) => text.replace(/https?:\/\/[^\s<>"']+/gi, diagnosticUrl);
+const redactText = redactUrlsInText;
 
 /** Button labels can quote URLs; adapter reports keep only their origin. */
 function redactConsent(consent: ConsentSummary): ConsentSummary {
