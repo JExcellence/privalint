@@ -311,7 +311,8 @@ for (const finding of result.findings) {
 }
 ```
 
-The package also exports `applyBaseline` and `readBaseline` for comparisons,
+The package also exports the report formatters (`formatHtml`, `formatMarkdown`, `formatSarif`,
+`formatJson`, `formatText`), `applyBaseline` and `readBaseline` for comparisons,
 `identifyReportSchema` and `assessCoverage` for stored reports, and the rule list.
 
 The CLI reads `privalint.config.json` when present, or `--config <file>`, and CLI flags win. API

@@ -102,6 +102,13 @@ describe('formatHtml', () => {
     expect(html).toContain('Google Analytics');
   });
 
+  it('is exported from the package entry with the other formatters', async () => {
+    const entry = await import('../src/index.js');
+    expect(entry.formatHtml).toBe(formatHtml);
+    expect(entry.FORMATS).toContain('html');
+    expect(typeof entry.format).toBe('function');
+  });
+
   it('escapes the five HTML special characters', () => {
     expect(escape(`<a href="x" title='y'>&</a>`)).toBe(
       '&lt;a href=&quot;x&quot; title=&#39;y&#39;&gt;&amp;&lt;/a&gt;',

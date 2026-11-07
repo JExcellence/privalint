@@ -3,6 +3,11 @@ export const MAX_PDF_BYTES = 5_000_000;
 const MAX_PAGES = 60;
 const MAX_CHARS = 500_000;
 
+type PdfJs = typeof import('pdfjs-dist/legacy/build/pdf.mjs');
+
+/** Loaded on demand: most scans never meet a PDF policy. */
+const loadPdfJs = (): Promise<PdfJs> => import('pdfjs-dist/legacy/build/pdf.mjs');
+
 /** Whether the bytes are a PDF: "%PDF-" within the first kilobyte, as readers accept it. */
 export function isPdf(bytes: Uint8Array): boolean {
   const head = new TextDecoder('latin1').decode(bytes.subarray(0, 1024));
@@ -14,18 +19,28 @@ export function isPdf(bytes: Uint8Array): boolean {
  * broken). Uses pdf.js without evaluating code from the file and without loading fonts: only the
  * text is needed.
  */
-export async function pdfText(bytes: Uint8Array): Promise<string | undefined> {
+export async function pdfText(
+  bytes: Uint8Array,
+  load: () => Promise<PdfJs> = loadPdfJs,
+): Promise<string | undefined> {
   if (!isPdf(bytes)) return undefined;
-  // Loaded on demand: most scans never meet a PDF policy.
-  const { getDocument, VerbosityLevel } = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const task = getDocument({
-    // pdf.js takes ownership of the buffer; give it a copy.
-    data: new Uint8Array(bytes),
-    isEvalSupported: false,
-    disableFontFace: true,
-    useSystemFonts: false,
-    verbosity: VerbosityLevel.ERRORS,
-  });
+  // pdf.js can fail to load, for example on Node 24 without its optional @napi-rs/canvas package
+  // ("DOMMatrix is not defined"). The policy then stays unread instead of failing the scan.
+  let pdfjs: PdfJs;
+  let task: ReturnType<PdfJs['getDocument']>;
+  try {
+    pdfjs = await load();
+    task = pdfjs.getDocument({
+      // pdf.js takes ownership of the buffer; give it a copy.
+      data: new Uint8Array(bytes),
+      isEvalSupported: false,
+      disableFontFace: true,
+      useSystemFonts: false,
+      verbosity: pdfjs.VerbosityLevel.ERRORS,
+    });
+  } catch {
+    return undefined;
+  }
   try {
     const document = await task.promise;
     const pages: string[] = [];
@@ -48,6 +63,6 @@ export async function pdfText(bytes: Uint8Array): Promise<string | undefined> {
   } catch {
     return undefined;
   } finally {
-    await task.destroy();
+    await task.destroy().catch(() => undefined);
   }
 }

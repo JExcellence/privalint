@@ -27,4 +27,4 @@ export function format(
   }
 }
 
-export { formatHtml, formatJson, formatMarkdown, formatSarif, formatText };
+export { formatHtml, formatJson, formatMarkdown, formatSarif, formatText, type JsonOptions };

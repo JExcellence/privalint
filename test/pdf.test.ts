@@ -22,6 +22,12 @@ describe('pdfText', () => {
     expect(await pdfText(encode('%PDF-1.4\nnot really a pdf'))).toBeUndefined();
   });
 
+  it('leaves a PDF unread when pdf.js fails to load, instead of throwing', async () => {
+    // As on Node 24 without the optional @napi-rs/canvas package: "DOMMatrix is not defined".
+    const failing = () => Promise.reject(new ReferenceError('DOMMatrix is not defined'));
+    expect(await pdfText(await fixture(), failing)).toBeUndefined();
+  });
+
   it('leaves the caller its buffer', async () => {
     const bytes = await fixture();
     await pdfText(bytes);
