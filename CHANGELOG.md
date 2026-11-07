@@ -6,6 +6,29 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.10.1 - 2026-11-07
+
+Upgrade notes:
+
+- Keep optional dependencies installed (no `npm ci --omit=optional`) if PDF cookie policies should
+  be read: pdf.js needs `@napi-rs/canvas` on Node. The 0.10.0 note said to skip it. Without it,
+  PDF policies now stay unread instead of failing the scan.
+
+### Added
+
+- `format`, `FORMATS`, `formatHtml`, `formatJson`, `formatMarkdown`, `formatSarif` and `formatText`
+  are exported from the package, so code that calls `scan()` can write the same reports as the
+  CLI, such as the HTML page
+
+### Fixed
+
+- A same-site PDF cookie policy failed the whole scan when pdf.js could not load, as on Node 24
+  without `@napi-rs/canvas` ("DOMMatrix is not defined"). The policy now stays unread
+- Reports of scans through a network adapter cut the fix guide links to
+  `https://github.com/[redacted]` and the German "https://-Adresse" in the `mixed-content` fix.
+  Links to privalint's repository stay whole now, and "https://" not followed by a host is left
+  alone
+
 ## 0.10.0 - 2026-11-07
 
 Upgrade notes:
@@ -22,8 +45,8 @@ Upgrade notes:
   through a network adapter, and can add findings. Deselect a rule to skip its load. Without a
   legal notice link, a page behind a vague legal link or the privacy policy is read instead.
 - New dependency `pdfjs-dist` (5.1.x, the last line that supports Node 20.12) to read PDF cookie
-  policies. It brings the optional `@napi-rs/canvas`, which privalint does not use; install with
-  `--omit=optional` to skip it.
+  policies. It brings the optional `@napi-rs/canvas`, which pdf.js needs on Node to read PDFs, so
+  keep optional dependencies installed. (Corrected in 0.10.1: this note first said to skip it.)
 - Native scans make DNS lookups for up to 20 first-party subdomains that received requests, to
   find CNAME-cloaked trackers. Scans through a network adapter make none.
 - New rules run by default and can add findings: `mixed-content` reports a form that submits over
