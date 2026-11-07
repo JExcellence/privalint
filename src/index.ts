@@ -20,6 +20,17 @@ export {
   SUPPORTED_REPORT_SCHEMAS,
 } from './report-contract.js';
 export {
+  FORMATS,
+  type Format,
+  format,
+  formatHtml,
+  formatJson,
+  formatMarkdown,
+  formatSarif,
+  formatText,
+  type JsonOptions,
+} from './reporters/index.js';
+export {
   adobeFonts,
   consentSettingsLink,
   defaultRules,
