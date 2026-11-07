@@ -62,7 +62,7 @@
     "tldts": "^7.4.19"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.3",
+    "@biomejs/biome": "2.6.4",
     "@types/node": "^20.19.43",
     "ajv": "^8.20.0",
     "typescript": "^7.0.2",
