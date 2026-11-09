@@ -57,7 +57,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "pdfjs-dist": "~5.1.91",
+    "pdfjs-dist": "~6.5.438",
     "playwright": "^1.64.1",
     "tldts": "^7.4.19"
   },
