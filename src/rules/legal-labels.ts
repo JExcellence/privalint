@@ -20,7 +20,19 @@ const BY_LANGUAGE: Record<string, LegalLabels> = {
 };
 
 /** When the page doesn't declare a language privalint knows, the region's usual one. */
-const BY_REGION: Record<Region, string> = { de: 'de', at: 'de', ch: 'de', hu: 'hu', eu: 'en' };
+const BY_REGION: Record<Region, string> = {
+  de: 'de',
+  at: 'de',
+  ch: 'de',
+  hu: 'hu',
+  fr: 'fr',
+  it: 'it',
+  es: 'es',
+  nl: 'nl',
+  pl: 'pl',
+  uk: 'en',
+  eu: 'en',
+};
 
 /**
  * The labels a fix should suggest: in the language the site is written in, so an English site in

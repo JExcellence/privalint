@@ -11,7 +11,8 @@ With `--check-close`, privalint loads the start page once more in a fresh browse
 banner's close control and clicks it: a visible control in the banner layer whose whole text is
 "×", "✕", "X", "Close", "Schließen", "Bezár", … or whose `aria-label` or `title` says so. It then
 reloads the page and compares what loads, like the reject path. Each tracker on privalint's list
-that loads or sets new cookies then is an `error` (a tag manager alone is a `warning`, unless its
+that loads or sets new cookies then is an `error` (analytics with `--region fr`, `it`, `nl` or `uk` is a
+`warning` with the conditions of the exemption in the fix; a tag manager alone is a `warning`, unless its
 requests tell Google that consent was granted; see
 [Google Consent Mode](pre-consent-trackers.md#google-consent-mode)). A first-party subdomain that is a CNAME to a tracker counts as that tracker; see
 [CNAME-cloaked trackers](pre-consent-trackers.md#cname-cloaked-trackers).

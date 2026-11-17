@@ -14,7 +14,7 @@ const readJson = async (path: string): Promise<unknown> =>
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 const schemas = new Map(
   await Promise.all(
-    ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0'].map(async (version) => {
+    ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0'].map(async (version) => {
       const report = ajv.compile(
         (await readJson(`../schemas/report-${version}.schema.json`)) as object,
       );
@@ -97,6 +97,20 @@ describe('standalone report contracts', () => {
     expect(validate('1.2.0')).toBe(false);
     const broken = { ...value, consent: { ...value.consent, settings: { outcome: 'maybe' } } };
     expect(schemas.get('1.3.0')?.report({ ...broken, schemaVersion: '1.3.0' })).toBe(false);
+  });
+
+  it('accepts the regions added in 1.6.0 only from that schema on', async () => {
+    const value = (await fixture('complete')) as ScanResult;
+    const withRegion = (version: string, region: string) => ({
+      ...value,
+      schemaVersion: version,
+      region,
+      ...(value.options === undefined ? {} : { options: { ...value.options, region } }),
+    });
+    for (const code of ['fr', 'it', 'es', 'nl', 'pl', 'uk']) {
+      expect(schemas.get('1.6.0')?.report(withRegion('1.6.0', code))).toBe(true);
+      expect(schemas.get('1.5.0')?.report(withRegion('1.5.0', code))).toBe(false);
+    }
   });
 
   it('accepts Hungarian report text only from schema 1.5.0 on', async () => {

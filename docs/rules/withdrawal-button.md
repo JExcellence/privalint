@@ -19,6 +19,10 @@ and close variants in French, Spanish, Italian and Dutch.
 | Shop, only a cancellation policy ("Widerrufsbelehrung") or nothing | warning  |
 | Not a shop, or not the start page                                  | nothing  |
 | `--region ch`                                                      | info     |
+| `--region uk` (no such duty in UK law)                             | info     |
+| `--region fr`: "Renoncer au contrat ici" counts as the link        | passes   |
+| `--region es` or `--region pl` (not yet transposed, as of 2026-11-17) | info |
+| "Overeenkomst ontbinden" or "Odstąp od umowy" counts as the link | passes |
 
 ## Why
 

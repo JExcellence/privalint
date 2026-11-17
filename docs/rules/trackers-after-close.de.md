@@ -12,7 +12,8 @@ das Schließen-Element des Banners und klickt es: ein sichtbares Bedienelement i
 dessen ganzer Text „×“, „✕“, „X“, „Close“, „Schließen“, „Bezár“, … ist oder dessen `aria-label`
 oder `title` das sagt. Danach lädt es die Seite neu und vergleicht wie beim Ablehnen-Pfad, was
 lädt. Jeder Tracker von privalints Liste, der dann lädt oder neue Cookies setzt, ist ein `error`
-(ein Tag-Manager allein eine `warning`, außer seine Anfragen melden Google eine Einwilligung; siehe
+(Analyse mit `--region fr`, `it`, `nl` oder `uk` eine `warning` mit den Bedingungen der Ausnahme im
+Lösungsvorschlag; ein Tag-Manager allein eine `warning`, außer seine Anfragen melden Google eine Einwilligung; siehe
 [Google Consent Mode](pre-consent-trackers.de.md#google-consent-mode)). Eine eigene Subdomain, die per CNAME auf einen Tracker zeigt, zählt als dieser Tracker; siehe
 [Per CNAME getarnte Tracker](pre-consent-trackers.de.md#per-cname-getarnte-tracker).
 

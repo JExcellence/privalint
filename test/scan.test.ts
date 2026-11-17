@@ -294,6 +294,40 @@ describe('scan', () => {
     ).toEqual(['info:contact']);
   });
 
+  it('reads a legal notice and a privacy policy published as PDF', async () => {
+    let start: PageSnapshot | undefined;
+    const result = await scan(`${origin}/pdf-legal/`, {
+      ...options,
+      onPage: (page) => {
+        start ??= page;
+      },
+    });
+    expect(start?.legalNotice?.url).toBe(`${origin}/pdf-legal/impressum.pdf`);
+    expect(start?.legalNotice?.text).toContain('HRB 12345');
+    expect(start?.privacyPolicy?.url).toBe(`${origin}/pdf-legal/datenschutz.pdf`);
+    const notEvaluable = (ruleId: string) =>
+      result.ruleSummary?.find((summary) => summary.ruleId === ruleId)?.notEvaluable;
+    expect(notEvaluable('legal-notice-content')).toBe(0);
+    expect(notEvaluable('privacy-policy-content')).toBe(0);
+    expect(
+      result.findings.filter((f) => f.ruleId === 'legal-notice-content'),
+      JSON.stringify(result.findings),
+    ).toEqual([]);
+  });
+
+  it('counts a PDF without text as a legal notice that could not be loaded', async () => {
+    let start: PageSnapshot | undefined;
+    await scan(`${origin}/pdf-legal/scanned.html`, {
+      ...options,
+      onPage: (page) => {
+        start ??= page;
+      },
+    });
+    expect(start?.legalNotice).toBeUndefined();
+    expect(start?.linkedPageMissing?.legalNotice).toBe('not-loaded');
+    expect(start?.privacyPolicy?.text).toContain('datenschutz@example.de');
+  });
+
   it('notes template text and an unreachable data protection officer in the privacy policy', async () => {
     const result = await scan(`${origin}/provider-details/template.html`, options);
     const findings = result.findings.filter((f) => f.ruleId === 'privacy-policy-content');

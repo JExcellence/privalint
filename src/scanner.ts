@@ -10,7 +10,7 @@ import { withFixGuides } from './fix-guides.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
 import { networkLimits } from './network.js';
-import { MAX_PDF_BYTES, pdfText } from './pdf.js';
+import { MAX_PDF_BYTES, readPdf } from './pdf.js';
 import { redactPersonalDataInText } from './personal-data.js';
 import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
@@ -453,7 +453,8 @@ const COOKIE_POLICY =
 
 /**
  * Loads the page a link matching `pattern` on `from` leads to, on the same site, and returns
- * its text. One extra load that doesn't count as a crawled page, like the settings check.
+ * its text. One extra load that doesn't count as a crawled page, like the settings check. A PDF
+ * on the same site is read with pdf.js; one without readable text counts as not loaded.
  */
 async function readLinkedPage(
   browser: Browser,
@@ -465,10 +466,26 @@ async function readLinkedPage(
   // "Privacy settings" with href="#" may come before the policy link: try the first real target.
   const found = from.links
     .filter(linkMatches(pattern))
-    .map((link) => ({ link, url: crawlTarget(link.href, fromUrl) }))
+    .map((link) => ({
+      link,
+      url: crawlTarget(link.href, fromUrl) ?? pdfTarget(link.href, fromUrl),
+    }))
     .find(({ url }) => url !== undefined && url !== withoutHash(from.finalUrl));
   const target = found?.url;
   if (target === undefined) return { missing: 'no-link' };
+  const pdf = await readPdfDocument(browser, target, fromUrl, options);
+  if (pdf !== undefined) {
+    if (!pdf.read) return { missing: 'not-loaded' };
+    // A PDF has no links to follow; its text gets the same cap as a page's. Text cut off may hide
+    // what a rule looks for, so the page then counts as incomplete.
+    const text = pdf.text.slice(0, MAX_LINKED_TEXT);
+    const complete = pdf.complete && pdf.text.length <= MAX_LINKED_TEXT;
+    return {
+      page: { url: pdf.url, text, mailto: false, complete },
+      links: [],
+      label: found?.link.text ?? '',
+    };
+  }
   const page = await capturePage(browser, target, fromUrl, options, 'none', true);
   // A 404 or 500 page is no legal notice or policy, whatever it says. A link that leads to another
   // site is not this site's page either.
@@ -576,13 +593,16 @@ async function readPolicyAndCookies(
   const { page: text, links } = policy;
   const cookieLink = links.find(linkMatches(COOKIE_POLICY));
   if (cookieLink === undefined) return policy;
-  const pdf = await readPdfPolicy(browser, cookieLink.href, new URL(text.url), options);
+  const pdf = await readPdfDocument(browser, cookieLink.href, new URL(text.url), options);
   if (pdf !== undefined) {
     return {
       page: {
         ...text,
-        text: `${text.text}\n${pdf.text}`,
-        ...(pdf.read ? {} : { unread: [pdf.url] }),
+        text: `${text.text}\n${pdf.text.slice(0, MAX_LINKED_TEXT)}`,
+        // Cut off or unread, the cookie policy counts as not fully read.
+        ...(pdf.read && pdf.complete && pdf.text.length <= MAX_LINKED_TEXT
+          ? {}
+          : { unread: [pdf.url] }),
       },
       links,
       label: policy.label,
@@ -611,33 +631,45 @@ async function readPolicyAndCookies(
 }
 
 /**
- * A cookie policy published as a PDF on the same site, read with pdf.js. Undefined when the link
- * is no PDF (by its path), so the caller loads it as a page; `read: false` when the PDF couldn't
- * be downloaded or read, or is larger than 5 MB.
+ * A policy or legal notice published as a PDF on the same site, read with pdf.js. Undefined when
+ * the link is no PDF (by its path), so the caller loads it as a page; `read: false` when the PDF
+ * couldn't be downloaded or read, has no text (a scan), or is larger than 5 MB.
  */
-async function readPdfPolicy(
+async function readPdfDocument(
   browser: Browser,
   href: string,
   from: URL,
   options: ScanOptions,
-): Promise<{ url: string; text: string; read: boolean } | undefined> {
+): Promise<{ url: string; text: string; read: boolean; complete: boolean } | undefined> {
+  const url = pdfTarget(href, from);
+  if (url === undefined) return undefined;
+  const fetchBytes = options.networkAdapter
+    ? adapterFetchBytes(options.networkAdapter, MAX_PDF_BYTES)
+    : browserFetchBytes(browser, MAX_PDF_BYTES);
+  const bytes = await fetchBytes(url);
+  // pdf.js read nothing: no text layer (a scan), not a PDF, or pdf.js failed to load.
+  const pdf = bytes === undefined ? undefined : await readPdf(bytes);
+  return pdf === undefined
+    ? { url, text: '', read: false, complete: false }
+    : { url, text: pdf.text, read: true, complete: pdf.complete };
+}
+
+/** A PDF on the same site, by its path, without the fragment; undefined for anything else. */
+function pdfTarget(href: string, from: URL): string | undefined {
   let url: URL;
   try {
     url = new URL(href, from);
   } catch {
     return undefined;
   }
-  if (!/\.pdf$/i.test(url.pathname) || !isFirstParty(url.href, from)) return undefined;
+  if (!/^https?:$/.test(url.protocol) || !/\.pdf$/i.test(url.pathname)) return undefined;
+  if (!isFirstParty(url.href, from)) return undefined;
   url.hash = '';
-  const fetchBytes = options.networkAdapter
-    ? adapterFetchBytes(options.networkAdapter, MAX_PDF_BYTES)
-    : browserFetchBytes(browser, MAX_PDF_BYTES);
-  const bytes = await fetchBytes(url.href);
-  const text = bytes === undefined ? undefined : await pdfText(bytes);
-  return text === undefined
-    ? { url: url.href, text: '', read: false }
-    : { url: url.href, text, read: true };
+  return url.href;
 }
+
+/** Visible text of a linked page is cut to this length; a PDF read in its place too. */
+const MAX_LINKED_TEXT = 100_000;
 
 /** Loads the start page in a fresh context that sends Global Privacy Control, without clicking. */
 async function checkGpc(

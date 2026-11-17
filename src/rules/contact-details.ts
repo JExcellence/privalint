@@ -9,9 +9,12 @@ const POSTCODE =
   /\b(?:[A-Z]{1,2}-?\s?)?\d{4,5}\s+\p{Lu}|\p{Lu}\p{Ll}+,?\s+\d{4}\b|\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b|\b[AC-FHKNPRTV-Y]\d[\dW]\s?[AC-FHKNPRTV-Y\d]{4}\b/u;
 // The last two: UK postcodes ("SW1A 2AA") and Irish Eircodes ("D04 E5W5").
 
-/** A street with a house number, such as "Musterstraße 12", "Váci út 1." or "12 Main Street". */
+/**
+ * A street with a house number, such as "Musterstraße 12", "Váci út 1.", "12 Main Street" or the
+ * French "12 bis, rue de la Paix".
+ */
 const STREET =
-  /\p{L}[\p{L}.'-]*(?:straße|strasse|str\.|weg|gasse|platz|allee|ring|damm|ufer|utca|út|tér|körút|street|road|avenue|lane|rue|via)?\s+\d+\s?[a-z]?\b|\b\d+[a-z]?,?\s+\p{L}+\s+(?:street|road|avenue|lane|st\.|rd\.)/iu;
+  /\p{L}[\p{L}.'-]*(?:straße|strasse|str\.|weg|gasse|platz|allee|ring|damm|ufer|utca|út|tér|körút|street|road|avenue|lane|rue|via)?\s+\d+\s?[a-z]?\b|\b\d+[a-z]?,?\s+\p{L}+\s+(?:street|road|avenue|lane|st\.|rd\.)|\b\d+(?:\s?(?:bis|ter))?,?\s+(?:(?:rue|avenue|boulevard|bd|place|all[ée]e|impasse|chemin|quai|cours|route)\b|av\.)/iu;
 
 /**
  * Numbers that look like a postcode or a house number but aren't: phone and fax numbers, tax and

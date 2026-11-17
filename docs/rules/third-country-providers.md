@@ -35,6 +35,8 @@ the transfer.
 - Art. 44, 45 and 46 GDPR
 - Commission Implementing Decision (EU) 2023/1795 (EU-US Data Privacy Framework)
 - Switzerland (`--region ch`): Art. 16 and 17 DSG
+- United Kingdom (`--region uk`): UK GDPR Arts. 44A, 45A and 46; Data Protection (Adequacy)
+  (United States of America) Regulations 2023. Transfers to the EEA are not reported.
 
 ## How to fix
 

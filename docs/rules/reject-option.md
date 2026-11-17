@@ -21,6 +21,7 @@ Banner is named through its vendor marker plus the existing label heuristic. See
 | Accept and reject buttons on the first layer                     | passes   |
 | Accept on the first layer, reject only in settings or not at all | warning  |
 | Accept or a subscription ("pay or OK"), no reject                | info     |
+| `--region it`: no reject, but `--check-close` closed the banner with an "X", the page after closing was fully observed and `trackers-after-close` runs | passes |
 | No banner found                                                  | nothing  |
 
 A banner counts as pay-or-OK when a button or link inside the banner mentions a subscription

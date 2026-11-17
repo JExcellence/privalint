@@ -9,7 +9,7 @@ Warnt, wenn eine Seite nicht auf ein Impressum verlinkt.
 Jeder Link auf der Seite wird anhand von Text, `aria-label`, `title` und URL mit gängigen
 Bezeichnungen für ein Impressum abgeglichen: Impressum, Imprint, Legal notice, Site notice,
 Anbieterkennzeichnung, Anbieterangaben, Mentions légales, Aviso legal, Note legali, Colofon,
-Informacje prawne und Impresszum. Weiche Trennstriche und Zeichen ohne Breite im Text
+Bedrijfsgegevens, Informacje prawne, Dane firmy und Impresszum. Weiche Trennstriche und Zeichen ohne Breite im Text
 („Im&amp;shy;pressum“) werden ignoriert.
 
 Die Regel läuft auf jeder gecrawlten Seite, weil das Impressum von jeder Seite aus erreichbar sein
@@ -21,6 +21,7 @@ muss.
 | Kein solcher Link, aber „Rechtliche Hinweise“, „Rechtliches“, „Legal“ oder „Jogi tudnivalók“ | `info`      |
 | Kein solcher Link, aber ein Link zur Kontaktseite                                            | `info`      |
 | Nichts davon                                                                                 | `warning`   |
+| Nichts davon, mit `--region ch`, `it`, `nl`, `pl` oder `uk`                                  | `info`      |
 
 Ein unklarer Rechts-Link wird nur notiert: Die Seite dahinter kann die Anbieterangaben enthalten
 oder nur einen Haftungsausschluss, das verrät die Beschriftung nicht. Prüfen oder den Link

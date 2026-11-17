@@ -10,6 +10,8 @@ contains no leftover template text.
 privalint reads the privacy policy the same way as for
 [`privacy-policy-vendors`](privacy-policy-vendors.md): the page the start page links as its
 privacy policy, on the same site, plus a cookie policy it links. Both rules share that one load.
+When that cookie policy can't be read, a missing contact is only `info`, names the unread link and
+makes the rule partial, since the details may be there.
 
 | Detail                  | How it is found                                                                                                                                       | Finding                                            |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
@@ -42,7 +44,8 @@ officer, give an e-mail address or another way to reach them where they are name
 
 ## Limits
 
-- Only the start page's privacy policy is read; a policy in a PDF or on another domain is not.
+- Only the start page's privacy policy is read; a policy on another domain is not. A policy in a
+  PDF on the same site is read with pdf.js.
 - A contact link without a `mailto:` target, such as a contact form, does not count as an e-mail
   address.
 - Whether the named controller is the right one isn't checked.

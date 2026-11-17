@@ -533,7 +533,7 @@ describe('legal link labels', () => {
         region,
       })[0]?.fix;
     expect(contact('de')).toContain('BGH I ZR 228/03');
-    for (const region of ['at', 'ch', 'hu', 'eu'] as const) {
+    for (const region of ['at', 'ch', 'hu', 'fr', 'uk', 'eu'] as const) {
       expect(contact(region)).not.toContain('BGH');
       expect(contact(region)).toContain('"Legal notice"');
     }
@@ -821,6 +821,41 @@ describe('legal-notice-content', () => {
   it('does not take "at office. Hours" for an e-mail address', () => {
     const findings = check('Musterweg 3\n50667 Köln\nYou can reach us at office. Hours vary.');
     expect(findings[0]?.message).toBe('The legal notice gives no e-mail address.');
+  });
+
+  it.each([
+    ['Muster Software GmbH', 'GmbH'],
+    ['Fotostudio Müller GmbH', 'GmbH'],
+    ['Muster Entwicklungs GmbH', 'GmbH'],
+  ])('reads the legal form of a provider named "%s"', (name, form) => {
+    const findings = check(`${name}\nMusterweg 3\n50667 Köln\nmail@muster.de`);
+    expect(findings).toEqual([
+      expect.objectContaining({ subject: 'register', message: expect.stringContaining(form) }),
+    ]);
+  });
+
+  it.each([
+    ['Design Müller GmbH', 'GmbH'],
+    ['Software Solutions GmbH', 'GmbH'],
+  ])('reads the legal form of "%s" at the start of a line', (name, form) => {
+    expect(check(`${name}\nMusterweg 3\n50667 Köln\nmail@muster.de`)).toEqual([
+      expect.objectContaining({ subject: 'register', message: expect.stringContaining(form) }),
+    ]);
+  });
+
+  it.each([
+    'Gestaltung: Agentur Pixel GmbH',
+    'Website by Pixel Ltd.',
+    'Conception et réalisation : Agence X SARL',
+    'Tárhelyszolgáltató: Példa Kft.',
+    'Webdesign: Agentur Beispiel GmbH',
+    'Website developed by Example Ltd',
+    'Konzept und Entwicklung: Beispiel GmbH',
+    'Fotos von Bildagentur AG',
+    'Bildnachweis: Stock GmbH',
+    'Muster - Hosting bei Strato AG',
+  ])('ignores the legal form in "%s"', (line) => {
+    expect(check(`Max Muster\nMusterweg 3\n50667 Köln\nmail@muster.de\n${line}`)).toEqual([]);
   });
 
   it('does not ask a sole trader without a legal form for a register entry', () => {

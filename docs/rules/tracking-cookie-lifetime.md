@@ -18,8 +18,8 @@ The lifetime is a separate point: it stays wrong after the consent problem is fi
 ## Why
 
 Personal data may only be kept as long as the purpose needs it (storage limitation). The French
-regulator CNIL recommends at most 13 months for tracking cookies, and the figure is widely used
-as a benchmark. Google Analytics sets `_ga` for two years by default.
+regulator CNIL sets 13 months for the cookies of audience measurement that runs without consent
+(recommendation, § 5), and the figure is widely used as a benchmark for tracking cookies. Google Analytics sets `_ga` for two years by default.
 
 - Art. 5(1)(e) GDPR
 - CNIL recommendation on cookies, 17.09.2020

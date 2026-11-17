@@ -40,11 +40,14 @@ const PROXIED_ENDPOINTS: ReadonlyArray<{
   matches: (url: URL) => boolean;
 }> = [
   {
-    // GA4 measurement protocol as sent by gtag.js: /g/collect?v=2&tid=G-XXXX.
+    // GA4 measurement protocol as sent by gtag.js: /g/collect?v=2&tid=G-XXXX. Tagging servers
+    // often rename the path (custom loaders), so a hit with GA4's own client or event parameters
+    // counts on any path.
     vendor: 'Google Analytics',
     category: 'analytics',
     matches: (url) =>
-      /\/g\/collect$/.test(url.pathname) &&
+      (/\/g\/collect$/.test(url.pathname) ||
+        ['cid', 'en', '_p'].some((name) => url.searchParams.has(name))) &&
       url.searchParams.get('v') === '2' &&
       /^G-[A-Z0-9]+$/i.test(url.searchParams.get('tid') ?? ''),
   },

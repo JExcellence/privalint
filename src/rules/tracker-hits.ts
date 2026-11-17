@@ -11,6 +11,7 @@ import {
   type TrackerCategory,
 } from '../data/trackers.js';
 import { huArticle, type Lang, say, type Text } from '../i18n.js';
+import type { Region } from '../legal.js';
 import { observedRequests } from '../observations.js';
 import type { CnameCloak, Finding, RecordedCookie, RecordedRequest, StorageKey } from '../types.js';
 import { safeHost } from '../url.js';
@@ -127,11 +128,16 @@ export interface TrackerTexts {
  * Severity, message and fix of a tracker finding. A tag manager alone is a warning, since the
  * container may be configured correctly; a request that tells Google consent was granted is an error
  * for any vendor. The fix for pings with storage denied says that they still reach Google.
+ *
+ * `exemptionRegion`: the scan's region, passed only where the visitor has not refused. Where that
+ * region exempts analytics from consent under conditions privalint can't see from outside, an
+ * analytics tool is a warning and the fix names the conditions.
  */
 export function trackerFinding(
   hit: TrackerHit,
   lang: Lang,
   texts: TrackerTexts,
+  exemptionRegion?: Region,
 ): Pick<Finding, 'severity' | 'message' | 'fix'> {
   const kind = consentModeKind(hit);
   if (kind === 'granted') {
@@ -141,12 +147,50 @@ export function trackerFinding(
       fix: say(lang, texts.grantedFix ?? texts.fix),
     };
   }
+  const exemption =
+    hit.tracker.category === 'analytics' && exemptionRegion !== undefined
+      ? STATISTICS_EXEMPTION[exemptionRegion]
+      : undefined;
   return {
-    severity: hit.tracker.category === 'tag-manager' ? 'warning' : 'error',
+    severity:
+      hit.tracker.category === 'tag-manager' || exemption !== undefined ? 'warning' : 'error',
     message: say(lang, kind === 'denied' ? (texts.deniedMessage ?? texts.message) : texts.message),
-    fix: say(lang, texts.fix) + (kind === 'denied' ? say(lang, DENIED_PINGS_NOTE) : ''),
+    fix:
+      say(lang, texts.fix) +
+      (kind === 'denied' ? say(lang, DENIED_PINGS_NOTE) : '') +
+      (exemption === undefined ? '' : say(lang, exemption)),
   };
 }
+
+/**
+ * Regions that exempt analytics from consent under conditions: the United Kingdom since
+ * 05.02.2026 (PECR Sch. A1 para. 5), France for audience measurement (CNIL, délibération
+ * n° 2020-091, §§ 49 to 51), Italy for analytics that counts as a technical cookie (Garante,
+ * 10.06.2021, § 7.2) and the Netherlands (Art. 11.7a lid 3 sub b Tw). Spain and Poland have no
+ * such exemption in law. A refusal or a granted Consent Mode state is never softened.
+ */
+const STATISTICS_EXEMPTION: Partial<Record<Region, Text>> = {
+  uk: {
+    en: ' In the UK, analytics may run without consent (PECR Sch. A1 para. 5) only if it collects statistics solely to improve this site, the data is not shared for any other purpose, and visitors are told clearly and can object free of charge. privalint cannot check these conditions; if one is not met, ask for consent.',
+    de: ' Im Vereinigten Königreich darf Analyse ohne Einwilligung laufen (PECR Sch. A1 para. 5), wenn sie nur Statistiken zur Verbesserung dieser Website erhebt, die Daten zu keinem anderen Zweck weitergegeben werden und Besucher klar informiert werden und kostenlos widersprechen können. privalint kann diese Bedingungen nicht prüfen; fehlt eine, ist eine Einwilligung nötig.',
+    hu: ' Az Egyesült Királyságban az analitika hozzájárulás nélkül is futhat (PECR Sch. A1 para. 5), ha kizárólag a webhely fejlesztését szolgáló statisztikát gyűjt, az adatokat más célra nem adják tovább, és a látogatók egyértelmű tájékoztatást kapnak, valamint ingyenesen tiltakozhatnak. A privalint ezeket a feltételeket nem tudja ellenőrizni; ha bármelyik hiányzik, hozzájárulás szükséges.',
+  },
+  fr: {
+    en: ' In France, audience measurement is exempt from consent (CNIL, délibération n° 2020-091, §§ 49 to 51) only if it serves solely to measure the audience of this site for the publisher alone, produces anonymous statistics, is not combined with other data and does not follow visitors across sites. privalint cannot check this configuration; if it is not met, ask for consent.',
+    de: ' In Frankreich ist Reichweitenmessung von der Einwilligung befreit (CNIL, délibération n° 2020-091, §§ 49 bis 51), wenn sie nur der Reichweitenmessung dieser Website für den Betreiber allein dient, anonyme Statistiken erzeugt, nicht mit anderen Daten verknüpft wird und Besucher nicht über Websites hinweg verfolgt. privalint kann diese Konfiguration nicht prüfen; ist sie nicht erfüllt, ist eine Einwilligung nötig.',
+    hu: ' Franciaországban a látogatottságmérés mentesül a hozzájárulás alól (CNIL, délibération n° 2020-091, 49-51. pont), ha kizárólag a webhely látogatottságát méri, csak az üzemeltető számára, anonim statisztikát készít, nem kapcsolják össze más adatokkal, és nem követi a látogatókat más webhelyeken. A privalint ezt a beállítást nem tudja ellenőrizni; ha nem teljesül, hozzájárulás szükséges.',
+  },
+  it: {
+    en: ' In Italy, analytics cookies count as technical cookies that need no consent (Garante privacy, cookie guidelines of 10.06.2021, § 7.2) only if they produce aggregate statistics for this site alone, a third-party tool masks at least part of the IP address, and the data is not combined with other data or passed on. privalint cannot check this configuration; if it is not met, ask for consent.',
+    de: ' In Italien gelten Analyse-Cookies als technische Cookies ohne Einwilligung (Garante privacy, Cookie-Leitlinien vom 10.06.2021, § 7.2), wenn sie nur aggregierte Statistiken für diese Website erzeugen, ein Drittanbieter-Tool die IP-Adresse mindestens teilweise kürzt und die Daten weder mit anderen Daten verknüpft noch weitergegeben werden. privalint kann diese Konfiguration nicht prüfen; ist sie nicht erfüllt, ist eine Einwilligung nötig.',
+    hu: ' Olaszországban az analitikai sütik hozzájárulás nélküli technikai sütinek számítanak (Garante privacy, 2021.06.10-i süti-iránymutatás, 7.2. pont), ha kizárólag a webhelyre vonatkozó összesített statisztikát készítenek, harmadik féltől származó eszköz esetén az IP-cím legalább egy részét elfedik, és az adatokat nem kapcsolják össze más adatokkal és nem adják tovább. A privalint ezt a beállítást nem tudja ellenőrizni; ha nem teljesül, hozzájárulás szükséges.',
+  },
+  nl: {
+    en: " In the Netherlands, analytics may run without consent (Art. 11.7a lid 3 sub b Tw) only if it measures the quality or effectiveness of this site and has little or no impact on the privacy of visitors, for example with shortened IP addresses, no data sharing for the vendor's own purposes and a data processing agreement. privalint cannot check this configuration; if it is not met, ask for consent.",
+    de: ' In den Niederlanden darf Analyse ohne Einwilligung laufen (Art. 11.7a lid 3 sub b Tw), wenn sie nur die Qualität oder Wirksamkeit dieser Website misst und kaum oder keine Folgen für die Privatsphäre der Besucher hat, etwa mit gekürzten IP-Adressen, ohne Datenweitergabe für eigene Zwecke des Anbieters und mit Auftragsverarbeitungsvertrag. privalint kann diese Konfiguration nicht prüfen; ist sie nicht erfüllt, ist eine Einwilligung nötig.',
+    hu: ' Hollandiában az analitika hozzájárulás nélkül is futhat (Art. 11.7a lid 3 sub b Tw), ha kizárólag a webhely minőségét vagy hatékonyságát méri, és alig vagy egyáltalán nem érinti a látogatók magánszféráját, például rövidített IP-címekkel, a szolgáltató saját céljaira történő adatátadás nélkül és adatfeldolgozási szerződéssel. A privalint ezt a beállítást nem tudja ellenőrizni; ha nem teljesül, hozzájárulás szükséges.',
+  },
+};
 
 /**
  * How a vendor's Google Consent Mode states change its finding: granted storage before or after a

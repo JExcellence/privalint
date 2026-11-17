@@ -37,6 +37,9 @@ Standardvertragsklauseln. Die Datenschutzerklärung muss die Übermittlung nenne
 - Art. 44, 45 und 46 DSGVO
 - Durchführungsbeschluss (EU) 2023/1795 der Kommission (EU-US Data Privacy Framework)
 - Schweiz (`--region ch`): Art. 16 und 17 DSG
+- Vereinigtes Königreich (`--region uk`): UK GDPR Arts. 44A, 45A und 46; Data Protection
+  (Adequacy) (United States of America) Regulations 2023. Übermittlungen in den EWR werden nicht
+  gemeldet.
 
 ## Wie beheben
 

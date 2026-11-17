@@ -47,7 +47,7 @@ the transfer outside the EU. If the site no longer needs a service, remove it in
   Services that only load after consent are checked with `--check-accept` only.
 - A name in the policy is enough; whether the description is correct is not checked.
 - A cookie policy published as a PDF on the same site is downloaded (up to 5 MB) and its text read
-  with pdf.js; scanned PDFs without a text layer have no text to read. A privacy policy that is
-  itself a PDF, policies on another domain and policies split over more than one linked page are
+  with pdf.js, and so is a privacy policy that is itself a PDF; scanned PDFs without a text layer
+  have no text to read. Policies on another domain and policies split over more than one linked page are
   only partly read. When the policy links a cookie policy that can't be read, such as a PDF over
-  5 MB, every finding drops to `info` and names the unread link.
+  5 MB, every finding drops to `info` and names the unread link; the rule then counts as partial.

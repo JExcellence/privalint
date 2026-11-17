@@ -19,13 +19,17 @@ sonst die Datenschutzerklärung, weil manche Websites die Anbieterangaben dort n
 dort fehlt, wird als `info` gemeldet, da die Seite nicht als Impressum gedacht sein muss. Die
 Datenschutzerklärung wird nur einmal geladen, auch wenn die Datenschutz-Regeln sie brauchen.
 
-| Angabe                   | Wie sie erkannt wird                                                                     | Fehlt                                                                                                          |
-| ------------------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Postanschrift            | Postleitzahl und Ort, mit Straße und Hausnummer in dieser oder der Zeile darüber         | `warning`                                                                                                      |
-| E-Mail                   | ein `mailto:`-Link oder eine Adresse im Text, auch als `(at)` / `[at]` geschrieben       | `warning`                                                                                                      |
-| Registereintrag          | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE-Nummer, „company number“, … | `info`, nur wenn eine eingetragene Rechtsform (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., …) genannt ist |
-| Steuernummer (Ungarn)    | „adószám“ oder eine Nummer wie `12345678-2-42`                                           | `info`, nur mit `--region hu` und einer eingetragenen Rechtsform                                               |
-| Offenlegung (Österreich) | „Offenlegung“, „§ 25 MedienG“ oder „Mediengesetz“                                        | `info`, nur mit `--region at`                                                                                  |
+| Angabe                                   | Wie sie erkannt wird                                                                                       | Fehlt                                                                                                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Postanschrift                            | Postleitzahl und Ort, mit Straße und Hausnummer in dieser oder der Zeile darüber                           | `warning`                                                                                                                                            |
+| E-Mail                                   | ein `mailto:`-Link oder eine Adresse im Text, auch als `(at)` / `[at]` geschrieben                         | `warning`                                                                                                                                            |
+| Registereintrag                          | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE-Nummer, RCS, SIREN/SIRET, Registro Imprese/REA, Registro Mercantil, KvK, KRS, „company number“, … | `info`, nur wenn eine eingetragene Rechtsform (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., PLC, LLP, SARL, SAS, SASU, EURL, SNC, S.r.l., S.p.A., S.L., S.A., B.V., N.V., sp. z o.o., …) genannt ist |
+| Steuernummer (Ungarn)                    | „adószám“ oder eine Nummer wie `12345678-2-42`                                                             | `info`, nur mit `--region hu` und einer eingetragenen Rechtsform                                                                                     |
+| Offenlegung (Österreich)                 | „Offenlegung“, „§ 25 MedienG“ oder „Mediengesetz“                                                          | `info`, nur mit `--region at`                                                                                                                        |
+| Hoster und Verantwortlicher (Frankreich) | „hébergeur“, „hébergé par“, „directeur de la publication“                                                  | `info`, nur mit `--region fr`                                                                                                                        |
+| Umsatzsteuernummer (Italien) | „partita IVA“, „P.IVA“, `IT` und 11 Ziffern oder „VAT“ | `info`, nur mit `--region it` und einer eingetragenen Rechtsform |
+| Steuernummer (Spanien) | „NIF“, „CIF“ oder eine Nummer wie `B12345678` | `info`, nur mit `--region es` und einer eingetragenen Rechtsform |
+| KRS, NIP und Stammkapital (Polen) | „KRS“, „NIP“, „kapitał zakładowy“ | `info`, nur mit `--region pl` und einer sp. z o.o. oder S.A. |
 
 Postleitzahlen mit fünf Ziffern (Deutschland) oder vier (Österreich, Schweiz, Ungarn), auch mit
 Länderkürzel wie `A-` oder `H-`, zählen in jeder Region, ebenso die ungarische Reihenfolge
@@ -54,7 +58,8 @@ Registernummer ergänzen.
 - Name des Anbieters und Vertretungsberechtigte werden nicht geprüft; ein Name lässt sich nicht
   zuverlässig von anderem Text unterscheiden.
 - Eine USt-IdNr. ist nur Pflicht, wenn es eine gibt, daher wird eine fehlende nicht gemeldet.
-- Impressen auf einer anderen Domain, als PDF oder hinter einem Skript, das erst nach dem Settle
-  lädt, werden nicht gelesen.
+- Impressen auf einer anderen Domain oder hinter einem Skript, das erst nach dem Settle lädt,
+  werden nicht gelesen. Ein Impressum als PDF auf derselben Website wird mit pdf.js gelesen; ein
+  gescanntes ohne Textebene gilt als nicht geladen.
 - In der Schweiz ist ein Impressum nur im elektronischen Geschäftsverkehr Pflicht, daher sinken die
   Befunde dort um eine Stufe.

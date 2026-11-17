@@ -19,13 +19,17 @@ privacy policy, since some sites put the provider details there. Everything foun
 is reported as `info`, because the page may not be meant as a legal notice. The privacy policy is
 loaded only once, also when the privacy policy rules need it.
 
-| Detail                     | How it is found                                                                          | Missing                                                                                                 |
-| -------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Postal address             | a postcode and place, with a street and house number on that line or the line above      | `warning`                                                                                               |
-| E-mail                     | a `mailto:` link or an address in the text, also written as `(at)` / `[at]`              | `warning`                                                                                               |
-| Register entry             | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE number, "company number", … | `info`, only when a registered legal form (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., …) is named |
-| Tax number (Hungary)       | "adószám" or a number like `12345678-2-42`                                               | `info`, only with `--region hu` and a registered legal form                                             |
-| Media disclosure (Austria) | "Offenlegung", "§ 25 MedienG" or "Mediengesetz"                                          | `info`, only with `--region at`                                                                         |
+| Detail                                 | How it is found                                                                                            | Missing                                                                                                                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Postal address                         | a postcode and place, with a street and house number on that line or the line above                        | `warning`                                                                                                                                     |
+| E-mail                                 | a `mailto:` link or an address in the text, also written as `(at)` / `[at]`                                | `warning`                                                                                                                                     |
+| Register entry                         | Handelsregister, HRB/HRA, Firmenbuch/FN, Cégjegyzék/Cg., CHE number, RCS, SIREN/SIRET, Registro Imprese/REA, Registro Mercantil, KvK, KRS, "company number", … | `info`, only when a registered legal form (GmbH, UG, AG, e.K., e.V., Kft., Zrt., Bt., Ltd., PLC, LLP, SARL, SAS, SASU, EURL, SNC, S.r.l., S.p.A., S.L., S.A., B.V., N.V., sp. z o.o., …) is named |
+| Tax number (Hungary)                   | "adószám" or a number like `12345678-2-42`                                                                 | `info`, only with `--region hu` and a registered legal form                                                                                   |
+| Media disclosure (Austria)             | "Offenlegung", "§ 25 MedienG" or "Mediengesetz"                                                            | `info`, only with `--region at`                                                                                                               |
+| Host and publication director (France) | "hébergeur", "hébergé par", "directeur de la publication"                                                  | `info`, only with `--region fr`                                                                                                               |
+| VAT number (Italy) | "partita IVA", "P.IVA", `IT` and 11 digits, or "VAT" | `info`, only with `--region it` and a registered legal form |
+| Tax number (Spain) | "NIF", "CIF" or a number like `B12345678` | `info`, only with `--region es` and a registered legal form |
+| KRS, NIP and share capital (Poland) | "KRS", "NIP", "kapitał zakładowy" | `info`, only with `--region pl` and a sp. z o.o. or S.A. |
 
 Postcodes with five digits (Germany) or four (Austria, Switzerland, Hungary), optionally with a
 country prefix such as `A-` or `H-`, count in every region, as does the Hungarian order
@@ -54,7 +58,8 @@ registration number.
 - The provider's name and the managing directors aren't checked; a name can't be told apart from
   other text reliably.
 - A VAT ID is only required when the provider has one, so a missing one isn't reported.
-- Legal notices on another domain, in a PDF or behind a script that loads after the page settles
-  are not read.
+- Legal notices on another domain or behind a script that loads after the page settles are not
+  read. A legal notice in a PDF on the same site is read with pdf.js; a scanned one without a text
+  layer counts as not loaded.
 - In Switzerland a legal notice is only required for e-commerce, so the findings drop one level
   there.

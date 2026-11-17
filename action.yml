@@ -28,7 +28,7 @@ inputs:
     description: Language of the report and the job summary. One of en, de, hu. Empty uses the config file, else en.
     default: ""
   region:
-    description: Tool reference and severity profile, not a determination of applicable law. One of de, at, ch, hu, eu. Empty uses the config file, else de.
+    description: Tool reference and severity profile, not a determination of applicable law. One of de, at, ch, hu, fr, it, es, nl, pl, uk, eu. Empty uses the config file, else de.
     default: ""
   check-settings:
     description: true also switches off every category in the banner settings, saves and checks again (trackers-after-settings). Empty uses settingsCheck from the config file.

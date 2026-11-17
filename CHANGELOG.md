@@ -8,6 +8,34 @@ All notable changes are listed here. The format follows
 
 ### Added
 
+- Region profiles for France (`--region fr`) and the United Kingdom (`--region uk`), with each
+  rule's legal basis as lawyers there cite it; sources in [docs/regions.md](docs/regions.md)
+  ([#134](https://github.com/jexcellence/privalint/issues/134)). In both, analytics before consent
+  or after closing the banner is a warning with the conditions of the exemption in the fix (CNIL
+  audience measurement; PECR Sch. A1 para. 5, in force since 05.02.2026); trackers after "reject"
+  stay errors. With `fr`, `legal-notice-content` notes a missing host or publication director
+  (LCEN). With `uk`, `impressum-link` and `withdrawal-button` drop one level and `third-country-providers` treats the UK and the EEA as adequate. Reports get schema
+  1.6.0, which only adds the region values
+- Region profiles for Italy (`it`), Spain (`es`), the Netherlands (`nl`) and Poland (`pl`)
+  ([#134](https://github.com/jexcellence/privalint/issues/134)). Analytics before consent is a
+  warning with the conditions in the fix in Italy (Garante, 10.06.2021) and the Netherlands
+  (Art. 11.7a lid 3 Tw); Spain and Poland have no such exemption. In Italy an "X" that closes the
+  banner counts as refusal for `reject-option` when `--check-close` used it. `impressum-link`
+  drops one level in Italy, the Netherlands and Poland, `withdrawal-button` in Spain and Poland,
+  where it is not yet transposed. `legal-notice-content` notes a missing partita IVA (`it`), NIF
+  (`es`) or KRS, NIP and share capital (`pl`), and recognises S.r.l., S.p.A., S.L., S.A., B.V.,
+  N.V. and sp. z o.o. with the registers REA, Registro Imprese, Registro Mercantil, KvK and KRS.
+  `withdrawal-button` accepts "overeenkomst ontbinden" and "odstąp od umowy"
+- Rules get `selectedRules` in their context, the IDs of the rules the scan runs, so a rule can
+  leave a case to another one; `reject-option` in Italy relies on `trackers-after-close` only when
+  that rule runs
+- A legal notice or privacy policy published as a PDF on the same site is read with pdf.js, as a
+  linked cookie policy already was. A PDF without a text layer counts as not loaded, so the rules
+  that need it are not evaluable instead of reporting missing details
+- GA4 hits through a server-side tagging server whose custom loader renames the collect path are
+  recognised by their parameters (`v=2`, a `G-` measurement ID and `cid`, `en` or `_p`) on any path
+- `legal-notice-content` recognises the legal forms PLC, LLP, SAS, SASU, EURL and SNC, the
+  registers RCS and SIREN/SIRET, and French street addresses such as "12 bis, rue de la Paix"
 - `privalint mcp` runs privalint as an MCP server over stdio, with the tools `scan_site` and
   `list_rules`, up to 20 pages per call and three at a time, for Claude Desktop, Cursor and other MCP clients. A scan sends progress
   notifications and stops when the client cancels it. A missing Chromium is reported with the
@@ -26,6 +54,22 @@ All notable changes are listed here. The format follows
 
 ### Fixed
 
+- `legal-notice-content` took words such as "Software", "Foto" or "Entwicklung" in the provider's
+  own name ("Muster Software GmbH") for a mention of another company and skipped its legal form.
+  Such words now count only as a label: after a separator, before a colon or next to "by", "von",
+  "durch", "par" or "bei". "Gestaltung", "Konzeption", "réalisation", "création", "website" and
+  "built" are recognised as labels too, as are Hungarian words such as "Tárhelyszolgáltató"
+- A privacy policy whose linked cookie policy could not be read counted as fully read: a finding
+  of `privacy-policy-content`, `privacy-policy-vendors` or `legal-notice-content` is now partial,
+  and a missing controller contact drops to `info` and names the unread link, as missing vendors
+  already did
+- A PDF or gzip file that a network adapter returned as a binary string was re-encoded as UTF-8
+  and could not be read; it is now copied byte by byte
+- `withdrawal-button` did not accept "Renoncer au contrat ici", the label French law prescribes
+- "Continuer sans accepter" split by a non-breaking space or a line break was not recognised as
+  a reject button
+- `tracking-cookie-lifetime` said the CNIL recommends 13 months for tracking cookies; the
+  13 months are for audience measurement without consent and serve as a benchmark
 - Trackers behind a first-party CNAME, such as `metrics.your-site.de`, were only recognised
   before consent. Subdomains that load after rejecting, saving switched-off settings, closing the
   banner or with Global Privacy Control are now resolved too, and `trackers-after-reject`,

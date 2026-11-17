@@ -15,10 +15,11 @@ gleicht dann ab:
 
 Befunde werden nach Anbieter gruppiert, mit bis zu fünf Nachweisen pro Anbieter.
 
-| Kategorie                                                            | Schweregrad |
-| -------------------------------------------------------------------- | ----------- |
-| analytics, advertising, session-replay, social, marketing-automation | `error`     |
-| tag-manager (z. B. ein GTM-Container allein)                         | `warning`   |
+| Kategorie                                                            | Schweregrad                                                                                    |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| analytics, advertising, session-replay, social, marketing-automation | `error`                                                                                        |
+| tag-manager (z. B. ein GTM-Container allein)                         | `warning`                                                                                      |
+| analytics mit `--region fr`, `it`, `nl` oder `uk`                    | `warning`, mit den Bedingungen der Ausnahme im Lösungsvorschlag ([Regionen](../regions.de.md)) |
 
 Ein Tag-Manager-Container ist nur eine Warnung: Schon sein Laden überträgt die IP-Adresse an
 einen Dritten, ob er aber ohne Einwilligung Tags auslöst, hängt von seiner Konfiguration ab.
@@ -32,12 +33,12 @@ wirken wie eigene, deshalb werden sie zusätzlich an Pfad und Parametern auf jed
 Jede Signatur verlangt das Parameterformat des Anbieters, ein beliebiger `/collect`-Endpunkt
 passt also nicht:
 
-| Anbieter           | Pfad und Parameter                                  |
-| ------------------ | --------------------------------------------------- |
-| Google Analytics   | `…/g/collect?v=2&tid=G-…`, `…/collect?v=1&tid=UA-…` |
-| Google Analytics   | `…/gtag/js?id=G-…` (auch `AW-`, `DC-`)              |
-| Google Tag Manager | `…/gtm.js?id=GTM-…`                                 |
-| Meta Pixel         | `…/tr?id=<numerische Pixel-ID>&ev=…`                |
+| Anbieter           | Pfad und Parameter                                                                                                                              |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google Analytics   | `…/g/collect?v=2&tid=G-…`, jeder Pfad mit `v=2&tid=G-…` und `cid`, `en` oder `_p` (von einem Custom Loader umbenannt), `…/collect?v=1&tid=UA-…` |
+| Google Analytics   | `…/gtag/js?id=G-…` (auch `AW-`, `DC-`)                                                                                                          |
+| Google Tag Manager | `…/gtm.js?id=GTM-…`                                                                                                                             |
+| Meta Pixel         | `…/tr?id=<numerische Pixel-ID>&ev=…`                                                                                                            |
 
 Der Beleg nennt dann den Host, über den die Anfragen liefen („über metrics.example.com
 weitergeleitet“). Auch ein serverseitiger Container braucht für das Weitergeleitete eine

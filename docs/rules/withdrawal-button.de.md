@@ -14,12 +14,16 @@ Button mit der Beschriftung, die das Gesetz verlangt: „Vertrag widerrufen“, 
 widerrufen“, „Withdraw from contract here“ und ähnliche Formulierungen auf Französisch, Spanisch,
 Italienisch und Niederländisch.
 
-| Situation                                         | Schweregrad |
-| ------------------------------------------------- | ----------- |
-| Shop, Widerrufs-Link auf der Startseite           | bestanden   |
-| Shop, nur eine Widerrufsbelehrung oder gar nichts | `warning`   |
-| Kein Shop oder nicht die Startseite               | nichts      |
-| `--region ch`                                     | `info`      |
+| Situation                                                | Schweregrad |
+| -------------------------------------------------------- | ----------- |
+| Shop, Widerrufs-Link auf der Startseite                  | bestanden   |
+| Shop, nur eine Widerrufsbelehrung oder gar nichts        | `warning`   |
+| Kein Shop oder nicht die Startseite                      | nichts      |
+| `--region ch`                                            | `info`      |
+| `--region uk` (keine solche Pflicht im britischen Recht) | `info`      |
+| `--region fr`: „Renoncer au contrat ici“ zählt als Link  | bestanden   |
+| `--region es` oder `--region pl` (noch nicht umgesetzt, Stand 17.11.2026) | `info` |
+| „Overeenkomst ontbinden“ oder „Odstąp od umowy“ zählt als Link | bestanden |
 
 ## Warum
 

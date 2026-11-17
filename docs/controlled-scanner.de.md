@@ -180,6 +180,11 @@ Blockierte/fehlgeschlagene Ressourcen und HTTP-Fehlerantworten gelten nicht als 
 geladenen Anbieters. Positive Beobachtungen können trotz Teilausfällen Findings ergeben. Regeln
 für fehlende Dokumentinhalte laufen erst bei vollständig beobachtetem initialen Laden. Eigene
 Regeln können `requires` angeben; ohne Angabe benötigen sie ein vollständiges Dokument.
+Die Regeln, die eine verlinkte Seite lesen (`legal-notice-content`, `privacy-policy-content`,
+`privacy-policy-vendors`), sind außerdem partiell, wenn sie einen Befund melden, während ein Teil
+dieser Seite, etwa eine verlinkte Cookie-Richtlinie, nicht gelesen werden konnte; ein Ergebnis ohne
+Befund bleibt geprüft. Eine PDF- oder gzip-Datei, die ein Adapter als
+Binär-String liefert (ein Zeichen je Byte, keines über U+00FF), wird Byte für Byte übernommen.
 
 Consent ergänzt die vorhandenen Felder um `state`:
 

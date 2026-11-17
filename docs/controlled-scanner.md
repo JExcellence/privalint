@@ -61,7 +61,8 @@ Chromium and is reported as `unsupported-method`.
 
 The adapter receives raw URL, method, headers and body for trusted processing; none are logged by
 PrivaLint. Return `{ status, headers, body }`; repeated headers such as Set-Cookie can be arrays.
-Bodies can be strings, byte arrays or async byte streams. Stream large bodies: a buffered adapter
+Bodies can be strings, byte arrays or async byte streams. A PDF or gzip file returned as a binary
+string (one character per byte, none above U+00FF) is copied byte for byte. Stream large bodies: a buffered adapter
 has already allocated the data before the scanner can check its size. Preserve Content-Encoding
 if returning encoded bytes, or remove it after decoding; budgets count bytes supplied by the adapter,
 not Chromium's later decoded-memory usage. Never call a second, unrestricted fetch on policy failure.
@@ -176,6 +177,9 @@ rules may inspect available positive evidence even with failed resources; blocke
 and HTTP error responses are excluded as proof of a loaded vendor. Absence-based document rules
 do not run against incomplete initial loading. Custom rules can declare `requires`; otherwise a
 complete document is required. Built-in rule IDs carry their observation requirements internally.
+The rules that read a linked page (`legal-notice-content`, `privacy-policy-content`,
+`privacy-policy-vendors`) are also partial when they report a finding while part of that page, such
+as a linked cookie policy, could not be read; a clean result stays checked.
 
 Consent adds `state` without removing existing fields:
 

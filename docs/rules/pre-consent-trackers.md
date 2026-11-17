@@ -18,10 +18,11 @@ compares:
 
 Findings are grouped by vendor, with up to five pieces of evidence each.
 
-| Category                                                             | Severity |
-| -------------------------------------------------------------------- | -------- |
-| analytics, advertising, session-replay, social, marketing-automation | error    |
-| tag-manager (e.g. a GTM container on its own)                        | warning  |
+| Category                                                             | Severity                                                                            |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| analytics, advertising, session-replay, social, marketing-automation | error                                                                               |
+| tag-manager (e.g. a GTM container on its own)                        | warning                                                                             |
+| analytics with `--region fr`, `it`, `nl` or `uk`                     | warning, with the conditions of the exemption in the fix ([regions](../regions.md)) |
 
 A tag manager container is a warning because loading it already transfers the IP address to a
 third party, but whether it fires tags without consent depends on its configuration. Any tag it
@@ -34,12 +35,12 @@ Some sites route tracking through their own domain: a server-side Google Tag Man
 are also recognised by their path and parameters on any host. Each signature needs the vendor's
 own parameter format, so an unrelated `/collect` endpoint doesn't match:
 
-| Vendor             | Path and parameters                                 |
-| ------------------ | --------------------------------------------------- |
-| Google Analytics   | `…/g/collect?v=2&tid=G-…`, `…/collect?v=1&tid=UA-…` |
-| Google Analytics   | `…/gtag/js?id=G-…` (also `AW-`, `DC-`)              |
-| Google Tag Manager | `…/gtm.js?id=GTM-…`                                 |
-| Meta Pixel         | `…/tr?id=<numeric pixel id>&ev=…`                   |
+| Vendor             | Path and parameters                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Google Analytics   | `…/g/collect?v=2&tid=G-…`, any path with `v=2&tid=G-…` and `cid`, `en` or `_p` (renamed by a custom loader), `…/collect?v=1&tid=UA-…` |
+| Google Analytics   | `…/gtag/js?id=G-…` (also `AW-`, `DC-`)                                                                                                |
+| Google Tag Manager | `…/gtm.js?id=GTM-…`                                                                                                                   |
+| Meta Pixel         | `…/tr?id=<numeric pixel id>&ev=…`                                                                                                     |
 
 The evidence then names the host the requests went through ("proxied through metrics.example.com").
 A server-side container still needs consent for what it forwards.

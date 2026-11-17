@@ -299,6 +299,9 @@ describe('proxied collection endpoints', () => {
     ['https://sgtm.example.de/gtm.js?id=GTM-ABCD12', 'Google Tag Manager'],
     ['https://sgtm.example.de/gtag/js?id=G-ABC123', 'Google Analytics'],
     ['https://example.de/fb/tr?id=123456789012&ev=PageView', 'Meta Pixel'],
+    // A tagging server with a custom loader renames the collect path.
+    ['https://data.example.de/x7k2?v=2&tid=G-ABC123&cid=123.456&en=page_view', 'Google Analytics'],
+    ['https://example.de/metrics/hit?v=2&tid=G-ABC123&_p=1700000000', 'Google Analytics'],
   ])('recognises %s as %s, marked as proxied', (url, vendor) => {
     expect(findTrackerByUrl(url)).toMatchObject({ vendor, proxied: true });
   });
@@ -308,6 +311,8 @@ describe('proxied collection endpoints', () => {
     'https://example.de/g/collect?v=2&tid=customer-42',
     'https://example.de/gtm.js',
     'https://example.de/tr?id=abc&ev=click',
+    'https://example.de/search?v=2&en=books',
+    'https://example.de/api?v=2&tid=G-ABC123',
   ])('leaves unrelated first-party paths alone: %s', (url) => {
     expect(findTrackerByUrl(url)).toBeUndefined();
   });

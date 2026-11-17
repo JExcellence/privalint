@@ -98,8 +98,10 @@ const EEA = new Set([
   'EU',
 ]);
 
-/** Whether data sent to `country` leaves the EU/EEA, or Switzerland as well for `ch`. */
+/** Whether data sent to `country` leaves the EU/EEA, plus Switzerland for `ch` and the UK for `uk`. */
 export function isThirdCountry(country: string, region?: string): boolean {
   if (region === 'ch' && country === 'CH') return false;
+  // UK adequacy regulations cover the EEA; other countries they cover have no provider listed here.
+  if (region === 'uk' && country === 'GB') return false;
   return !EEA.has(country);
 }

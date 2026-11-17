@@ -1,7 +1,25 @@
-import { say } from '../i18n.js';
+import { say, type Text } from '../i18n.js';
 import type { Rule } from '../types.js';
 
 const ID = 'reject-option';
+
+/**
+ * Italy accepts a command such as an "X" that closes the banner and keeps the default settings as
+ * the way to refuse (Garante privacy, cookie guidelines of 10.06.2021, § 7.1). Whether closing
+ * really keeps trackers off is checked by trackers-after-close.
+ */
+const ITALIAN_CLOSE_NOTE: Text = {
+  en: ' In Italy, an "X" that closes the banner and keeps only technical cookies also counts as refusal (Garante privacy, 10.06.2021, § 7.1); run privalint with --check-close to test one.',
+  de: ' In Italien gilt auch ein „X“, das das Banner schließt und nur technische Cookies belässt, als Ablehnung (Garante privacy, 10.06.2021, § 7.1); privalint mit --check-close ausführen, um es zu prüfen.',
+  hu: ' Olaszországban a bannert bezáró „X” is elutasításnak számít, ha csak a technikai sütik maradnak (Garante privacy, 2021.06.10., 7.1. pont); a vizsgálathoz futtassa a privalintet a --check-close kapcsolóval.',
+};
+
+/** The close check ran, but found no "X" it could use or could not watch the page after it. */
+const ITALIAN_CLOSE_NOT_USED: Text = {
+  en: ' In Italy, an "X" that closes the banner and keeps only technical cookies also counts as refusal (Garante privacy, 10.06.2021, § 7.1); the close check found none it could use and fully observe, or trackers-after-close does not run to verify it.',
+  de: ' In Italien gilt auch ein „X“, das das Banner schließt und nur technische Cookies belässt, als Ablehnung (Garante privacy, 10.06.2021, § 7.1); die Schließen-Prüfung fand keines, das sie benutzen und vollständig beobachten konnte, oder trackers-after-close läuft nicht, um es zu prüfen.',
+  hu: ' Olaszországban a bannert bezáró „X” is elutasításnak számít, ha csak a technikai sütik maradnak (Garante privacy, 2021.06.10., 7.1. pont); a bezárás vizsgálata nem talált olyat, amelyet használni és teljesen megfigyelni tudott volna, vagy a trackers-after-close szabály nem fut, hogy ellenőrizze.',
+};
 
 export const rejectOption: Rule = {
   id: ID,
@@ -17,7 +35,7 @@ export const rejectOption: Rule = {
     'Art. 4(11) GDPR',
     '§ 25 Abs. 1 TDDDG',
   ],
-  check({ page, lang }) {
+  check({ page, lang, region, selectedRules }) {
     const consent = page.consent;
     if (
       consent?.bannerFound !== true ||
@@ -26,14 +44,22 @@ export const rejectOption: Rule = {
     ) {
       return [];
     }
+    // Only when the page after closing was fully observed, so trackers-after-close can judge it.
+    if (
+      region === 'it' &&
+      consent.close?.outcome === 'closed' &&
+      consent.close.afterCloseComplete !== false &&
+      selectedRules?.has('trackers-after-close') === true
+    ) {
+      return [];
+    }
     const vendor = consent.cmp === undefined ? '' : ` (${consent.cmp})`;
-    const accept =
-      consent.acceptLabel ?? say(lang, { en: 'accept', de: 'Zustimmen', hu: 'elfogadás' });
+    const accept = consent.acceptLabel;
     const evidence = [
       say(lang, {
-        en: `accept button: ${consent.acceptLabel ?? 'unlabelled'}`,
-        de: `Zustimmen-Button: ${consent.acceptLabel ?? 'ohne Beschriftung'}`,
-        hu: `elfogadás gomb: ${consent.acceptLabel ?? 'felirat nélkül'}`,
+        en: `accept button: ${accept}`,
+        de: `Zustimmen-Button: ${accept}`,
+        hu: `elfogadás gomb: ${accept}`,
       }),
     ];
     if (consent.payOrOk === true) {
@@ -67,11 +93,15 @@ export const rejectOption: Rule = {
         }),
         pageUrl: page.finalUrl,
         evidence,
-        fix: say(lang, {
-          en: 'Add a button such as "Alle ablehnen" or "Nur notwendige" on the first layer, with the same size and prominence as the accept button.',
-          de: 'Einen Button wie „Alle ablehnen“ oder „Nur notwendige“ auf die erste Ebene setzen, gleich groß und gleich auffällig wie den Zustimmen-Button.',
-          hu: 'Helyezzen el az első szinten egy „Az összes elutasítása” vagy „Csak a szükségesek” gombot, ugyanakkora méretben és ugyanolyan feltűnően, mint az elfogadás gombot.',
-        }),
+        fix:
+          say(lang, {
+            en: 'Add a button such as "Alle ablehnen" or "Nur notwendige" on the first layer, with the same size and prominence as the accept button.',
+            de: 'Einen Button wie „Alle ablehnen“ oder „Nur notwendige“ auf die erste Ebene setzen, gleich groß und gleich auffällig wie den Zustimmen-Button.',
+            hu: 'Helyezzen el az első szinten egy „Az összes elutasítása” vagy „Csak a szükségesek” gombot, ugyanakkora méretben és ugyanolyan feltűnően, mint az elfogadás gombot.',
+          }) +
+          (region !== 'it'
+            ? ''
+            : say(lang, consent.close === undefined ? ITALIAN_CLOSE_NOTE : ITALIAN_CLOSE_NOT_USED)),
       },
     ];
   },

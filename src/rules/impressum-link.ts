@@ -11,7 +11,7 @@ const ID = 'impressum-link';
  * behind an icon-only link is still found.
  */
 export const LEGAL_NOTICE =
-  /impressum|imprint|legal[\s_-]?notice|site[\s_-]?notice|anbieter[\s_-]?(?:kennzeichnung|angaben)|mentions[\s_-]?l[eé]gales|aviso[\s_-]?legal|note[\s_-]?legali|colofon|informacje[\s_-]?prawne|impresszum/i;
+  /impressum|imprint|legal[\s_-]?notice|site[\s_-]?notice|anbieter[\s_-]?(?:kennzeichnung|angaben)|mentions[\s_-]?l[eé]gales|aviso[\s_-]?legal|note[\s_-]?legali|colofon|bedrijfsgegevens|informacje[\s_-]?prawne|dane[\s_-]?firmy|impresszum/i;
 
 /**
  * Labels for a legal page that may hold the provider information or only a disclaimer, such as

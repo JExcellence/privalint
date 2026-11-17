@@ -42,7 +42,9 @@ export function adapterFetchBytes(adapter: NetworkAdapter, maxBytes: number): Fe
       if (response.status !== 200 || response.body === undefined) return undefined;
       const body = response.body;
       if (typeof body === 'string') {
-        const bytes = new TextEncoder().encode(body);
+        const bytes = isBinaryString(body)
+          ? Uint8Array.from(body, (char) => char.charCodeAt(0))
+          : new TextEncoder().encode(body);
         return bytes.byteLength > maxBytes ? undefined : bytes;
       }
       if (body instanceof Uint8Array) return body.byteLength > maxBytes ? undefined : body;
@@ -58,4 +60,17 @@ export function adapterFetchBytes(adapter: NetworkAdapter, maxBytes: number): Fe
       return undefined;
     }
   };
+}
+
+/**
+ * A PDF or gzip file an adapter returned as a "binary string", one character per byte. Encoding
+ * it as UTF-8 would turn every byte above 0x7f into two and break the file, so it is copied byte
+ * by byte instead. Text such as a sitemap is still encoded as UTF-8.
+ */
+function isBinaryString(body: string): boolean {
+  if (!body.startsWith('%PDF-') && !body.startsWith('\u001f\u008b')) return false;
+  for (let i = 0; i < body.length; i++) {
+    if (body.charCodeAt(i) > 0xff) return false;
+  }
+  return true;
 }

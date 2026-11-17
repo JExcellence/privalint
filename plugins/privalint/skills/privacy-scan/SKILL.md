@@ -14,7 +14,7 @@ privalint loads a live website in a real browser (Chromium), clicks "reject" on 
 Call the `scan_site` tool of the privalint MCP server with the URL the user gave (`$ARGUMENTS`). If there is none, ask for it. A local dev server works too; give it with `http://`, such as `http://localhost:3000`, because a URL without a scheme is scanned with `https://`.
 
 - `maxPages`: 1 by default. Use 5 to 10 when the user wants the whole site or forms on subpages checked; each page takes 10 to 60 seconds.
-- `region`: `de` by default. Use `at`, `ch`, `hu` or `eu` when the site is clearly for that country.
+- `region`: `de` by default. Use `at`, `ch`, `hu`, `fr` (France), `it` (Italy), `es` (Spain), `nl` (Netherlands), `pl` (Poland), `uk` (United Kingdom) or `eu` when the site is clearly for that country.
 - `lang`: answer in the user's language; pass `de` or `hu` when the user writes German or Hungarian.
 - Opt-in checks, only when the user asks or the question needs them: `checkSettings` (switch everything off in the banner settings), `checkClose` (close the banner with its "×"), `checkAccept` (services that run after consent, for the privacy policy check), `gpc` (Global Privacy Control).
 

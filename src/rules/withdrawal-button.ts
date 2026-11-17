@@ -11,7 +11,7 @@ const ID = 'withdrawal-button';
  * function, and don't match.
  */
 const WITHDRAWAL =
-  /vertrag\s+(hier\s+)?widerrufen|widerruf\s+(erklären|einreichen|starten)|withdraw\s+(from\s+)?(the\s+|your\s+)?contract|cancel\s+(the\s+|your\s+)?contract\s+here|résilier\s+le\s+contrat|se\s+rétracter|desistir\s+del\s+contrato|recedere\s+dal\s+contratto|overeenkomst\s+herroepen/i;
+  /vertrag\s+(hier\s+)?widerrufen|widerruf\s+(erklären|einreichen|starten)|withdraw\s+(from\s+)?(the\s+|your\s+)?contract|cancel\s+(the\s+|your\s+)?contract\s+here|renoncer\s+au\s+contrat|résilier\s+le\s+contrat|se\s+rétracter|desistir\s+del\s+contrato|recedere\s+dal\s+contratto|overeenkomst\s+herroepen|overeenkomst\s+(?:hier\s+)?ontbinden|odst[aą]p\s+od\s+umowy/i;
 
 export const withdrawalButton: Rule = {
   id: ID,

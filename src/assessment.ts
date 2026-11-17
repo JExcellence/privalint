@@ -288,7 +288,7 @@ export function assessPage(
     ) {
       // The DOM was read, but a request never finished. What the rule found there is reliable,
       // so a clean result counts; a finding about something missing may be a gap in loading.
-      const seen = rule.check({ page: input, siteUrl, lang, region });
+      const seen = rule.check({ page: input, siteUrl, lang, region, selectedRules: selected });
       if (seen.length === 0) {
         return {
           ruleId: rule.id,
@@ -323,7 +323,7 @@ export function assessPage(
         findingCount: 0,
       };
     }
-    const detected = rule.check({ page: input, siteUrl, lang, region });
+    const detected = rule.check({ page: input, siteUrl, lang, region, selectedRules: selected });
     const linked = LINKED_PAGES[rule.id];
     if (detected.length > 0 && linked !== undefined && page[linked]?.complete === false) {
       // Something missing from a linked page that didn't load completely may be a loading gap.
@@ -340,6 +340,9 @@ export function assessPage(
     detectedBy.set(rule.id, detected);
     const partial =
       unreadFor(rule) ||
+      // A finding about something missing, while part of the linked page (a cookie policy behind
+      // it) could not be read: the detail may be there. A clean result is reliable either way.
+      (detected.length > 0 && linked !== undefined && (page[linked]?.unread?.length ?? 0) > 0) ||
       (requirements.includes('gpc')
         ? page.consent?.gpc?.afterGpcComplete === false
         : requirements.includes('after-close')

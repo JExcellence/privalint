@@ -520,6 +520,8 @@ export interface RuleContext {
   lang: Lang;
   /** Legal profile of the scan. Absent when a custom caller doesn't pass one. */
   region?: Region;
+  /** IDs of the rules this scan runs, so a rule can leave a case to another one. */
+  selectedRules?: ReadonlySet<string>;
 }
 
 export interface Rule {

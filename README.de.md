@@ -28,17 +28,26 @@ npx privalint https://ihre-seite.de --lang de
 Mit `--region` wählen Sie das Referenz- und Einstufungsprofil des Tools. Das Profil bestimmt
 nicht, welches Recht für eine Website anwendbar ist. Befunde sind keine rechtliche Beurteilung.
 
-| Region          | Cookies und Tracking                      | Impressum                                       | Besonderheit                                                     |
-| --------------- | ----------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
-| `de` (Standard) | Opt-in, § 25 TDDDG                        | § 5 DDG                                         | keine                                                            |
-| `at`            | Opt-in, § 165 Abs. 3 TKG 2021             | § 5 ECG, § 25 MedienG                           | keine                                                            |
-| `ch`            | Opt-out, Art. 45c FMG                     | Art. 3 Abs. 1 lit. s UWG (bei Online-Angeboten) | Tracker, Einbindungen, Schriften und Impressum eine Stufe milder |
-| `hu`            | Opt-in, Eht. 155. § (4)                   | Ekertv. 4. §                                    | keine                                                            |
-| `eu`            | Opt-in, Art. 5 Abs. 3 ePrivacy-Richtlinie | Art. 5 E-Commerce-Richtlinie                    | keine                                                            |
+| Region          | Cookies und Tracking                      | Impressum                                       | Besonderheit                                                                                                                                                         |
+| --------------- | ----------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `de` (Standard) | Opt-in, § 25 TDDDG                        | § 5 DDG                                         | keine                                                                                                                                                                |
+| `at`            | Opt-in, § 165 Abs. 3 TKG 2021             | § 5 ECG, § 25 MedienG                           | keine                                                                                                                                                                |
+| `ch`            | Opt-out, Art. 45c FMG                     | Art. 3 Abs. 1 lit. s UWG (bei Online-Angeboten) | Tracker, Einbindungen, Schriften und Impressum eine Stufe milder                                                                                                     |
+| `hu`            | Opt-in, Eht. 155. § (4)                   | Ekertv. 4. §                                    | keine                                                                                                                                                                |
+| `fr`            | Opt-in, Art. 82 loi n° 78-17              | Art. 1-1 LCEN                                   | Analyse vor der Einwilligung oder nach dem Schließen nur eine Warnung (CNIL-Ausnahme für Reichweitenmessung); Impressum wird auf Hoster und Verantwortlichen geprüft |
+| `it` | Opt-in, Art. 122 Codice privacy | Art. 7 D.lgs. 70/2003 | Analyse nur eine Warnung (Garante); ein „X“, das das Banner schließt, gilt als Ablehnung; Impressum-Link eine Stufe milder; Impressum wird auf die partita IVA geprüft |
+| `es` | Opt-in, Art. 22.2 LSSI | Art. 10 LSSI | Widerrufsbutton eine Stufe milder (noch nicht umgesetzt); Impressum wird auf die NIF geprüft |
+| `nl` | Opt-in, Art. 11.7a Tw | Art. 3:15d BW | Analyse nur eine Warnung (Art. 11.7a lid 3 Tw); Impressum-Link eine Stufe milder |
+| `pl` | Opt-in, art. 399 PKE | art. 5 UŚUDE | Impressum-Link und Widerrufsbutton eine Stufe milder; Impressum einer sp. z o.o. oder S.A. wird auf KRS, NIP und Stammkapital geprüft |
+| `uk`            | Opt-in, PECR reg. 6                       | Electronic Commerce Regulations 2002, reg. 6    | Analyse vor der Einwilligung oder nach dem Schließen nur eine Warnung (PECR Sch. A1 para. 5); Impressum-Link und Widerrufsbutton eine Stufe milder                   |
+| `eu`            | Opt-in, Art. 5 Abs. 3 ePrivacy-Richtlinie | Art. 5 E-Commerce-Richtlinie                    | keine                                                                                                                                                                |
 
 Tracker, die nach einem ausdrücklichen „Ablehnen“ weiterlaufen, bleiben überall ein Fehler, auch in
 der Schweiz (Art. 30 Abs. 2 lit. b DSG). Richtet sich eine Schweizer Website auch an Besucher aus
-der EU, prüfen Sie sie zusätzlich mit `--region eu`.
+der EU, prüfen Sie sie zusätzlich mit `--region eu`. Ob Analyse-Tools in Frankreich, Italien, den Niederlanden und im
+Vereinigten Königreich ohne Einwilligung laufen dürfen, hängt von ihrer Einrichtung ab, die privalint
+nicht sieht; diese Befunde bleiben Warnungen mit den Bedingungen im Lösungsvorschlag. Quellen je
+Land: [Regionen](docs/regions.de.md).
 
 ```bash
 npx privalint https://ihre-seite.at --region at --lang de --max-pages 20
@@ -252,8 +261,8 @@ den der Assistent steuert.
   [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database) abgeglichen
   (Apache-2.0, siehe [NOTICE](NOTICE)), nur über den Cookie-Namen.
 - Serverseitiges Tracking ist im Browser nicht sichtbar.
-- PDFs, die nur aus Bildern bestehen, enthalten keinen lesbaren Text, und eine
-  Datenschutzerklärung, die selbst ein PDF ist, wird nicht gelesen.
+- PDFs, die nur aus Bildern bestehen, enthalten keinen lesbaren Text; ein solches Impressum oder
+  eine solche Datenschutzerklärung gilt als nicht geladen, die Regeln dazu als nicht auswertbar.
 - Chromium läuft standardmäßig ohne seine Sandbox, weil sie in vielen Containern nicht startet.
   Wer fremde Seiten auf einem Rechner mit Zugangsdaten prüft, sollte `--sandbox` setzen.
   Die Sandbox braucht unprivilegierte User-Namespaces. In Docker-Containern blockiert sie das

@@ -60,8 +60,9 @@ export const privacyPolicyContent: Rule = {
     });
 
     if (!hasEmail(text, policy.mailto) && !hasAddress(text)) {
-      // An overview page that links the actual notices may name the controller there.
-      const further = policy.linkedDocuments ?? [];
+      // An overview page that links the actual notices, or a linked cookie policy that could not
+      // be read, may name the controller there.
+      const further = [...(policy.linkedDocuments ?? []), ...(policy.unread ?? [])];
       const notRead = further.map((url) =>
         say(lang, {
           en: `not read: ${url}`,

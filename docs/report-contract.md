@@ -4,7 +4,7 @@
 
 ## Versioned validation
 
-New scans use schema **1.5.0**. Schemas 1.0.0 to 1.4.0 remain available for earlier
+New scans use schema **1.6.0**. Schemas 1.0.0 to 1.5.0 remain available for earlier
 versioned reports. 1.2.0 adds the skip reason `cancelled-by-page`, which a 1.1.0 validator would
 reject. 1.3.0 adds the opt-in settings-layer check: `consent.settings`, `options.settingsCheck`,
 the observation kind `after-settings`, the skip reason `settings-check-disabled` and its
@@ -30,7 +30,8 @@ a request, with its registrable domain, the page it was first seen on, the phase
 privalint knows it as. It holds hosts only, never paths or query strings. A 1.4.0 validator would
 reject all of these. A report compared with `--baseline` also has `baseline` (`new` or
 `existing`) on each finding and a top-level `baseline` with the counts `new` and `existing` and the
-`fixed` findings (`ruleId`, `pageUrl`, `subject`).
+`fixed` findings (`ruleId`, `pageUrl`, `subject`). 1.6.0 adds the regions `fr`, `it`, `es`, `nl`, `pl` and `uk` (`region`
+and `options.region`), which a 1.5.0 validator would reject; nothing else changes.
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;
 unknown versions are unsupported. Never assign a schema version to old data merely to validate it.
 
@@ -42,12 +43,14 @@ The npm package ships self-contained JSON Schema 2020-12 files:
 - `privalint/schemas/report-1.3.0.schema.json`
 - `privalint/schemas/report-1.4.0.schema.json`
 - `privalint/schemas/report-1.5.0.schema.json`
+- `privalint/schemas/report-1.6.0.schema.json`
 - `privalint/schemas/sarif-properties-1.0.0.schema.json`
 - `privalint/schemas/sarif-properties-1.1.0.schema.json`
 - `privalint/schemas/sarif-properties-1.2.0.schema.json`
 - `privalint/schemas/sarif-properties-1.3.0.schema.json`
 - `privalint/schemas/sarif-properties-1.4.0.schema.json`
 - `privalint/schemas/sarif-properties-1.5.0.schema.json`
+- `privalint/schemas/sarif-properties-1.6.0.schema.json`
 
 SARIF extension schemas validate `runs[].properties`, not the entire SARIF standard. Required
 fields, types, outcomes and contradictions (for example a negative success with `partial: true`)

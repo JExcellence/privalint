@@ -197,7 +197,7 @@ Inputs left empty are not passed to privalint, so `privalint.config.json` in you
 | `device`             | config, else desktop | Playwright device to emulate, such as `iPhone 15`, to check the mobile banner. |
 | `disable`            |                      | Comma-separated rule ids to skip.                                              |
 | `lang`               | config, else `en`    | Language of the report: `en`, `de` or `hu`.                                    |
-| `region`             | config, else `de`    | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.                               |
+| `region`             | config, else `de`    | Whose law to cite: `de`, `at`, `ch`, `hu`, `fr`, `it`, `es`, `nl`, `pl`, `uk`, `eu`.                   |
 | `sarif-file`         | `privalint.sarif`    | Where to write SARIF. Empty to skip.                                           |
 | `job-summary`        | `true`               | Add the Markdown report to the job summary.                                    |
 | `pr-comment`         | `false`              | Create or update a same-repository PR report comment.                          |
@@ -240,7 +240,7 @@ privalint mcp             Run as an MCP server over stdio (tools: scan_site, lis
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
       --lang <lang>       Language of the report: en | de | hu (default en)
-      --region <region>   Whose law to cite: de | at | ch | hu | eu (default de)
+      --region <region>   Whose law to cite: de | at | ch | hu | fr | it | es | nl | pl | uk | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
       --consent           Enable consent checking even if the JSON config disables it
       --check-settings    Also open the banner's settings, switch everything off and
@@ -286,17 +286,25 @@ privalint's Playwright needs: `npx -y playwright@<version> install chromium`.
 `--region` selects the references and severity profile used by the tool. It does not determine
 which law applies to a website, and findings are not legal determinations:
 
-| Region         | Cookies and tracking                 | Imprint                               | Changes                                                     |
-| -------------- | ------------------------------------ | ------------------------------------- | ----------------------------------------------------------- |
-| `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                               | none                                                        |
-| `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                 | none                                                        |
-| `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce) | trackers, embeds, fonts and `impressum-link` drop one level |
-| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                          | none                                                        |
-| `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC           | none                                                        |
+| Region         | Cookies and tracking                 | Imprint                                      | Changes                                                                                                                                                  |
+| -------------- | ------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                                      | none                                                                                                                                                     |
+| `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                        | none                                                                                                                                                     |
+| `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce)        | trackers, embeds, fonts and `impressum-link` drop one level                                                                                              |
+| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                                 | none                                                                                                                                                     |
+| `fr`           | Opt-in, Art. 82 loi n° 78-17         | Art. 1-1 LCEN                                | analytics before consent or after closing drops to warning (CNIL audience measurement exemption); legal notice checked for host and publication director |
+| `it` | Opt-in, Art. 122 Codice privacy | Art. 7 D.lgs. 70/2003 | analytics drops to warning (Garante); an "X" that closes the banner counts as refusal; `impressum-link` drops one level; legal notice checked for the partita IVA |
+| `es` | Opt-in, Art. 22.2 LSSI | Art. 10 LSSI | `withdrawal-button` drops one level (not yet transposed); legal notice checked for the NIF |
+| `nl` | Opt-in, Art. 11.7a Tw | Art. 3:15d BW | analytics drops to warning (Art. 11.7a lid 3 Tw); `impressum-link` drops one level |
+| `pl` | Opt-in, art. 399 PKE | art. 5 UŚUDE | `impressum-link` and `withdrawal-button` drop one level; legal notice of a sp. z o.o. or S.A. checked for KRS, NIP and share capital |
+| `uk`           | Opt-in, PECR reg. 6                  | Electronic Commerce Regulations 2002, reg. 6 | analytics before consent or after closing drops to warning (PECR Sch. A1 para. 5); `impressum-link` and the withdrawal button drop one level             |
+| `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC                  | none                                                                                                                                                     |
 
 Every finding lists its legal basis for the chosen country. Trackers that run after an explicit
 "reject" stay an error everywhere, Switzerland included (Art. 30 Abs. 2 lit. b DSG). If a Swiss
-site also targets visitors in the EU, scan it with `--region eu` as well.
+site also targets visitors in the EU, scan it with `--region eu` as well. The analytics exemptions in
+France, Italy, the Netherlands and the UK depend on how the tool is set up, which privalint cannot see, so those findings
+stay warnings with the conditions in the fix. Sources for each country: [regions](docs/regions.md).
 
 `--lang de` writes findings, fixes and the report in German, `--lang hu` in Hungarian:
 
@@ -427,8 +435,8 @@ Going further:
 - Many consent managers decide by IP address whether to show a banner. GitHub-hosted runners have
   US addresses, so the result can differ from what an EU visitor sees. Use a runner or proxy in
   the EU for results you want to rely on.
-- PDFs that are only scanned images have no text to read, and a privacy policy that is itself a
-  PDF is not read.
+- PDFs that are only scanned images have no text to read; such a legal notice or privacy policy
+  counts as not loaded, so its rules are reported as not evaluable.
 - Chromium runs without its sandbox by default, like Playwright's own default, because the sandbox
   often can't start in containers. Pass `--sandbox` when you scan sites you don't trust on a
   machine that holds secrets. The sandbox needs unprivileged user namespaces, which Docker's
@@ -436,7 +444,7 @@ Going further:
 
 ## Roadmap
 
-- Region profiles for France, Italy, Spain, Poland, the Netherlands and the UK
+- More region profiles (France, Italy, Spain, the Netherlands, Poland and the UK are done)
   ([#134](https://github.com/jexcellence/privalint/issues/134))
 - Report text in French, Italian, Spanish and Polish
   ([#135](https://github.com/jexcellence/privalint/issues/135))

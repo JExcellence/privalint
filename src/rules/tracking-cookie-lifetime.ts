@@ -4,7 +4,7 @@ import type { Finding, RecordedCookie, Rule } from '../types.js';
 
 const ID = 'tracking-cookie-lifetime';
 
-/** The longest lifetime the CNIL recommends for tracking cookies, in calendar months. */
+/** The CNIL's lifetime for consent-exempt audience measurement cookies, used as a benchmark. */
 const MAX_MONTHS = 13;
 const DAY_SECONDS = 24 * 60 * 60;
 
@@ -12,8 +12,9 @@ export const trackingCookieLifetime: Rule = {
   id: ID,
   title: 'Tracking cookies kept longer than 13 months',
   description:
-    'Personal data may only be kept as long as needed. The French regulator CNIL recommends at ' +
-    'most 13 months for tracking cookies, and other regulators point to it. privalint notes ' +
+    'Personal data may only be kept as long as needed. The French regulator CNIL sets 13 months ' +
+    'for cookies of audience measurement without consent, a common benchmark for tracking ' +
+    'cookies. privalint notes ' +
     'cookies from the tracker list that the site sets for longer.',
   references: ['Art. 5(1)(e) GDPR', 'CNIL recommendation on cookies, 17.09.2020'],
   check({ page, lang }) {

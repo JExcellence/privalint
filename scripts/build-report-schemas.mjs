@@ -53,8 +53,11 @@ const explanation = choices(
 );
 const meta = { $schema: 'https://json-schema.org/draft/2020-12/schema' };
 
-/** Versions that carry the fields added within 1.4.0; 1.5.0 keeps them. */
-const LATEST_14 = ['1.4.0', '1.5.0'];
+const VERSIONS = ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0'];
+/** Whether `version` carries what `first` added; every later version keeps it. */
+const since = (version, first) => VERSIONS.indexOf(version) >= VERSIONS.indexOf(first);
+/** Versions that carry the fields added within 1.4.0. */
+const LATEST_14 = VERSIONS.filter((version) => since(version, '1.4.0'));
 
 function definitions(version) {
   // 1.1.0 added scan and page IDs; every later version keeps them.
@@ -67,7 +70,7 @@ function definitions(version) {
   if (settingsAware) observationKinds.push('after-settings');
   if (timed) observationKinds.push('banner-search', 'transport');
   // 1.5.0 added the legal notice and privacy policy read next to the start page.
-  const linked = version === '1.5.0';
+  const linked = since(version, '1.5.0');
   if (linked) observationKinds.push('linked-page', 'after-close', 'gpc');
   const pageIdentity = identified ? { pageId: uuid } : {};
   return {
@@ -316,7 +319,7 @@ function definitions(version) {
         subject: string,
         references: array(string),
         policy: object({ allowed: boolean, originalSeverity: severity }),
-        ...(version === '1.5.0' ? { baseline: choices('new', 'existing') } : {}),
+        ...(since(version, '1.5.0') ? { baseline: choices('new', 'existing') } : {}),
       },
       [...Object.keys(pageIdentity), 'ruleId', 'severity', 'message', 'pageUrl', 'evidence'],
     ),
@@ -387,7 +390,7 @@ function definitions(version) {
           : {}),
         ...(timed ? { tcf: ref('tcf'), bannerWaitMs: count } : {}),
         // Added in 1.5.0 with the opt-in close-button check.
-        ...(version === '1.5.0'
+        ...(since(version, '1.5.0')
           ? {
               close: object(
                 {
@@ -468,7 +471,7 @@ function definitions(version) {
         // Added within 1.4.0 (scanner 0.10.0); optional.
         ...(LATEST_14.includes(version) ? { hostChecks: choices('each', 'main') } : {}),
         // Added in 1.5.0; optional, only when a device was emulated.
-        ...(version === '1.5.0'
+        ...(since(version, '1.5.0')
           ? {
               device: string,
               sitemap: boolean,
@@ -504,13 +507,16 @@ const reportOptions = {
 };
 
 // 1.5.0 added Hungarian report text.
-const langFor = (version) => (version === '1.5.0' ? choices('en', 'de', 'hu') : reportOptions.lang);
+const langFor = (version) =>
+  since(version, '1.5.0') ? choices('en', 'de', 'hu') : reportOptions.lang;
 
-// 1.3.0 added Hungary.
+// 1.3.0 added Hungary, 1.6.0 France and the United Kingdom.
 const regionFor = (version) =>
-  ['1.0.0', '1.1.0', '1.2.0'].includes(version)
-    ? reportOptions.region
-    : choices('de', 'at', 'ch', 'hu', 'eu');
+  since(version, '1.6.0')
+    ? choices('de', 'at', 'ch', 'hu', 'fr', 'it', 'es', 'nl', 'pl', 'uk', 'eu')
+    : since(version, '1.3.0')
+      ? choices('de', 'at', 'ch', 'hu', 'eu')
+      : reportOptions.region;
 
 function reportSchema(version) {
   return {
@@ -555,7 +561,7 @@ function reportSchema(version) {
             }
           : {}),
         // Added in 1.5.0; optional, absent when no host outside the site answered.
-        ...(version === '1.5.0'
+        ...(since(version, '1.5.0')
           ? {
               thirdParties: array(
                 object(
@@ -583,7 +589,7 @@ function reportSchema(version) {
         consent: ref('consent'),
         findings: array(ref('finding')),
         // Added in 1.5.0; present only when the scan was compared with a baseline report.
-        ...(version === '1.5.0'
+        ...(since(version, '1.5.0')
           ? {
               baseline: object(
                 {
@@ -661,7 +667,7 @@ function sarifPropertiesSchema(version) {
 
 const directory = new URL('../schemas/', import.meta.url);
 await mkdir(directory, { recursive: true });
-for (const version of ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0']) {
+for (const version of VERSIONS) {
   for (const [name, schema] of [
     ['report', reportSchema(version)],
     ['sarif-properties', sarifPropertiesSchema(version)],
