@@ -51,6 +51,10 @@ look first-party. In native scans privalint resolves the CNAME chain (up to five
 first-party subdomain other than the scanned host that received a request, and reports a chain
 that reaches a tracker domain as that tracker, with the chain as evidence:
 "request https://metrics.example.com/… (CNAME metrics.example.com → example.com.eulerian.net)".
+Subdomains that receive requests only after rejecting, saving switched-off settings, closing the
+banner or with Global Privacy Control are resolved too, so `trackers-after-reject`,
+`trackers-after-settings`, `trackers-after-close` and `gpc-signal` recognise them the same way.
+Loads after accepting are not checked: trackers may run then.
 
 The targets come from the tracker list and from AdGuard's MIT-licensed
 [cname-trackers list](https://github.com/AdguardTeam/cname-trackers) (Adobe Experience Cloud,
@@ -64,11 +68,11 @@ Google tags in Consent Mode send the consent state with each request in the `gcs
 privalint reads it from every tracker request and puts it first in the evidence:
 "Consent Mode: ad_storage denied, analytics_storage denied (gcs=G100)".
 
-| What the requests carry                    | Finding                                                                         |
-| ------------------------------------------ | ------------------------------------------------------------------------------- |
+| What the requests carry                    | Finding                                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------------------- |
 | only denied states, such as `G100`         | "sends Google Consent Mode pings", with a note that the pings still reach Google |
-| any granted state (`G101`, `G110`, `G111`) | its own error: the tag tells Google that consent was granted before any choice  |
-| no `gcs`                                   | the plain finding                                                               |
+| any granted state (`G101`, `G110`, `G111`) | its own error: the tag tells Google that consent was granted before any choice   |
+| no `gcs`                                   | the plain finding                                                                |
 
 The after-reject, after-settings and after-close checks read it the same way. A granted state
 after rejecting is reported as consent the visitor never gave.

@@ -22,9 +22,11 @@ export const gpcSignal: Rule = {
     }
     const vendors = (hits: ReturnType<typeof findTrackerHits>) =>
       hits.map((hit) => hit.tracker.vendor);
-    const plain = vendors(findTrackerHits(page.requests, page.cookies, lang, page.storage));
+    const plain = vendors(
+      findTrackerHits(page.requests, page.cookies, lang, page.storage, page.cnameCloaks),
+    );
     const withGpc = vendors(
-      findTrackerHits(after.requests, after.cookies, lang, after.storage ?? []),
+      findTrackerHits(after.requests, after.cookies, lang, after.storage, page.cnameCloaks),
     );
     const list = (names: string[]) =>
       names.length === 0 ? say(lang, { en: 'none', de: 'keine', hu: 'nincs' }) : names.join(', ');

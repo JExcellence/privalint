@@ -13,6 +13,7 @@ import { FORMATS, type Format, format, formatText } from './reporters/index.js';
 import { defaultRules } from './rules/index.js';
 import { scan } from './scanner.js';
 import type { Finding, Rule } from './types.js';
+import { readTarget } from './url.js';
 
 const FAIL_LEVELS = ['error', 'warning', 'never'] as const;
 const CHANNELS = ['chrome', 'msedge'] as const;
@@ -29,6 +30,7 @@ Find GDPR problems on a live website: trackers before consent or after
 
 Usage
   privalint <url> [options]
+  privalint mcp           Run as an MCP server over stdio (tools: scan_site, list_rules)
 
 Options
   -p, --max-pages <n>     Crawl up to n pages of the same site (default 1)
@@ -95,6 +97,13 @@ const FORMAT_BY_EXTENSION: Record<string, Format> = {
 };
 
 async function main(argv: string[]): Promise<number> {
+  if (argv[0] === 'mcp') {
+    if (argv.length > 1) throw new Error('privalint mcp takes no options.');
+    // Loaded only here: the MCP SDK is not needed for a plain scan.
+    const { serveMcp } = await import('./mcp.js');
+    await serveMcp();
+    return EXIT_OK;
+  }
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,
@@ -278,12 +287,9 @@ function parseTarget(positionals: string[]): URL {
   if (raw === undefined || rest.length > 0) {
     throw new Error('Expected exactly one URL. Run privalint --help for usage.');
   }
-  const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-  try {
-    return new URL(withScheme);
-  } catch {
-    throw new Error('Not a valid HTTP(S) URL.');
-  }
+  const target = readTarget(raw);
+  if (target === undefined) throw new Error('Not a valid HTTP(S) URL.');
+  return target;
 }
 
 function oneOf<T extends string>(

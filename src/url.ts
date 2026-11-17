@@ -124,3 +124,26 @@ function routingQuery(url: URL): string {
     .sort(([a], [b]) => a.localeCompare(b));
   return kept.length === 0 ? '' : `?${new URLSearchParams(kept)}`;
 }
+
+/**
+ * Reads a scan target as a person or an assistant types it. A host without a scheme, also
+ * "localhost:3000", gets https://. Input that starts like another scheme ("ftp://", "mailto:",
+ * "http:") is refused rather than read as a host. Undefined when it is no HTTP(S) URL, or when it
+ * carries credentials without an explicit http(s):// or while `credentials` is false.
+ */
+export function readTarget(raw: string, options: { credentials?: boolean } = {}): URL | undefined {
+  const trimmed = raw.trim();
+  const web = /^https?:\/\//i.test(trimmed);
+  if (!web && /^[a-z][a-z\d+.-]*:(?!\d)/i.test(trimmed)) return undefined;
+  let url: URL;
+  try {
+    url = new URL(web ? trimmed : `https://${trimmed}`);
+  } catch {
+    return undefined;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
+  const credentials = url.username !== '' || url.password !== '';
+  // Without a scheme of its own, "mailto:1@example.com" would read as user "mailto", password "1".
+  if (credentials && (!web || options.credentials === false)) return undefined;
+  return url;
+}

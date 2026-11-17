@@ -8,6 +8,13 @@ All notable changes are listed here. The format follows
 
 ### Added
 
+- `privalint mcp` runs privalint as an MCP server over stdio, with the tools `scan_site` and
+  `list_rules`, up to 20 pages per call and three at a time, for Claude Desktop, Cursor and other MCP clients. A scan sends progress
+  notifications and stops when the client cancels it. A missing Chromium is reported with the
+  command that installs it
+- A Claude Code plugin in this repository (`/plugin install privalint --marketplace
+  JExcellence/privalint`): the MCP server plus a `privacy-scan` skill that reports the findings
+  and finds their cause in the user's code
 - `impressum-link` accepts "Anbieterangaben" as a legal notice link
 - Google Consent Mode: the tracker checks read the `gcs` parameter of each tracker request and put
   the consent state first in the evidence ("Consent Mode: ad_storage denied, analytics_storage
@@ -19,6 +26,16 @@ All notable changes are listed here. The format follows
 
 ### Fixed
 
+- Trackers behind a first-party CNAME, such as `metrics.your-site.de`, were only recognised
+  before consent. Subdomains that load after rejecting, saving switched-off settings, closing the
+  banner or with Global Privacy Control are now resolved too, and `trackers-after-reject`,
+  `trackers-after-settings`, `trackers-after-close`, `gpc-signal` and `consent-banner-missing`
+  report them as the tracker behind them
+- With `npx privalint`, a missing Chromium stopped the scan with Playwright's hint
+  `npx playwright install`, which installs the browser of whatever Playwright npx resolves. The
+  scan now names the build privalint needs: `npx -y playwright@<version> install chromium`
+- `privalint ftp://example.com` scanned a host called `ftp`; targets that start with another
+  scheme are now refused
 - Links to the Impressum or the privacy policy written with soft hyphens or zero-width characters,
   such as "Daten&amp;shy;schutz&amp;shy;erklärung", were not recognised, so `impressum-link`,
   `privacy-policy-link` and `form-privacy-notice` reported them as missing

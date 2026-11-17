@@ -16,7 +16,13 @@ export const consentBannerMissing: Rule = {
   check({ page, lang }) {
     if (page.consent?.bannerFound !== false || page.consent.state !== 'not-detected') return [];
     // A tag manager on its own can be configured to wait for consent, so it doesn't count here.
-    const vendors = findTrackerHits(page.requests, page.cookies, lang, page.storage)
+    const vendors = findTrackerHits(
+      page.requests,
+      page.cookies,
+      lang,
+      page.storage,
+      page.cnameCloaks,
+    )
       .filter(({ tracker }) => tracker.category !== 'tag-manager')
       .map(({ tracker }) => tracker.vendor);
     if (vendors.length === 0) return [];

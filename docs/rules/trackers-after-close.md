@@ -13,15 +13,16 @@ banner's close control and clicks it: a visible control in the banner layer whos
 reloads the page and compares what loads, like the reject path. Each tracker on privalint's list
 that loads or sets new cookies then is an `error` (a tag manager alone is a `warning`, unless its
 requests tell Google that consent was granted; see
-[Google Consent Mode](pre-consent-trackers.md#google-consent-mode)).
+[Google Consent Mode](pre-consent-trackers.md#google-consent-mode)). A first-party subdomain that is a CNAME to a tracker counts as that tracker; see
+[CNAME-cloaked trackers](pre-consent-trackers.md#cname-cloaked-trackers).
 
-| Situation                                         | Result                                                    |
-| ------------------------------------------------- | --------------------------------------------------------- |
-| Close button found and clicked                    | checked; findings for trackers that loaded                |
-| Banner without a close button (search completed)  | checked, no finding: closing can't be misread             |
-| Search, click or reload failed                    | not evaluable (`browser-interaction-failed`), not a pass  |
-| `--check-close` not given                         | skipped (`close-check-disabled`), not a gap               |
-| Banner didn't appear again                        | not evaluable (`banner-not-shown`)                        |
+| Situation                                        | Result                                                   |
+| ------------------------------------------------ | -------------------------------------------------------- |
+| Close button found and clicked                   | checked; findings for trackers that loaded               |
+| Banner without a close button (search completed) | checked, no finding: closing can't be misread            |
+| Search, click or reload failed                   | not evaluable (`browser-interaction-failed`), not a pass |
+| `--check-close` not given                        | skipped (`close-check-disabled`), not a gap              |
+| Banner didn't appear again                       | not evaluable (`banner-not-shown`)                       |
 
 The report records the result in `consent.close`: outcome, reason, the close control's label and
 whether the window after closing was observed completely.

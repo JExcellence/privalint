@@ -11,6 +11,8 @@ On the start page privalint looks for a consent banner, by the selectors of comm
 managers and by button labels, and waits up to one more settle period for a banner that renders
 late (see [consent manager recognition](../consent-managers.md)). If none appears and at least one
 tool from the tracker list ran before any interaction, this rule reports it once, naming the tools.
+A tracker behind a first-party CNAME counts too; see
+[CNAME-cloaked trackers](pre-consent-trackers.md#cname-cloaked-trackers).
 
 | Situation                                                  | Severity |
 | ---------------------------------------------------------- | -------- |

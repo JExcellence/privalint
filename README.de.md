@@ -97,7 +97,9 @@ Tracker erkennt privalint an Host und Cookie, und auch, wenn sie sich verstecken
 - **Über die eigene Domain geleitet:** GA4 `/g/collect`, serverseitiger Google Tag Manager und der
   Meta-Pixel-Endpunkt werden an Pfad und Parametern erkannt, auf jedem Host.
 - **Hinter einem eigenen CNAME:** In nativen Scans löst privalint die CNAME-Kette der eigenen
-  Subdomains auf und meldet `metrics.ihre-seite.de` als den Tracker, auf den sie zeigt.
+  Subdomains auf und meldet `metrics.ihre-seite.de` als den Tracker, auf den sie zeigt, vor der
+  Einwilligung und nach jeder Entscheidung (Ablehnen, gespeicherte Einstellungen, geschlossenes
+  Banner, GPC).
 - **Fingerprinting:** Canvas-, WebGL- und Audio-Abfragen werden mit dem aufrufenden Skript
   festgehalten.
 
@@ -199,6 +201,44 @@ Weiterführend:
 - [privalint hinter einem öffentlichen Webformular betreiben](docs/controlled-scanner.de.md):
   Netzwerk-Adapter, Limits und Abbruch, mit [typgeprüftem Beispiel](examples/controlled-scanner.ts)
 - [Erkennung von Consent-Managern](docs/consent-managers.de.md)
+
+## Mit Claude und anderen KI-Assistenten
+
+privalint läuft auch als MCP-Server. Ein KI-Assistent kann damit eine Seite prüfen, die Befunde
+erklären und sie im eigenen Code beheben.
+
+**Claude-Code-Plugin.** Das Plugin bringt die Prüfwerkzeuge und den Skill `privacy-scan` mit, der
+die Befunde berichtet und ihre Ursache im Repository sucht:
+
+```text
+/plugin install privalint --marketplace JExcellence/privalint
+```
+
+Das braucht Claude Code 2.1.275 oder neuer. In älteren Versionen erst
+`/plugin marketplace add JExcellence/privalint` und dann `/plugin install privalint@privalint`.
+Danach zum Beispiel fragen: „Prüfe https://ihre-seite.de auf DSGVO-Probleme“, oder
+`/privalint:privacy-scan https://ihre-seite.de` ausführen.
+
+**Andere MCP-Clients** wie Claude Desktop, Cursor oder VS Code bekommen einen stdio-Server:
+
+```json
+{
+  "mcpServers": {
+    "privalint": { "command": "npx", "args": ["-y", "privalint@latest", "mcp"] }
+  }
+}
+```
+
+Unter Windows `"command": "cmd"` mit `"args": ["/c", "npx", "-y", "privalint@latest", "mcp"]`.
+Der Server hat zwei Werkzeuge: `scan_site` nimmt `url` (ohne Schema mit `https://`; andere Schemata als http und https werden
+abgelehnt) und optional `maxPages` (bis 20), `lang`,
+`region`, `checkSettings`, `checkClose`, `checkAccept`, `gpc`, `sitemap`, `device` und `report`
+(`markdown` oder `json`). `list_rules` listet die Prüfungen mit ihren Rechtsgrundlagen.
+Chromium muss einmal installiert werden; fehlt es, nennt die Prüfung den passenden Befehl. Eine Prüfung
+lädt bis zu drei Seiten gleichzeitig und dauert 10 bis 60 Sekunden pro Seite. Der Server prüft
+jede Adresse, die der Assistent übergibt, auch `localhost` und Adressen im eigenen Netz, damit er
+einen Entwicklungsserver prüfen kann; unerwartete Aufrufe also wie bei jedem Browser bestätigen,
+den der Assistent steuert.
 
 ## Grenzen
 

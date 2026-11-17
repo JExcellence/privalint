@@ -6,5 +6,8 @@
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "always" } },
   "linter": { "rules": { "preset": "none" } },
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
-  "overrides": [{ "includes": ["schemas/**/*.json"], "formatter": { "enabled": false } }]
+  "overrides": [
+    { "includes": ["schemas/**/*.json"], "formatter": { "enabled": false } },
+    { "includes": ["plugins/**/SKILL.md"], "formatter": { "enabled": false } }
+  ]
 }

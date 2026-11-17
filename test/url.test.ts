@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { crawlTarget, isFirstParty } from '../src/url.js';
+import { crawlTarget, isFirstParty, readTarget } from '../src/url.js';
 import { SITE } from './helpers.js';
 
 describe('isFirstParty', () => {
@@ -76,5 +76,38 @@ describe('crawlTarget', () => {
     'javascript:void(0)',
   ])('skips %s', (href) => {
     expect(crawlTarget(href, SITE)).toBeUndefined();
+  });
+});
+
+describe('readTarget', () => {
+  it.each([
+    ['example.com', 'https://example.com/'],
+    ['  example.com/shop  ', 'https://example.com/shop'],
+    ['localhost:3000', 'https://localhost:3000/'],
+    ['http://localhost:3000', 'http://localhost:3000/'],
+    ['HTTPS://Example.com', 'https://example.com/'],
+    ['https://user:pw@staging.example.com', 'https://user:pw@staging.example.com/'],
+  ])('reads %s as %s', (raw, href) => {
+    expect(readTarget(raw)?.href).toBe(href);
+  });
+
+  it.each([
+    'ftp://example.com',
+    'mailto:a@example.com',
+    'mailto:1@example.com',
+    'user:pw@staging.example.com',
+    'http:',
+    'https:/example.com',
+    'https://',
+    '',
+  ])('refuses %s', (raw) => {
+    expect(readTarget(raw)).toBeUndefined();
+  });
+
+  it('refuses credentials when asked to', () => {
+    expect(readTarget('https://user:pw@example.com', { credentials: false })).toBeUndefined();
+    expect(readTarget('https://example.com', { credentials: false })?.href).toBe(
+      'https://example.com/',
+    );
   });
 });

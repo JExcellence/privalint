@@ -439,7 +439,10 @@ export interface PageSnapshot {
    * read it. Rules that use them can't report a clean result. Internal.
    */
   unreadParts?: PageRead[];
-  /** First-party subdomains this page used that are CNAMEs to a tracker. Native scans. Internal. */
+  /**
+   * First-party subdomains this page used, before or after a consent choice, that are CNAMEs to a
+   * tracker. Native scans. Internal.
+   */
   cnameCloaks?: CnameCloak[];
   /** Calls to fingerprinting APIs before consent and the script that made each. Internal. */
   fingerprinting?: FingerprintRead[];

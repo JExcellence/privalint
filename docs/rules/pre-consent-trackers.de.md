@@ -49,6 +49,11 @@ Eine Subdomain wie `metrics.example.com` kann ein CNAME auf einen Tracker sein; 
 Cookies wirken dann wie eigene. In nativen Scans löst privalint die CNAME-Kette (bis zu fünf
 Schritte) jeder eigenen Subdomain außer dem gescannten Host auf, an die eine Anfrage ging, und meldet
 eine Kette, die eine Tracker-Domain erreicht, als diesen Tracker, mit der Kette als Beleg.
+Subdomains, die erst nach dem Ablehnen, nach dem Speichern abgewählter Einstellungen, nach dem
+Schließen des Banners oder mit Global Privacy Control Anfragen bekommen, werden ebenso aufgelöst;
+`trackers-after-reject`, `trackers-after-settings`, `trackers-after-close` und `gpc-signal`
+erkennen sie genauso. Ladevorgänge nach dem Zustimmen werden nicht geprüft: Dann dürfen Tracker
+laufen.
 
 Die Ziele stammen aus der Tracker-Liste und aus AdGuards MIT-lizenzierter
 [cname-trackers-Liste](https://github.com/AdguardTeam/cname-trackers) (Adobe Experience Cloud,
@@ -62,11 +67,11 @@ Google-Tags im Consent Mode senden den Einwilligungsstatus mit jeder Anfrage im 
 privalint liest ihn aus jeder Tracker-Anfrage und stellt ihn an den Anfang der Belege:
 „Consent Mode: ad_storage abgelehnt, analytics_storage abgelehnt (gcs=G100)“.
 
-| Was die Anfragen tragen                        | Befund                                                                       |
-| ---------------------------------------------- | ---------------------------------------------------------------------------- |
+| Was die Anfragen tragen                        | Befund                                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------------------------ |
 | nur abgelehnte Zustände, etwa `G100`           | „sendet Google-Consent-Mode-Pings“, mit dem Hinweis, dass sie Google erreichen |
-| ein erlaubter Zustand (`G101`, `G110`, `G111`) | eigener Fehler: das Tag meldet Google eine Einwilligung vor jeder Auswahl    |
-| kein `gcs`                                     | der normale Befund                                                           |
+| ein erlaubter Zustand (`G101`, `G110`, `G111`) | eigener Fehler: das Tag meldet Google eine Einwilligung vor jeder Auswahl      |
+| kein `gcs`                                     | der normale Befund                                                             |
 
 Die Prüfungen nach dem Ablehnen, nach dem Speichern der Einstellungen und nach dem Schließen lesen
 ihn genauso. Ein erlaubter Zustand nach dem Ablehnen wird als Einwilligung gemeldet, die der

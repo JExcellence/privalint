@@ -35,7 +35,8 @@ stored by the reject test doesn't hide the banner. Then it
 Every request and every cookie that is new since the save is matched against the tracker list, with
 the same severities as `trackers-after-reject`. A Google tag that tells Google consent was granted
 after saving is an error, a tag manager included; see
-[Google Consent Mode](pre-consent-trackers.md#google-consent-mode).
+[Google Consent Mode](pre-consent-trackers.md#google-consent-mode). A first-party subdomain that is a CNAME to a tracker counts as that tracker; see
+[CNAME-cloaked trackers](pre-consent-trackers.md#cname-cloaked-trackers).
 
 For TCF banners, consent that the API still reports for a purpose or vendor is an error: the
 visitor refused, and a consent was stored. Purposes or vendors still on through legitimate interest

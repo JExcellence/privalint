@@ -1,0 +1,14 @@
+{
+  "name": "privalint",
+  "description": "privalint for Claude Code: scan websites for GDPR and consent problems and fix them in your code.",
+  "owner": { "name": "JExcellence", "url": "https://github.com/JExcellence" },
+  "plugins": [
+    {
+      "name": "privalint",
+      "source": "./plugins/privalint",
+      "description": "Scan a live website in a real browser for trackers before consent or after reject, consent banner problems, Google Fonts, embeds and missing legal links, then fix what it finds in your code.",
+      "category": "security",
+      "tags": ["gdpr", "privacy", "cookies", "consent", "dsgvo"]
+    }
+  ]
+}

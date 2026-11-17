@@ -9,7 +9,8 @@ Meldet Tracker, die nach einem Klick auf „Ablehnen“ weiterhin laden oder neu
 Auf der Startseite sucht privalint das Cookie-Banner, klickt auf dessen Ablehnen-Button, wartet,
 bis das Netzwerk zur Ruhe kommt, lädt die Seite neu und wartet erneut. Jede Anfrage und jedes
 Cookie, das seit dem Klick neu hinzugekommen ist, wird mit derselben Tracker-Liste abgeglichen wie
-bei [`pre-consent-trackers`](pre-consent-trackers.de.md).
+bei [`pre-consent-trackers`](pre-consent-trackers.de.md). Eine eigene Subdomain, die per CNAME auf einen Tracker zeigt, zählt als dieser Tracker; siehe
+[Per CNAME getarnte Tracker](pre-consent-trackers.de.md#per-cname-getarnte-tracker).
 
 | Kategorie                                    | Schweregrad |
 | -------------------------------------------- | ----------- |

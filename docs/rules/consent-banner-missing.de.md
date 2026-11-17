@@ -11,7 +11,8 @@ Auf der Startseite sucht privalint ein Cookie-Banner, über die Selektoren verbr
 Consent-Manager und über Beschriftungen, und wartet bis zu einer weiteren Settle-Zeit auf ein
 Banner, das spät erscheint (siehe [Erkennung von Consent-Managern](../consent-managers.de.md)).
 Erscheint keines und lief mindestens ein Dienst von der Tracker-Liste ohne jede Interaktion, meldet
-diese Regel das einmal und nennt die Dienste.
+diese Regel das einmal und nennt die Dienste. Ein Tracker hinter einem eigenen CNAME zählt auch;
+siehe [Per CNAME getarnte Tracker](pre-consent-trackers.de.md#per-cname-getarnte-tracker).
 
 | Situation                                                       | Schweregrad |
 | --------------------------------------------------------------- | ----------- |

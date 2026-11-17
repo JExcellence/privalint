@@ -78,7 +78,8 @@ Trackers are recognised by host and cookie, and also when they hide:
 - **Proxied through the site's own domain:** GA4 `/g/collect`, server-side Google Tag Manager and
   the Meta Pixel endpoint are recognised by path and parameters on any host.
 - **Behind a first-party CNAME:** in native scans, privalint resolves the CNAME chain of the site's
-  own subdomains and reports `metrics.your-site.de` as the tracker it points to.
+  own subdomains and reports `metrics.your-site.de` as the tracker it points to, before consent
+  and after any consent choice (reject, saved settings, closed banner, GPC).
 - **Fingerprinting:** canvas, WebGL and audio reads are recorded with the script that made them.
 
 ### Legal notice and privacy policy
@@ -216,6 +217,7 @@ On self-hosted runners without it, add `actions/setup-node` before this step.
 
 ```
 privalint <url> [options]
+privalint mcp             Run as an MCP server over stdio (tools: scan_site, list_rules)
 
   -p, --max-pages <n>     Crawl up to n pages of the same site (default 1)
       --concurrency <n>   Load up to n pages at the same time (default 1).
@@ -270,11 +272,14 @@ Exit codes: `0` nothing at or above `--fail-on`, `1` findings, `2` invalid argum
 scan, `3` incomplete coverage with `--fail-on-incomplete` (findings exit `1` takes precedence;
 rules or consent checks you switched off on purpose don't count).
 
-The first run needs a browser. If Playwright hasn't installed one yet:
+The first run needs a browser. In a project that has privalint installed:
 
 ```bash
 npx playwright install chromium
 ```
+
+With `npx privalint`, a missing browser stops the scan with the command that installs the build
+privalint's Playwright needs: `npx -y playwright@<version> install chromium`.
 
 ## Countries and languages
 
@@ -299,6 +304,45 @@ site also targets visitors in the EU, scan it with `--region eu` as well.
 npx privalint https://ihre-seite.ch --region ch --lang de
 npx privalint https://pelda.hu --region hu --lang hu
 ```
+
+## Use it with Claude and other AI assistants
+
+privalint runs as an MCP server, so an AI assistant can scan a site, explain the findings and fix
+them in your code.
+
+**Claude Code plugin.** The plugin adds the scan tools and a `privacy-scan` skill that reports the
+findings and finds their cause in your repository:
+
+```text
+/plugin install privalint --marketplace JExcellence/privalint
+```
+
+This needs Claude Code 2.1.275 or later. On older versions, run
+`/plugin marketplace add JExcellence/privalint` and then `/plugin install privalint@privalint`.
+Then ask "Check https://your-site.de for GDPR problems" or run
+`/privalint:privacy-scan https://your-site.de`.
+
+**Any MCP client**, such as Claude Desktop, Cursor or VS Code, with a stdio server:
+
+```json
+{
+  "mcpServers": {
+    "privalint": { "command": "npx", "args": ["-y", "privalint@latest", "mcp"] }
+  }
+}
+```
+
+On Windows, use `"command": "cmd"` with `"args": ["/c", "npx", "-y", "privalint@latest", "mcp"]`.
+
+The server has two tools. `scan_site` takes `url` (without a scheme it gets `https://`; schemes
+other than http and https are refused) and optionally `maxPages` (up to 20), `lang`,
+`region`, `checkSettings`, `checkClose`, `checkAccept`, `gpc`, `sitemap`, `device` and
+`report` (`markdown` or `json`). `list_rules` lists the checks with their legal references.
+A scan loads up to three pages at a time, takes 10 to 60 seconds per page and sends progress
+notifications while it runs. The server scans any address the assistant passes, including
+`localhost` and addresses in your own network, so it can check a dev server; approve calls you
+did not expect as you would any browser the assistant controls. Chromium
+has to be installed once; if it is missing, the scan fails with the command that installs it.
 
 ## Use it from code
 

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { type Browser, chromium } from 'playwright';
 import { assessPage } from './assessment.js';
 import { capturePage, deviceOptions } from './capture.js';
@@ -60,6 +61,14 @@ function integer(value: number, name: string, minimum: number): void {
   }
 }
 
+/** The Playwright privalint runs with, whose browser build must be installed. */
+const PLAYWRIGHT_VERSION = (
+  createRequire(import.meta.url)('playwright/package.json') as { version: string }
+).version;
+
+const isMissingBrowser = (error: unknown): boolean =>
+  error instanceof Error && error.message.includes("Executable doesn't exist");
+
 async function launchBrowser(options: ScanOptions): Promise<Browser> {
   const sandbox = options.sandbox === true;
   try {
@@ -69,6 +78,15 @@ async function launchBrowser(options: ScanOptions): Promise<Browser> {
       ...(options.channel === undefined ? {} : { channel: options.channel }),
     });
   } catch (error) {
+    if (options.channel === undefined && isMissingBrowser(error)) {
+      // Playwright's own hint, "npx playwright install", installs the browser of whatever
+      // Playwright npx resolves, which under `npx privalint` need not be the one privalint uses.
+      throw new Error(
+        `Chromium for Playwright ${PLAYWRIGHT_VERSION} is not installed. Install it once with: ` +
+          `npx -y playwright@${PLAYWRIGHT_VERSION} install chromium`,
+        { cause: error },
+      );
+    }
     if (!sandbox) throw error;
     // Chromium's own message ("No usable sandbox!") does not say what to change.
     throw new Error(
@@ -305,7 +323,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     throwIfAborted(options.signal);
     // DNS lookups belong to native scans: an adapter owns the network, an offline fixture has none.
     if (!options.networkAdapter && (options.resolveCname !== undefined || !options.offline)) {
-      await findCnameCloaks(snapshots, siteUrl, options.resolveCname);
+      await findCnameCloaks(snapshots, siteUrl, options.resolveCname, options.signal);
+      throwIfAborted(options.signal);
     }
     // The consent manager seen on a host's first page is the one its other pages use.
     const cmpByHost = new Map<string, string>();
