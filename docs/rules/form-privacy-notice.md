@@ -16,6 +16,7 @@ as long as that element is small enough not to be the whole page.
 | Every such form has a privacy link in or right around it      | passes                                                              |
 | A form without one, while the page links the policy elsewhere | info                                                                |
 | The page has no privacy link at all                           | nothing here; [`privacy-policy-link`](privacy-policy-link.md) warns |
+| The page's forms could not be read                            | not evaluable (`incomplete-observation`), not a pass                |
 
 ## Why
 

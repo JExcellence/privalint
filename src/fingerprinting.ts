@@ -50,15 +50,19 @@ export async function installFingerprintProbe(context: BrowserContext): Promise<
   await context.addInitScript(fingerprintProbe, MAX_READS);
 }
 
-/** The reads recorded so far, deduplicated by API and script. */
-export async function readFingerprinting(page: Page): Promise<FingerprintRead[]> {
+/**
+ * The reads recorded so far, deduplicated by API and script. Undefined when the page could not be
+ * read, which is not the same as no fingerprinting.
+ */
+export async function readFingerprinting(page: Page): Promise<FingerprintRead[] | undefined> {
   const reads = await page
     .evaluate(
       () =>
         (globalThis as unknown as { __privalintFingerprinting?: FingerprintRead[] })
           .__privalintFingerprinting ?? [],
     )
-    .catch(() => [] as FingerprintRead[]);
+    .catch(() => undefined);
+  if (reads === undefined) return undefined;
   const seen = new Map<string, FingerprintRead>();
   for (const read of reads) {
     if (read.script !== '') seen.set(`${read.api} ${read.script}`, read);

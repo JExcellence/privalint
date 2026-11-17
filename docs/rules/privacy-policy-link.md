@@ -8,7 +8,8 @@ Warns when a page has no link to a privacy policy.
 
 Every link on the page is matched by its text, `aria-label`, `title` and URL path against common
 names for a privacy policy: Datenschutz, Datenschutzerklärung, Privacy, Data protection,
-Confidentialité, Privacidad, Protezione dei dati, Privacybeleid and Polityka prywatności.
+Confidentialité, Privacidad, Protezione dei dati, Privacybeleid and Polityka prywatności. Soft
+hyphens and zero-width characters ("Daten&amp;shy;schutz&amp;shy;erklärung") are ignored.
 
 The rule runs on every crawled page.
 

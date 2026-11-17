@@ -10,10 +10,12 @@ import { classifyLoadError, Diagnostics, diagnosticUrl } from './diagnostics.js'
 import { installFingerprintProbe, readFingerprinting } from './fingerprinting.js';
 import { readForms } from './forms.js';
 import { ControlledNetwork, networkLimits, watchPageCancellations } from './network.js';
+import { installPageRuntime } from './page-runtime.js';
+import { INVISIBLE_CHARS } from './rules/links.js';
 import { DEFAULTS, type ScanOptions } from './scan-options.js';
 import { readStorageKeys } from './storage.js';
 import { observeTransport } from './transport.js';
-import type { LinkedPageText, PageSnapshot } from './types.js';
+import type { LinkedPageText, PageRead, PageSnapshot } from './types.js';
 import { isFirstParty } from './url.js';
 
 /**
@@ -98,6 +100,7 @@ export async function capturePage(
           : route.fulfill({ status: 200, body: '' }),
       );
     }
+    await installPageRuntime(context);
     await installFingerprintProbe(context);
     const page = await context.newPage();
     if (network) await network.attachPage(page);
@@ -126,16 +129,23 @@ export async function capturePage(
     await page.waitForTimeout(options.settleMs ?? DEFAULTS.settleMs);
     // A script may have redirected while the page settled; links and rules belong to where it went.
     snapshot.finalUrl = page.url();
-    snapshot.links = await page.$$eval('a[href]', (anchors) =>
-      anchors.map((a) => ({
-        href: (a as HTMLAnchorElement).href,
-        text: [a.textContent, a.getAttribute('aria-label'), a.getAttribute('title')]
-          .filter(Boolean)
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .slice(0, 200),
-      })),
+    // Soft hyphens and zero-width characters are invisible but split words in reports.
+    snapshot.links = await page.$$eval(
+      'a[href]',
+      (anchors, invisibleSource) => {
+        const invisible = new RegExp(invisibleSource, 'g');
+        return anchors.map((a) => ({
+          href: (a as HTMLAnchorElement).href,
+          text: [a.textContent, a.getAttribute('aria-label'), a.getAttribute('title')]
+            .filter(Boolean)
+            .join(' ')
+            .replace(invisible, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 200),
+        }));
+      },
+      INVISIBLE_CHARS.source,
     );
     const language = await page
       .evaluate(() => globalThis.document.documentElement.lang)
@@ -144,16 +154,22 @@ export async function capturePage(
     if (primary !== undefined) snapshot.language = primary.toLowerCase();
     snapshot.browserLanguage =
       (options.locale ?? DEFAULTS.locale).split('-')[0]?.toLowerCase() ?? '';
-    snapshot.forms = await readForms(page);
+    // A failed read is recorded, not taken for an empty page: the rules using it stay unproven.
+    const unread: PageRead[] = [];
+    const forms = await readForms(page);
+    if (forms === undefined) unread.push('forms');
+    else snapshot.forms = forms;
     const fingerprinting = await readFingerprinting(page);
-    if (fingerprinting.length > 0) snapshot.fingerprinting = fingerprinting;
+    if (fingerprinting === undefined) unread.push('fingerprinting');
+    else if (fingerprinting.length > 0) snapshot.fingerprinting = fingerprinting;
     const security = await readPageSecurity(page);
-    if (security.insecure.length > 0) snapshot.insecureResources = security.insecure;
+    if (security === undefined) unread.push('security');
+    else if (security.insecure.length > 0) snapshot.insecureResources = security.insecure;
     const header = response?.headers()['referrer-policy'];
-    if (header !== undefined || security.referrer !== undefined) {
+    if (header !== undefined || security?.referrer !== undefined) {
       snapshot.referrerPolicy = {
         ...(header === undefined ? {} : { header }),
-        ...(security.referrer === undefined ? {} : { meta: security.referrer }),
+        ...(security?.referrer === undefined ? {} : { meta: security.referrer }),
       };
     }
     const text = keepText ? await readText(page, snapshot.finalUrl) : undefined;
@@ -172,7 +188,10 @@ export async function capturePage(
       path,
       expires,
     }));
-    snapshot.storage = await readStorageKeys(page);
+    const storage = await readStorageKeys(page);
+    if (storage === undefined) unread.push('storage');
+    snapshot.storage = storage ?? [];
+    if (unread.length > 0) snapshot.unreadParts = unread;
     // One extra request to the target, so only where privalint owns the network.
     if (consentPath === 'reject' && !controlled && !options.offline) {
       snapshot.transport = await observeTransport(context.request, snapshot.finalUrl, response);
@@ -198,7 +217,7 @@ export async function capturePage(
       };
       if (consentPath === 'gpc') {
         const shown = await bannerShown(page, consentOptions);
-        const signal = await page
+        const gpcSignal = await page
           .evaluate(() => (navigator as { globalPrivacyControl?: boolean }).globalPrivacyControl)
           .catch(() => undefined);
         snapshot.consent = {
@@ -208,7 +227,7 @@ export async function capturePage(
             outcome: 'observed',
             reason: 'gpc-sent',
             bannerShown: shown,
-            signal: signal === true,
+            signal: gpcSignal === true,
             afterGpc: {
               requests: [...requests],
               cookies: snapshot.cookies,
@@ -278,8 +297,11 @@ export async function capturePage(
   }
   if (options.signal?.aborted) throw new DOMException('Scan aborted', 'AbortError');
   beforeComplete = beforeComplete && !diagnostics.hasIssues('before-consent');
+  // Each after-choice window also needs its storage read: without it, storage trackers go unseen.
+  const afterChoice = !diagnostics.hasIssues('after-reject');
   if (snapshot.consent?.rejected) {
-    snapshot.consent.afterRejectComplete = !diagnostics.hasIssues('after-reject');
+    snapshot.consent.afterRejectComplete =
+      afterChoice && snapshot.consent.afterReject?.storage !== undefined;
   }
   // The GPC path has no click; its whole capture counts.
   if (snapshot.consent?.gpc !== undefined) {
@@ -287,15 +309,18 @@ export async function capturePage(
   }
   // So does the accept path, for what loads after accepting.
   if (snapshot.consent?.accept?.afterAccept !== undefined) {
-    snapshot.consent.accept.afterAcceptComplete = !diagnostics.hasIssues('after-reject');
+    snapshot.consent.accept.afterAcceptComplete =
+      afterChoice && snapshot.consent.accept.afterAccept.storage !== undefined;
   }
   // The close path, too, reuses the after-reject phase for what loads after closing.
   if (snapshot.consent?.close?.afterClose !== undefined) {
-    snapshot.consent.close.afterCloseComplete = !diagnostics.hasIssues('after-reject');
+    snapshot.consent.close.afterCloseComplete =
+      afterChoice && snapshot.consent.close.afterClose.storage !== undefined;
   }
   // The settings path reuses the after-reject phase for what loads after saving.
   if (snapshot.consent?.settings?.afterSave !== undefined) {
-    snapshot.consent.settings.afterSaveComplete = !diagnostics.hasIssues('after-reject');
+    snapshot.consent.settings.afterSaveComplete =
+      afterChoice && snapshot.consent.settings.afterSave.storage !== undefined;
   }
   snapshot.capture = {
     complete: beforeComplete && diagnostics.restrictingIssues === 0,
@@ -324,7 +349,9 @@ async function readText(page: Page, url: string): Promise<LinkedPageText | undef
 }
 
 /** Resources referenced over http:// and the referrer policy set by meta tag. */
-async function readPageSecurity(page: Page): Promise<{ insecure: string[]; referrer?: string }> {
+async function readPageSecurity(
+  page: Page,
+): Promise<{ insecure: string[]; referrer?: string } | undefined> {
   const read = await page
     .evaluate(() => {
       const selector =
@@ -338,7 +365,7 @@ async function readPageSecurity(page: Page): Promise<{ insecure: string[]; refer
         ...(meta == null ? {} : { referrer: meta }),
       };
     })
-    .catch(() => ({ insecure: [] as string[] }));
+    .catch(() => undefined);
   return read;
 }
 

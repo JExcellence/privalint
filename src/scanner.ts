@@ -692,6 +692,7 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
     bannerControls: _bannerControls,
     bannerText: _bannerText,
     keyboard: _keyboard,
+    bannerUnread: _bannerUnread,
     settings,
     ...summary
   } = start.consent;

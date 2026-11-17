@@ -56,6 +56,34 @@ Eulerian, Criteo, Keyade, AT Internet, Commanders Act, Oracle Eloqua, Wizaly, In
 Technologies, Pardot). Scans über einen Netzwerk-Adapter und Offline-Fixtures stellen keine
 DNS-Anfragen. Höchstens 20 Subdomains werden aufgelöst, jede Anfrage auf drei Sekunden begrenzt.
 
+### Google Consent Mode
+
+Google-Tags im Consent Mode senden den Einwilligungsstatus mit jeder Anfrage im Parameter `gcs`.
+privalint liest ihn aus jeder Tracker-Anfrage und stellt ihn an den Anfang der Belege:
+„Consent Mode: ad_storage abgelehnt, analytics_storage abgelehnt (gcs=G100)“.
+
+| Was die Anfragen tragen                        | Befund                                                                       |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- |
+| nur abgelehnte Zustände, etwa `G100`           | „sendet Google-Consent-Mode-Pings“, mit dem Hinweis, dass sie Google erreichen |
+| ein erlaubter Zustand (`G101`, `G110`, `G111`) | eigener Fehler: das Tag meldet Google eine Einwilligung vor jeder Auswahl    |
+| kein `gcs`                                     | der normale Befund                                                           |
+
+Die Prüfungen nach dem Ablehnen, nach dem Speichern der Einstellungen und nach dem Schließen lesen
+ihn genauso. Ein erlaubter Zustand nach dem Ablehnen wird als Einwilligung gemeldet, die der
+Besucher nie gegeben hat.
+
+Google dokumentiert, dass `gcs` `ad_storage` und `analytics_storage` überträgt
+([Consent mode HTTP parameters](https://developers.google.com/tag-platform/security/concepts/consent-mode)),
+aber nicht die Kodierung. Die Reihenfolge wurde am 2026-11-17 mit Googles gtag.js geprüft:
+Standardwerte abgelehnt/abgelehnt, abgelehnt/erlaubt, erlaubt/abgelehnt und erlaubt/erlaubt für
+ad_storage/analytics_storage sendeten `G100`, `G101`, `G110` und `G111`. Der Parameter `gcd`, der
+auch Standardwerte von Aktualisierungen unterscheidet, wird nicht gelesen: Google dokumentiert
+seine Buchstaben nicht, und Tabellen Dritter widersprechen sich.
+
+Manche Websites erlauben außerhalb der EU standardmäßig (`region` im Default-Befehl). Ein Scan von
+einer Adresse außerhalb der EU, etwa einem GitHub-Runner, kann dann `G111` sehen, das ein Besucher
+in der EU nicht bekäme.
+
 ## Warum
 
 Einwilligungspflichtig sind hier zwei Dinge, und ein Tracker tut meist beides:

@@ -34,7 +34,9 @@ Browser, damit die beim Ablehnen gespeicherte Wahl das Banner nicht verbirgt. Da
    Das liest nur; nichts wird angeklickt.
 
 Jede Anfrage und jedes Cookie seit dem Speichern wird mit der Tracker-Liste abgeglichen, mit
-denselben Schweregraden wie bei `trackers-after-reject`.
+denselben Schweregraden wie bei `trackers-after-reject`. Ein Google-Tag, das Google nach dem
+Speichern eine Einwilligung meldet, ist ein Fehler, auch bei einem Tag-Manager; siehe
+[Google Consent Mode](pre-consent-trackers.de.md#google-consent-mode).
 
 Bei TCF-Bannern ist eine Einwilligung, die die Schnittstelle für einen Zweck oder Anbieter noch
 meldet, ein Fehler: Die Besucher haben abgelehnt, gespeichert wurde eine Einwilligung. Zwecke oder

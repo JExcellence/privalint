@@ -8,8 +8,9 @@ Warnt, wenn eine Seite nicht auf ein Impressum verlinkt.
 
 Jeder Link auf der Seite wird anhand von Text, `aria-label`, `title` und URL mit gängigen
 Bezeichnungen für ein Impressum abgeglichen: Impressum, Imprint, Legal notice, Site notice,
-Anbieterkennzeichnung, Mentions légales, Aviso legal, Note legali, Colofon, Informacje prawne und
-Impresszum.
+Anbieterkennzeichnung, Anbieterangaben, Mentions légales, Aviso legal, Note legali, Colofon,
+Informacje prawne und Impresszum. Weiche Trennstriche und Zeichen ohne Breite im Text
+(„Im&amp;shy;pressum“) werden ignoriert.
 
 Die Regel läuft auf jeder gecrawlten Seite, weil das Impressum von jeder Seite aus erreichbar sein
 muss.

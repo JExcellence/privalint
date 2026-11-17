@@ -441,6 +441,8 @@ describe('impressum-link', () => {
     ['', 'https://example.de/de/impressum/'],
     ['Mentions légales', 'https://example.fr/mentions'],
     ['Impresszum', 'https://example.hu/rolunk'],
+    ['Im\u00ADpres\u00ADsum', 'https://example.de/seite-7'],
+    ['Anbieterangaben', 'https://example.de/ueber-uns'],
   ])('accepts a link labelled %j pointing to %s', (text, href) => {
     expect(run(impressumLink, snapshot({ links: [{ text, href }] }))).toEqual([]);
   });
@@ -1541,6 +1543,9 @@ describe('privacy-policy-link', () => {
     ['Adatkezelési tájékoztató', 'https://example.hu/dokumentumok'],
     ['Adatvédelem', 'https://example.hu/jog'],
     ['', 'https://example.hu/adatvedelmi-tajekoztato/'],
+    ['Daten\u00ADschutz\u00ADerklärung', 'https://example.de/seite-8'],
+    ['Daten\u200Bschutz', 'https://example.de/seite-8'],
+    ['', 'https://example.de/daten%C2%ADschutz/'],
   ])('accepts a link labelled %j pointing to %s', (text, href) => {
     expect(run(privacyPolicyLink, snapshot({ links: [{ text, href }] }))).toEqual([]);
   });

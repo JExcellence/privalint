@@ -114,16 +114,47 @@ describe('scan', () => {
     expect(hang.pages[0]?.capture?.complete).toBe(false);
   });
 
-  it('notes a contact form without a privacy link next to it', async () => {
+  it('notes a contact form without a privacy link next to it, reading soft-hyphenated links', async () => {
     const result = await scan(`${origin}/forms/`, { ...options, consentCheck: false });
     expect(result.findings).toEqual([
       expect.objectContaining({
         ruleId: 'form-privacy-notice',
         severity: 'info',
         message: expect.stringContaining('1 form(s) collecting personal data (contact or sign-up)'),
-        evidence: ['3 forms with email, phone or password fields checked'],
+        evidence: ['4 forms with email, phone or password fields checked'],
       }),
     ]);
+  });
+
+  it('reports rules that rely on a failed page read as not evaluable, not as clean', async () => {
+    let page: PageSnapshot | undefined;
+    const result = await scan(`${origin}/forms/unreadable.html`, {
+      ...options,
+      consentCheck: false,
+      onPage: (snapshot) => {
+        page ??= snapshot;
+      },
+    });
+    expect(page?.unreadParts).toEqual(['forms', 'storage']);
+    const outcome = (ruleId: string) =>
+      result.pages[0]?.ruleEvaluations?.find((evaluation) => evaluation.ruleId === ruleId);
+    for (const ruleId of [
+      'form-privacy-notice',
+      'form-preticked-consent',
+      'pre-consent-trackers',
+    ]) {
+      expect(outcome(ruleId)).toMatchObject({
+        status: 'executed',
+        partial: true,
+        outcome: 'not-evaluable',
+        explanation: 'incomplete-observation',
+      });
+    }
+    expect(outcome('privacy-policy-link')?.outcome).toBe('checked-no-finding');
+    expect(result.findings.map((finding) => finding.ruleId)).not.toContain('form-privacy-notice');
+    expect(assessCoverage(result).issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'form-privacy-notice', reason: 'not-evaluable' }),
+    );
   });
 
   it('reads ticked boxes, HTTP form targets, HTTP resources and the referrer policy', async () => {

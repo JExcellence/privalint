@@ -232,6 +232,20 @@ export interface PageLink {
   text: string;
 }
 
+/**
+ * A part of the loaded page privalint reads with its own script, after the page settled: forms,
+ * Web Storage key names, recorded fingerprinting calls, and http:// resources plus the referrer
+ * meta tag.
+ */
+export type PageRead = 'forms' | 'storage' | 'fingerprinting' | 'security';
+
+/**
+ * A part of the consent banner privalint reads with its own script: its links, text and whether it
+ * blocks the page (layout), how accept and reject look (controls), Tab reachability (keyboard), and
+ * the search for a link back into the settings after rejecting (settings-control).
+ */
+export type BannerRead = 'layout' | 'controls' | 'keyboard' | 'settings-control';
+
 /** A visible form that collects personal data. Only its structure, never its contents. */
 export interface FormObservation {
   /** A password field makes it a login; an email or phone field a contact or sign-up form. */
@@ -293,6 +307,8 @@ export interface ConsentObservation {
   bannerControls?: { accept: ControlLook; reject: ControlLook };
   /** Whether the first-layer controls can be reached with the Tab key. Internal input for banner-keyboard. */
   keyboard?: KeyboardReach;
+  /** Reads of the banner that failed, so the rules using them can't report a clean result. Internal. */
+  bannerUnread?: BannerRead[];
   /** True once the reject button was clicked and the page reloaded. */
   rejected: boolean;
   /** Requests made and cookies newly set after rejecting, including the reload. */
@@ -418,6 +434,11 @@ export interface PageSnapshot {
   cookies: RecordedCookie[];
   /** Forms that collect personal data. Internal input for form-privacy-notice. */
   forms?: FormObservation[];
+  /**
+   * Reads of the page that failed, for example because a script navigated away while privalint
+   * read it. Rules that use them can't report a clean result. Internal.
+   */
+  unreadParts?: PageRead[];
   /** First-party subdomains this page used that are CNAMEs to a tracker. Native scans. Internal. */
   cnameCloaks?: CnameCloak[];
   /** Calls to fingerprinting APIs before consent and the script that made each. Internal. */

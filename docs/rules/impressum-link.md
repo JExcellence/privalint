@@ -8,7 +8,8 @@ Warns when a page has no link to an Impressum (legal notice).
 
 Every link on the page is matched by its text, `aria-label`, `title` and URL against common names
 for a legal notice: Impressum, Imprint, Legal notice, Site notice, Anbieterkennzeichnung,
-Mentions légales, Aviso legal, Note legali, Colofon, Informacje prawne and Impresszum.
+Anbieterangaben, Mentions légales, Aviso legal, Note legali, Colofon, Informacje prawne and
+Impresszum. Soft hyphens and zero-width characters in the text ("Im&amp;shy;pressum") are ignored.
 
 The rule runs on every crawled page, because the notice has to be reachable from all of them.
 

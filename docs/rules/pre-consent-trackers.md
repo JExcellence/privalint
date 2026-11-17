@@ -58,6 +58,31 @@ Eulerian, Criteo, Keyade, AT Internet, Commanders Act, Oracle Eloqua, Wizaly, In
 Technologies, Pardot). Scans through a network adapter and offline fixtures make no DNS lookups.
 At most 20 subdomains are resolved, each lookup limited to three seconds.
 
+### Google Consent Mode
+
+Google tags in Consent Mode send the consent state with each request in the `gcs` parameter.
+privalint reads it from every tracker request and puts it first in the evidence:
+"Consent Mode: ad_storage denied, analytics_storage denied (gcs=G100)".
+
+| What the requests carry                    | Finding                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------- |
+| only denied states, such as `G100`         | "sends Google Consent Mode pings", with a note that the pings still reach Google |
+| any granted state (`G101`, `G110`, `G111`) | its own error: the tag tells Google that consent was granted before any choice  |
+| no `gcs`                                   | the plain finding                                                               |
+
+The after-reject, after-settings and after-close checks read it the same way. A granted state
+after rejecting is reported as consent the visitor never gave.
+
+Google documents that `gcs` carries `ad_storage` and `analytics_storage`
+([Consent mode HTTP parameters](https://developers.google.com/tag-platform/security/concepts/consent-mode)),
+but not how. The order was checked with Google's gtag.js on 2026-11-17: defaults of denied/denied,
+denied/granted, granted/denied and granted/granted for ad_storage/analytics_storage sent `G100`,
+`G101`, `G110` and `G111`. The `gcd` parameter, which also tells defaults from updates, is not
+read: Google doesn't document its letters and third-party tables disagree.
+
+Some sites grant consent by default outside the EU (`region` in the default command). A scan from a
+non-EU address, such as a GitHub-hosted runner, can then see `G111` that an EU visitor wouldn't.
+
 ## Why
 
 Two things need consent here, and a tracker usually does both:

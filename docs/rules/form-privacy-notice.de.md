@@ -17,6 +17,7 @@ solange dieses nicht praktisch die ganze Seite ist.
 | Jedes solche Formular hat einen Datenschutz-Link in der Nähe         | bestanden                                                             |
 | Ein Formular ohne, während die Seite die Erklärung anderswo verlinkt | `info`                                                                |
 | Die Seite hat gar keinen Datenschutz-Link                            | hier nichts; [`privacy-policy-link`](privacy-policy-link.de.md) warnt |
+| Die Formulare der Seite konnten nicht gelesen werden                 | nicht prüfbar (`incomplete-observation`), kein Bestanden              |
 
 ## Warum
 

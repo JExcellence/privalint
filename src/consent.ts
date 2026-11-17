@@ -3,6 +3,7 @@ import { classifyLoadError } from './diagnostics.js';
 import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
   AcceptObservation,
+  BannerRead,
   CloseObservation,
   ConsentObservation,
   ControlLook,
@@ -267,6 +268,7 @@ export async function observeConsent(
     ...(banner.text === undefined ? {} : { bannerText: banner.text }),
     ...(banner.blocking === undefined ? {} : { bannerBlocking: banner.blocking }),
     ...(banner.controls === undefined ? {} : { bannerControls: banner.controls }),
+    ...(banner.unread === undefined ? {} : { bannerUnread: [...banner.unread] }),
   };
   if (banner.reject === undefined) {
     if (banner.acceptLabel === undefined) observation.reason = 'unsupported-banner-markup';
@@ -274,6 +276,7 @@ export async function observeConsent(
   }
   const keyboard = await probeKeyboard(page, banner.accept, banner.reject).catch(() => undefined);
   if (keyboard !== undefined) observation.keyboard = keyboard;
+  else observation.bannerUnread = [...(observation.bannerUnread ?? []), 'keyboard'];
 
   try {
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
@@ -291,7 +294,11 @@ export async function observeConsent(
       .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
       .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
     const storage = newStorageKeys(storageBefore, await readStorageKeys(page));
-    const settingsLabel = await findSettingsControl(page);
+    // A failed search of the page is not a missing settings link.
+    const settings = await findSettingsControl(page).then(
+      (label) => ({ label }),
+      () => undefined,
+    );
     const tcf = await readTcf(page);
 
     return {
@@ -300,9 +307,19 @@ export async function observeConsent(
       state: 'reject-tested',
       outcome: 'reject-succeeded',
       reason: 'reject-clicked-and-reloaded',
-      afterReject: { requests: requests.slice(firstRequest), cookies, storage },
-      settingsControl:
-        settingsLabel === undefined ? { found: false } : { found: true, label: settingsLabel },
+      afterReject: {
+        requests: requests.slice(firstRequest),
+        cookies,
+        ...(storage === undefined ? {} : { storage }),
+      },
+      ...(settings === undefined
+        ? { bannerUnread: [...(observation.bannerUnread ?? []), 'settings-control' as const] }
+        : {
+            settingsControl:
+              settings.label === undefined
+                ? { found: false }
+                : { found: true, label: settings.label },
+          }),
       ...(tcf === undefined ? {} : { tcf }),
     };
   } catch (error) {
@@ -330,7 +347,17 @@ export async function observeClose(
   if (options.signal?.aborted) throw new DOMException('Close check aborted', 'AbortError');
   const { found: banner } = await waitFor(page, options, () => findBanner(page));
   if (banner?.accept === undefined) return undefined;
-  const closeLabel = await banner.accept.evaluate(markCloseControl).catch(() => undefined);
+  // A failed search says nothing about whether the banner has a close button.
+  let closeLabel: string | undefined;
+  try {
+    closeLabel = await banner.accept.evaluate(markCloseControl);
+  } catch (error) {
+    return {
+      outcome: 'interaction-failed',
+      reason: 'browser-interaction-failed',
+      error: classifyLoadError(error),
+    };
+  }
   if (closeLabel === undefined) return { outcome: 'no-close-control', reason: 'no-close-control' };
   try {
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
@@ -344,7 +371,10 @@ export async function observeClose(
         break;
       }
     }
-    if (control === undefined) return { outcome: 'no-close-control', reason: 'no-close-control' };
+    // The close button was found a moment ago; losing it now is a failed observation.
+    if (control === undefined) {
+      return { outcome: 'interaction-failed', reason: 'browser-interaction-failed', closeLabel };
+    }
     options.onReject?.();
     await control.click({ timeout: Math.min(5_000, options.timeoutMs) });
     await settle(page, options);
@@ -359,7 +389,11 @@ export async function observeClose(
       outcome: 'closed',
       reason: 'banner-closed-and-reloaded',
       closeLabel,
-      afterClose: { requests: requests.slice(firstRequest), cookies, storage },
+      afterClose: {
+        requests: requests.slice(firstRequest),
+        cookies,
+        ...(storage === undefined ? {} : { storage }),
+      },
     };
   } catch (error) {
     return {
@@ -413,7 +447,11 @@ export async function observeAccept(
       outcome: 'accepted',
       reason: 'accept-clicked-and-reloaded',
       ...label,
-      afterAccept: { requests: requests.slice(firstRequest), cookies, storage },
+      afterAccept: {
+        requests: requests.slice(firstRequest),
+        cookies,
+        ...(storage === undefined ? {} : { storage }),
+      },
     };
   } catch (error) {
     return {
@@ -638,7 +676,11 @@ export async function observeSettings(
       switchedOff,
       preselected,
       ...(legitimateInterest === undefined ? {} : { legitimateInterest }),
-      afterSave: { requests: requests.slice(firstRequest), cookies, storage },
+      afterSave: {
+        requests: requests.slice(firstRequest),
+        cookies,
+        ...(storage === undefined ? {} : { storage }),
+      },
       ...(tcf === undefined ? {} : { tcf }),
     };
   } catch (error) {
@@ -972,6 +1014,8 @@ interface Banner {
   blocking?: boolean;
   text?: string;
   controls?: { accept: ControlLook; reject: ControlLook };
+  /** Reads of the banner that failed. */
+  unread?: BannerRead[];
 }
 
 const MAX_BANNER_LINKS = 30;
@@ -1095,6 +1139,7 @@ async function findBanner(page: Page): Promise<Banner | undefined> {
 /**
  * Looks for a visible way back into the consent settings once the banner is gone. Returns the
  * control's label, or undefined if there is none. Icon buttons count by aria-label or title.
+ * Throws when the page itself can't be searched; a frame that can't be read is skipped.
  */
 async function findSettingsControl(page: Page): Promise<string | undefined> {
   for (const frame of page.frames()) {
@@ -1120,7 +1165,10 @@ async function findSettingsControl(page: Page): Promise<string | undefined> {
         }
         return undefined;
       }, SETTINGS_LABEL.source)
-      .catch(() => undefined);
+      .catch((error: unknown) => {
+        if (frame === page.mainFrame()) throw error;
+        return undefined;
+      });
     if (match !== undefined) return match;
   }
   return undefined;
@@ -1128,8 +1176,10 @@ async function findSettingsControl(page: Page): Promise<string | undefined> {
 
 async function describe(accept: Locator, reject: Locator | undefined, cmp?: string) {
   const banner: Banner = { accept, acceptLabel: await label(accept) };
+  const unread: BannerRead[] = [];
   const layout = await accept.evaluate(bannerLayout, MAX_BANNER_LINKS).catch(() => undefined);
-  if (layout !== undefined) {
+  if (layout === undefined) unread.push('layout');
+  else {
     banner.links = layout.links;
     banner.blocking = layout.blocking;
     if (layout.text) banner.text = layout.text;
@@ -1147,8 +1197,9 @@ async function describe(accept: Locator, reject: Locator | undefined, cmp?: stri
     const rejectLook = await reject.evaluate(controlLook).catch(() => undefined);
     if (acceptLook !== undefined && rejectLook !== undefined) {
       banner.controls = { accept: acceptLook, reject: rejectLook };
-    }
+    } else unread.push('controls');
   }
+  if (unread.length > 0) banner.unread = unread;
   return banner;
 }
 

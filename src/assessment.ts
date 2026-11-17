@@ -3,9 +3,11 @@ import type { Region } from './legal.js';
 import { observedRequests } from './observations.js';
 import { defaultRules } from './rules/index.js';
 import type {
+  BannerRead,
   ConsentObservation,
   Finding,
   ObservationKind,
+  PageRead,
   PageSnapshot,
   Rule,
   RuleEvaluation,
@@ -47,6 +49,30 @@ const REQUIREMENTS: Record<string, readonly ObservationKind[]> = {
   'banner-language': ['consent'],
   'banner-keyboard': ['consent'],
   'gpc-signal': ['gpc'],
+};
+
+/**
+ * The page reads each built-in rule relies on. When one of them failed, the rule can still report
+ * what it saw, but a clean result proves nothing.
+ */
+const READS: Partial<Record<string, readonly PageRead[]>> = {
+  'form-privacy-notice': ['forms'],
+  'form-preticked-consent': ['forms'],
+  'mixed-content': ['forms', 'security'],
+  'referrer-policy': ['security'],
+  fingerprinting: ['fingerprinting'],
+  'pre-consent-trackers': ['storage'],
+  'consent-banner-missing': ['storage'],
+  'gpc-signal': ['storage'],
+};
+
+/** The same for reads of the consent banner. */
+const BANNER_READS: Partial<Record<string, readonly BannerRead[]>> = {
+  'banner-legal-links': ['layout'],
+  'banner-language': ['layout'],
+  'reject-less-prominent': ['controls'],
+  'banner-keyboard': ['keyboard'],
+  'consent-settings-link': ['settings-control'],
 };
 
 /** Rules that read a page linked from the start page, and which one. */
@@ -138,6 +164,11 @@ export function assessPage(
     ...(page.consent === undefined ? {} : { consent: observedConsent(page.consent) }),
   };
   const requirementsOf = (rule: Rule) => rule.requires ?? REQUIREMENTS[rule.id] ?? ['document'];
+  const unreadFor = (rule: Rule) =>
+    (READS[rule.id] ?? []).some((read) => page.unreadParts?.includes(read) === true) ||
+    (BANNER_READS[rule.id] ?? []).some(
+      (read) => page.consent?.bannerUnread?.includes(read) === true,
+    );
   const needsConsent = (rule: Rule) =>
     requirementsOf(rule).some(
       (kind) =>
@@ -249,7 +280,12 @@ export function assessPage(
         findingCount: 0,
       };
     }
-    if (!available.document && readDocument && requirements.every((kind) => kind === 'document')) {
+    if (
+      !available.document &&
+      readDocument &&
+      !unreadFor(rule) &&
+      requirements.every((kind) => kind === 'document')
+    ) {
       // The DOM was read, but a request never finished. What the rule found there is reliable,
       // so a clean result counts; a finding about something missing may be a gap in loading.
       const seen = rule.check({ page: input, siteUrl, lang, region });
@@ -302,15 +338,17 @@ export function assessPage(
       };
     }
     detectedBy.set(rule.id, detected);
-    const partial = requirements.includes('gpc')
-      ? page.consent?.gpc?.afterGpcComplete === false
-      : requirements.includes('after-close')
-        ? page.consent?.close?.afterCloseComplete === false
-        : requirements.includes('after-settings')
-          ? page.consent?.settings?.afterSaveComplete === false
-          : requirements.includes('after-reject')
-            ? page.consent?.afterRejectComplete === false
-            : !complete;
+    const partial =
+      unreadFor(rule) ||
+      (requirements.includes('gpc')
+        ? page.consent?.gpc?.afterGpcComplete === false
+        : requirements.includes('after-close')
+          ? page.consent?.close?.afterCloseComplete === false
+          : requirements.includes('after-settings')
+            ? page.consent?.settings?.afterSaveComplete === false
+            : requirements.includes('after-reject')
+              ? page.consent?.afterRejectComplete === false
+              : !complete);
     return {
       ruleId: rule.id,
       status: 'executed',

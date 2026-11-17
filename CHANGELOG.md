@@ -6,6 +6,37 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+### Added
+
+- `impressum-link` accepts "Anbieterangaben" as a legal notice link
+- Google Consent Mode: the tracker checks read the `gcs` parameter of each tracker request and put
+  the consent state first in the evidence ("Consent Mode: ad_storage denied, analytics_storage
+  denied (gcs=G100)"). A granted state before any choice, after rejecting, after saving
+  switched-off settings or after closing the banner gets its own message: the tag tells Google
+  that consent was granted. Denied pings are named as such, with a note that they still reach
+  Google. The order of the two digits was checked with Google's gtag.js
+  ([#117](https://github.com/jexcellence/privalint/issues/117))
+
+### Fixed
+
+- Links to the Impressum or the privacy policy written with soft hyphens or zero-width characters,
+  such as "Daten&amp;shy;schutz&amp;shy;erklärung", were not recognised, so `impressum-link`,
+  `privacy-policy-link` and `form-privacy-notice` reported them as missing
+- `form-privacy-notice` also reads the `aria-label` and `title` of links next to a form, as the
+  other link checks already did
+- A read of the page that failed counted as a page without the thing read: no forms, no
+  fingerprinting calls, no Web Storage keys, no http:// resources. The rules using it then
+  reported "checked, no finding". They now report the evaluation as partial (`incomplete-observation`),
+  which `--fail-on-incomplete` counts. The same holds for reads of the consent banner (links, text,
+  control looks, keyboard reach), the settings link searched after rejecting, and the storage read
+  around each consent choice, also when it hit its cap of 200 keys; a failed search for the
+  banner's close button, or a close button that disappeared before the click, is no longer taken
+  for a banner without one
+- Run with tsx or another esbuild setup that keeps function names, every page read that declared
+  a named function failed in the browser (`__name is not defined`), so forms and parts of the
+  consent check were silently empty. privalint now defines a no-op `__name` in the scanned page
+  when the page has none
+
 ## 0.10.1 - 2026-11-07
 
 Upgrade notes:

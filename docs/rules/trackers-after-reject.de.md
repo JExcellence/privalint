@@ -16,6 +16,12 @@ bei [`pre-consent-trackers`](pre-consent-trackers.de.md).
 | analytics, advertising, session-replay, …    | `error`     |
 | tag-manager (z. B. ein GTM-Container allein) | `warning`   |
 
+Google-Tags, die weiter Google-Consent-Mode-Pings senden, werden als solche benannt. Ein Tag, das
+Google nach dem Klick eine Einwilligung meldet, ist ein Fehler, auch bei einem Tag-Manager; siehe
+[Google Consent Mode](pre-consent-trackers.de.md#google-consent-mode). Wurde das Fenster nach dem
+Klick nicht vollständig beobachtet, einschließlich des Web-Storage-Lesens, ist die Regel nicht
+prüfbar (`incomplete-observation`) statt sauber.
+
 Das Neuladen ist entscheidend: Viele fehlerhafte Einrichtungen respektieren den Klick auf der
 aktuellen Seite, laden beim nächsten Seitenaufruf aber wieder alles. Eine typische Ursache ist
 Code, der nur prüft, ob _irgendeine_ Entscheidung gespeichert wurde, statt welche.
