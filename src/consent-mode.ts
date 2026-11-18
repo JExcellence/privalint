@@ -49,9 +49,33 @@ export const grantsStorage = (state: ConsentModeState): boolean =>
 export function describeConsentMode(state: ConsentModeState, lang: Lang): string {
   const word = (value: boolean | undefined) =>
     value === undefined
-      ? say(lang, { en: 'not set', de: 'nicht gesetzt', hu: 'nincs beállítva' })
+      ? say(lang, {
+          en: 'not set',
+          de: 'nicht gesetzt',
+          hu: 'nincs beállítva',
+          fr: 'non défini',
+          it: 'non impostato',
+          es: 'no establecido',
+          pl: 'nie ustawiono',
+        })
       : value
-        ? say(lang, { en: 'granted', de: 'erlaubt', hu: 'engedélyezve' })
-        : say(lang, { en: 'denied', de: 'abgelehnt', hu: 'elutasítva' });
+        ? say(lang, {
+            en: 'granted',
+            de: 'erlaubt',
+            hu: 'engedélyezve',
+            fr: 'accordé',
+            it: 'concesso',
+            es: 'concedido',
+            pl: 'przyznano',
+          })
+        : say(lang, {
+            en: 'denied',
+            de: 'abgelehnt',
+            hu: 'elutasítva',
+            fr: 'refusé',
+            it: 'negato',
+            es: 'denegado',
+            pl: 'odmówiono',
+          });
   return `Consent Mode: ad_storage ${word(state.adStorage)}, analytics_storage ${word(state.analyticsStorage)} (gcs=${state.gcs})`;
 }

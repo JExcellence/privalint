@@ -178,3 +178,18 @@ the Amazon Ads tag (named only in a GitHub template, not on an Amazon site) and 
 | VWO               | cookies `_vwo_*`, `_vis_opt_*`, `_wingify_*`         | [Cookies stored by Wingify](https://help.wingify.com/hc/en-us/articles/58793798517785-Cookies-Stored-by-Wingify)         |
 | Microsoft Xandr   | `acdn.adnxs.com/dmp/up/`, `ib.adnxs.com/pixie`       | [Universal pixel code structure](https://learn.microsoft.com/en-us/xandr/monetize/universal-pixel-code-structure)        |
 | Amazon Associates | `z-na.amazon-adsystem.com/widgets/onejs`             | [Amazon Associates oneTag](https://affiliate-program.amazon.com/help/node/topic/GZ2P5RSW6AMWWKTM)                        |
+
+## Sources for the hosts added on 2026-11-18
+
+Read on 2026-11-18. Still off the list because the vendor's own pages don't name them: the Amazon
+Ads tag, the ProvenExpert rating seal (its embed code is generated in the account and its help
+pages name no host) and the Google Ads paths `/ccm/collect` and `/pagead/viewthroughconversion/`
+on `www.google.com` (Google's CSP guide names the origin only).
+
+| Vendor          | Hosts                                         | Source                                                                                                                          |
+| --------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Reddit Pixel    | `www.redditstatic.com/ads/`, `ads.reddit.com` | [About the Reddit Pixel, CSP section](https://business.reddithelp.com/articles/Knowledge/reddit-pixel)                          |
+| Microsoft Xandr | `secure.adnxs.com/px`                         | [Test conversion pixel and attribution](https://learn.microsoft.com/en-us/xandr/monetize/test-conversion-pixel-and-attribution) |
+| Microsoft Xandr | `ib.adnxs.com/px`, `ib.adnxs.com/seg`         | [Segment pixels, advanced](https://learn.microsoft.com/en-us/xandr/invest/segment-pixels-advanced)                              |
+
+The Reddit host also serves reddit.com itself, so only scripts under `/ads/` count.

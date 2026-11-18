@@ -506,9 +506,13 @@ const reportOptions = {
   allowedVendors: array(string),
 };
 
-// 1.5.0 added Hungarian report text.
+// 1.5.0 added Hungarian report text, 1.6.0 French, Italian, Spanish and Polish.
 const langFor = (version) =>
-  since(version, '1.5.0') ? choices('en', 'de', 'hu') : reportOptions.lang;
+  since(version, '1.6.0')
+    ? choices('en', 'de', 'hu', 'fr', 'it', 'es', 'pl')
+    : since(version, '1.5.0')
+      ? choices('en', 'de', 'hu')
+      : reportOptions.lang;
 
 // 1.3.0 added Hungary, 1.6.0 France and the United Kingdom.
 const regionFor = (version) =>

@@ -21,6 +21,13 @@ siehe [Per CNAME getarnte Tracker](pre-consent-trackers.de.md#per-cname-getarnte
 | Ein Banner wurde gefunden, oder die Prüfung schlug fehl/war aus | nichts      |
 | `--region ch` (Opt-out-Modell)                                  | `info`      |
 
+Wurde das Skript eines bekannten Consent-Managers geladen (Usercentrics, Cookiebot, OneTrust,
+Didomi, consentmanager, CookieYes, iubenda, Osano, Termly, CookieFirst, Axeptio, Sourcepoint oder
+Cookie-Script), erschien aber kein Banner, nennt der Befund ihn und sagt, dass er sein Banner
+womöglich vor automatisierten Browsern verbirgt. Usercentrics tat das am 18.11.2026 auf
+kemmler.de. Die Lösung beginnt dann mit einer Prüfung im normalen Browser. Auch die Consent-Zeile
+des Berichts und `consent.cmp` nennen ihn.
+
 Jeder Tracker ist unter [`pre-consent-trackers`](pre-consent-trackers.de.md) bereits ein Fehler.
 Diese Regel ist eine Warnung, damit dieselbe Ursache nicht doppelt zählt; sie sagt, warum die
 Tracker keine Einwilligung haben.

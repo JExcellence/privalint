@@ -105,8 +105,13 @@ findings. It never touches the browser. That keeps rules fast and easy to test.
 6. Add the legal basis for every region to the table in [`src/legal.ts`](src/legal.ts). A test
    fails if a built-in rule is missing a region. If the rule should be more or less strict in a
    country, say so in the PR so it can be added to `severityFor`.
-7. Write the rule's `message` and `fix` in every language (`{ en, de }`). TypeScript reports any
-   missing translation.
+7. Write the rule's `message` and `fix` in every language (`{ en, de, hu, fr, it, es, pl }`).
+   TypeScript reports any missing translation. Write French with plain spaces: `say()` adds the no-break spaces before
+   `:`, `;`, `!`, `?` and inside « ». Write numbers with `decimal(value, lang)` from
+   `src/i18n.ts`, which gives a decimal comma outside English and groups thousands as each
+   language does. Polish has three count forms; `plPlural(n, one, few, many)` picks the right one
+   ("1 link", "2 linki", "5 linków"). Quote labels from the page in « » for French, Italian and
+   Spanish and in „ ” for Polish.
 
 Guidelines for findings:
 

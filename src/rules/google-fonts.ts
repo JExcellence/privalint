@@ -1,4 +1,4 @@
-import { say, type Text } from '../i18n.js';
+import { plPlural, say, type Text } from '../i18n.js';
 import { observedRequests } from '../observations.js';
 import type { Finding, Rule } from '../types.js';
 import { hostMatches, safeHost } from '../url.js';
@@ -25,6 +25,10 @@ const FIX: Text = {
     'letölti a betűtípusokat, és a saját domainről szolgálja ki őket. Máshol telepítse a családot ' +
     'a @fontsource csomagból, vagy töltse le a google-webfonts-helperrel, majd távolítson el minden ' +
     'hivatkozást a fonts.googleapis.com és a fonts.gstatic.com címre.',
+  fr: 'Hébergez vous-même les fichiers de police. Avec Next.js, next/font/google télécharge les polices au moment du build et les sert depuis votre propre domaine. Ailleurs, installez la famille depuis @fontsource ou téléchargez-la via google-webfonts-helper, puis supprimez toute référence à fonts.googleapis.com et fonts.gstatic.com.',
+  it: 'Ospita in proprio i file dei font. In Next.js, next/font/google scarica i font in fase di build e li serve dal tuo dominio. Altrove, installa la famiglia da @fontsource o scaricala tramite google-webfonts-helper, poi rimuovi ogni riferimento a fonts.googleapis.com e fonts.gstatic.com.',
+  es: 'Aloja tú mismo los archivos de las fuentes. En Next.js, next/font/google descarga las fuentes al compilar y las sirve desde tu propio dominio. En otros casos, instala la familia desde @fontsource o descárgala con google-webfonts-helper, y después elimina toda referencia a fonts.googleapis.com y fonts.gstatic.com.',
+  pl: 'Hostuj pliki czcionek samodzielnie. W Next.js next/font/google pobiera czcionki podczas budowania i serwuje je z Twojej domeny. W innych przypadkach zainstaluj rodzinę z @fontsource lub pobierz ją przez google-webfonts-helper, a następnie usuń wszystkie odwołania do fonts.googleapis.com i fonts.gstatic.com.',
 };
 
 const isGoogleFontUrl = (url: string): boolean => {
@@ -53,6 +57,10 @@ export const googleFonts: Rule = {
             en: `Fonts are loaded from Google (${count} request${count === 1 ? '' : 's'}).`,
             de: `Schriften werden von Google geladen (${count} ${count === 1 ? 'Anfrage' : 'Anfragen'}).`,
             hu: `Az oldal betűtípusokat tölt be a Google-tól (${count} kérés).`,
+            fr: `Des polices sont chargées depuis Google (${count} requête${count <= 1 ? '' : 's'}).`,
+            it: `I font vengono caricati da Google (${count} ${count === 1 ? 'richiesta' : 'richieste'}).`,
+            es: `Se cargan fuentes desde Google (${count} ${count === 1 ? 'solicitud' : 'solicitudes'}).`,
+            pl: `Czcionki są ładowane z Google (${count} ${plPlural(count, 'żądanie', 'żądania', 'żądań')}).`,
           }),
           pageUrl: page.finalUrl,
           evidence: [...new Set(requests.map((request) => request.url))].slice(0, 5),
@@ -75,6 +83,10 @@ export const googleFonts: Rule = {
             en: 'The page preconnects to Google Fonts. No font was fetched, but the browser still opens a connection and transmits the IP address.',
             de: 'Die Seite baut vorab eine Verbindung zu Google Fonts auf. Es wurde keine Schrift geladen, aber der Browser öffnet trotzdem eine Verbindung und überträgt die IP-Adresse.',
             hu: 'Az oldal előre kapcsolatot nyit a Google Fonts felé. Betűtípus nem töltődött le, de a böngésző így is kapcsolatot létesít, és továbbítja az IP-címet.',
+            fr: "La page se préconnecte à Google Fonts. Aucune police n'a été chargée, mais le navigateur ouvre tout de même une connexion et transmet l'adresse IP.",
+            it: "La pagina si preconnette a Google Fonts. Nessun font è stato scaricato, ma il browser apre comunque una connessione e trasmette l'indirizzo IP.",
+            es: 'La página hace preconnect a Google Fonts. No se descargó ninguna fuente, pero el navegador abre igualmente una conexión y transmite la dirección IP.',
+            pl: 'Strona nawiązuje wstępne połączenie (preconnect) z Google Fonts. Nie pobrano żadnej czcionki, ale przeglądarka i tak otwiera połączenie i przesyła adres IP.',
           }),
           pageUrl: page.finalUrl,
           evidence: hints.map((hint) => `<link rel="${hint.rel}" href="${hint.href}">`),
@@ -82,6 +94,10 @@ export const googleFonts: Rule = {
             en: 'Remove the leftover <link> tags pointing to Google Fonts.',
             de: 'Die übrig gebliebenen <link>-Tags zu Google Fonts entfernen.',
             hu: 'Távolítsa el a Google Fonts felé mutató megmaradt <link> elemeket.',
+            fr: 'Supprimez les balises <link> restantes qui pointent vers Google Fonts.',
+            it: 'Rimuovi i tag <link> rimasti che puntano a Google Fonts.',
+            es: 'Elimina las etiquetas <link> sobrantes que apuntan a Google Fonts.',
+            pl: 'Usuń pozostałe znaczniki <link> wskazujące na Google Fonts.',
           }),
         } satisfies Finding,
       ];

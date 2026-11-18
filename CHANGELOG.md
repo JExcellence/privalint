@@ -8,6 +8,28 @@ All notable changes are listed here. The format follows
 
 ### Added
 
+- Report text in French (`--lang fr`, [#135](https://github.com/jexcellence/privalint/issues/135)):
+  every finding, fix and the text, Markdown, HTML and capture reports. Report schema 1.6.0 also
+  accepts `fr` as `lang`, with no-break spaces before ":", ";", "!", "?" and inside
+  guillemets. Not yet reviewed by a native speaker
+- Report text in Italian (`--lang it`), Spanish (`--lang es`) and Polish (`--lang pl`)
+  ([#135](https://github.com/jexcellence/privalint/issues/135)), with the Polish count forms
+  ("2 błędy", "5 błędów"). Report schema 1.6.0 also accepts `it`, `es` and `pl` as `lang`. Not
+  yet reviewed by native speakers
+- The consent check reads first-layer, settings and save buttons in Polish and more French, Italian,
+  Spanish and Dutch wording ("Odrzuć wszystkie", "Continua senza accettare", "Aceptar selección",
+  "Keuze opslaan"), and the links that reopen the settings in those languages
+  ([#57](https://github.com/jexcellence/privalint/issues/57)). "Accept all" in any of them still
+  never counts as saving the selection
+- Trackers from vendor documentation ([#71](https://github.com/jexcellence/privalint/issues/71)):
+  the Reddit Pixel script (`www.redditstatic.com/ads/`) and `ads.reddit.com`, and Microsoft Xandr
+  conversion and segment pixels (`ib.adnxs.com` and `secure.adnxs.com`, `/px` and `/seg`). The
+  Amazon Ads tag, ProvenExpert and the Google Ads `/ccm/collect` path stay off the list: their
+  vendors' pages still name no host or path
+- Documented the check of the Usercentrics shadow-root and CookieConsent v3 selectors
+  ([#55](https://github.com/jexcellence/privalint/issues/55)) in
+  [docs/consent-managers.md](docs/consent-managers.md): accept, deny and save match on a live
+  Usercentrics banner, the CookieConsent `data-role` values match its source
 - Region profiles for France (`--region fr`) and the United Kingdom (`--region uk`), with each
   rule's legal basis as lawyers there cite it; sources in [docs/regions.md](docs/regions.md)
   ([#134](https://github.com/jexcellence/privalint/issues/134)). In both, analytics before consent
@@ -54,6 +76,17 @@ All notable changes are listed here. The format follows
 
 ### Fixed
 
+- When a known consent manager's script loaded but no banner appeared, privalint said the site
+  had no consent banner. Some consent managers hide the banner from automated browsers (seen with
+  Usercentrics on kemmler.de), so `consent-banner-missing` and the report's consent line now name
+  the consent manager, say it may hide the banner from automated browsers and ask for a check in
+  a normal browser. `consent.cmp` carries its name
+- Size and contrast ratios and adapter timings were written with a decimal point in German and
+  Hungarian reports; they now use a decimal comma there and in French, and large numbers are
+  grouped as each language writes them ("125.000" in German)
+- A page label quoted in a French report that has its own guillemets is no longer quoted twice;
+  its guillemets become the inner quotes “ ”. A stray straight quote from the page no longer
+  switches off the French no-break spaces for the rest of the line
 - `legal-notice-content` took words such as "Software", "Foto" or "Entwicklung" in the provider's
   own name ("Muster Software GmbH") for a mention of another company and skipped its legal form.
   Such words now count only as a label: after a separator, before a colon or next to "by", "von",

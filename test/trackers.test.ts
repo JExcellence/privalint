@@ -270,6 +270,10 @@ describe('vendors from install and CSP documentation (2026-11-06)', () => {
     ['https://r2.visualwebsiteoptimizer.com/events/t', 'VWO'],
     ['https://acdn.adnxs.com/dmp/up/pixie.js', 'Microsoft Xandr'],
     ['https://ib.adnxs.com/pixie?pi=abc&e=PageView&script=0', 'Microsoft Xandr'],
+    ['https://secure.adnxs.com/px?id=1234&t=2', 'Microsoft Xandr'],
+    ['https://ib.adnxs.com/seg?add=11837&t=1', 'Microsoft Xandr'],
+    ['https://www.redditstatic.com/ads/pixel.js', 'Reddit Pixel'],
+    ['https://ads.reddit.com/conversions/events', 'Reddit Pixel'],
     ['https://z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US', 'Amazon Associates'],
   ])('%s -> %s', (url, vendor) => {
     expect(findTrackerByUrl(url)?.vendor).toBe(vendor);
@@ -282,6 +286,8 @@ describe('vendors from install and CSP documentation (2026-11-06)', () => {
     'https://www.redditstatic.com/shreddit/en-US/app.js',
     'https://visualwebsiteoptimizer.com.example.net/lib/1.js',
     'https://acdn.adnxs.com/ast/ast.js',
+    'https://secure.adnxs.com/pxj?id=1',
+    'https://secure.adnxs.com/getuid?https%3A%2F%2Fexample.com',
   ])('leaves %s alone', (url) => {
     expect(findTrackerByUrl(url)).toBeUndefined();
   });

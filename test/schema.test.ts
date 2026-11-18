@@ -128,6 +128,25 @@ describe('standalone report contracts', () => {
     expect(schemas.get('1.5.0')?.report({ ...value, schemaVersion: '1.5.0' })).toBe(true);
   });
 
+  it('accepts French report text only from schema 1.6.0 on', async () => {
+    const value = (await fixture('complete')) as ScanResult;
+    const french = (version: string) => ({
+      ...value,
+      schemaVersion: version,
+      lang: 'fr' as const,
+      ...(value.options === undefined
+        ? {}
+        : { options: { ...value.options, lang: 'fr' as const } }),
+    });
+    expect(schemas.get('1.6.0')?.report(french('1.6.0'))).toBe(true);
+    expect(schemas.get('1.5.0')?.report(french('1.5.0'))).toBe(false);
+    for (const lang of ['it', 'es', 'pl'] as const) {
+      const report = { ...french('1.6.0'), lang };
+      expect(schemas.get('1.6.0')?.report(report)).toBe(true);
+      expect(schemas.get('1.5.0')?.report({ ...report, schemaVersion: '1.5.0' })).toBe(false);
+    }
+  });
+
   it('accepts baseline marks and the fixed list in schema 1.5.0', async () => {
     const value = (await fixture('policy-overridden')) as ScanResult;
     const [first] = value.findings;

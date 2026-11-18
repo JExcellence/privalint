@@ -1,4 +1,4 @@
-import { type Lang, say } from '../i18n.js';
+import { type Lang, plPlural, say } from '../i18n.js';
 import type { PageLink } from '../types.js';
 
 /**
@@ -21,6 +21,10 @@ export const linksChecked = (count: number, lang: Lang) =>
     en: `${count} links checked`,
     de: `${count} Links geprüft`,
     hu: `${count} hivatkozás ellenőrizve`,
+    fr: `${count} liens vérifiés`,
+    it: `${count} link verificati`,
+    es: `${count} enlaces comprobados`,
+    pl: `${count} ${plPlural(count, 'sprawdzony link', 'sprawdzone linki', 'sprawdzonych linków')}`,
   });
 
 export function pathOf(href: string): string {

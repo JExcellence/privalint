@@ -13,16 +13,16 @@ WooCommerce, Shopware, Magento). On such a start page privalint looks for a link
 like the law asks: "Vertrag widerrufen", "Vertrag hier widerrufen", "Withdraw from contract here"
 and close variants in French, Spanish, Italian and Dutch.
 
-| Situation                                                          | Severity |
-| ------------------------------------------------------------------ | -------- |
-| Shop, a withdrawal link on the start page                          | passes   |
-| Shop, only a cancellation policy ("Widerrufsbelehrung") or nothing | warning  |
-| Not a shop, or not the start page                                  | nothing  |
-| `--region ch`                                                      | info     |
-| `--region uk` (no such duty in UK law)                             | info     |
-| `--region fr`: "Renoncer au contrat ici" counts as the link        | passes   |
-| `--region es` or `--region pl` (not yet transposed, as of 2026-11-17) | info |
-| "Overeenkomst ontbinden" or "Odstąp od umowy" counts as the link | passes |
+| Situation                                                             | Severity |
+| --------------------------------------------------------------------- | -------- |
+| Shop, a withdrawal link on the start page                             | passes   |
+| Shop, only a cancellation policy ("Widerrufsbelehrung") or nothing    | warning  |
+| Not a shop, or not the start page                                     | nothing  |
+| `--region ch`                                                         | info     |
+| `--region uk` (no such duty in UK law)                                | info     |
+| `--region fr`: "Renoncer au contrat ici" counts as the link           | passes   |
+| `--region es` or `--region pl` (not yet transposed, as of 2026-11-17) | info     |
+| "Overeenkomst ontbinden" or "Odstąp od umowy" counts as the link      | passes   |
 
 ## Why
 

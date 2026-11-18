@@ -15,7 +15,8 @@ Call the `scan_site` tool of the privalint MCP server with the URL the user gave
 
 - `maxPages`: 1 by default. Use 5 to 10 when the user wants the whole site or forms on subpages checked; each page takes 10 to 60 seconds.
 - `region`: `de` by default. Use `at`, `ch`, `hu`, `fr` (France), `it` (Italy), `es` (Spain), `nl` (Netherlands), `pl` (Poland), `uk` (United Kingdom) or `eu` when the site is clearly for that country.
-- `lang`: answer in the user's language; pass `de` or `hu` when the user writes German or Hungarian.
+- `lang`: answer in the user's language; pass `de`, `hu`, `fr`, `it`, `es` or `pl` when the user writes German, Hungarian, French,
+  Italian, Spanish or Polish.
 - Opt-in checks, only when the user asks or the question needs them: `checkSettings` (switch everything off in the banner settings), `checkClose` (close the banner with its "×"), `checkAccept` (services that run after consent, for the privacy policy check), `gpc` (Global Privacy Control).
 
 If the tool is unavailable, run the CLI instead: `npx -y privalint@latest <url> --format markdown`.

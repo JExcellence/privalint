@@ -27,7 +27,11 @@
       "enum": [
         "en",
         "de",
-        "hu"
+        "hu",
+        "fr",
+        "it",
+        "es",
+        "pl"
       ]
     },
     "region": {
@@ -1249,7 +1253,11 @@
           "enum": [
             "en",
             "de",
-            "hu"
+            "hu",
+            "fr",
+            "it",
+            "es",
+            "pl"
           ]
         },
         "region": {

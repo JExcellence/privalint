@@ -11,7 +11,7 @@ Files are limited to 64 KiB. Do not store credentials in config; URL credentials
 
 Supported fields: `url` (absolute HTTP(S)), `maxPages` (positive integer), `concurrency`
 (positive integer, pages loaded at the same time), `settleMs` (nonnegative),
-`timeoutMs` (positive), `locale`, `lang` (`en`/`de`/`hu`), `region` (`de`/`at`/`ch`/`hu`/`fr`/`it`/`es`/`nl`/`pl`/`uk`/`eu`),
+`timeoutMs` (positive), `locale`, `lang` (`en`/`de`/`hu`/`fr`/`it`/`es`/`pl`), `region` (`de`/`at`/`ch`/`hu`/`fr`/`it`/`es`/`nl`/`pl`/`uk`/`eu`),
 `consentCheck`, `settingsCheck`, `closeCheck`, `acceptCheck`, `gpc` and `failOnIncomplete` (booleans), `hostChecks` (`each`/`main`), `device` (a Playwright device name such as `"iPhone 15"`; the
 report records it in `options.device`), `sitemap` (boolean: choose the pages after the start
 page from the sitemap), `rules` (known IDs to `off`/`error`/`warning`/`info`) and

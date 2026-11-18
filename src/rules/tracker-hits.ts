@@ -41,7 +41,15 @@ export function findTrackerHits(
   storage: readonly StorageKey[] = [],
   cloaks: readonly CnameCloak[] = [],
 ): TrackerHit[] {
-  const requestLabel = say(lang, { en: 'request', de: 'Anfrage', hu: 'kérés' });
+  const requestLabel = say(lang, {
+    en: 'request',
+    de: 'Anfrage',
+    hu: 'kérés',
+    fr: 'requête',
+    it: 'richiesta',
+    es: 'solicitud',
+    pl: 'żądanie',
+  });
   const hits = new Map<
     string,
     { tracker: CookieTracker; evidence: Set<string>; consentMode: Map<string, ConsentModeState> }
@@ -77,6 +85,10 @@ export function findTrackerHits(
             en: ` (proxied through ${host})`,
             de: ` (über ${host} weitergeleitet)`,
             hu: ` (${huArticle(host)} ${host} kiszolgálón keresztül továbbítva)`,
+            fr: ` (relayé par ${host})`,
+            it: ` (tramite proxy su ${host})`,
+            es: ` (a través de un proxy en ${host})`,
+            pl: ` (przez proxy na ${host})`,
           })
         : '';
       record(tracker, `${requestLabel} ${request.url}${proxied}`, request.url);
@@ -174,21 +186,37 @@ const STATISTICS_EXEMPTION: Partial<Record<Region, Text>> = {
     en: ' In the UK, analytics may run without consent (PECR Sch. A1 para. 5) only if it collects statistics solely to improve this site, the data is not shared for any other purpose, and visitors are told clearly and can object free of charge. privalint cannot check these conditions; if one is not met, ask for consent.',
     de: ' Im Vereinigten Königreich darf Analyse ohne Einwilligung laufen (PECR Sch. A1 para. 5), wenn sie nur Statistiken zur Verbesserung dieser Website erhebt, die Daten zu keinem anderen Zweck weitergegeben werden und Besucher klar informiert werden und kostenlos widersprechen können. privalint kann diese Bedingungen nicht prüfen; fehlt eine, ist eine Einwilligung nötig.',
     hu: ' Az Egyesült Királyságban az analitika hozzájárulás nélkül is futhat (PECR Sch. A1 para. 5), ha kizárólag a webhely fejlesztését szolgáló statisztikát gyűjt, az adatokat más célra nem adják tovább, és a látogatók egyértelmű tájékoztatást kapnak, valamint ingyenesen tiltakozhatnak. A privalint ezeket a feltételeket nem tudja ellenőrizni; ha bármelyik hiányzik, hozzájárulás szükséges.',
+    fr: " Au Royaume-Uni, la mesure d'audience peut fonctionner sans consentement (PECR Sch. A1 para. 5) seulement si elle collecte des statistiques dans le seul but d'améliorer ce site, si les données ne sont partagées à aucune autre fin, et si les visiteurs sont clairement informés et peuvent s'y opposer gratuitement. privalint ne peut pas vérifier ces conditions ; si l'une d'elles n'est pas remplie, demandez le consentement.",
+    it: ' Nel Regno Unito gli strumenti di analisi possono funzionare senza consenso (PECR Sch. A1 para. 5) solo se raccolgono statistiche esclusivamente per migliorare questo sito, i dati non sono condivisi per altri scopi e i visitatori ne sono informati chiaramente e possono opporsi gratuitamente. privalint non può verificare queste condizioni; se una non è soddisfatta, chiedi il consenso.',
+    es: ' En el Reino Unido, la analítica puede funcionar sin consentimiento (PECR Sch. A1 para. 5) solo si recoge estadísticas únicamente para mejorar este sitio, los datos no se comparten para ningún otro fin y se informa claramente a los visitantes, que pueden oponerse gratuitamente. privalint no puede comprobar estas condiciones; si alguna no se cumple, pide el consentimiento.',
+    pl: ' W Wielkiej Brytanii analityka może działać bez zgody (PECR Sch. A1 para. 5) tylko wtedy, gdy zbiera statystyki wyłącznie w celu ulepszenia tej witryny, dane nie są udostępniane w żadnym innym celu, a odwiedzający są o tym jasno informowani i mogą bezpłatnie się sprzeciwić. privalint nie może sprawdzić tych warunków; jeśli któryś nie jest spełniony, poproś o zgodę.',
   },
   fr: {
     en: ' In France, audience measurement is exempt from consent (CNIL, délibération n° 2020-091, §§ 49 to 51) only if it serves solely to measure the audience of this site for the publisher alone, produces anonymous statistics, is not combined with other data and does not follow visitors across sites. privalint cannot check this configuration; if it is not met, ask for consent.',
     de: ' In Frankreich ist Reichweitenmessung von der Einwilligung befreit (CNIL, délibération n° 2020-091, §§ 49 bis 51), wenn sie nur der Reichweitenmessung dieser Website für den Betreiber allein dient, anonyme Statistiken erzeugt, nicht mit anderen Daten verknüpft wird und Besucher nicht über Websites hinweg verfolgt. privalint kann diese Konfiguration nicht prüfen; ist sie nicht erfüllt, ist eine Einwilligung nötig.',
     hu: ' Franciaországban a látogatottságmérés mentesül a hozzájárulás alól (CNIL, délibération n° 2020-091, 49-51. pont), ha kizárólag a webhely látogatottságát méri, csak az üzemeltető számára, anonim statisztikát készít, nem kapcsolják össze más adatokkal, és nem követi a látogatókat más webhelyeken. A privalint ezt a beállítást nem tudja ellenőrizni; ha nem teljesül, hozzájárulás szükséges.',
+    fr: " En France, la mesure d'audience est exemptée de consentement (CNIL, délibération n° 2020-091, §§ 49 à 51) seulement si elle sert uniquement à mesurer l'audience de ce site pour le compte exclusif de l'éditeur, produit des statistiques anonymes, n'est pas recoupée avec d'autres données et ne suit pas les visiteurs sur d'autres sites. privalint ne peut pas vérifier cette configuration ; si elle n'est pas respectée, demandez le consentement.",
+    it: " In Francia la misurazione dell'audience è esente dal consenso (CNIL, délibération n° 2020-091, §§ da 49 a 51) solo se serve esclusivamente a misurare l'audience di questo sito per il solo editore, produce statistiche anonime, non è combinata con altri dati e non segue i visitatori tra siti diversi. privalint non può verificare questa configurazione; se non è soddisfatta, chiedi il consenso.",
+    es: ' En Francia, la medición de audiencia está exenta de consentimiento (CNIL, délibération n° 2020-091, §§ 49 a 51) solo si sirve únicamente para medir la audiencia de este sitio para el propio editor, produce estadísticas anónimas, no se combina con otros datos y no sigue a los visitantes entre sitios. privalint no puede comprobar esta configuración; si no se cumple, pide el consentimiento.',
+    pl: ' We Francji pomiar oglądalności jest zwolniony z obowiązku uzyskania zgody (CNIL, délibération n° 2020-091, §§ 49 do 51) tylko wtedy, gdy służy wyłącznie do pomiaru oglądalności tej witryny dla samego wydawcy, tworzy anonimowe statystyki, nie jest łączony z innymi danymi i nie śledzi odwiedzających między witrynami. privalint nie może sprawdzić tej konfiguracji; jeśli nie jest spełniona, poproś o zgodę.',
   },
   it: {
     en: ' In Italy, analytics cookies count as technical cookies that need no consent (Garante privacy, cookie guidelines of 10.06.2021, § 7.2) only if they produce aggregate statistics for this site alone, a third-party tool masks at least part of the IP address, and the data is not combined with other data or passed on. privalint cannot check this configuration; if it is not met, ask for consent.',
     de: ' In Italien gelten Analyse-Cookies als technische Cookies ohne Einwilligung (Garante privacy, Cookie-Leitlinien vom 10.06.2021, § 7.2), wenn sie nur aggregierte Statistiken für diese Website erzeugen, ein Drittanbieter-Tool die IP-Adresse mindestens teilweise kürzt und die Daten weder mit anderen Daten verknüpft noch weitergegeben werden. privalint kann diese Konfiguration nicht prüfen; ist sie nicht erfüllt, ist eine Einwilligung nötig.',
     hu: ' Olaszországban az analitikai sütik hozzájárulás nélküli technikai sütinek számítanak (Garante privacy, 2021.06.10-i süti-iránymutatás, 7.2. pont), ha kizárólag a webhelyre vonatkozó összesített statisztikát készítenek, harmadik féltől származó eszköz esetén az IP-cím legalább egy részét elfedik, és az adatokat nem kapcsolják össze más adatokkal és nem adják tovább. A privalint ezt a beállítást nem tudja ellenőrizni; ha nem teljesül, hozzájárulás szükséges.',
+    fr: " En Italie, les cookies analytiques valent cookies techniques sans consentement (Garante privacy, lignes directrices cookies du 10.06.2021, § 7.2) seulement s'ils produisent des statistiques agrégées pour ce seul site, si un outil tiers masque au moins une partie de l'adresse IP, et si les données ne sont ni recoupées avec d'autres ni transmises. privalint ne peut pas vérifier cette configuration ; si elle n'est pas respectée, demandez le consentement.",
+    it: " In Italia i cookie analitici sono assimilati ai cookie tecnici che non richiedono consenso (Garante privacy, linee guida cookie del 10.06.2021, § 7.2) solo se producono statistiche aggregate per questo solo sito, uno strumento di terze parti maschera almeno una parte dell'indirizzo IP e i dati non sono combinati con altri dati né ceduti. privalint non può verificare questa configurazione; se non è soddisfatta, chiedi il consenso.",
+    es: ' En Italia, las cookies analíticas se asimilan a cookies técnicas que no requieren consentimiento (Garante privacy, directrices sobre cookies del 10.06.2021, § 7.2) solo si producen estadísticas agregadas solo para este sitio, una herramienta de terceros enmascara al menos parte de la dirección IP y los datos no se combinan con otros ni se ceden. privalint no puede comprobar esta configuración; si no se cumple, pide el consentimiento.',
+    pl: ' We Włoszech analityczne pliki cookie są traktowane jak techniczne pliki cookie, które nie wymagają zgody (Garante privacy, wytyczne dotyczące cookies z 10.06.2021, § 7.2), tylko wtedy, gdy tworzą zagregowane statystyki wyłącznie dla tej witryny, narzędzie podmiotu trzeciego maskuje co najmniej część adresu IP, a dane nie są łączone z innymi danymi ani przekazywane dalej. privalint nie może sprawdzić tej konfiguracji; jeśli nie jest spełniona, poproś o zgodę.',
   },
   nl: {
     en: " In the Netherlands, analytics may run without consent (Art. 11.7a lid 3 sub b Tw) only if it measures the quality or effectiveness of this site and has little or no impact on the privacy of visitors, for example with shortened IP addresses, no data sharing for the vendor's own purposes and a data processing agreement. privalint cannot check this configuration; if it is not met, ask for consent.",
     de: ' In den Niederlanden darf Analyse ohne Einwilligung laufen (Art. 11.7a lid 3 sub b Tw), wenn sie nur die Qualität oder Wirksamkeit dieser Website misst und kaum oder keine Folgen für die Privatsphäre der Besucher hat, etwa mit gekürzten IP-Adressen, ohne Datenweitergabe für eigene Zwecke des Anbieters und mit Auftragsverarbeitungsvertrag. privalint kann diese Konfiguration nicht prüfen; ist sie nicht erfüllt, ist eine Einwilligung nötig.',
     hu: ' Hollandiában az analitika hozzájárulás nélkül is futhat (Art. 11.7a lid 3 sub b Tw), ha kizárólag a webhely minőségét vagy hatékonyságát méri, és alig vagy egyáltalán nem érinti a látogatók magánszféráját, például rövidített IP-címekkel, a szolgáltató saját céljaira történő adatátadás nélkül és adatfeldolgozási szerződéssel. A privalint ezt a beállítást nem tudja ellenőrizni; ha nem teljesül, hozzájárulás szükséges.',
+    fr: " Aux Pays-Bas, la mesure d'audience peut fonctionner sans consentement (art. 11.7a lid 3 sub b Tw) seulement si elle mesure la qualité ou l'efficacité de ce site avec peu ou pas d'impact sur la vie privée des visiteurs, par exemple avec des adresses IP raccourcies, sans partage de données pour les propres fins du fournisseur et avec un contrat de sous-traitance. privalint ne peut pas vérifier cette configuration ; si elle n'est pas respectée, demandez le consentement.",
+    it: " Nei Paesi Bassi gli strumenti di analisi possono funzionare senza consenso (Art. 11.7a lid 3 sub b Tw) solo se misurano la qualità o l'efficacia di questo sito e hanno un impatto nullo o minimo sulla privacy dei visitatori, ad esempio con indirizzi IP abbreviati, senza condivisione dei dati per scopi propri del fornitore e con un accordo sul trattamento dei dati. privalint non può verificare questa configurazione; se non è soddisfatta, chiedi il consenso.",
+    es: ' En los Países Bajos, la analítica puede funcionar sin consentimiento (Art. 11.7a lid 3 sub b Tw) solo si mide la calidad o la eficacia de este sitio y tiene un impacto nulo o escaso en la privacidad de los visitantes, por ejemplo con direcciones IP acortadas, sin compartir datos para fines propios del proveedor y con un contrato de encargo del tratamiento. privalint no puede comprobar esta configuración; si no se cumple, pide el consentimiento.',
+    pl: ' W Holandii analityka może działać bez zgody (Art. 11.7a lid 3 sub b Tw) tylko wtedy, gdy mierzy jakość lub skuteczność tej witryny i ma niewielki lub żaden wpływ na prywatność odwiedzających, na przykład dzięki skróconym adresom IP, braku udostępniania danych do własnych celów dostawcy i umowie powierzenia przetwarzania danych. privalint nie może sprawdzić tej konfiguracji; jeśli nie jest spełniona, poproś o zgodę.',
   },
 };
 
@@ -211,20 +239,76 @@ const DENIED_PINGS_NOTE: Text = {
   en: ' Consent Mode pings with storage denied still send each page view, with the IP address and browser details, to Google; they do not replace consent.',
   de: ' Google-Consent-Mode-Pings mit abgelehnter Speicherung senden trotzdem jeden Seitenaufruf mit IP-Adresse und Browserdaten an Google; sie ersetzen keine Einwilligung.',
   hu: ' Az elutasított tárolású Consent Mode pingek is elküldenek minden oldalmegtekintést az IP-címmel és a böngésző adataival a Google-nek; nem helyettesítik a hozzájárulást.',
+  fr: " Les pings Consent Mode avec stockage refusé envoient tout de même chaque page vue à Google, avec l'adresse IP et les détails du navigateur ; ils ne remplacent pas le consentement.",
+  it: " I ping di Consent Mode con archiviazione negata inviano comunque a Google ogni visualizzazione di pagina, con l'indirizzo IP e i dettagli del browser; non sostituiscono il consenso.",
+  es: ' Los pings de Consent Mode con el almacenamiento denegado siguen enviando a Google cada página vista, con la dirección IP y los datos del navegador; no sustituyen al consentimiento.',
+  pl: ' Pingi Consent Mode z odmową przechowywania nadal wysyłają do Google każde wyświetlenie strony wraz z adresem IP i danymi przeglądarki; nie zastępują zgody.',
 };
 
 const CATEGORY_LABELS: Record<TrackerCategory, Text> = {
-  analytics: { en: 'analytics', de: 'Analyse', hu: 'analitika' },
-  advertising: { en: 'advertising', de: 'Werbung', hu: 'hirdetés' },
-  'session-replay': { en: 'session-replay', de: 'Session-Replay', hu: 'munkamenet-visszajátszás' },
-  fingerprinting: { en: 'fingerprinting', de: 'Fingerprinting', hu: 'ujjlenyomat-azonosítás' },
-  social: { en: 'social', de: 'Social Media', hu: 'közösségi média' },
+  analytics: {
+    en: 'analytics',
+    de: 'Analyse',
+    hu: 'analitika',
+    fr: "mesure d'audience",
+    it: 'statistiche',
+    es: 'analítica',
+    pl: 'analityka',
+  },
+  advertising: {
+    en: 'advertising',
+    de: 'Werbung',
+    hu: 'hirdetés',
+    fr: 'publicité',
+    it: 'pubblicità',
+    es: 'publicidad',
+    pl: 'reklama',
+  },
+  'session-replay': {
+    en: 'session-replay',
+    de: 'Session-Replay',
+    hu: 'munkamenet-visszajátszás',
+    fr: 'enregistrement de session',
+    it: 'registrazione delle sessioni',
+    es: 'grabación de sesiones',
+    pl: 'nagrywanie sesji',
+  },
+  fingerprinting: {
+    en: 'fingerprinting',
+    de: 'Fingerprinting',
+    hu: 'ujjlenyomat-azonosítás',
+    fr: 'empreinte numérique',
+    it: 'fingerprinting',
+    es: 'huella digital',
+    pl: 'fingerprinting',
+  },
+  social: {
+    en: 'social',
+    de: 'Social Media',
+    hu: 'közösségi média',
+    fr: 'réseaux sociaux',
+    it: 'social media',
+    es: 'redes sociales',
+    pl: 'media społecznościowe',
+  },
   'marketing-automation': {
     en: 'marketing-automation',
     de: 'Marketing-Automatisierung',
     hu: 'marketingautomatizálás',
+    fr: 'automatisation marketing',
+    it: 'marketing automation',
+    es: 'automatización de marketing',
+    pl: 'automatyzacja marketingu',
   },
-  'tag-manager': { en: 'tag-manager', de: 'Tag-Manager', hu: 'címkekezelő' },
+  'tag-manager': {
+    en: 'tag-manager',
+    de: 'Tag-Manager',
+    hu: 'címkekezelő',
+    fr: 'gestionnaire de balises',
+    it: 'tag manager',
+    es: 'gestor de etiquetas',
+    pl: 'menedżer tagów',
+  },
 };
 
 export const categoryLabel = (category: TrackerCategory, lang: Lang) =>

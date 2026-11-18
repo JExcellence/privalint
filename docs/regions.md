@@ -39,15 +39,15 @@ could not be re-read for this page.
 
 ## Italy (`it`)
 
-| Topic | Citation | Source |
-| --- | --- | --- |
-| Cookies and trackers | Art. 122 D.lgs. 196/2003 (Codice privacy) | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2003-06-30;196~art122) |
-| Garante guidelines | Garante privacy, Linee guida cookie e altri strumenti di tracciamento, 10.06.2021 | [garanteprivacy.it](https://www.garanteprivacy.it/home/docweb/-/docweb-display/docweb/9677876) |
-| Legal notice | Art. 7 D.lgs. 70/2003; Art. 2250 c.c. for companies | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2003-04-09;70~art7) |
-| VAT number on the site | Art. 35 DPR 633/1972 | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1972-10-26;633~art35) |
-| Marketing e-mail | Art. 130 Codice privacy | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2003-06-30;196~art130) |
-| Withdrawal button | Art. 54-bis D.lgs. 206/2005 (Codice del consumo), for contracts from 19.06.2026 | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2005-09-06;206~art54bis) |
-| Accessibility (European Accessibility Act) | Art. 12 and Annex IV D.lgs. 82/2022 | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2022-05-27;82~art12) |
+| Topic                                      | Citation                                                                          | Source                                                                                                                          |
+| ------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Cookies and trackers                       | Art. 122 D.lgs. 196/2003 (Codice privacy)                                         | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2003-06-30;196~art122)                    |
+| Garante guidelines                         | Garante privacy, Linee guida cookie e altri strumenti di tracciamento, 10.06.2021 | [garanteprivacy.it](https://www.garanteprivacy.it/home/docweb/-/docweb-display/docweb/9677876)                                  |
+| Legal notice                               | Art. 7 D.lgs. 70/2003; Art. 2250 c.c. for companies                               | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2003-04-09;70~art7)                       |
+| VAT number on the site                     | Art. 35 DPR 633/1972                                                              | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.del.presidente.della.repubblica:1972-10-26;633~art35) |
+| Marketing e-mail                           | Art. 130 Codice privacy                                                           | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2003-06-30;196~art130)                    |
+| Withdrawal button                          | Art. 54-bis D.lgs. 206/2005 (Codice del consumo), for contracts from 19.06.2026   | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2005-09-06;206~art54bis)                  |
+| Accessibility (European Accessibility Act) | Art. 12 and Annex IV D.lgs. 82/2022                                               | [Normattiva](https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.legislativo:2022-05-27;82~art12)                      |
 
 What changes with `it`:
 
@@ -67,14 +67,14 @@ What changes with `it`:
 
 ## Spain (`es`)
 
-| Topic | Citation | Source |
-| --- | --- | --- |
-| Cookies and trackers | Art. 22.2 Ley 34/2002 (LSSI) | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2002-13758) |
-| AEPD guide | AEPD, Guía sobre el uso de las cookies, May 2024 | [aepd.es](https://www.aepd.es/guias/guia-cookies.pdf) |
-| Legal notice (aviso legal) | Art. 10.1 LSSI | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2002-13758) |
-| Privacy notice | Art. 11 Ley Orgánica 3/2018 (LOPDGDD) | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673) |
-| Withdrawal button | Not transposed into the TRLGDCU (RDL 1/2007) as of 2026-11-17; Art. 11a Directive 2011/83/EU cited | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2007-20555) |
-| Accessibility (European Accessibility Act) | Ley 11/2023 | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2023-11022) |
+| Topic                                      | Citation                                                                                           | Source                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Cookies and trackers                       | Art. 22.2 Ley 34/2002 (LSSI)                                                                       | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2002-13758) |
+| AEPD guide                                 | AEPD, Guía sobre el uso de las cookies, May 2024                                                   | [aepd.es](https://www.aepd.es/guias/guia-cookies.pdf)        |
+| Legal notice (aviso legal)                 | Art. 10.1 LSSI                                                                                     | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2002-13758) |
+| Privacy notice                             | Art. 11 Ley Orgánica 3/2018 (LOPDGDD)                                                              | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673) |
+| Withdrawal button                          | Not transposed into the TRLGDCU (RDL 1/2007) as of 2026-11-17; Art. 11a Directive 2011/83/EU cited | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2007-20555) |
+| Accessibility (European Accessibility Act) | Ley 11/2023                                                                                        | [BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2023-11022) |
 
 What changes with `es`:
 
@@ -87,14 +87,14 @@ What changes with `es`:
 
 ## The Netherlands (`nl`)
 
-| Topic | Citation | Source |
-| --- | --- | --- |
-| Cookies and trackers | Art. 11.7a Telecommunicatiewet (Tw) | [wetten.overheid.nl](https://wetten.overheid.nl/BWBR0009950/2026-08-15) |
-| AP rules for banners | Autoriteit Persoonsgegevens, Vuistregels heldere cookiebanners | [autoriteitpersoonsgegevens.nl](https://www.autoriteitpersoonsgegevens.nl/documenten/vuistregels-heldere-cookiebanners) |
-| AP enforcement | Fine of 600,000 euros on AS Watson for Kruidvat.nl, 16.07.2024 | [autoriteitpersoonsgegevens.nl](https://www.autoriteitpersoonsgegevens.nl/actueel/boete-van-600000-euro-voor-tracking-cookies-op-kruidvatnl) |
-| Legal notice | Art. 3:15d BW | [wetten.overheid.nl](https://wetten.overheid.nl/BWBR0005291/2025-07-01) |
-| Withdrawal button | Art. 6:230oa BW, in force since 25.06.2026 | [wetten.overheid.nl](https://wetten.overheid.nl/BWBR0005289/2026-07-16) |
-| Accessibility (European Accessibility Act) | Art. 6:230fb BW | [wetten.overheid.nl](https://wetten.overheid.nl/BWBR0005289/2026-07-16) |
+| Topic                                      | Citation                                                       | Source                                                                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cookies and trackers                       | Art. 11.7a Telecommunicatiewet (Tw)                            | [wetten.overheid.nl](https://wetten.overheid.nl/BWBR0009950/2026-08-15)                                                                      |
+| AP rules for banners                       | Autoriteit Persoonsgegevens, Vuistregels heldere cookiebanners | [autoriteitpersoonsgegevens.nl](https://www.autoriteitpersoonsgegevens.nl/documenten/vuistregels-heldere-cookiebanners)                      |
+| AP enforcement                             | Fine of 600,000 euros on AS Watson for Kruidvat.nl, 16.07.2024 | [autoriteitpersoonsgegevens.nl](https://www.autoriteitpersoonsgegevens.nl/actueel/boete-van-600000-euro-voor-tracking-cookies-op-kruidvatnl) |
+| Legal notice                               | Art. 3:15d BW                                                  | [wetten.overheid.nl](https://wetten.overheid.nl/BWBR0005291/2025-07-01)                                                                      |
+| Withdrawal button                          | Art. 6:230oa BW, in force since 25.06.2026                     | [wetten.overheid.nl](https://wetten.overheid.nl/BWBR0005289/2026-07-16)                                                                      |
+| Accessibility (European Accessibility Act) | Art. 6:230fb BW                                                | [wetten.overheid.nl](https://wetten.overheid.nl/BWBR0005289/2026-07-16)                                                                      |
 
 What changes with `nl`:
 
@@ -111,13 +111,13 @@ What changes with `nl`:
 
 ## Poland (`pl`)
 
-| Topic | Citation | Source |
-| --- | --- | --- |
-| Cookies and trackers | art. 399 ustawy Prawo komunikacji elektronicznej (PKE), Dz.U. 2024 poz. 1221, in force since 10.11.2024 | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2024/1221/text.html) |
-| Legal notice | art. 5 ustawy o świadczeniu usług drogą elektroniczną (UŚUDE), Dz.U. 2024 poz. 1513 | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2024/1513/text.html) |
-| Company details on the website | art. 206 § 1 and 374 § 1 Kodeks spółek handlowych (KSH), Dz.U. 2024 poz. 18 | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2024/18/text.html) |
-| Withdrawal button | Not transposed into the ustawa o prawach konsumenta (Dz.U. 2026 poz. 1244) as of 2026-11-17; Art. 11a Directive 2011/83/EU cited | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2026/1244) |
-| Accessibility (European Accessibility Act) | ustawa o zapewnianiu spełniania wymagań dostępności, Dz.U. 2024 poz. 731 | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2024/731/text.html) |
+| Topic                                      | Citation                                                                                                                         | Source                                                         |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Cookies and trackers                       | art. 399 ustawy Prawo komunikacji elektronicznej (PKE), Dz.U. 2024 poz. 1221, in force since 10.11.2024                          | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2024/1221/text.html) |
+| Legal notice                               | art. 5 ustawy o świadczeniu usług drogą elektroniczną (UŚUDE), Dz.U. 2024 poz. 1513                                              | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2024/1513/text.html) |
+| Company details on the website             | art. 206 § 1 and 374 § 1 Kodeks spółek handlowych (KSH), Dz.U. 2024 poz. 18                                                      | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2024/18/text.html)   |
+| Withdrawal button                          | Not transposed into the ustawa o prawach konsumenta (Dz.U. 2026 poz. 1244) as of 2026-11-17; Art. 11a Directive 2011/83/EU cited | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2026/1244)           |
+| Accessibility (European Accessibility Act) | ustawa o zapewnianiu spełniania wymagań dostępności, Dz.U. 2024 poz. 731                                                         | [ELI](https://api.sejm.gov.pl/eli/acts/DU/2024/731/text.html)  |
 
 What changes with `pl`:
 

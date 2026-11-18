@@ -134,6 +134,33 @@ describe('French legal notice', () => {
   });
 });
 
+describe('French findings', () => {
+  it('writes the message and fix in French, with French list and names', () => {
+    const page = snapshot({
+      legalNotice: {
+        url: 'https://example.fr/mentions-legales',
+        text: 'Exemple SAS\n12 rue de la Paix\n75002 Paris\ncontact@example.fr',
+        mailto: true,
+      },
+    });
+    const findings = legalNoticeContent.check({ siteUrl: SITE, page, lang: 'fr', region: 'fr' });
+    expect(findings.map((finding) => finding.message)).toEqual([
+      'La page des mentions légales indique la forme juridique SAS, mais aucune immatriculation au registre.',
+      "La page des mentions légales ne nomme pas l'hébergeur ni le directeur de la publication.",
+    ]);
+    const [tracker] = preConsentTrackers.check({
+      siteUrl: SITE,
+      page: snapshot({ requests: [request(analytics)] }),
+      lang: 'fr',
+      region: 'fr',
+    });
+    expect(tracker?.message).toBe(
+      "Google Analytics (mesure d'audience) s'exécute avant que le visiteur ait donné son consentement.",
+    );
+    expect(tracker?.fix).toContain('CNIL, délibération n° 2020-091, §§ 49 à 51');
+  });
+});
+
 describe('withdrawal button in France', () => {
   it('accepts the label French law prescribes', () => {
     const page = snapshot({
@@ -311,5 +338,34 @@ describe('transfers from the United Kingdom', () => {
       requests: [request('https://o123.ingest.de.sentry.io/api/4/envelope/')],
     });
     expect(run(thirdCountryProviders, eu, 'uk')).toEqual([]);
+  });
+});
+
+describe('findings in Italian, Spanish and Polish', () => {
+  const rejected = snapshot({
+    consent: {
+      bannerFound: true,
+      rejectLabel: 'Rifiuta tutto',
+      rejected: true,
+      afterReject: { requests: [request(advertising)], cookies: [], storage: [] },
+    },
+  });
+  const inLang = (lang: 'it' | 'es' | 'pl', region: Region) =>
+    trackersAfterReject.check({ siteUrl: SITE, page: rejected, lang, region })[0]?.message;
+
+  it('writes the finding in the language of the report, quoting the page label', () => {
+    expect(inLang('it', 'it')).toContain('dopo il clic su «Rifiuta tutto»');
+    expect(inLang('es', 'es')).toContain('después de hacer clic en «Rifiuta tutto»');
+    expect(inLang('pl', 'pl')).toContain('po kliknięciu „Rifiuta tutto”');
+  });
+
+  it('cites the national exemption in the language of the report', () => {
+    const [finding] = preConsentTrackers.check({
+      siteUrl: SITE,
+      page: snapshot({ requests: [request(analytics)] }),
+      lang: 'it',
+      region: 'it',
+    });
+    expect(finding?.fix).toContain('privalint non può verificare questa configurazione');
   });
 });

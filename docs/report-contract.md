@@ -31,7 +31,8 @@ privalint knows it as. It holds hosts only, never paths or query strings. A 1.4.
 reject all of these. A report compared with `--baseline` also has `baseline` (`new` or
 `existing`) on each finding and a top-level `baseline` with the counts `new` and `existing` and the
 `fixed` findings (`ruleId`, `pageUrl`, `subject`). 1.6.0 adds the regions `fr`, `it`, `es`, `nl`, `pl` and `uk` (`region`
-and `options.region`), which a 1.5.0 validator would reject; nothing else changes.
+and `options.region`) and the report languages `fr`, `it`, `es` and `pl` (`lang` and `options.lang`), which a 1.5.0
+validator would reject; nothing else changes.
 Scanner/package and schema versions are independent. Absent `schemaVersion` means legacy;
 unknown versions are unsupported. Never assign a schema version to old data merely to validate it.
 

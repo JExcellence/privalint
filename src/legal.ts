@@ -687,16 +687,16 @@ const UNITED_KINGDOM: Record<RuleId, string[]> = {
 };
 
 const LEGAL: Record<string, Record<Region, string[]>> = Object.fromEntries(
-  Object.entries(BASE).map(([ruleId, references]) => [
+  (Object.keys(BASE) as RuleId[]).map((ruleId) => [
     ruleId,
     {
-      ...references,
-      fr: FRANCE[ruleId as RuleId],
-      it: ITALY[ruleId as RuleId],
-      es: SPAIN[ruleId as RuleId],
-      nl: NETHERLANDS[ruleId as RuleId],
-      pl: POLAND[ruleId as RuleId],
-      uk: UNITED_KINGDOM[ruleId as RuleId],
+      ...BASE[ruleId],
+      fr: FRANCE[ruleId],
+      it: ITALY[ruleId],
+      es: SPAIN[ruleId],
+      nl: NETHERLANDS[ruleId],
+      pl: POLAND[ruleId],
+      uk: UNITED_KINGDOM[ruleId],
     },
   ]),
 );

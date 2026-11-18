@@ -286,7 +286,10 @@ export interface ConsentObservation {
     | 'reject-clicked-and-reloaded';
   state?: 'not-detected' | 'reject-unavailable' | 'interaction-failed' | 'reject-tested';
   bannerFound: boolean;
-  /** Name of the consent manager, if it was recognised. */
+  /**
+   * Name of the consent manager, if it was recognised. Without a banner: the consent manager whose
+   * script loaded although no banner appeared.
+   */
   cmp?: string;
   acceptLabel?: string;
   rejectLabel?: string;

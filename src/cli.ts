@@ -53,7 +53,7 @@ Options
       --settle <ms>       Wait this long after load for late tags (default 2000)
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
-      --lang <lang>       Language of the report: en | de | hu (default en)
+      --lang <lang>       Language of the report: en | de | hu | fr | it | es | pl (default en)
       --region <region>   Whose law to cite: de | at | ch | hu | fr | it | es | nl | pl | uk | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
       --consent           Enable consent checking even if the JSON config disables it
