@@ -6,6 +6,21 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.11.0 - 2026-11-18
+
+Upgrade notes:
+
+- Reports get schema 1.6.0. It only adds the region values `fr`, `it`, `es`, `nl`, `pl` and `uk`
+  and the report languages `fr`, `it`, `es` and `pl`; a 1.5.0 validator rejects reports that use
+  them.
+- Scans can find more than before with the same options: trackers behind a first-party CNAME
+  after a consent choice, Google Consent Mode pings that report consent as granted, legal pages
+  published as PDF, consent buttons in more languages and more tracker hosts.
+- A page read that failed now counts as a gap, so a rule that depends on it is partial instead of
+  clean.
+- The French, Italian, Spanish and Polish texts and the new region citations have not yet been
+  reviewed by native speakers or lawyers in those countries.
+
 ### Added
 
 - Report text in French (`--lang fr`, [#135](https://github.com/jexcellence/privalint/issues/135)):

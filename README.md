@@ -320,7 +320,8 @@ npx privalint https://przyklad.pl --region pl --lang pl
 ```
 
 The French, Italian, Spanish and Polish texts have not yet been reviewed by native speakers;
-corrections are welcome. Fix guides linked from findings are in English or German.
+corrections are welcome ([#159](https://github.com/jexcellence/privalint/issues/159) to
+[#162](https://github.com/jexcellence/privalint/issues/162)). Fix guides linked from findings are in English or German.
 
 ## Use it with Claude and other AI assistants
 
@@ -453,8 +454,13 @@ Going further:
 
 ## Roadmap
 
-- More region profiles (France, Italy, Spain, the Netherlands, Poland and the UK are done)
-  ([#134](https://github.com/jexcellence/privalint/issues/134))
+- Native-speaker review of the French, Italian, Spanish and Polish report text
+  ([#159](https://github.com/jexcellence/privalint/issues/159),
+  [#160](https://github.com/jexcellence/privalint/issues/160),
+  [#161](https://github.com/jexcellence/privalint/issues/161),
+  [#162](https://github.com/jexcellence/privalint/issues/162))
+- Legal review of the region citations per country
+  ([#163](https://github.com/jexcellence/privalint/issues/163))
 
 ## Contributing
 
