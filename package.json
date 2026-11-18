@@ -61,7 +61,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "~1.32.2",
     "pdfjs-dist": "~5.1.91",
-    "playwright": "^1.64.1",
+    "playwright": "^1.65.1",
     "tldts": "^7.4.19",
     "zod": "^4.6.7"
   },
