@@ -18,12 +18,13 @@ berücksichtigen. Real Cookie Banner wird über seinen Anbieter-Marker plus die 
 Beschriftungs-Heuristik erkannt. Siehe die
 [Hinweise zur CMP-Unterstützung und Prüfung](../consent-managers.de.md) ([English](../consent-managers.md)).
 
-| Situation                                                                        | Schweregrad   |
-| -------------------------------------------------------------------------------- | ------------- |
-| Zustimmen und Ablehnen auf der ersten Ebene                                      | bestanden     |
-| Zustimmen auf der ersten Ebene, Ablehnen nur in den Einstellungen oder gar nicht | `warning`     |
-| Zustimmen oder ein Abo („Pur-Abo-Modell“), kein Ablehnen                         | `info`        |
-| Kein Banner gefunden                                                             | keine Meldung |
+| Situation                                                                                                                                                                   | Schweregrad   |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Zustimmen und Ablehnen auf der ersten Ebene                                                                                                                                 | bestanden     |
+| Zustimmen auf der ersten Ebene, Ablehnen nur in den Einstellungen oder gar nicht                                                                                            | `warning`     |
+| Zustimmen oder ein Abo („Pur-Abo-Modell“), kein Ablehnen                                                                                                                    | `info`        |
+| `--region it`: kein Ablehnen, aber `--check-close` hat das Banner mit einem „X“ geschlossen, die Seite danach wurde vollständig beobachtet und `trackers-after-close` läuft | bestanden     |
+| Kein Banner gefunden                                                                                                                                                        | keine Meldung |
 
 Als Pur-Abo-Modell gilt ein Banner, wenn ein Button oder Link innerhalb des Banners ein Abo
 erwähnt („Abo“, „abonnieren“, „subscribe“, „werbefrei“, …). Links in der Navigation der Website

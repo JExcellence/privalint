@@ -11,6 +11,8 @@ On the start page privalint looks for a consent banner, by the selectors of comm
 managers and by button labels, and waits up to one more settle period for a banner that renders
 late (see [consent manager recognition](../consent-managers.md)). If none appears and at least one
 tool from the tracker list ran before any interaction, this rule reports it once, naming the tools.
+A tracker behind a first-party CNAME counts too; see
+[CNAME-cloaked trackers](pre-consent-trackers.md#cname-cloaked-trackers).
 
 | Situation                                                  | Severity |
 | ---------------------------------------------------------- | -------- |
@@ -18,6 +20,12 @@ tool from the tracker list ran before any interaction, this rule reports it once
 | No banner, only a tag manager loads                        | nothing  |
 | A banner was found, or the consent check failed or was off | nothing  |
 | `--region ch` (opt-out model)                              | info     |
+
+If the script of a known consent manager loaded (Usercentrics, Cookiebot, OneTrust, Didomi,
+consentmanager, CookieYes, iubenda, Osano, Termly, CookieFirst, Axeptio, Sourcepoint or
+Cookie-Script) but no banner appeared, the finding names it and says that it may hide its banner
+from automated browsers. Usercentrics did that on kemmler.de on 2026-11-18. The fix then starts
+with a check in a normal browser. The report's consent line and `consent.cmp` name it too.
 
 Each tracker is already an error under [`pre-consent-trackers`](pre-consent-trackers.md). This rule
 is a warning so the same cause isn't counted twice; it says why the trackers have no consent.

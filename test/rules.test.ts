@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { huArticle, type Lang } from '../src/i18n.js';
+import { loadedConsentManager } from '../src/consent.js';
+import { decimal, frenchSpacing, huArticle, type Lang, plPlural, say } from '../src/i18n.js';
 import { guessLanguage, KNOWN_LANGUAGES, LANGUAGE_WORDS } from '../src/language.js';
 import type { Region } from '../src/legal.js';
 import {
@@ -154,6 +155,34 @@ describe('consent-banner-missing', () => {
     expect(run(consentBannerMissing, snapshot({ consent: noBanner }))).toEqual([]);
     const gtm = [request('https://www.googletagmanager.com/gtm.js?id=GTM-1')];
     expect(run(consentBannerMissing, snapshot({ requests: gtm, consent: noBanner }))).toEqual([]);
+  });
+
+  it('says when a consent manager loaded but showed no banner', () => {
+    const page = snapshot({
+      requests: [
+        request('https://web.cmp.usercentrics.eu/ui/loader.js'),
+        request('https://www.google-analytics.com/g/collect'),
+      ],
+      consent: { ...noBanner, cmp: 'Usercentrics' },
+    });
+    const [finding] = run(consentBannerMissing, page);
+    expect(finding?.message).toContain(
+      "Usercentrics loaded, but showed no banner to privalint's automated browser",
+    );
+    expect(finding?.evidence[0]).toBe('Consent manager loaded: Usercentrics');
+    expect(finding?.fix).toContain('normal browser');
+  });
+
+  it('recognises a loaded consent manager by its script host', () => {
+    expect(loadedConsentManager([request('https://web.cmp.usercentrics.eu/ui/loader.js')])).toBe(
+      'Usercentrics',
+    );
+    expect(loadedConsentManager([request('https://consent.cookiebot.com/uc.js')])).toBe(
+      'Cookiebot',
+    );
+    expect(
+      loadedConsentManager([request('https://usercentrics.eu.example.net/loader.js')]),
+    ).toBeUndefined();
   });
 });
 
@@ -441,6 +470,8 @@ describe('impressum-link', () => {
     ['', 'https://example.de/de/impressum/'],
     ['Mentions légales', 'https://example.fr/mentions'],
     ['Impresszum', 'https://example.hu/rolunk'],
+    ['Im\u00ADpres\u00ADsum', 'https://example.de/seite-7'],
+    ['Anbieterangaben', 'https://example.de/ueber-uns'],
   ])('accepts a link labelled %j pointing to %s', (text, href) => {
     expect(run(impressumLink, snapshot({ links: [{ text, href }] }))).toEqual([]);
   });
@@ -531,7 +562,7 @@ describe('legal link labels', () => {
         region,
       })[0]?.fix;
     expect(contact('de')).toContain('BGH I ZR 228/03');
-    for (const region of ['at', 'ch', 'hu', 'eu'] as const) {
+    for (const region of ['at', 'ch', 'hu', 'fr', 'uk', 'eu'] as const) {
       expect(contact(region)).not.toContain('BGH');
       expect(contact(region)).toContain('"Legal notice"');
     }
@@ -581,6 +612,79 @@ describe('tracking-cookie-lifetime', () => {
       },
     });
     expect(run(trackingCookieLifetime, page)).toHaveLength(1);
+  });
+});
+
+describe('French and decimal text', () => {
+  const nbsp = String.fromCodePoint(0xa0);
+  const narrow = String.fromCodePoint(0x202f);
+
+  it('puts no-break spaces before French punctuation and inside guillemets', () => {
+    expect(frenchSpacing('cookie : 13 mois ; « Tout refuser » ?')).toBe(
+      `cookie${nbsp}: 13 mois${narrow}; «${nbsp}Tout refuser${nbsp}»${narrow}?`,
+    );
+    expect(frenchSpacing('Sec-GPC: 1 et https://example.fr')).toBe(
+      'Sec-GPC: 1 et https://example.fr',
+    );
+    expect(
+      say('fr', {
+        en: 'a : b',
+        de: 'a : b',
+        hu: 'a : b',
+        fr: 'a : b',
+        it: 'a : b',
+        es: 'a : b',
+        pl: 'a : b',
+      }),
+    ).toBe(`a${nbsp}: b`);
+    expect(
+      say('de', {
+        en: 'a : b',
+        de: 'a : b',
+        hu: 'a : b',
+        fr: 'a : b',
+        it: 'a : b',
+        es: 'a : b',
+        pl: 'a : b',
+      }),
+    ).toBe('a : b');
+    // A label quoted from the page keeps its own spaces.
+    expect(frenchSpacing('bouton : « Tout accepter ! » et suite ?')).toBe(
+      `bouton${nbsp}: «${nbsp}Tout accepter !${nbsp}» et suite${narrow}?`,
+    );
+    // Guillemets in a quoted label become inner quotes instead of doubling.
+    expect(frenchSpacing('clic sur « « Oui » ! »')).toBe(`clic sur «${nbsp}“ Oui ” !${nbsp}»`);
+    // A stray quote from the page does not switch the spacing off for the rest.
+    expect(frenchSpacing('« 5" écran » : oui ?')).toBe(
+      `«${nbsp}5" écran${nbsp}»${nbsp}: oui${narrow}?`,
+    );
+    expect(frenchSpacing('a » b : c')).toBe(`a » b${nbsp}: c`);
+  });
+
+  it('writes decimals with a comma outside English', () => {
+    expect(decimal(2.5, 'en')).toBe('2.5');
+    expect(decimal(2.5, 'de')).toBe('2,5');
+    expect(decimal(0.4, 'fr')).toBe('0,4');
+    expect(decimal(125000, 'en')).toBe('125,000');
+    expect(decimal(125000, 'de')).toBe('125.000');
+    expect(decimal(125000, 'fr')).toBe(`125${narrow}000`);
+    expect(decimal(2, 'de', 1)).toBe('2,0');
+    expect(decimal(2.5, 'pl')).toBe('2,5');
+  });
+
+  it('picks the Polish count form', () => {
+    const form = (n: number) => plPlural(n, 'link', 'linki', 'linków');
+    expect([1, 2, 4, 5, 12, 14, 22, 25, 0].map(form)).toEqual([
+      'link',
+      'linki',
+      'linki',
+      'linków',
+      'linków',
+      'linków',
+      'linki',
+      'linków',
+      'linków',
+    ]);
   });
 });
 
@@ -819,6 +923,41 @@ describe('legal-notice-content', () => {
   it('does not take "at office. Hours" for an e-mail address', () => {
     const findings = check('Musterweg 3\n50667 Köln\nYou can reach us at office. Hours vary.');
     expect(findings[0]?.message).toBe('The legal notice gives no e-mail address.');
+  });
+
+  it.each([
+    ['Muster Software GmbH', 'GmbH'],
+    ['Fotostudio Müller GmbH', 'GmbH'],
+    ['Muster Entwicklungs GmbH', 'GmbH'],
+  ])('reads the legal form of a provider named "%s"', (name, form) => {
+    const findings = check(`${name}\nMusterweg 3\n50667 Köln\nmail@muster.de`);
+    expect(findings).toEqual([
+      expect.objectContaining({ subject: 'register', message: expect.stringContaining(form) }),
+    ]);
+  });
+
+  it.each([
+    ['Design Müller GmbH', 'GmbH'],
+    ['Software Solutions GmbH', 'GmbH'],
+  ])('reads the legal form of "%s" at the start of a line', (name, form) => {
+    expect(check(`${name}\nMusterweg 3\n50667 Köln\nmail@muster.de`)).toEqual([
+      expect.objectContaining({ subject: 'register', message: expect.stringContaining(form) }),
+    ]);
+  });
+
+  it.each([
+    'Gestaltung: Agentur Pixel GmbH',
+    'Website by Pixel Ltd.',
+    'Conception et réalisation : Agence X SARL',
+    'Tárhelyszolgáltató: Példa Kft.',
+    'Webdesign: Agentur Beispiel GmbH',
+    'Website developed by Example Ltd',
+    'Konzept und Entwicklung: Beispiel GmbH',
+    'Fotos von Bildagentur AG',
+    'Bildnachweis: Stock GmbH',
+    'Muster - Hosting bei Strato AG',
+  ])('ignores the legal form in "%s"', (line) => {
+    expect(check(`Max Muster\nMusterweg 3\n50667 Köln\nmail@muster.de\n${line}`)).toEqual([]);
   });
 
   it('does not ask a sole trader without a legal form for a register entry', () => {
@@ -1541,6 +1680,9 @@ describe('privacy-policy-link', () => {
     ['Adatkezelési tájékoztató', 'https://example.hu/dokumentumok'],
     ['Adatvédelem', 'https://example.hu/jog'],
     ['', 'https://example.hu/adatvedelmi-tajekoztato/'],
+    ['Daten\u00ADschutz\u00ADerklärung', 'https://example.de/seite-8'],
+    ['Daten\u200Bschutz', 'https://example.de/seite-8'],
+    ['', 'https://example.de/daten%C2%ADschutz/'],
   ])('accepts a link labelled %j pointing to %s', (text, href) => {
     expect(run(privacyPolicyLink, snapshot({ links: [{ text, href }] }))).toEqual([]);
   });

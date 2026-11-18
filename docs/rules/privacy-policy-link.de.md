@@ -9,7 +9,8 @@ Warnt, wenn eine Seite nicht auf eine Datenschutzerklärung verlinkt.
 Jeder Link auf der Seite wird anhand von Text, `aria-label`, `title` und URL-Pfad mit gängigen
 Bezeichnungen für eine Datenschutzerklärung abgeglichen: Datenschutz, Datenschutzerklärung,
 Privacy, Data protection, Confidentialité, Privacidad, Protezione dei dati, Privacybeleid und
-Polityka prywatności.
+Polityka prywatności. Weiche Trennstriche und Zeichen ohne Breite
+(„Daten&amp;shy;schutz&amp;shy;erklärung“) werden ignoriert.
 
 Die Regel läuft auf jeder gecrawlten Seite.
 

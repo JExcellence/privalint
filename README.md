@@ -78,7 +78,8 @@ Trackers are recognised by host and cookie, and also when they hide:
 - **Proxied through the site's own domain:** GA4 `/g/collect`, server-side Google Tag Manager and
   the Meta Pixel endpoint are recognised by path and parameters on any host.
 - **Behind a first-party CNAME:** in native scans, privalint resolves the CNAME chain of the site's
-  own subdomains and reports `metrics.your-site.de` as the tracker it points to.
+  own subdomains and reports `metrics.your-site.de` as the tracker it points to, before consent
+  and after any consent choice (reject, saved settings, closed banner, GPC).
 - **Fingerprinting:** canvas, WebGL and audio reads are recorded with the script that made them.
 
 ### Legal notice and privacy policy
@@ -124,7 +125,8 @@ When privalint recognises one of them, the fix of each such finding links the ma
 | `html`     | One self-contained page to hand to a client or attach to a ticket, in light and dark. It loads nothing. |
 
 `-o` writes a file and picks the format by its extension (`.json`, `.md`, `.sarif`, `.html`); it
-can be repeated. Reports can be written in English, German or Hungarian (`--lang`).
+can be repeated. Reports can be written in English, German, Hungarian, French, Italian, Spanish or
+Polish (`--lang`).
 
 Every report says for each rule and page whether it was checked with no finding, found something,
 or could not be checked, and why. That keeps "nothing found" apart from "not looked at".
@@ -179,27 +181,27 @@ preview URL from your hosting provider's deployment event or action output as `u
 Inputs left empty are not passed to privalint, so `privalint.config.json` in your workspace (or
 `config`) decides, and the CLI default applies when neither sets a value.
 
-| Input                | Default              |                                                                                |
-| -------------------- | -------------------- | ------------------------------------------------------------------------------ |
-| `url`                |                      | Page to scan. Required.                                                        |
-| `config`             |                      | JSON config file. Empty reads `./privalint.config.json` if present.            |
-| `max-pages`          | config, else `1`     | How many pages of the same site to crawl.                                      |
-| `concurrency`        | config, else `1`     | Pages loaded at the same time; same report as with 1.                          |
-| `fail-on`            | `error`              | `error`, `warning` or `never`.                                                 |
-| `fail-on-incomplete` | config, else off     | `true` or `false`: fail separately for incomplete observations.                |
-| `baseline`           |                      | Earlier JSON report; only findings it lacks fail the run.                      |
-| `check-settings`     | config, else off     | `true` also tests the banner's settings layer.                                 |
-| `check-close`        | config, else off     | `true` also closes the banner with its close button and checks what loads.     |
-| `check-accept`       | config, else off     | `true` also accepts and checks the privacy policy for services loaded then.    |
-| `gpc`                | config, else off     | `true` also loads the start page with Global Privacy Control (`gpc-signal`).   |
-| `sitemap`            | config, else off     | `true` chooses pages from `sitemap.xml`, pages with forms first.               |
-| `device`             | config, else desktop | Playwright device to emulate, such as `iPhone 15`, to check the mobile banner. |
-| `disable`            |                      | Comma-separated rule ids to skip.                                              |
-| `lang`               | config, else `en`    | Language of the report: `en`, `de` or `hu`.                                    |
-| `region`             | config, else `de`    | Whose law to cite: `de`, `at`, `ch`, `hu`, `eu`.                               |
-| `sarif-file`         | `privalint.sarif`    | Where to write SARIF. Empty to skip.                                           |
-| `job-summary`        | `true`               | Add the Markdown report to the job summary.                                    |
-| `pr-comment`         | `false`              | Create or update a same-repository PR report comment.                          |
+| Input                | Default              |                                                                                      |
+| -------------------- | -------------------- | ------------------------------------------------------------------------------------ |
+| `url`                |                      | Page to scan. Required.                                                              |
+| `config`             |                      | JSON config file. Empty reads `./privalint.config.json` if present.                  |
+| `max-pages`          | config, else `1`     | How many pages of the same site to crawl.                                            |
+| `concurrency`        | config, else `1`     | Pages loaded at the same time; same report as with 1.                                |
+| `fail-on`            | `error`              | `error`, `warning` or `never`.                                                       |
+| `fail-on-incomplete` | config, else off     | `true` or `false`: fail separately for incomplete observations.                      |
+| `baseline`           |                      | Earlier JSON report; only findings it lacks fail the run.                            |
+| `check-settings`     | config, else off     | `true` also tests the banner's settings layer.                                       |
+| `check-close`        | config, else off     | `true` also closes the banner with its close button and checks what loads.           |
+| `check-accept`       | config, else off     | `true` also accepts and checks the privacy policy for services loaded then.          |
+| `gpc`                | config, else off     | `true` also loads the start page with Global Privacy Control (`gpc-signal`).         |
+| `sitemap`            | config, else off     | `true` chooses pages from `sitemap.xml`, pages with forms first.                     |
+| `device`             | config, else desktop | Playwright device to emulate, such as `iPhone 15`, to check the mobile banner.       |
+| `disable`            |                      | Comma-separated rule ids to skip.                                                    |
+| `lang`               | config, else `en`    | Language of the report: `en`, `de`, `hu`, `fr`, `it`, `es` or `pl`.                  |
+| `region`             | config, else `de`    | Whose law to cite: `de`, `at`, `ch`, `hu`, `fr`, `it`, `es`, `nl`, `pl`, `uk`, `eu`. |
+| `sarif-file`         | `privalint.sarif`    | Where to write SARIF. Empty to skip.                                                 |
+| `job-summary`        | `true`               | Add the Markdown report to the job summary.                                          |
+| `pr-comment`         | `false`              | Create or update a same-repository PR report comment.                                |
 
 Outputs: `exit-code`, and `sarif-file` when a report was written.
 
@@ -216,6 +218,7 @@ On self-hosted runners without it, add `actions/setup-node` before this step.
 
 ```
 privalint <url> [options]
+privalint mcp             Run as an MCP server over stdio (tools: scan_site, list_rules)
 
   -p, --max-pages <n>     Crawl up to n pages of the same site (default 1)
       --concurrency <n>   Load up to n pages at the same time (default 1).
@@ -237,8 +240,8 @@ privalint <url> [options]
       --settle <ms>       Wait this long after load for late tags (default 2000)
       --timeout <ms>      Navigation timeout per page (default 30000)
       --locale <locale>   Browser locale (default de-DE)
-      --lang <lang>       Language of the report: en | de | hu (default en)
-      --region <region>   Whose law to cite: de | at | ch | hu | eu (default de)
+      --lang <lang>       Language of the report: en | de | hu | fr | it | es | pl (default en)
+      --region <region>   Whose law to cite: de | at | ch | hu | fr | it | es | nl | pl | uk | eu (default de)
       --skip-consent      Don't click "reject" on the consent banner
       --consent           Enable consent checking even if the JSON config disables it
       --check-settings    Also open the banner's settings, switch everything off and
@@ -270,35 +273,94 @@ Exit codes: `0` nothing at or above `--fail-on`, `1` findings, `2` invalid argum
 scan, `3` incomplete coverage with `--fail-on-incomplete` (findings exit `1` takes precedence;
 rules or consent checks you switched off on purpose don't count).
 
-The first run needs a browser. If Playwright hasn't installed one yet:
+The first run needs a browser. In a project that has privalint installed:
 
 ```bash
 npx playwright install chromium
 ```
+
+With `npx privalint`, a missing browser stops the scan with the command that installs the build
+privalint's Playwright needs: `npx -y playwright@<version> install chromium`.
 
 ## Countries and languages
 
 `--region` selects the references and severity profile used by the tool. It does not determine
 which law applies to a website, and findings are not legal determinations:
 
-| Region         | Cookies and tracking                 | Imprint                               | Changes                                                     |
-| -------------- | ------------------------------------ | ------------------------------------- | ----------------------------------------------------------- |
-| `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                               | none                                                        |
-| `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                 | none                                                        |
-| `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce) | trackers, embeds, fonts and `impressum-link` drop one level |
-| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                          | none                                                        |
-| `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC           | none                                                        |
+| Region         | Cookies and tracking                 | Imprint                                      | Changes                                                                                                                                                           |
+| -------------- | ------------------------------------ | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `de` (default) | Opt-in, § 25 TDDDG                   | § 5 DDG                                      | none                                                                                                                                                              |
+| `at`           | Opt-in, § 165 Abs. 3 TKG 2021        | § 5 ECG, § 25 MedienG                        | none                                                                                                                                                              |
+| `ch`           | Opt-out, Art. 45c FMG                | Art. 3 Abs. 1 lit. s UWG (e-commerce)        | trackers, embeds, fonts and `impressum-link` drop one level                                                                                                       |
+| `hu`           | Opt-in, Eht. 155. § (4)              | Ekertv. 4. §                                 | none                                                                                                                                                              |
+| `fr`           | Opt-in, Art. 82 loi n° 78-17         | Art. 1-1 LCEN                                | analytics before consent or after closing drops to warning (CNIL audience measurement exemption); legal notice checked for host and publication director          |
+| `it`           | Opt-in, Art. 122 Codice privacy      | Art. 7 D.lgs. 70/2003                        | analytics drops to warning (Garante); an "X" that closes the banner counts as refusal; `impressum-link` drops one level; legal notice checked for the partita IVA |
+| `es`           | Opt-in, Art. 22.2 LSSI               | Art. 10 LSSI                                 | `withdrawal-button` drops one level (not yet transposed); legal notice checked for the NIF                                                                        |
+| `nl`           | Opt-in, Art. 11.7a Tw                | Art. 3:15d BW                                | analytics drops to warning (Art. 11.7a lid 3 Tw); `impressum-link` drops one level                                                                                |
+| `pl`           | Opt-in, art. 399 PKE                 | art. 5 UŚUDE                                 | `impressum-link` and `withdrawal-button` drop one level; legal notice of a sp. z o.o. or S.A. checked for KRS, NIP and share capital                              |
+| `uk`           | Opt-in, PECR reg. 6                  | Electronic Commerce Regulations 2002, reg. 6 | analytics before consent or after closing drops to warning (PECR Sch. A1 para. 5); `impressum-link` and the withdrawal button drop one level                      |
+| `eu`           | Opt-in, Art. 5(3) ePrivacy Directive | Art. 5 Directive 2000/31/EC                  | none                                                                                                                                                              |
 
 Every finding lists its legal basis for the chosen country. Trackers that run after an explicit
 "reject" stay an error everywhere, Switzerland included (Art. 30 Abs. 2 lit. b DSG). If a Swiss
-site also targets visitors in the EU, scan it with `--region eu` as well.
+site also targets visitors in the EU, scan it with `--region eu` as well. The analytics exemptions in
+France, Italy, the Netherlands and the UK depend on how the tool is set up, which privalint cannot see, so those findings
+stay warnings with the conditions in the fix. Sources for each country: [regions](docs/regions.md).
 
-`--lang de` writes findings, fixes and the report in German, `--lang hu` in Hungarian:
+`--lang de` writes findings, fixes and the report in German, `--lang hu` in Hungarian, `--lang fr`
+in French, `--lang it` in Italian, `--lang es` in Spanish and `--lang pl` in Polish:
 
 ```bash
 npx privalint https://ihre-seite.ch --region ch --lang de
 npx privalint https://pelda.hu --region hu --lang hu
+npx privalint https://exemple.fr --region fr --lang fr
+npx privalint https://esempio.it --region it --lang it
+npx privalint https://ejemplo.es --region es --lang es
+npx privalint https://przyklad.pl --region pl --lang pl
 ```
+
+The French, Italian, Spanish and Polish texts have not yet been reviewed by native speakers;
+corrections are welcome ([#159](https://github.com/jexcellence/privalint/issues/159) to
+[#162](https://github.com/jexcellence/privalint/issues/162)). Fix guides linked from findings are in English or German.
+
+## Use it with Claude and other AI assistants
+
+privalint runs as an MCP server, so an AI assistant can scan a site, explain the findings and fix
+them in your code.
+
+**Claude Code plugin.** The plugin adds the scan tools and a `privacy-scan` skill that reports the
+findings and finds their cause in your repository:
+
+```text
+/plugin install privalint --marketplace JExcellence/privalint
+```
+
+This needs Claude Code 2.1.275 or later. On older versions, run
+`/plugin marketplace add JExcellence/privalint` and then `/plugin install privalint@privalint`.
+Then ask "Check https://your-site.de for GDPR problems" or run
+`/privalint:privacy-scan https://your-site.de`.
+
+**Any MCP client**, such as Claude Desktop, Cursor or VS Code, with a stdio server:
+
+```json
+{
+  "mcpServers": {
+    "privalint": { "command": "npx", "args": ["-y", "privalint@latest", "mcp"] }
+  }
+}
+```
+
+On Windows, use `"command": "cmd"` with `"args": ["/c", "npx", "-y", "privalint@latest", "mcp"]`.
+
+The server has two tools. `scan_site` takes `url` (without a scheme it gets `https://`; schemes
+other than http and https are refused) and optionally `maxPages` (up to 20), `lang`,
+`region`, `checkSettings`, `checkClose`, `checkAccept`, `gpc`, `sitemap`, `device` and
+`report` (`markdown` or `json`). `list_rules` lists the checks with their legal references.
+A scan loads up to three pages at a time, takes 10 to 60 seconds per page and sends progress
+notifications while it runs. The server scans any address the assistant passes, including
+`localhost` and addresses in your own network, so it can check a dev server; approve calls you
+did not expect as you would any browser the assistant controls. Chromium
+has to be installed once; if it is missing, the scan fails with the command that installs it.
 
 ## Use it from code
 
@@ -383,8 +445,8 @@ Going further:
 - Many consent managers decide by IP address whether to show a banner. GitHub-hosted runners have
   US addresses, so the result can differ from what an EU visitor sees. Use a runner or proxy in
   the EU for results you want to rely on.
-- PDFs that are only scanned images have no text to read, and a privacy policy that is itself a
-  PDF is not read.
+- PDFs that are only scanned images have no text to read; such a legal notice or privacy policy
+  counts as not loaded, so its rules are reported as not evaluable.
 - Chromium runs without its sandbox by default, like Playwright's own default, because the sandbox
   often can't start in containers. Pass `--sandbox` when you scan sites you don't trust on a
   machine that holds secrets. The sandbox needs unprivileged user namespaces, which Docker's
@@ -392,10 +454,13 @@ Going further:
 
 ## Roadmap
 
-- Region profiles for France, Italy, Spain, Poland, the Netherlands and the UK
-  ([#134](https://github.com/jexcellence/privalint/issues/134))
-- Report text in French, Italian, Spanish and Polish
-  ([#135](https://github.com/jexcellence/privalint/issues/135))
+- Native-speaker review of the French, Italian, Spanish and Polish report text
+  ([#159](https://github.com/jexcellence/privalint/issues/159),
+  [#160](https://github.com/jexcellence/privalint/issues/160),
+  [#161](https://github.com/jexcellence/privalint/issues/161),
+  [#162](https://github.com/jexcellence/privalint/issues/162))
+- Legal review of the region citations per country
+  ([#163](https://github.com/jexcellence/privalint/issues/163))
 
 ## Contributing
 

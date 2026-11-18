@@ -1,6 +1,6 @@
 import { resolveCname } from 'node:dns/promises';
 import { findTrackerByUrl, type TrackerCategory } from './data/trackers.js';
-import type { CnameCloak, PageSnapshot } from './types.js';
+import type { CnameCloak, PageSnapshot, RecordedRequest } from './types.js';
 import { hostMatches, isFirstParty, safeHost } from './url.js';
 
 /** Resolves the CNAME records of a host; empty when it has none. */
@@ -65,18 +65,36 @@ async function chainOf(host: string, resolve: CnameResolver): Promise<string[]> 
 }
 
 /**
- * First-party subdomains (other than the scanned host) that requests went to, resolved to their
- * CNAME chain. A chain that reaches a tracker domain is a cloaked tracker: its requests and
- * cookies look first-party. Each affected page gets the matches in `cnameCloaks`.
+ * The requests of a page that tracker rules check: the first load and the loads after rejecting,
+ * saving switched-off settings, closing the banner and sending GPC. Loads after accepting are left
+ * out: trackers may run then.
+ */
+function checkedRequests(page: PageSnapshot): RecordedRequest[] {
+  const consent = page.consent;
+  return [
+    page.requests,
+    consent?.afterReject?.requests,
+    consent?.settings?.afterSave?.requests,
+    consent?.close?.afterClose?.requests,
+    consent?.gpc?.afterGpc?.requests,
+  ].flatMap((requests) => requests ?? []);
+}
+
+/**
+ * First-party subdomains (other than the scanned host) that requests went to, before or after a
+ * consent choice, resolved to their CNAME chain. A chain that reaches a tracker domain is a
+ * cloaked tracker: its requests and cookies look first-party. Each affected page gets the matches
+ * in `cnameCloaks`.
  */
 export async function findCnameCloaks(
   pages: readonly PageSnapshot[],
   siteUrl: URL,
   resolve: CnameResolver = systemResolver,
+  signal?: AbortSignal,
 ): Promise<void> {
   const hosts = new Set<string>();
   for (const page of pages) {
-    for (const request of page.requests) {
+    for (const request of checkedRequests(page)) {
       const host = safeHost(request.url);
       if (host === undefined || host === siteUrl.hostname) continue;
       if (isFirstParty(request.url, siteUrl) && hosts.size < MAX_HOSTS) hosts.add(host);
@@ -84,6 +102,8 @@ export async function findCnameCloaks(
   }
   const cloaks = new Map<string, CnameCloak>();
   for (const host of hosts) {
+    // A cancelled scan stops here; the caller throws the abort.
+    if (signal?.aborted) return;
     const chain = await chainOf(host, resolve);
     const hit = chain.map((hop) => trackerFor(hop)).find((tracker) => tracker !== undefined);
     if (hit !== undefined) {
@@ -92,8 +112,9 @@ export async function findCnameCloaks(
   }
   if (cloaks.size === 0) return;
   for (const page of pages) {
+    const requests = checkedRequests(page);
     const used = [...cloaks.values()].filter((cloak) =>
-      page.requests.some((request) => safeHost(request.url) === cloak.host),
+      requests.some((request) => safeHost(request.url) === cloak.host),
     );
     if (used.length > 0) page.cnameCloaks = used;
   }

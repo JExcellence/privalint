@@ -16,12 +16,13 @@ CookieFirst, Osano, Termly and Sourcepoint have additional frame-aware selectors
 Banner is named through its vendor marker plus the existing label heuristic. See the
 [CMP support and verification notes](../consent-managers.md) ([Deutsch](../consent-managers.de.md)).
 
-| Situation                                                        | Severity |
-| ---------------------------------------------------------------- | -------- |
-| Accept and reject buttons on the first layer                     | passes   |
-| Accept on the first layer, reject only in settings or not at all | warning  |
-| Accept or a subscription ("pay or OK"), no reject                | info     |
-| No banner found                                                  | nothing  |
+| Situation                                                                                                                                              | Severity |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| Accept and reject buttons on the first layer                                                                                                           | passes   |
+| Accept on the first layer, reject only in settings or not at all                                                                                       | warning  |
+| Accept or a subscription ("pay or OK"), no reject                                                                                                      | info     |
+| `--region it`: no reject, but `--check-close` closed the banner with an "X", the page after closing was fully observed and `trackers-after-close` runs | passes   |
+| No banner found                                                                                                                                        | nothing  |
 
 A banner counts as pay-or-OK when a button or link inside the banner mentions a subscription
 ("Abo", "abonnieren", "subscribe", "werbefrei", …). Links in the site's own navigation don't count.

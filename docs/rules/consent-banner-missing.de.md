@@ -11,7 +11,8 @@ Auf der Startseite sucht privalint ein Cookie-Banner, über die Selektoren verbr
 Consent-Manager und über Beschriftungen, und wartet bis zu einer weiteren Settle-Zeit auf ein
 Banner, das spät erscheint (siehe [Erkennung von Consent-Managern](../consent-managers.de.md)).
 Erscheint keines und lief mindestens ein Dienst von der Tracker-Liste ohne jede Interaktion, meldet
-diese Regel das einmal und nennt die Dienste.
+diese Regel das einmal und nennt die Dienste. Ein Tracker hinter einem eigenen CNAME zählt auch;
+siehe [Per CNAME getarnte Tracker](pre-consent-trackers.de.md#per-cname-getarnte-tracker).
 
 | Situation                                                       | Schweregrad |
 | --------------------------------------------------------------- | ----------- |
@@ -19,6 +20,13 @@ diese Regel das einmal und nennt die Dienste.
 | Kein Banner, nur ein Tag-Manager lädt                           | nichts      |
 | Ein Banner wurde gefunden, oder die Prüfung schlug fehl/war aus | nichts      |
 | `--region ch` (Opt-out-Modell)                                  | `info`      |
+
+Wurde das Skript eines bekannten Consent-Managers geladen (Usercentrics, Cookiebot, OneTrust,
+Didomi, consentmanager, CookieYes, iubenda, Osano, Termly, CookieFirst, Axeptio, Sourcepoint oder
+Cookie-Script), erschien aber kein Banner, nennt der Befund ihn und sagt, dass er sein Banner
+womöglich vor automatisierten Browsern verbirgt. Usercentrics tat das am 18.11.2026 auf
+kemmler.de. Die Lösung beginnt dann mit einer Prüfung im normalen Browser. Auch die Consent-Zeile
+des Berichts und `consent.cmp` nennen ihn.
 
 Jeder Tracker ist unter [`pre-consent-trackers`](pre-consent-trackers.de.md) bereits ein Fehler.
 Diese Regel ist eine Warnung, damit dieselbe Ursache nicht doppelt zählt; sie sagt, warum die

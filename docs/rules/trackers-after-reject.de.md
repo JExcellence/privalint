@@ -9,12 +9,19 @@ Meldet Tracker, die nach einem Klick auf „Ablehnen“ weiterhin laden oder neu
 Auf der Startseite sucht privalint das Cookie-Banner, klickt auf dessen Ablehnen-Button, wartet,
 bis das Netzwerk zur Ruhe kommt, lädt die Seite neu und wartet erneut. Jede Anfrage und jedes
 Cookie, das seit dem Klick neu hinzugekommen ist, wird mit derselben Tracker-Liste abgeglichen wie
-bei [`pre-consent-trackers`](pre-consent-trackers.de.md).
+bei [`pre-consent-trackers`](pre-consent-trackers.de.md). Eine eigene Subdomain, die per CNAME auf einen Tracker zeigt, zählt als dieser Tracker; siehe
+[Per CNAME getarnte Tracker](pre-consent-trackers.de.md#per-cname-getarnte-tracker).
 
 | Kategorie                                    | Schweregrad |
 | -------------------------------------------- | ----------- |
 | analytics, advertising, session-replay, …    | `error`     |
 | tag-manager (z. B. ein GTM-Container allein) | `warning`   |
+
+Google-Tags, die weiter Google-Consent-Mode-Pings senden, werden als solche benannt. Ein Tag, das
+Google nach dem Klick eine Einwilligung meldet, ist ein Fehler, auch bei einem Tag-Manager; siehe
+[Google Consent Mode](pre-consent-trackers.de.md#google-consent-mode). Wurde das Fenster nach dem
+Klick nicht vollständig beobachtet, einschließlich des Web-Storage-Lesens, ist die Regel nicht
+prüfbar (`incomplete-observation`) statt sauber.
 
 Das Neuladen ist entscheidend: Viele fehlerhafte Einrichtungen respektieren den Klick auf der
 aktuellen Seite, laden beim nächsten Seitenaufruf aber wieder alles. Eine typische Ursache ist

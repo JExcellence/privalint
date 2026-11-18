@@ -20,8 +20,9 @@ bleibt falsch, wenn das Einwilligungsproblem behoben ist.
 ## Warum
 
 Personenbezogene Daten dürfen nur so lange gespeichert werden, wie der Zweck es erfordert
-(Speicherbegrenzung). Die französische Aufsichtsbehörde CNIL empfiehlt für Tracking-Cookies
-höchstens 13 Monate; der Wert dient vielfach als Maßstab. Google Analytics setzt `_ga`
+(Speicherbegrenzung). Die französische Aufsichtsbehörde CNIL setzt 13 Monate für die Cookies
+einwilligungsfreier Reichweitenmessung (Empfehlung, § 5); der Wert dient vielfach als Maßstab für
+Tracking-Cookies. Google Analytics setzt `_ga`
 standardmäßig für zwei Jahre.
 
 - Art. 5 Abs. 1 lit. e DSGVO

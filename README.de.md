@@ -28,27 +28,46 @@ npx privalint https://ihre-seite.de --lang de
 Mit `--region` wählen Sie das Referenz- und Einstufungsprofil des Tools. Das Profil bestimmt
 nicht, welches Recht für eine Website anwendbar ist. Befunde sind keine rechtliche Beurteilung.
 
-| Region          | Cookies und Tracking                      | Impressum                                       | Besonderheit                                                     |
-| --------------- | ----------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
-| `de` (Standard) | Opt-in, § 25 TDDDG                        | § 5 DDG                                         | keine                                                            |
-| `at`            | Opt-in, § 165 Abs. 3 TKG 2021             | § 5 ECG, § 25 MedienG                           | keine                                                            |
-| `ch`            | Opt-out, Art. 45c FMG                     | Art. 3 Abs. 1 lit. s UWG (bei Online-Angeboten) | Tracker, Einbindungen, Schriften und Impressum eine Stufe milder |
-| `hu`            | Opt-in, Eht. 155. § (4)                   | Ekertv. 4. §                                    | keine                                                            |
-| `eu`            | Opt-in, Art. 5 Abs. 3 ePrivacy-Richtlinie | Art. 5 E-Commerce-Richtlinie                    | keine                                                            |
+| Region          | Cookies und Tracking                      | Impressum                                       | Besonderheit                                                                                                                                                           |
+| --------------- | ----------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `de` (Standard) | Opt-in, § 25 TDDDG                        | § 5 DDG                                         | keine                                                                                                                                                                  |
+| `at`            | Opt-in, § 165 Abs. 3 TKG 2021             | § 5 ECG, § 25 MedienG                           | keine                                                                                                                                                                  |
+| `ch`            | Opt-out, Art. 45c FMG                     | Art. 3 Abs. 1 lit. s UWG (bei Online-Angeboten) | Tracker, Einbindungen, Schriften und Impressum eine Stufe milder                                                                                                       |
+| `hu`            | Opt-in, Eht. 155. § (4)                   | Ekertv. 4. §                                    | keine                                                                                                                                                                  |
+| `fr`            | Opt-in, Art. 82 loi n° 78-17              | Art. 1-1 LCEN                                   | Analyse vor der Einwilligung oder nach dem Schließen nur eine Warnung (CNIL-Ausnahme für Reichweitenmessung); Impressum wird auf Hoster und Verantwortlichen geprüft   |
+| `it`            | Opt-in, Art. 122 Codice privacy           | Art. 7 D.lgs. 70/2003                           | Analyse nur eine Warnung (Garante); ein „X“, das das Banner schließt, gilt als Ablehnung; Impressum-Link eine Stufe milder; Impressum wird auf die partita IVA geprüft |
+| `es`            | Opt-in, Art. 22.2 LSSI                    | Art. 10 LSSI                                    | Widerrufsbutton eine Stufe milder (noch nicht umgesetzt); Impressum wird auf die NIF geprüft                                                                           |
+| `nl`            | Opt-in, Art. 11.7a Tw                     | Art. 3:15d BW                                   | Analyse nur eine Warnung (Art. 11.7a lid 3 Tw); Impressum-Link eine Stufe milder                                                                                       |
+| `pl`            | Opt-in, art. 399 PKE                      | art. 5 UŚUDE                                    | Impressum-Link und Widerrufsbutton eine Stufe milder; Impressum einer sp. z o.o. oder S.A. wird auf KRS, NIP und Stammkapital geprüft                                  |
+| `uk`            | Opt-in, PECR reg. 6                       | Electronic Commerce Regulations 2002, reg. 6    | Analyse vor der Einwilligung oder nach dem Schließen nur eine Warnung (PECR Sch. A1 para. 5); Impressum-Link und Widerrufsbutton eine Stufe milder                     |
+| `eu`            | Opt-in, Art. 5 Abs. 3 ePrivacy-Richtlinie | Art. 5 E-Commerce-Richtlinie                    | keine                                                                                                                                                                  |
 
 Tracker, die nach einem ausdrücklichen „Ablehnen“ weiterlaufen, bleiben überall ein Fehler, auch in
 der Schweiz (Art. 30 Abs. 2 lit. b DSG). Richtet sich eine Schweizer Website auch an Besucher aus
-der EU, prüfen Sie sie zusätzlich mit `--region eu`.
+der EU, prüfen Sie sie zusätzlich mit `--region eu`. Ob Analyse-Tools in Frankreich, Italien, den Niederlanden und im
+Vereinigten Königreich ohne Einwilligung laufen dürfen, hängt von ihrer Einrichtung ab, die privalint
+nicht sieht; diese Befunde bleiben Warnungen mit den Bedingungen im Lösungsvorschlag. Quellen je
+Land: [Regionen](docs/regions.de.md).
 
 ```bash
 npx privalint https://ihre-seite.at --region at --lang de --max-pages 20
 ```
 
-Für ungarische Websites schreibt `--lang hu` Befunde, Lösungen und Bericht auf Ungarisch:
+Für ungarische Websites schreibt `--lang hu` Befunde, Lösungen und Bericht auf Ungarisch,
+`--lang fr` auf Französisch, `--lang it` auf Italienisch, `--lang es` auf Spanisch und `--lang pl`
+auf Polnisch:
 
 ```bash
 npx privalint https://pelda.hu --region hu --lang hu
+npx privalint https://exemple.fr --region fr --lang fr
+npx privalint https://esempio.it --region it --lang it
+npx privalint https://ejemplo.es --region es --lang es
+npx privalint https://przyklad.pl --region pl --lang pl
 ```
+
+Die französischen, italienischen, spanischen und polnischen Texte sind noch nicht von
+Muttersprachlern geprüft; Korrekturen sind willkommen. Die verlinkten Anleitungen gibt es auf
+Englisch und Deutsch.
 
 ## Was geprüft wird
 
@@ -97,7 +116,9 @@ Tracker erkennt privalint an Host und Cookie, und auch, wenn sie sich verstecken
 - **Über die eigene Domain geleitet:** GA4 `/g/collect`, serverseitiger Google Tag Manager und der
   Meta-Pixel-Endpunkt werden an Pfad und Parametern erkannt, auf jedem Host.
 - **Hinter einem eigenen CNAME:** In nativen Scans löst privalint die CNAME-Kette der eigenen
-  Subdomains auf und meldet `metrics.ihre-seite.de` als den Tracker, auf den sie zeigt.
+  Subdomains auf und meldet `metrics.ihre-seite.de` als den Tracker, auf den sie zeigt, vor der
+  Einwilligung und nach jeder Entscheidung (Ablehnen, gespeicherte Einstellungen, geschlossenes
+  Banner, GPC).
 - **Fingerprinting:** Canvas-, WebGL- und Audio-Abfragen werden mit dem aufrufenden Skript
   festgehalten.
 
@@ -200,6 +221,44 @@ Weiterführend:
   Netzwerk-Adapter, Limits und Abbruch, mit [typgeprüftem Beispiel](examples/controlled-scanner.ts)
 - [Erkennung von Consent-Managern](docs/consent-managers.de.md)
 
+## Mit Claude und anderen KI-Assistenten
+
+privalint läuft auch als MCP-Server. Ein KI-Assistent kann damit eine Seite prüfen, die Befunde
+erklären und sie im eigenen Code beheben.
+
+**Claude-Code-Plugin.** Das Plugin bringt die Prüfwerkzeuge und den Skill `privacy-scan` mit, der
+die Befunde berichtet und ihre Ursache im Repository sucht:
+
+```text
+/plugin install privalint --marketplace JExcellence/privalint
+```
+
+Das braucht Claude Code 2.1.275 oder neuer. In älteren Versionen erst
+`/plugin marketplace add JExcellence/privalint` und dann `/plugin install privalint@privalint`.
+Danach zum Beispiel fragen: „Prüfe https://ihre-seite.de auf DSGVO-Probleme“, oder
+`/privalint:privacy-scan https://ihre-seite.de` ausführen.
+
+**Andere MCP-Clients** wie Claude Desktop, Cursor oder VS Code bekommen einen stdio-Server:
+
+```json
+{
+  "mcpServers": {
+    "privalint": { "command": "npx", "args": ["-y", "privalint@latest", "mcp"] }
+  }
+}
+```
+
+Unter Windows `"command": "cmd"` mit `"args": ["/c", "npx", "-y", "privalint@latest", "mcp"]`.
+Der Server hat zwei Werkzeuge: `scan_site` nimmt `url` (ohne Schema mit `https://`; andere Schemata als http und https werden
+abgelehnt) und optional `maxPages` (bis 20), `lang`,
+`region`, `checkSettings`, `checkClose`, `checkAccept`, `gpc`, `sitemap`, `device` und `report`
+(`markdown` oder `json`). `list_rules` listet die Prüfungen mit ihren Rechtsgrundlagen.
+Chromium muss einmal installiert werden; fehlt es, nennt die Prüfung den passenden Befehl. Eine Prüfung
+lädt bis zu drei Seiten gleichzeitig und dauert 10 bis 60 Sekunden pro Seite. Der Server prüft
+jede Adresse, die der Assistent übergibt, auch `localhost` und Adressen im eigenen Netz, damit er
+einen Entwicklungsserver prüfen kann; unerwartete Aufrufe also wie bei jedem Browser bestätigen,
+den der Assistent steuert.
+
 ## Grenzen
 
 - Manche Seiten zeigen ihr Cookie-Banner Headless-Browsern nicht. Dann meldet privalint „kein
@@ -212,8 +271,8 @@ Weiterführend:
   [Open Cookie Database](https://github.com/jkwakman/Open-Cookie-Database) abgeglichen
   (Apache-2.0, siehe [NOTICE](NOTICE)), nur über den Cookie-Namen.
 - Serverseitiges Tracking ist im Browser nicht sichtbar.
-- PDFs, die nur aus Bildern bestehen, enthalten keinen lesbaren Text, und eine
-  Datenschutzerklärung, die selbst ein PDF ist, wird nicht gelesen.
+- PDFs, die nur aus Bildern bestehen, enthalten keinen lesbaren Text; ein solches Impressum oder
+  eine solche Datenschutzerklärung gilt als nicht geladen, die Regeln dazu als nicht auswertbar.
 - Chromium läuft standardmäßig ohne seine Sandbox, weil sie in vielen Containern nicht startet.
   Wer fremde Seiten auf einem Rechner mit Zugangsdaten prüft, sollte `--sandbox` setzen.
   Die Sandbox braucht unprivilegierte User-Namespaces. In Docker-Containern blockiert sie das

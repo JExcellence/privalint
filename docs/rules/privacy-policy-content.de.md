@@ -10,7 +10,9 @@ nennt und keinen übrig gebliebenen Vorlagentext enthält.
 privalint liest die Datenschutzerklärung wie bei
 [`privacy-policy-vendors`](privacy-policy-vendors.de.md): die Seite, die die Startseite als
 Datenschutzerklärung verlinkt, auf derselben Website, dazu eine dort verlinkte Cookie-Richtlinie.
-Beide Regeln teilen sich diesen einen Ladevorgang.
+Beide Regeln teilen sich diesen einen Ladevorgang. Lässt sich diese Cookie-Richtlinie nicht lesen,
+ist ein fehlender Kontakt nur `info`, nennt den ungelesenen Link und macht die Regel partiell, weil
+die Angaben dort stehen können.
 
 | Angabe                       | Woran sie erkannt wird                                                                                                                                  | Befund                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
@@ -44,8 +46,8 @@ angeben.
 
 ## Grenzen
 
-- Nur die Datenschutzerklärung der Startseite wird gelesen, nicht eine als PDF oder auf einer
-  anderen Domain.
+- Nur die Datenschutzerklärung der Startseite wird gelesen, nicht eine auf einer anderen Domain.
+  Eine Erklärung als PDF auf derselben Website wird mit pdf.js gelesen.
 - Ein Kontakt-Link ohne `mailto:`-Ziel, etwa zu einem Kontaktformular, zählt nicht als
   E-Mail-Adresse.
 - Ob der genannte Verantwortliche der richtige ist, wird nicht geprüft.

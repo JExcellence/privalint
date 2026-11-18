@@ -108,6 +108,10 @@ export const privacyPolicyVendors: Rule = {
         en: `not read: ${url}`,
         de: `nicht gelesen: ${url}`,
         hu: `nem olvasható: ${url}`,
+        fr: `non lu : ${url}`,
+        it: `non letto: ${url}`,
+        es: `no leída: ${url}`,
+        pl: `nie przeczytano: ${url}`,
       }),
     );
     return [...seen]
@@ -121,6 +125,10 @@ export const privacyPolicyVendors: Rule = {
             en: `The privacy policy does not mention ${vendor}, which the start page uses.`,
             de: `Die Datenschutzerklärung nennt ${vendor} nicht, obwohl die Startseite es nutzt.`,
             hu: `Az adatkezelési tájékoztató nem említi ${huArticle(vendor)} ${vendor} szolgáltatást, pedig a kezdőlap használja.`,
+            fr: `La politique de confidentialité ne mentionne pas ${vendor}, que la page d'accueil utilise.`,
+            it: `L'informativa sulla privacy non menziona ${vendor}, che la pagina iniziale utilizza.`,
+            es: `La política de privacidad no menciona ${vendor}, que la página de inicio utiliza.`,
+            pl: `Polityka prywatności nie wymienia usługi ${vendor}, której używa strona startowa.`,
           }),
           pageUrl: page.finalUrl,
           evidence: [
@@ -128,6 +136,10 @@ export const privacyPolicyVendors: Rule = {
               en: `privacy policy: ${policy.url}`,
               de: `Datenschutzerklärung: ${policy.url}`,
               hu: `adatkezelési tájékoztató: ${policy.url}`,
+              fr: `politique de confidentialité : ${policy.url}`,
+              it: `informativa sulla privacy: ${policy.url}`,
+              es: `política de privacidad: ${policy.url}`,
+              pl: `polityka prywatności: ${policy.url}`,
             }),
             evidence,
             ...unread,
@@ -136,6 +148,10 @@ export const privacyPolicyVendors: Rule = {
             en: `Name ${vendor} in the privacy policy, with the purpose, the legal basis and, where it applies, the transfer outside the EU. If the site no longer needs it, remove it instead.`,
             de: `${vendor} in der Datenschutzerklärung nennen, mit Zweck, Rechtsgrundlage und, falls zutreffend, der Übermittlung außerhalb der EU. Wird es nicht mehr gebraucht, stattdessen entfernen.`,
             hu: `Nevezze meg ${huArticle(vendor)} ${vendor} szolgáltatást az adatkezelési tájékoztatóban, a céllal, a jogalappal és adott esetben az EU-n kívüli továbbítással együtt. Ha az oldalnak már nincs rá szüksége, inkább távolítsa el.`,
+            fr: `Nommez ${vendor} dans la politique de confidentialité, avec la finalité, la base légale et, le cas échéant, le transfert hors de l'UE. Si le site n'en a plus besoin, supprimez-le plutôt.`,
+            it: `Indica ${vendor} nell'informativa sulla privacy, con la finalità, la base giuridica e, se del caso, il trasferimento fuori dall'UE. Se il sito non ne ha più bisogno, rimuovilo.`,
+            es: `Menciona ${vendor} en la política de privacidad, con la finalidad, la base jurídica y, cuando proceda, la transferencia fuera de la UE. Si el sitio ya no lo necesita, elimínalo.`,
+            pl: `Wymień ${vendor} w polityce prywatności, podając cel, podstawę prawną oraz, jeśli dotyczy, przekazywanie danych poza UE. Jeśli witryna już tego nie potrzebuje, usuń to narzędzie.`,
           }),
         }),
       );

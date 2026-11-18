@@ -8,7 +8,8 @@ Warns when a page has no link to an Impressum (legal notice).
 
 Every link on the page is matched by its text, `aria-label`, `title` and URL against common names
 for a legal notice: Impressum, Imprint, Legal notice, Site notice, Anbieterkennzeichnung,
-Mentions légales, Aviso legal, Note legali, Colofon, Informacje prawne and Impresszum.
+Anbieterangaben, Mentions légales, Aviso legal, Note legali, Colofon, Bedrijfsgegevens, Informacje prawne,
+Dane firmy and Impresszum. Soft hyphens and zero-width characters in the text ("Im&amp;shy;pressum") are ignored.
 
 The rule runs on every crawled page, because the notice has to be reachable from all of them.
 
@@ -18,6 +19,7 @@ The rule runs on every crawled page, because the notice has to be reachable from
 | No such link, but "Rechtliche Hinweise", "Rechtliches", "Legal" or "Jogi tudnivalók" | info     |
 | No such link, but a link to the contact page                                         | info     |
 | None of these                                                                        | warning  |
+| None of these, with `--region ch`, `it`, `nl`, `pl` or `uk`                          | info     |
 
 A vague legal link is only noted: the page behind it may hold the provider information or just a
 disclaimer, and the label alone can't tell. Check it, or label the link "Impressum".

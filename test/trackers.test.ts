@@ -270,6 +270,10 @@ describe('vendors from install and CSP documentation (2026-11-06)', () => {
     ['https://r2.visualwebsiteoptimizer.com/events/t', 'VWO'],
     ['https://acdn.adnxs.com/dmp/up/pixie.js', 'Microsoft Xandr'],
     ['https://ib.adnxs.com/pixie?pi=abc&e=PageView&script=0', 'Microsoft Xandr'],
+    ['https://secure.adnxs.com/px?id=1234&t=2', 'Microsoft Xandr'],
+    ['https://ib.adnxs.com/seg?add=11837&t=1', 'Microsoft Xandr'],
+    ['https://www.redditstatic.com/ads/pixel.js', 'Reddit Pixel'],
+    ['https://ads.reddit.com/conversions/events', 'Reddit Pixel'],
     ['https://z-na.amazon-adsystem.com/widgets/onejs?MarketPlace=US', 'Amazon Associates'],
   ])('%s -> %s', (url, vendor) => {
     expect(findTrackerByUrl(url)?.vendor).toBe(vendor);
@@ -282,6 +286,8 @@ describe('vendors from install and CSP documentation (2026-11-06)', () => {
     'https://www.redditstatic.com/shreddit/en-US/app.js',
     'https://visualwebsiteoptimizer.com.example.net/lib/1.js',
     'https://acdn.adnxs.com/ast/ast.js',
+    'https://secure.adnxs.com/pxj?id=1',
+    'https://secure.adnxs.com/getuid?https%3A%2F%2Fexample.com',
   ])('leaves %s alone', (url) => {
     expect(findTrackerByUrl(url)).toBeUndefined();
   });
@@ -299,6 +305,9 @@ describe('proxied collection endpoints', () => {
     ['https://sgtm.example.de/gtm.js?id=GTM-ABCD12', 'Google Tag Manager'],
     ['https://sgtm.example.de/gtag/js?id=G-ABC123', 'Google Analytics'],
     ['https://example.de/fb/tr?id=123456789012&ev=PageView', 'Meta Pixel'],
+    // A tagging server with a custom loader renames the collect path.
+    ['https://data.example.de/x7k2?v=2&tid=G-ABC123&cid=123.456&en=page_view', 'Google Analytics'],
+    ['https://example.de/metrics/hit?v=2&tid=G-ABC123&_p=1700000000', 'Google Analytics'],
   ])('recognises %s as %s, marked as proxied', (url, vendor) => {
     expect(findTrackerByUrl(url)).toMatchObject({ vendor, proxied: true });
   });
@@ -308,6 +317,8 @@ describe('proxied collection endpoints', () => {
     'https://example.de/g/collect?v=2&tid=customer-42',
     'https://example.de/gtm.js',
     'https://example.de/tr?id=abc&ev=click',
+    'https://example.de/search?v=2&en=books',
+    'https://example.de/api?v=2&tid=G-ABC123',
   ])('leaves unrelated first-party paths alone: %s', (url) => {
     expect(findTrackerByUrl(url)).toBeUndefined();
   });

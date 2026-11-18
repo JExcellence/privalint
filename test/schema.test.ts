@@ -14,7 +14,7 @@ const readJson = async (path: string): Promise<unknown> =>
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 const schemas = new Map(
   await Promise.all(
-    ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0'].map(async (version) => {
+    ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0'].map(async (version) => {
       const report = ajv.compile(
         (await readJson(`../schemas/report-${version}.schema.json`)) as object,
       );
@@ -99,6 +99,20 @@ describe('standalone report contracts', () => {
     expect(schemas.get('1.3.0')?.report({ ...broken, schemaVersion: '1.3.0' })).toBe(false);
   });
 
+  it('accepts the regions added in 1.6.0 only from that schema on', async () => {
+    const value = (await fixture('complete')) as ScanResult;
+    const withRegion = (version: string, region: string) => ({
+      ...value,
+      schemaVersion: version,
+      region,
+      ...(value.options === undefined ? {} : { options: { ...value.options, region } }),
+    });
+    for (const code of ['fr', 'it', 'es', 'nl', 'pl', 'uk']) {
+      expect(schemas.get('1.6.0')?.report(withRegion('1.6.0', code))).toBe(true);
+      expect(schemas.get('1.5.0')?.report(withRegion('1.5.0', code))).toBe(false);
+    }
+  });
+
   it('accepts Hungarian report text only from schema 1.5.0 on', async () => {
     const value = (await fixture('complete')) as ScanResult;
     const hungarian = (version: string) => ({
@@ -112,6 +126,25 @@ describe('standalone report contracts', () => {
     expect(schemas.get('1.5.0')?.report(hungarian('1.5.0'))).toBe(true);
     expect(schemas.get('1.4.0')?.report(hungarian('1.4.0'))).toBe(false);
     expect(schemas.get('1.5.0')?.report({ ...value, schemaVersion: '1.5.0' })).toBe(true);
+  });
+
+  it('accepts French report text only from schema 1.6.0 on', async () => {
+    const value = (await fixture('complete')) as ScanResult;
+    const french = (version: string) => ({
+      ...value,
+      schemaVersion: version,
+      lang: 'fr' as const,
+      ...(value.options === undefined
+        ? {}
+        : { options: { ...value.options, lang: 'fr' as const } }),
+    });
+    expect(schemas.get('1.6.0')?.report(french('1.6.0'))).toBe(true);
+    expect(schemas.get('1.5.0')?.report(french('1.5.0'))).toBe(false);
+    for (const lang of ['it', 'es', 'pl'] as const) {
+      const report = { ...french('1.6.0'), lang };
+      expect(schemas.get('1.6.0')?.report(report)).toBe(true);
+      expect(schemas.get('1.5.0')?.report({ ...report, schemaVersion: '1.5.0' })).toBe(false);
+    }
   });
 
   it('accepts baseline marks and the fixed list in schema 1.5.0', async () => {

@@ -298,6 +298,72 @@ describe('Hungarian reports', () => {
   });
 });
 
+describe('French reports', () => {
+  const french = (findings: Finding[]): ScanResult => ({ ...result(findings), lang: 'fr' });
+
+  it('writes the text summary in French, with the singular for one', () => {
+    const output = formatText(french([finding(), finding({ severity: 'warning' })]));
+    expect(output).toContain('1 erreur, 1 avertissement sur 1 page (1,2 s).');
+    const nbsp = String.fromCodePoint(0xa0);
+    expect(output).toContain(`correction${nbsp}: Self-host the font files.`);
+    expect(output).toContain('ne prouve pas la conformité au RGPD');
+    expect(formatText(french([]))).toContain('Aucun problème trouvé sur 1 page (1,2 s).');
+  });
+
+  it('translates the Markdown headings', () => {
+    const output = formatMarkdown(french([finding()]));
+    expect(output).toContain('| | Règle | Constat |');
+    expect(output).toContain('<summary>Comment corriger</summary>');
+  });
+});
+
+describe('consent line with a hidden banner', () => {
+  it('names the consent manager that loaded but showed nothing', () => {
+    const hidden: ScanResult = {
+      ...result([]),
+      consent: { bannerFound: false, rejected: false, state: 'not-detected', cmp: 'Usercentrics' },
+    };
+    expect(formatText(hidden)).toContain('none shown, although Usercentrics loaded');
+    expect(formatText({ ...hidden, lang: 'hu' })).toContain('pedig az Usercentrics betöltődött');
+  });
+});
+
+describe('Italian, Spanish and Polish reports', () => {
+  const inLang = (lang: 'it' | 'es' | 'pl', findings: Finding[]): ScanResult => ({
+    ...result(findings),
+    lang,
+  });
+
+  it('writes the text summary in each language', () => {
+    const two = [finding(), finding({ severity: 'warning' })];
+    expect(formatText(inLang('it', two))).toContain('1 errore, 1 avviso su 1 pagina (1,2 s).');
+    expect(formatText(inLang('es', two))).toContain('1 error, 1 advertencia en 1 página (1,2 s).');
+    expect(formatText(inLang('pl', two))).toContain('1 błąd, 1 ostrzeżenie · 1 strona (1,2 s).');
+    expect(formatText(inLang('it', []))).toContain('Nessun problema trovato su 1 pagina (1,2 s).');
+    expect(formatText(inLang('pl', []))).toContain('Nie znaleziono problemów (1 strona, 1,2 s).');
+  });
+
+  it('uses the Polish count forms', () => {
+    const errors = (n: number) =>
+      formatText(
+        inLang(
+          'pl',
+          Array.from({ length: n }, () => finding()),
+        ),
+      );
+    expect(errors(2)).toContain('2 błędy');
+    expect(errors(5)).toContain('5 błędów');
+  });
+
+  it('translates the Markdown headings', () => {
+    expect(formatMarkdown(inLang('it', [finding()]))).toContain('| | Regola | Rilievo |');
+    expect(formatMarkdown(inLang('es', [finding()]))).toContain(
+      '<summary>Cómo corregirlo</summary>',
+    );
+    expect(formatMarkdown(inLang('pl', [finding()]))).toContain('| | Reguła | Ustalenie |');
+  });
+});
+
 describe('incomplete observations', () => {
   it('keeps policy-adjusted findings visible in both report languages', () => {
     const adjusted = result([

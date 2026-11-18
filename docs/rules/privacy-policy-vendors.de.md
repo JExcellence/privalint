@@ -49,8 +49,8 @@ der Übermittlung außerhalb der EU. Wird ein Dienst nicht mehr gebraucht, ihn s
   geprüft.
 - Ein Name in der Erklärung reicht; ob die Beschreibung stimmt, wird nicht geprüft.
 - Eine Cookie-Richtlinie, die als PDF auf derselben Website liegt, wird heruntergeladen (bis 5 MB)
-  und ihr Text mit pdf.js gelesen; gescannte PDFs ohne Textebene enthalten keinen lesbaren Text.
-  Eine Datenschutzerklärung, die selbst ein PDF ist, Erklärungen auf einer anderen Domain und
+  und ihr Text mit pdf.js gelesen, ebenso eine Datenschutzerklärung, die selbst ein PDF ist;
+  gescannte PDFs ohne Textebene enthalten keinen lesbaren Text. Erklärungen auf einer anderen Domain und
   Erklärungen, die auf mehr als eine verlinkte Seite verteilt sind, werden nur teilweise gelesen.
   Verlinkt die Erklärung eine Cookie-Richtlinie, die sich nicht lesen lässt, etwa ein PDF über
-  5 MB, sinkt jeder Befund auf `info` und nennt den ungelesenen Link.
+  5 MB, sinkt jeder Befund auf `info` und nennt den ungelesenen Link; die Regel gilt dann als partiell.

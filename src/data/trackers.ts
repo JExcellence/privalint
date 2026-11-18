@@ -40,11 +40,14 @@ const PROXIED_ENDPOINTS: ReadonlyArray<{
   matches: (url: URL) => boolean;
 }> = [
   {
-    // GA4 measurement protocol as sent by gtag.js: /g/collect?v=2&tid=G-XXXX.
+    // GA4 measurement protocol as sent by gtag.js: /g/collect?v=2&tid=G-XXXX. Tagging servers
+    // often rename the path (custom loaders), so a hit with GA4's own client or event parameters
+    // counts on any path.
     vendor: 'Google Analytics',
     category: 'analytics',
     matches: (url) =>
-      /\/g\/collect$/.test(url.pathname) &&
+      (/\/g\/collect$/.test(url.pathname) ||
+        ['cid', 'en', '_p'].some((name) => url.searchParams.has(name))) &&
       url.searchParams.get('v') === '2' &&
       /^G-[A-Z0-9]+$/i.test(url.searchParams.get('tid') ?? ''),
   },
@@ -361,7 +364,15 @@ export const trackers: readonly Tracker[] = [
   {
     vendor: 'Reddit Pixel',
     category: 'advertising',
-    domains: ['alb.reddit.com', 'pixel-config.reddit.com'],
+    domains: ['alb.reddit.com', 'pixel-config.reddit.com', 'ads.reddit.com'],
+  },
+  {
+    // Reddit's CSP guide names www.redditstatic.com for the pixel script; the host also serves
+    // reddit.com itself, so only the ads scripts count.
+    vendor: 'Reddit Pixel',
+    category: 'advertising',
+    domains: ['www.redditstatic.com'],
+    paths: ['/ads/'],
   },
   {
     // dev.visualwebsiteoptimizer.com for accounts created before 14 June 2026, edge.wingify.net
@@ -388,6 +399,14 @@ export const trackers: readonly Tracker[] = [
     category: 'advertising',
     domains: ['ib.adnxs.com'],
     paths: ['/pixie'],
+  },
+  {
+    // Conversion and segment pixels (Microsoft Invest docs, 2026-11-18). /ast/ is the ad
+    // library publishers load and is not listed.
+    vendor: 'Microsoft Xandr',
+    category: 'advertising',
+    domains: ['ib.adnxs.com', 'secure.adnxs.com'],
+    paths: ['/px', '/seg'],
   },
   // Fingerprint (FingerprintJS Pro): script CDNs and the identification API, from the vendor's
   // CSP guide https://docs.fingerprint.com/docs/js-agent-csp (2026-11-06).

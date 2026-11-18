@@ -18,10 +18,11 @@ compares:
 
 Findings are grouped by vendor, with up to five pieces of evidence each.
 
-| Category                                                             | Severity |
-| -------------------------------------------------------------------- | -------- |
-| analytics, advertising, session-replay, social, marketing-automation | error    |
-| tag-manager (e.g. a GTM container on its own)                        | warning  |
+| Category                                                             | Severity                                                                            |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| analytics, advertising, session-replay, social, marketing-automation | error                                                                               |
+| tag-manager (e.g. a GTM container on its own)                        | warning                                                                             |
+| analytics with `--region fr`, `it`, `nl` or `uk`                     | warning, with the conditions of the exemption in the fix ([regions](../regions.md)) |
 
 A tag manager container is a warning because loading it already transfers the IP address to a
 third party, but whether it fires tags without consent depends on its configuration. Any tag it
@@ -34,12 +35,12 @@ Some sites route tracking through their own domain: a server-side Google Tag Man
 are also recognised by their path and parameters on any host. Each signature needs the vendor's
 own parameter format, so an unrelated `/collect` endpoint doesn't match:
 
-| Vendor             | Path and parameters                                 |
-| ------------------ | --------------------------------------------------- |
-| Google Analytics   | `…/g/collect?v=2&tid=G-…`, `…/collect?v=1&tid=UA-…` |
-| Google Analytics   | `…/gtag/js?id=G-…` (also `AW-`, `DC-`)              |
-| Google Tag Manager | `…/gtm.js?id=GTM-…`                                 |
-| Meta Pixel         | `…/tr?id=<numeric pixel id>&ev=…`                   |
+| Vendor             | Path and parameters                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Google Analytics   | `…/g/collect?v=2&tid=G-…`, any path with `v=2&tid=G-…` and `cid`, `en` or `_p` (renamed by a custom loader), `…/collect?v=1&tid=UA-…` |
+| Google Analytics   | `…/gtag/js?id=G-…` (also `AW-`, `DC-`)                                                                                                |
+| Google Tag Manager | `…/gtm.js?id=GTM-…`                                                                                                                   |
+| Meta Pixel         | `…/tr?id=<numeric pixel id>&ev=…`                                                                                                     |
 
 The evidence then names the host the requests went through ("proxied through metrics.example.com").
 A server-side container still needs consent for what it forwards.
@@ -51,12 +52,41 @@ look first-party. In native scans privalint resolves the CNAME chain (up to five
 first-party subdomain other than the scanned host that received a request, and reports a chain
 that reaches a tracker domain as that tracker, with the chain as evidence:
 "request https://metrics.example.com/… (CNAME metrics.example.com → example.com.eulerian.net)".
+Subdomains that receive requests only after rejecting, saving switched-off settings, closing the
+banner or with Global Privacy Control are resolved too, so `trackers-after-reject`,
+`trackers-after-settings`, `trackers-after-close` and `gpc-signal` recognise them the same way.
+Loads after accepting are not checked: trackers may run then.
 
 The targets come from the tracker list and from AdGuard's MIT-licensed
 [cname-trackers list](https://github.com/AdguardTeam/cname-trackers) (Adobe Experience Cloud,
 Eulerian, Criteo, Keyade, AT Internet, Commanders Act, Oracle Eloqua, Wizaly, Ingenious
 Technologies, Pardot). Scans through a network adapter and offline fixtures make no DNS lookups.
 At most 20 subdomains are resolved, each lookup limited to three seconds.
+
+### Google Consent Mode
+
+Google tags in Consent Mode send the consent state with each request in the `gcs` parameter.
+privalint reads it from every tracker request and puts it first in the evidence:
+"Consent Mode: ad_storage denied, analytics_storage denied (gcs=G100)".
+
+| What the requests carry                    | Finding                                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------------------- |
+| only denied states, such as `G100`         | "sends Google Consent Mode pings", with a note that the pings still reach Google |
+| any granted state (`G101`, `G110`, `G111`) | its own error: the tag tells Google that consent was granted before any choice   |
+| no `gcs`                                   | the plain finding                                                                |
+
+The after-reject, after-settings and after-close checks read it the same way. A granted state
+after rejecting is reported as consent the visitor never gave.
+
+Google documents that `gcs` carries `ad_storage` and `analytics_storage`
+([Consent mode HTTP parameters](https://developers.google.com/tag-platform/security/concepts/consent-mode)),
+but not how. The order was checked with Google's gtag.js on 2026-11-17: defaults of denied/denied,
+denied/granted, granted/denied and granted/granted for ad_storage/analytics_storage sent `G100`,
+`G101`, `G110` and `G111`. The `gcd` parameter, which also tells defaults from updates, is not
+read: Google doesn't document its letters and third-party tables disagree.
+
+Some sites grant consent by default outside the EU (`region` in the default command). A scan from a
+non-EU address, such as a GitHub-hosted runner, can then see `G111` that an EU visitor wouldn't.
 
 ## Why
 
@@ -148,3 +178,18 @@ the Amazon Ads tag (named only in a GitHub template, not on an Amazon site) and 
 | VWO               | cookies `_vwo_*`, `_vis_opt_*`, `_wingify_*`         | [Cookies stored by Wingify](https://help.wingify.com/hc/en-us/articles/58793798517785-Cookies-Stored-by-Wingify)         |
 | Microsoft Xandr   | `acdn.adnxs.com/dmp/up/`, `ib.adnxs.com/pixie`       | [Universal pixel code structure](https://learn.microsoft.com/en-us/xandr/monetize/universal-pixel-code-structure)        |
 | Amazon Associates | `z-na.amazon-adsystem.com/widgets/onejs`             | [Amazon Associates oneTag](https://affiliate-program.amazon.com/help/node/topic/GZ2P5RSW6AMWWKTM)                        |
+
+## Sources for the hosts added on 2026-11-18
+
+Read on 2026-11-18. Still off the list because the vendor's own pages don't name them: the Amazon
+Ads tag, the ProvenExpert rating seal (its embed code is generated in the account and its help
+pages name no host) and the Google Ads paths `/ccm/collect` and `/pagead/viewthroughconversion/`
+on `www.google.com` (Google's CSP guide names the origin only).
+
+| Vendor          | Hosts                                         | Source                                                                                                                          |
+| --------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Reddit Pixel    | `www.redditstatic.com/ads/`, `ads.reddit.com` | [About the Reddit Pixel, CSP section](https://business.reddithelp.com/articles/Knowledge/reddit-pixel)                          |
+| Microsoft Xandr | `secure.adnxs.com/px`                         | [Test conversion pixel and attribution](https://learn.microsoft.com/en-us/xandr/monetize/test-conversion-pixel-and-attribution) |
+| Microsoft Xandr | `ib.adnxs.com/px`, `ib.adnxs.com/seg`         | [Segment pixels, advanced](https://learn.microsoft.com/en-us/xandr/invest/segment-pixels-advanced)                              |
+
+The Reddit host also serves reddit.com itself, so only scripts under `/ads/` count.

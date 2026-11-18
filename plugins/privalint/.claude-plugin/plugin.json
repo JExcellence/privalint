@@ -1,0 +1,11 @@
+{
+  "name": "privalint",
+  "displayName": "privalint",
+  "version": "0.1.0",
+  "description": "Scan a live website in a real browser for GDPR and consent problems and fix what it finds in your code.",
+  "author": { "name": "JExcellence", "url": "https://github.com/JExcellence" },
+  "homepage": "https://github.com/JExcellence/privalint#readme",
+  "repository": "https://github.com/JExcellence/privalint",
+  "license": "MIT",
+  "keywords": ["gdpr", "dsgvo", "privacy", "cookies", "consent", "impressum"]
+}

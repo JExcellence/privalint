@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "privalint": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/start-mcp.mjs"]
+    }
+  }
+}

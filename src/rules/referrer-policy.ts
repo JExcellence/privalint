@@ -1,4 +1,4 @@
-import { huArticle, say } from '../i18n.js';
+import { huArticle, plPlural, say } from '../i18n.js';
 import { observedRequests } from '../observations.js';
 import type { Rule } from '../types.js';
 import { isFirstParty } from '../url.js';
@@ -74,6 +74,10 @@ export const referrerPolicy: Rule = {
           en: `The referrer policy ${policy} sends the full page address to ${hosts.length} other host(s).`,
           de: `Die Referrer-Policy ${policy} schickt die vollständige Seitenadresse an ${hosts.length} fremde(n) Host(s).`,
           hu: `${huArticle(policy, true)} ${policy} hivatkozó-szabály a teljes oldalcímet elküldi ${hosts.length} külső kiszolgálónak.`,
+          fr: `La politique de référent ${policy} envoie l'adresse complète de la page à ${hosts.length} ${hosts.length <= 1 ? 'autre hôte' : 'autres hôtes'}.`,
+          it: `La referrer policy ${policy} invia l'indirizzo completo della pagina a ${hosts.length} ${hosts.length === 1 ? 'altro host' : 'altri host'}.`,
+          es: `La política de referente ${policy} envía la dirección completa de la página a ${hosts.length} ${hosts.length === 1 ? 'otro host' : 'otros hosts'}.`,
+          pl: `Polityka referrer ${policy} wysyła pełny adres strony do ${hosts.length} ${plPlural(hosts.length, 'innego hosta', 'innych hostów', 'innych hostów')}.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [`${source}: ${policy}`, ...hosts.slice(0, 3)],
@@ -81,6 +85,10 @@ export const referrerPolicy: Rule = {
           en: 'Set Referrer-Policy: strict-origin-when-cross-origin (the browser default) or stricter, and remove unsafe-url or no-referrer-when-downgrade from headers and meta tags.',
           de: 'Referrer-Policy: strict-origin-when-cross-origin (Browser-Standard) oder strenger setzen und unsafe-url bzw. no-referrer-when-downgrade aus Header und Meta-Tag entfernen.',
           hu: 'Állítsa be a Referrer-Policy: strict-origin-when-cross-origin (böngésző-alapértelmezés) vagy szigorúbb értéket, és távolítsa el az unsafe-url, illetve no-referrer-when-downgrade értéket a fejlécből és a meta címkéből.',
+          fr: 'Définissez Referrer-Policy: strict-origin-when-cross-origin (la valeur par défaut des navigateurs) ou plus strict, et retirez unsafe-url ou no-referrer-when-downgrade des en-têtes et des balises meta.',
+          it: 'Imposta Referrer-Policy: strict-origin-when-cross-origin (il valore predefinito del browser) o una più restrittiva, e rimuovi unsafe-url o no-referrer-when-downgrade da intestazioni e meta tag.',
+          es: 'Fija Referrer-Policy: strict-origin-when-cross-origin (el valor predeterminado del navegador) o una más estricta, y elimina unsafe-url o no-referrer-when-downgrade de las cabeceras y las etiquetas meta.',
+          pl: 'Ustaw Referrer-Policy: strict-origin-when-cross-origin (domyślne ustawienie przeglądarki) lub bardziej restrykcyjne i usuń unsafe-url lub no-referrer-when-downgrade z nagłówków i znaczników meta.',
         }),
       },
     ];

@@ -3,6 +3,7 @@ import { classifyLoadError } from './diagnostics.js';
 import { newStorageKeys, readStorageKeys } from './storage.js';
 import type {
   AcceptObservation,
+  BannerRead,
   CloseObservation,
   ConsentObservation,
   ControlLook,
@@ -13,6 +14,7 @@ import type {
   SettingsObservation,
   TcfObservation,
 } from './types.js';
+import { findByUrl, type HostPattern } from './url.js';
 
 interface CmpSelectors {
   name: string;
@@ -141,17 +143,17 @@ const KNOWN_CMPS: readonly CmpSelectors[] = [
 // Labels that also match REJECT_LABEL ("Nur notwendige akzeptieren") are never treated as accept.
 // "Acceptable Use Policy" is a footer link, not consent.
 const ACCEPT_LABEL =
-  /akzeptieren|annehmen|zustimmen|einwilligen|einverstanden|alles? (cookies )?(zulassen|erlauben)|\baccept(?!able)|\ballow all|\bagree\b|accepter|aceptar|accetta|accepteren|alles toestaan|elfogad/i;
+  /akzeptieren|annehmen|zustimmen|einwilligen|einverstanden|alles? (cookies )?(zulassen|erlauben)|\baccept(?!able)|\ballow all|\bagree\b|accepter|j['’]accepte|aceptar|acepto|accetta|accetto|acconsento|accepteren|akkoord|alles toestaan|akceptuj|zaakceptuj|zgadzam się|wyrażam zgodę|zezwól na wszystkie|elfogad/i;
 
 const REJECT_LABEL =
-  /ablehnen|verweigern|nur (technisch )?(notwendige|essenzielle|erforderliche)|\breject|\bdecline|\bdeny\b|\brefuse|(only|use) (strictly )?(necessary|essential|required)|refuser|continuer sans accepter|rechazar|rifiuta|weigeren|alleen noodzakelijke|elutasít|csak a (feltétlenül )?szükséges/i;
+  /ablehnen|verweigern|nur (technisch )?(notwendige|essenzielle|erforderliche)|\breject|\bdecline|\bdeny\b|\brefuse|(only|use) (strictly )?(necessary|essential|required)|refuser|continuer\s+sans\s+accepter|rechazar|rechazo|continuar\s+sin\s+aceptar|solo\s+(las\s+)?necesarias|rifiuta|rifiuto|continua\s+senza\s+accettare|solo\s+(i\s+)?(cookie\s+)?necessari|weigeren|afwijzen|alleen noodzakelijke|odrzuć|odmawiam|nie akceptuj|tylko niezbędne|kontynuuj bez akceptacji|elutasít|csak a (feltétlenül )?szükséges/i;
 
 /** Second option on "pay or OK" banners: accept tracking or take out a subscription. */
 const SUBSCRIBE = /abonn|\babo\b|subscri|werbefrei|ohne werbung|ad-free|without ads|\bpur\b/i;
 
 /** A frame without any of these words is not showing a consent banner. */
 const CONSENT_CONTEXT =
-  /cookie|consent|einwillig|tracking|datenschutz|privacy|süti|hozzájárul|adatvédel/i;
+  /cookie|consent|einwillig|tracking|datenschutz|privacy|confidentialité|vie privée|consenso|consentimiento|privacidad|toestemming|ciastecz|zgod(?!n)|prywatno|süti|hozzájárul|adatvédel/i;
 
 const CLICKABLE = 'button, [role="button"], a, input[type="button"], input[type="submit"]';
 
@@ -185,40 +187,86 @@ const REOPEN_CONTROLS = [
 
 // Word boundaries keep nav links like "Consent management platform" from matching.
 const SETTINGS_LABEL =
-  /(cookie|consent|datenschutz|privatsphäre|privacy|tracking)[-\s]?(einstellungen|settings|preferences|präferenzen|optionen|options|beállítások)\b|(einwilligung|zustimmung|consent)(en)?\s+(widerrufen|ändern|verwalten|anpassen|bearbeiten|withdraw|manage|change)\b|cookies?\s+(verwalten|anpassen|ändern|manage)\b|manage\s+(cookies|consent|privacy)\b|withdraw\s+(my\s+)?consent\b|paramètres des cookies|gérer (les )?cookies|süti[-\s]?beállítás|adatvédelmi beállítás|hozzájárulás (visszavonása|módosítása|kezelése)/i;
+  /(cookie|consent|datenschutz|privatsphäre|privacy|tracking)[-\s]?(einstellungen|settings|preferences|präferenzen|optionen|options|beállítások)\b|(einwilligung|zustimmung|consent)(en)?\s+(widerrufen|ändern|verwalten|anpassen|bearbeiten|withdraw|manage|change)\b|cookies?\s+(verwalten|anpassen|ändern|manage)\b|manage\s+(cookies|consent|privacy)\b|withdraw\s+(my\s+)?consent\b|paramètres des cookies|gérer (les |mes )?cookies|gestion des cookies|préférences (de |des )?cookies|impostazioni (dei )?cookie|preferenze (dei )?cookie|gestisci (i )?cookie|configuración de cookies|preferencias de cookies|gestionar cookies|cookie-?instellingen|cookievoorkeuren|ustawienia (plików )?cookie|zarządzaj (plikami )?cookie|ustawienia prywatności|süti[-\s]?beállítás|adatvédelmi beállítás|hozzájárulás (visszavonása|módosítása|kezelése)/i;
 
 /** Opens the second layer from the first: "Einstellungen", "Customize", "More options". */
 const OPEN_SETTINGS_LABEL =
-  /einstellungen|anpassen|individuell|optionen|details|customi[sz]e|settings|preferences|options|paramètres|personnaliser|configurar|preferenze|impostazioni|instellingen|voorkeuren|beállítás|testreszab|további lehetőségek|részletek/i;
+  /einstellungen|anpassen|individuell|optionen|details|customi[sz]e|settings|preferences|options|paramètres|personnaliser|configurar|configuración|personalizar|preferencias|preferenze|impostazioni|personalizza|instellingen|voorkeuren|aanpassen|ustawienia|dostosuj|preferencje|więcej opcji|beállítás|testreszab|további lehetőségek|részletek/i;
 
 /** Saves the selection in the second layer. "Alle akzeptieren" never counts, see isAcceptAll. */
 const SAVE_LABEL =
-  /speichern|bestätigen|übernehmen|auswahl (akzeptieren|erlauben|zulassen)|\bsave\b|confirm|(accept|allow) selection|enregistrer|guardar|salva|opslaan|mentés|megerősít|kiválasztott|elfogadom a fenti/i;
+  /speichern|bestätigen|übernehmen|auswahl (akzeptieren|erlauben|zulassen)|\bsave\b|confirm|(accept|allow) selection|enregistrer|valider|accepter (la |ma )?sélection|guardar|aceptar (la )?selección|permitir (la )?selección|salva|conferma|accetta (la )?selezion|opslaan|bevestig|selectie (accepteren|toestaan)|zapisz|potwierdź|zatwierdź|akceptuj wybran|zezwól na wybran|mentés|megerősít|kiválasztott|elfogadom a fenti/i;
 
 // No \b around the Hungarian words: \b only knows ASCII letters, so it fails next to "ö".
-const ALL_WORD = /\b(alle|alles|all|tout|tous|todo|todas|tutti|tutto)\b|összes|minden|mindet/i;
+const ALL_WORD =
+  /\b(alle|alles|all|tout|tous|toutes|todo|todos|todas|tutti|tutte|tutto)\b|wszystk|összes|minden|mindet/i;
 
 /**
  * The narrowest choice when a banner offers consent levels as radio buttons instead of switches,
  * such as "Legszűkebb szint: Alap működés" on otpbank.hu (2026-11-01).
  */
 const NARROWEST_LEVEL =
-  /notwendig|essenziell|erforderlich|nur technisch|necessary|essential|strictly|nécessaires|necesarias|necessari|noodzakelijk|legszűkebb|alap működés|csak (a )?(feltétlenül )?szükséges/i;
+  /notwendig|essenziell|erforderlich|nur technisch|necessary|essential|strictly|nécessaires|necesarias|necessari|noodzakelijk|niezbędne|wymagane|legszűkebb|alap működés|csak (a )?(feltétlenül )?szükséges/i;
 
 /** A tab or section for purposes processed on the basis of legitimate interest (TCF banners). */
 const LEGITIMATE_INTEREST_TAB =
-  /berechtigte[nsr]?\s+interesse|legitimate\s+interest|intérêt\s+légitime|interés\s+legítimo|legittimo\s+interesse|gerechtvaardigd\s+belang|jogos\s+érdek/i;
+  /berechtigte[nsr]?\s+interesse|legitimate\s+interest|intérêt\s+légitime|interés\s+legítimo|legittimo\s+interesse|gerechtvaardigd\s+belang|prawnie\s+uzasadnion|jogos\s+érdek/i;
 
 /**
  * Objecting to every legitimate-interest purpose at once. Only objection wording counts: a plain
  * "Alle ablehnen" could be the first layer's reject button, which closes the banner.
  */
 const OBJECT_ALL =
-  /(allen?|alles)\s+widersprechen|widerspruch\s+(gegen\s+)?alle|object\s+(to\s+)?all|s['’]opposer\s+à\s+tout|oponerse\s+a\s+todo|opporsi\s+a\s+tutt|bezwaar\s+tegen\s+alle|tiltakoz(om|ás)\s+(az?\s+)?(mind|összes)|mindegyik(nek|et)\s+elutasít/i;
+  /(allen?|alles)\s+widersprechen|widerspruch\s+(gegen\s+)?alle|object\s+(to\s+)?all|s['’]opposer\s+à\s+tout|oponerse\s+a\s+todo|opporsi\s+a\s+tutt|bezwaar\s+tegen\s+alle|sprzeciw\s+wobec\s+wszystki|tiltakoz(om|ás)\s+(az?\s+)?(mind|összes)|mindegyik(nek|et)\s+elutasít/i;
 
 /** Words that make an "all" label about the current selection, see isAcceptAll. */
 const SELECTION_WORD =
-  /auswahl|einstellungen|präferenzen|selection|settings|preferences|choices|sélection|préférences|selección|preferencias|selezione|preferenze|selectie|voorkeuren|kiválaszt|beállítás/i;
+  /auswahl|einstellungen|präferenzen|selection|settings|preferences|choices|sélection|préférences|selección|preferencias|selezione|preferenze|selectie|voorkeuren|keuze|wybór|wybran|ustawienia|preferencje|kiválaszt|beállítás/i;
+
+/**
+ * Script hosts of consent managers. A page that loads one but shows no banner probably hides it
+ * from automated browsers (bot detection) or for this region, so the report names it instead of
+ * saying the site has no consent manager.
+ */
+const CONSENT_MANAGER_SCRIPTS: ReadonlyArray<HostPattern & { name: string }> = [
+  {
+    name: 'Usercentrics',
+    domains: ['app.usercentrics.eu', 'web.cmp.usercentrics.eu', 'privacy-proxy.usercentrics.eu'],
+  },
+  { name: 'Cookiebot', domains: ['consent.cookiebot.com', 'consent.cookiebot.eu'] },
+  { name: 'OneTrust', domains: ['cdn.cookielaw.org'] },
+  { name: 'Didomi', domains: ['sdk.privacy-center.org'] },
+  { name: 'consentmanager', domains: ['cdn.consentmanager.net', 'delivery.consentmanager.net'] },
+  { name: 'CookieYes', domains: ['cdn-cookieyes.com'] },
+  { name: 'iubenda', domains: ['cdn.iubenda.com', 'cs.iubenda.com'] },
+  { name: 'Osano', domains: ['cmp.osano.com'] },
+  { name: 'Termly', domains: ['app.termly.io'] },
+  { name: 'CookieFirst', domains: ['consent.cookiefirst.com'] },
+  { name: 'Axeptio', domains: ['static.axept.io'] },
+  { name: 'Sourcepoint', domains: ['cdn.privacy-mgmt.com'] },
+  { name: 'Cookie-Script', domains: ['cdn.cookie-script.com'] },
+];
+
+/** The consent manager whose script the page loaded, if any. */
+export function loadedConsentManager(requests: readonly RecordedRequest[]): string | undefined {
+  for (const request of requests) {
+    const match = findByUrl(CONSENT_MANAGER_SCRIPTS, request.url);
+    if (match !== undefined) return match.name;
+  }
+  return undefined;
+}
+
+/** The label patterns, exported for the label tests only. */
+export const CONSENT_LABELS = {
+  accept: ACCEPT_LABEL,
+  reject: REJECT_LABEL,
+  openSettings: OPEN_SETTINGS_LABEL,
+  save: SAVE_LABEL,
+  reopenSettings: SETTINGS_LABEL,
+  context: CONSENT_CONTEXT,
+} as const;
+
+export { isAcceptAll };
 
 export interface ConsentCheckOptions {
   settleMs: number;
@@ -242,6 +290,7 @@ export async function observeConsent(
   if (options.signal?.aborted) throw new DOMException('Consent check aborted', 'AbortError');
   const { found: banner, waitedMs } = await waitFor(page, options, () => findBanner(page));
   if (banner === undefined) {
+    const loaded = loadedConsentManager(requests);
     return {
       bannerFound: false,
       rejected: false,
@@ -249,6 +298,7 @@ export async function observeConsent(
       outcome: 'no-banner-detected',
       reason: 'no-supported-banner',
       bannerWaitMs: waitedMs,
+      ...(loaded === undefined ? {} : { cmp: loaded }),
     };
   }
 
@@ -267,6 +317,7 @@ export async function observeConsent(
     ...(banner.text === undefined ? {} : { bannerText: banner.text }),
     ...(banner.blocking === undefined ? {} : { bannerBlocking: banner.blocking }),
     ...(banner.controls === undefined ? {} : { bannerControls: banner.controls }),
+    ...(banner.unread === undefined ? {} : { bannerUnread: [...banner.unread] }),
   };
   if (banner.reject === undefined) {
     if (banner.acceptLabel === undefined) observation.reason = 'unsupported-banner-markup';
@@ -274,6 +325,7 @@ export async function observeConsent(
   }
   const keyboard = await probeKeyboard(page, banner.accept, banner.reject).catch(() => undefined);
   if (keyboard !== undefined) observation.keyboard = keyboard;
+  else observation.bannerUnread = [...(observation.bannerUnread ?? []), 'keyboard'];
 
   try {
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
@@ -291,7 +343,11 @@ export async function observeConsent(
       .filter((cookie) => !cookiesBefore.has(cookieKey(cookie)))
       .map(({ name, domain, path, expires }) => ({ name, domain, path, expires }));
     const storage = newStorageKeys(storageBefore, await readStorageKeys(page));
-    const settingsLabel = await findSettingsControl(page);
+    // A failed search of the page is not a missing settings link.
+    const settings = await findSettingsControl(page).then(
+      (label) => ({ label }),
+      () => undefined,
+    );
     const tcf = await readTcf(page);
 
     return {
@@ -300,9 +356,19 @@ export async function observeConsent(
       state: 'reject-tested',
       outcome: 'reject-succeeded',
       reason: 'reject-clicked-and-reloaded',
-      afterReject: { requests: requests.slice(firstRequest), cookies, storage },
-      settingsControl:
-        settingsLabel === undefined ? { found: false } : { found: true, label: settingsLabel },
+      afterReject: {
+        requests: requests.slice(firstRequest),
+        cookies,
+        ...(storage === undefined ? {} : { storage }),
+      },
+      ...(settings === undefined
+        ? { bannerUnread: [...(observation.bannerUnread ?? []), 'settings-control' as const] }
+        : {
+            settingsControl:
+              settings.label === undefined
+                ? { found: false }
+                : { found: true, label: settings.label },
+          }),
       ...(tcf === undefined ? {} : { tcf }),
     };
   } catch (error) {
@@ -330,7 +396,17 @@ export async function observeClose(
   if (options.signal?.aborted) throw new DOMException('Close check aborted', 'AbortError');
   const { found: banner } = await waitFor(page, options, () => findBanner(page));
   if (banner?.accept === undefined) return undefined;
-  const closeLabel = await banner.accept.evaluate(markCloseControl).catch(() => undefined);
+  // A failed search says nothing about whether the banner has a close button.
+  let closeLabel: string | undefined;
+  try {
+    closeLabel = await banner.accept.evaluate(markCloseControl);
+  } catch (error) {
+    return {
+      outcome: 'interaction-failed',
+      reason: 'browser-interaction-failed',
+      error: classifyLoadError(error),
+    };
+  }
   if (closeLabel === undefined) return { outcome: 'no-close-control', reason: 'no-close-control' };
   try {
     const cookiesBefore = new Set((await context.cookies()).map(cookieKey));
@@ -344,7 +420,10 @@ export async function observeClose(
         break;
       }
     }
-    if (control === undefined) return { outcome: 'no-close-control', reason: 'no-close-control' };
+    // The close button was found a moment ago; losing it now is a failed observation.
+    if (control === undefined) {
+      return { outcome: 'interaction-failed', reason: 'browser-interaction-failed', closeLabel };
+    }
     options.onReject?.();
     await control.click({ timeout: Math.min(5_000, options.timeoutMs) });
     await settle(page, options);
@@ -359,7 +438,11 @@ export async function observeClose(
       outcome: 'closed',
       reason: 'banner-closed-and-reloaded',
       closeLabel,
-      afterClose: { requests: requests.slice(firstRequest), cookies, storage },
+      afterClose: {
+        requests: requests.slice(firstRequest),
+        cookies,
+        ...(storage === undefined ? {} : { storage }),
+      },
     };
   } catch (error) {
     return {
@@ -413,7 +496,11 @@ export async function observeAccept(
       outcome: 'accepted',
       reason: 'accept-clicked-and-reloaded',
       ...label,
-      afterAccept: { requests: requests.slice(firstRequest), cookies, storage },
+      afterAccept: {
+        requests: requests.slice(firstRequest),
+        cookies,
+        ...(storage === undefined ? {} : { storage }),
+      },
     };
   } catch (error) {
     return {
@@ -638,7 +725,11 @@ export async function observeSettings(
       switchedOff,
       preselected,
       ...(legitimateInterest === undefined ? {} : { legitimateInterest }),
-      afterSave: { requests: requests.slice(firstRequest), cookies, storage },
+      afterSave: {
+        requests: requests.slice(firstRequest),
+        cookies,
+        ...(storage === undefined ? {} : { storage }),
+      },
       ...(tcf === undefined ? {} : { tcf }),
     };
   } catch (error) {
@@ -972,6 +1063,8 @@ interface Banner {
   blocking?: boolean;
   text?: string;
   controls?: { accept: ControlLook; reject: ControlLook };
+  /** Reads of the banner that failed. */
+  unread?: BannerRead[];
 }
 
 const MAX_BANNER_LINKS = 30;
@@ -1095,6 +1188,7 @@ async function findBanner(page: Page): Promise<Banner | undefined> {
 /**
  * Looks for a visible way back into the consent settings once the banner is gone. Returns the
  * control's label, or undefined if there is none. Icon buttons count by aria-label or title.
+ * Throws when the page itself can't be searched; a frame that can't be read is skipped.
  */
 async function findSettingsControl(page: Page): Promise<string | undefined> {
   for (const frame of page.frames()) {
@@ -1120,7 +1214,10 @@ async function findSettingsControl(page: Page): Promise<string | undefined> {
         }
         return undefined;
       }, SETTINGS_LABEL.source)
-      .catch(() => undefined);
+      .catch((error: unknown) => {
+        if (frame === page.mainFrame()) throw error;
+        return undefined;
+      });
     if (match !== undefined) return match;
   }
   return undefined;
@@ -1128,8 +1225,10 @@ async function findSettingsControl(page: Page): Promise<string | undefined> {
 
 async function describe(accept: Locator, reject: Locator | undefined, cmp?: string) {
   const banner: Banner = { accept, acceptLabel: await label(accept) };
+  const unread: BannerRead[] = [];
   const layout = await accept.evaluate(bannerLayout, MAX_BANNER_LINKS).catch(() => undefined);
-  if (layout !== undefined) {
+  if (layout === undefined) unread.push('layout');
+  else {
     banner.links = layout.links;
     banner.blocking = layout.blocking;
     if (layout.text) banner.text = layout.text;
@@ -1147,8 +1246,9 @@ async function describe(accept: Locator, reject: Locator | undefined, cmp?: stri
     const rejectLook = await reject.evaluate(controlLook).catch(() => undefined);
     if (acceptLook !== undefined && rejectLook !== undefined) {
       banner.controls = { accept: acceptLook, reject: rejectLook };
-    }
+    } else unread.push('controls');
   }
+  if (unread.length > 0) banner.unread = unread;
   return banner;
 }
 

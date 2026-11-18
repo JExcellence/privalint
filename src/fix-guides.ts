@@ -50,6 +50,10 @@ export function withFixGuides(
       en: `How to do this in ${cmp}: ${url}`,
       de: `So geht das in ${cmp}: ${url}`,
       hu: `Így teheti meg a(z) ${cmp} felületén (angol nyelvű útmutató): ${url}`,
+      fr: `Comment faire dans ${cmp} (guide en anglais) : ${url}`,
+      it: `Come farlo in ${cmp} (guida in inglese): ${url}`,
+      es: `Cómo hacerlo en ${cmp} (guía en inglés): ${url}`,
+      pl: `Jak to zrobić w ${cmp} (przewodnik po angielsku): ${url}`,
     });
     return { ...finding, fix: finding.fix === undefined ? pointer : `${finding.fix} ${pointer}` };
   });

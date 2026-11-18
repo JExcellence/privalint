@@ -1,4 +1,4 @@
-import { say, type Text } from '../i18n.js';
+import { plPlural, say, type Text } from '../i18n.js';
 import { observedRequests } from '../observations.js';
 import type { Finding, Rule } from '../types.js';
 import { hostMatches, safeHost } from '../url.js';
@@ -28,6 +28,10 @@ const FIX: Text = {
     'tárolásra a készítőjétől, kérdezze az Adobe értékesítését a helyi tárolásról, vagy váltson ' +
     'nyílt licencű betűtípusra (pl. a Fontsource-ból), és szolgálja ki a saját domainről. Ezután ' +
     'távolítson el minden hivatkozást a use.typekit.net és a p.typekit.net címre.',
+  fr: "Les polices Adobe Fonts ne sont concédées pour le web qu'à travers les serveurs d'Adobe et ne peuvent donc pas simplement être auto-hébergées. Achetez une licence d'auto-hébergement auprès de la fonderie, demandez à Adobe un hébergement local, ou passez à une police sous licence libre (par exemple via Fontsource) servie depuis votre propre domaine. Supprimez ensuite toute référence à use.typekit.net et p.typekit.net.",
+  it: "I font Adobe sono concessi in licenza per il web solo tramite i server di Adobe, quindi non si possono semplicemente ospitare in proprio. Acquista dalla fonderia una licenza per l'hosting in proprio o chiedi ad Adobe Sales l'hosting locale, oppure passa a un font con licenza libera (ad es. da Fontsource) e servilo dal tuo dominio. Poi rimuovi ogni riferimento a use.typekit.net e p.typekit.net.",
+  es: 'Las fuentes de Adobe solo se licencian para la web a través de los servidores de Adobe, así que no se pueden alojar sin más en un servidor propio. Licencia la fuente para alojamiento propio con su fundición o consulta a Adobe Sales sobre el alojamiento local, o cambia a una fuente con licencia abierta (p. ej. de Fontsource) y sírvela desde tu propio dominio. Después elimina toda referencia a use.typekit.net y p.typekit.net.',
+  pl: 'Czcionki Adobe są licencjonowane do użytku w sieci wyłącznie przez serwery Adobe, więc nie można ich po prostu hostować samodzielnie. Kup licencję na samodzielny hosting od odlewni czcionki lub zapytaj Adobe Sales o hosting lokalny albo przejdź na czcionkę z otwartą licencją (np. z Fontsource) i serwuj ją z własnej domeny. Następnie usuń wszystkie odwołania do use.typekit.net i p.typekit.net.',
 };
 
 const isAdobeFontUrl = (url: string): boolean => {
@@ -57,6 +61,10 @@ export const adobeFonts: Rule = {
             en: `Fonts are loaded from Adobe (${count} request${count === 1 ? '' : 's'}).`,
             de: `Schriften werden von Adobe geladen (${count} ${count === 1 ? 'Anfrage' : 'Anfragen'}).`,
             hu: `Az oldal betűtípusokat tölt be az Adobe-tól (${count} kérés).`,
+            fr: `Des polices sont chargées depuis Adobe (${count} requête${count <= 1 ? '' : 's'}).`,
+            it: `I font vengono caricati da Adobe (${count} ${count === 1 ? 'richiesta' : 'richieste'}).`,
+            es: `Se cargan fuentes desde Adobe (${count} ${count === 1 ? 'solicitud' : 'solicitudes'}).`,
+            pl: `Czcionki są ładowane z Adobe (${count} ${plPlural(count, 'żądanie', 'żądania', 'żądań')}).`,
           }),
           pageUrl: page.finalUrl,
           evidence: [...new Set(requests.map((request) => request.url))].slice(0, 5),
@@ -78,6 +86,10 @@ export const adobeFonts: Rule = {
             en: 'The page preconnects to Adobe Fonts. No font was fetched, but the browser still opens a connection and transmits the IP address.',
             de: 'Die Seite baut vorab eine Verbindung zu Adobe Fonts auf. Es wurde keine Schrift geladen, aber der Browser öffnet trotzdem eine Verbindung und überträgt die IP-Adresse.',
             hu: 'Az oldal előre kapcsolatot nyit az Adobe Fonts felé. Betűtípus nem töltődött le, de a böngésző így is kapcsolatot létesít, és továbbítja az IP-címet.',
+            fr: "La page se préconnecte à Adobe Fonts. Aucune police n'a été chargée, mais le navigateur ouvre tout de même une connexion et transmet l'adresse IP.",
+            it: "La pagina si preconnette ad Adobe Fonts. Nessun font è stato scaricato, ma il browser apre comunque una connessione e trasmette l'indirizzo IP.",
+            es: 'La página hace preconnect a Adobe Fonts. No se descargó ninguna fuente, pero el navegador abre igualmente una conexión y transmite la dirección IP.',
+            pl: 'Strona nawiązuje wstępne połączenie (preconnect) z Adobe Fonts. Nie pobrano żadnej czcionki, ale przeglądarka i tak otwiera połączenie i przesyła adres IP.',
           }),
           pageUrl: page.finalUrl,
           evidence: hints.map((hint) => `<link rel="${hint.rel}" href="${hint.href}">`),
@@ -85,6 +97,10 @@ export const adobeFonts: Rule = {
             en: 'Remove the leftover <link> tags pointing to Adobe Fonts.',
             de: 'Die übrig gebliebenen <link>-Tags zu Adobe Fonts entfernen.',
             hu: 'Távolítsa el az Adobe Fonts felé mutató megmaradt <link> elemeket.',
+            fr: 'Supprimez les balises <link> restantes qui pointent vers Adobe Fonts.',
+            it: 'Rimuovi i tag <link> rimasti che puntano ad Adobe Fonts.',
+            es: 'Elimina las etiquetas <link> sobrantes que apuntan a Adobe Fonts.',
+            pl: 'Usuń pozostałe znaczniki <link> wskazujące na Adobe Fonts.',
           }),
         } satisfies Finding,
       ];

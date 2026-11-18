@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>A page privalint can't read</title>
+    <script>
+      // Stands in for anything that makes privalint's own reads fail, such as a script that
+      // navigates away while they run: the forms and the Web Storage keys can't be read.
+      Object.defineProperty(Document.prototype, 'forms', {
+        get() {
+          throw new Error('forms unavailable');
+        },
+      });
+      Object.defineProperty(window, 'localStorage', {
+        get() {
+          throw new Error('storage unavailable');
+        },
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Kontakt</h1>
+    <form action="/send">
+      <input type="email" name="email" />
+      <button>Senden</button>
+    </form>
+    <footer>
+      <a href="/clean/impressum.html">Impressum</a>
+      <a href="/clean/datenschutz.html">Datenschutz</a>
+    </footer>
+  </body>
+</html>

@@ -9,12 +9,19 @@ Reports trackers that still load, or set new cookies, after the visitor clicked 
 On the start page privalint looks for the consent banner, clicks its reject button, waits for the
 network to settle, reloads the page and waits again. Every request and every cookie that is new
 since the click is matched against the same tracker list as
-[`pre-consent-trackers`](pre-consent-trackers.md).
+[`pre-consent-trackers`](pre-consent-trackers.md). A first-party subdomain that is a CNAME to a tracker counts as that tracker; see
+[CNAME-cloaked trackers](pre-consent-trackers.md#cname-cloaked-trackers).
 
 | Category                                      | Severity |
 | --------------------------------------------- | -------- |
 | analytics, advertising, session-replay, …     | error    |
 | tag-manager (e.g. a GTM container on its own) | warning  |
+
+Google tags that still send Google Consent Mode pings are named as such. A tag that tells Google
+consent was granted after the click is an error, a tag manager included; see
+[Google Consent Mode](pre-consent-trackers.md#google-consent-mode). If the window after the click
+wasn't observed completely, including the Web Storage read, the rule is not evaluable
+(`incomplete-observation`) instead of clean.
 
 The reload matters: many broken setups respect the click on the current page but load everything
 again on the next page view, for example because the code checks whether _any_ choice was stored

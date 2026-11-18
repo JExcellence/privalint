@@ -229,6 +229,33 @@ describe('JSON configuration', () => {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
   });
+  it('refuses targets that are no HTTP(S) URL and options after mcp', async () => {
+    const cwd = await directory();
+    const cliRun = (...args: string[]) =>
+      promisify(execFile)(process.execPath, [cli, ...args], { cwd });
+    await expect(cliRun('ftp://example.org')).rejects.toMatchObject({
+      code: 2,
+      stderr: expect.stringContaining('Not a valid HTTP(S) URL.'),
+    });
+    await expect(cliRun('mcp', '--max-pages', '2')).rejects.toMatchObject({
+      code: 2,
+      stderr: expect.stringContaining('privalint mcp takes no options.'),
+    });
+  });
+  it('names the matching install command when Chromium is missing', async () => {
+    const cwd = await directory();
+    const playwright = (await import('playwright/package.json', { with: { type: 'json' } })).default
+      .version;
+    await expect(
+      promisify(execFile)(process.execPath, [cli, 'http://127.0.0.1:9/'], {
+        cwd,
+        env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: cwd },
+      }),
+    ).rejects.toMatchObject({
+      code: 2,
+      stderr: expect.stringContaining(`npx -y playwright@${playwright} install chromium`),
+    });
+  });
   it('keeps opt-in coverage exits separate from findings, including config overrides', async () => {
     const cwd = await directory();
     const server = createServer((request, response) => {

@@ -1,4 +1,4 @@
-import { huArticle, type Lang, say } from '../i18n.js';
+import { decimal, huArticle, type Lang, say } from '../i18n.js';
 import type { ControlLook, Rule } from '../types.js';
 
 const ID = 'reject-less-prominent';
@@ -34,6 +34,10 @@ export const rejectLessProminent: Rule = {
           en: 'shown as plain text',
           de: 'als bloßer Text dargestellt',
           hu: 'egyszerű szövegként jelenik meg',
+          fr: 'affichée en texte simple',
+          it: 'mostrato come semplice testo',
+          es: 'mostrado como texto simple',
+          pl: 'wyświetlany jako zwykły tekst',
         }),
       );
     }
@@ -43,9 +47,13 @@ export const rejectLessProminent: Rule = {
       const ratio = Math.round((acceptArea / rejectArea) * 10) / 10;
       reasons.push(
         say(lang, {
-          en: `the accept button is ${ratio} times its size`,
-          de: `der Zustimmen-Button ist ${ratio}-mal so groß`,
-          hu: `az elfogadás gomb sokkal nagyobb (területarány ${ratio}:1)`,
+          en: `the accept button is ${decimal(ratio, lang)} times its size`,
+          de: `der Zustimmen-Button ist ${decimal(ratio, lang)}-mal so groß`,
+          hu: `az elfogadás gomb sokkal nagyobb (területarány ${decimal(ratio, lang)}:1)`,
+          fr: `le bouton d'acceptation est ${decimal(ratio, lang)} fois plus grand`,
+          it: `il pulsante di accettazione è ${decimal(ratio, lang)} volte più grande`,
+          es: `el botón de aceptar es ${decimal(ratio, lang)} veces más grande`,
+          pl: `przycisk akceptacji jest ${decimal(ratio, lang)} razy większy`,
         }),
       );
     }
@@ -57,9 +65,13 @@ export const rejectLessProminent: Rule = {
     ) {
       reasons.push(
         say(lang, {
-          en: `low text contrast (${reject.contrast}:1)`,
-          de: `geringer Textkontrast (${reject.contrast}:1)`,
-          hu: `alacsony szövegkontraszt (${reject.contrast}:1)`,
+          en: `low text contrast (${decimal(reject.contrast, lang)}:1)`,
+          de: `geringer Textkontrast (${decimal(reject.contrast, lang)}:1)`,
+          hu: `alacsony szövegkontraszt (${decimal(reject.contrast, lang)}:1)`,
+          fr: `faible contraste du texte (${decimal(reject.contrast, lang)}:1)`,
+          it: `basso contrasto del testo (${decimal(reject.contrast, lang)}:1)`,
+          es: `bajo contraste del texto (${decimal(reject.contrast, lang)}:1)`,
+          pl: `niski kontrast tekstu (${decimal(reject.contrast, lang)}:1)`,
         }),
       );
     }
@@ -75,18 +87,38 @@ export const rejectLessProminent: Rule = {
           en: `The reject control "${rejectLabel}" is less prominent than "${acceptLabel}": ${reasons.join('; ')}.`,
           de: `Die Ablehnen-Steuerung „${rejectLabel}“ fällt weniger auf als „${acceptLabel}“: ${reasons.join('; ')}.`,
           hu: `${huArticle(rejectLabel, true)} „${rejectLabel}” elutasítási lehetőség kevésbé feltűnő, mint ${huArticle(acceptLabel)} „${acceptLabel}”: ${reasons.join('; ')}.`,
+          fr: `La commande de refus « ${rejectLabel} » est moins visible que « ${acceptLabel} » : ${reasons.join(' ; ')}.`,
+          it: `Il comando di rifiuto «${rejectLabel}» è meno visibile di «${acceptLabel}»: ${reasons.join('; ')}.`,
+          es: `El control de rechazo «${rejectLabel}» es menos visible que «${acceptLabel}»: ${reasons.join('; ')}.`,
+          pl: `Element odrzucenia „${rejectLabel}” jest mniej widoczny niż „${acceptLabel}”: ${reasons.join('; ')}.`,
         }),
         pageUrl: page.finalUrl,
         evidence: [
           describe(
             lang,
-            say(lang, { en: 'accept', de: 'Zustimmen', hu: 'elfogadás' }),
+            say(lang, {
+              en: 'accept',
+              de: 'Zustimmen',
+              hu: 'elfogadás',
+              fr: 'accepter',
+              it: 'accetta',
+              es: 'aceptar',
+              pl: 'akceptuj',
+            }),
             acceptLabel,
             accept,
           ),
           describe(
             lang,
-            say(lang, { en: 'reject', de: 'Ablehnen', hu: 'elutasítás' }),
+            say(lang, {
+              en: 'reject',
+              de: 'Ablehnen',
+              hu: 'elutasítás',
+              fr: 'refuser',
+              it: 'rifiuta',
+              es: 'rechazar',
+              pl: 'odrzuć',
+            }),
             rejectLabel,
             reject,
           ),
@@ -95,6 +127,10 @@ export const rejectLessProminent: Rule = {
           en: 'Give the reject control the same form, size and contrast as the accept button, for example two buttons of the same style side by side.',
           de: 'Der Ablehnen-Steuerung dieselbe Form, Größe und denselben Kontrast wie dem Zustimmen-Button geben, etwa zwei gleich gestaltete Buttons nebeneinander.',
           hu: 'Adjon az elutasítási lehetőségnek ugyanolyan formát, méretet és kontrasztot, mint az elfogadás gombnak, például két egyforma stílusú gombot egymás mellett.',
+          fr: "Donnez à la commande de refus la même forme, la même taille et le même contraste que le bouton d'acceptation, par exemple deux boutons de même style côte à côte.",
+          it: 'Dai al comando di rifiuto la stessa forma, dimensione e contrasto del pulsante di accettazione, ad esempio due pulsanti dello stesso stile affiancati.',
+          es: 'Da al control de rechazo la misma forma, tamaño y contraste que al botón de aceptar, por ejemplo dos botones del mismo estilo uno al lado del otro.',
+          pl: 'Nadaj elementowi odrzucenia taką samą formę, wielkość i kontrast jak przyciskowi akceptacji, na przykład dwa przyciski w tym samym stylu obok siebie.',
         }),
       },
     ];
@@ -104,15 +140,35 @@ export const rejectLessProminent: Rule = {
 function describe(lang: Lang, role: string, label: string, look: ControlLook): string {
   const style =
     look.style === 'button'
-      ? say(lang, { en: 'button', de: 'Button', hu: 'gomb' })
-      : say(lang, { en: 'plain text', de: 'Text', hu: 'szöveg' });
+      ? say(lang, {
+          en: 'button',
+          de: 'Button',
+          hu: 'gomb',
+          fr: 'bouton',
+          it: 'pulsante',
+          es: 'botón',
+          pl: 'przycisk',
+        })
+      : say(lang, {
+          en: 'plain text',
+          de: 'Text',
+          hu: 'szöveg',
+          fr: 'texte simple',
+          it: 'testo semplice',
+          es: 'texto simple',
+          pl: 'zwykły tekst',
+        });
   const contrast =
     look.contrast === undefined
       ? ''
       : say(lang, {
-          en: `, contrast ${look.contrast}:1`,
-          de: `, Kontrast ${look.contrast}:1`,
-          hu: `, kontraszt ${look.contrast}:1`,
+          en: `, contrast ${decimal(look.contrast, lang)}:1`,
+          de: `, Kontrast ${decimal(look.contrast, lang)}:1`,
+          hu: `, kontraszt ${decimal(look.contrast, lang)}:1`,
+          fr: `, contraste ${decimal(look.contrast, lang)}:1`,
+          it: `, contrasto ${decimal(look.contrast, lang)}:1`,
+          es: `, contraste ${decimal(look.contrast, lang)}:1`,
+          pl: `, kontrast ${decimal(look.contrast, lang)}:1`,
         });
   return `${role} "${label}": ${style}, ${look.width}×${look.height} px${contrast}`;
 }

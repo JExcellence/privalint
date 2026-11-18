@@ -1,4 +1,5 @@
 import type { Page } from 'playwright';
+import { INVISIBLE_CHARS } from './rules/links.js';
 import { PRIVACY_POLICY } from './rules/privacy-policy-link.js';
 import type { FormObservation } from './types.js';
 
@@ -7,13 +8,16 @@ const MAX_FORMS = 20;
 /**
  * Visible forms that collect personal data (an email, phone or password field), and whether a link
  * to the privacy policy sits in the form or right around it. Search forms don't count. Only the
- * structure is read, never what is typed in.
+ * structure is read, never what is typed in. Undefined when the page could not be read, which is
+ * not the same as a page without forms.
  */
-export async function readForms(page: Page): Promise<FormObservation[]> {
+export async function readForms(page: Page): Promise<FormObservation[] | undefined> {
   return page
     .evaluate(
-      ([source, max]) => {
+      ([source, max, invisibleSource]) => {
         const privacy = new RegExp(source, 'i');
+        // Soft hyphens and zero-width characters split "Daten&shy;schutz" for the pattern.
+        const invisible = new RegExp(invisibleSource, 'g');
         const mentionsPrivacy = (root: Element) =>
           [...root.querySelectorAll('a[href]')].some((a) => {
             let path = '';
@@ -22,7 +26,10 @@ export async function readForms(page: Page): Promise<FormObservation[]> {
             } catch {
               // A broken href has no path to match; the text still counts.
             }
-            return privacy.test(a.textContent ?? '') || privacy.test(path);
+            const text = [a.textContent, a.getAttribute('aria-label'), a.getAttribute('title')]
+              .join(' ')
+              .replace(invisible, '');
+            return privacy.test(text) || privacy.test(path.replace(invisible, ''));
           });
         const labelOf = (box: HTMLInputElement) =>
           (
@@ -80,7 +87,7 @@ export async function readForms(page: Page): Promise<FormObservation[]> {
         }
         return result;
       },
-      [PRIVACY_POLICY.source, MAX_FORMS] as const,
+      [PRIVACY_POLICY.source, MAX_FORMS, INVISIBLE_CHARS.source] as const,
     )
-    .catch(() => []);
+    .catch(() => undefined);
 }

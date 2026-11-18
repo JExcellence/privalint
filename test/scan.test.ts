@@ -114,16 +114,47 @@ describe('scan', () => {
     expect(hang.pages[0]?.capture?.complete).toBe(false);
   });
 
-  it('notes a contact form without a privacy link next to it', async () => {
+  it('notes a contact form without a privacy link next to it, reading soft-hyphenated links', async () => {
     const result = await scan(`${origin}/forms/`, { ...options, consentCheck: false });
     expect(result.findings).toEqual([
       expect.objectContaining({
         ruleId: 'form-privacy-notice',
         severity: 'info',
         message: expect.stringContaining('1 form(s) collecting personal data (contact or sign-up)'),
-        evidence: ['3 forms with email, phone or password fields checked'],
+        evidence: ['4 forms with email, phone or password fields checked'],
       }),
     ]);
+  });
+
+  it('reports rules that rely on a failed page read as not evaluable, not as clean', async () => {
+    let page: PageSnapshot | undefined;
+    const result = await scan(`${origin}/forms/unreadable.html`, {
+      ...options,
+      consentCheck: false,
+      onPage: (snapshot) => {
+        page ??= snapshot;
+      },
+    });
+    expect(page?.unreadParts).toEqual(['forms', 'storage']);
+    const outcome = (ruleId: string) =>
+      result.pages[0]?.ruleEvaluations?.find((evaluation) => evaluation.ruleId === ruleId);
+    for (const ruleId of [
+      'form-privacy-notice',
+      'form-preticked-consent',
+      'pre-consent-trackers',
+    ]) {
+      expect(outcome(ruleId)).toMatchObject({
+        status: 'executed',
+        partial: true,
+        outcome: 'not-evaluable',
+        explanation: 'incomplete-observation',
+      });
+    }
+    expect(outcome('privacy-policy-link')?.outcome).toBe('checked-no-finding');
+    expect(result.findings.map((finding) => finding.ruleId)).not.toContain('form-privacy-notice');
+    expect(assessCoverage(result).issues).toContainEqual(
+      expect.objectContaining({ ruleId: 'form-privacy-notice', reason: 'not-evaluable' }),
+    );
   });
 
   it('reads ticked boxes, HTTP form targets, HTTP resources and the referrer policy', async () => {
@@ -261,6 +292,40 @@ describe('scan', () => {
         .filter((f) => f.ruleId === 'privacy-policy-content')
         .map((f) => `${f.severity}:${f.subject}`),
     ).toEqual(['info:contact']);
+  });
+
+  it('reads a legal notice and a privacy policy published as PDF', async () => {
+    let start: PageSnapshot | undefined;
+    const result = await scan(`${origin}/pdf-legal/`, {
+      ...options,
+      onPage: (page) => {
+        start ??= page;
+      },
+    });
+    expect(start?.legalNotice?.url).toBe(`${origin}/pdf-legal/impressum.pdf`);
+    expect(start?.legalNotice?.text).toContain('HRB 12345');
+    expect(start?.privacyPolicy?.url).toBe(`${origin}/pdf-legal/datenschutz.pdf`);
+    const notEvaluable = (ruleId: string) =>
+      result.ruleSummary?.find((summary) => summary.ruleId === ruleId)?.notEvaluable;
+    expect(notEvaluable('legal-notice-content')).toBe(0);
+    expect(notEvaluable('privacy-policy-content')).toBe(0);
+    expect(
+      result.findings.filter((f) => f.ruleId === 'legal-notice-content'),
+      JSON.stringify(result.findings),
+    ).toEqual([]);
+  });
+
+  it('counts a PDF without text as a legal notice that could not be loaded', async () => {
+    let start: PageSnapshot | undefined;
+    await scan(`${origin}/pdf-legal/scanned.html`, {
+      ...options,
+      onPage: (page) => {
+        start ??= page;
+      },
+    });
+    expect(start?.legalNotice).toBeUndefined();
+    expect(start?.linkedPageMissing?.legalNotice).toBe('not-loaded');
+    expect(start?.privacyPolicy?.text).toContain('datenschutz@example.de');
   });
 
   it('notes template text and an unreachable data protection officer in the privacy policy', async () => {

@@ -16,13 +16,14 @@ export function isPdf(bytes: Uint8Array): boolean {
 
 /**
  * The text of a PDF, page by page, or undefined when it can't be read (not a PDF, encrypted,
- * broken). Uses pdf.js without evaluating code from the file and without loading fonts: only the
- * text is needed.
+ * broken, no text layer). Uses pdf.js without evaluating code from the file and without loading
+ * fonts: only the text is needed. `complete: false` when the text was cut at 60 pages or 500,000
+ * characters, so a rule doesn't take a missing part for a missing detail.
  */
-export async function pdfText(
+export async function readPdf(
   bytes: Uint8Array,
   load: () => Promise<PdfJs> = loadPdfJs,
-): Promise<string | undefined> {
+): Promise<{ text: string; complete: boolean } | undefined> {
   if (!isPdf(bytes)) return undefined;
   // pdf.js can fail to load, for example on Node 24 without its optional @napi-rs/canvas package
   // ("DOMMatrix is not defined"). The policy then stays unread instead of failing the scan.
@@ -45,6 +46,7 @@ export async function pdfText(
     const document = await task.promise;
     const pages: string[] = [];
     let length = 0;
+    let complete = document.numPages <= MAX_PAGES;
     for (let number = 1; number <= Math.min(document.numPages, MAX_PAGES); number++) {
       const page = await document.getPage(number);
       const content = await page.getTextContent();
@@ -56,10 +58,16 @@ export async function pdfText(
       page.cleanup();
       pages.push(text);
       length += text.length;
-      if (length >= MAX_CHARS) break;
+      if (length >= MAX_CHARS) {
+        // Pages after this one are not read.
+        if (number < document.numPages) complete = false;
+        break;
+      }
     }
-    const text = pages.join('\n').slice(0, MAX_CHARS).trim();
-    return text === '' ? undefined : text;
+    const joined = pages.join('\n');
+    if (joined.length > MAX_CHARS) complete = false;
+    const text = joined.slice(0, MAX_CHARS).trim();
+    return text === '' ? undefined : { text, complete };
   } catch {
     return undefined;
   } finally {

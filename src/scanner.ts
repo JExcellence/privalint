@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { type Browser, chromium } from 'playwright';
 import { assessPage } from './assessment.js';
 import { capturePage, deviceOptions } from './capture.js';
@@ -9,7 +10,7 @@ import { withFixGuides } from './fix-guides.js';
 import { applyRegion } from './legal.js';
 import { VERSION } from './meta.js';
 import { networkLimits } from './network.js';
-import { MAX_PDF_BYTES, pdfText } from './pdf.js';
+import { MAX_PDF_BYTES, readPdf } from './pdf.js';
 import { redactPersonalDataInText } from './personal-data.js';
 import { applyPolicy, ruleSetting, validateRuleSettings } from './policy.js';
 import { REPORT_SCHEMA_VERSION } from './report-contract.js';
@@ -60,6 +61,14 @@ function integer(value: number, name: string, minimum: number): void {
   }
 }
 
+/** The Playwright privalint runs with, whose browser build must be installed. */
+const PLAYWRIGHT_VERSION = (
+  createRequire(import.meta.url)('playwright/package.json') as { version: string }
+).version;
+
+const isMissingBrowser = (error: unknown): boolean =>
+  error instanceof Error && error.message.includes("Executable doesn't exist");
+
 async function launchBrowser(options: ScanOptions): Promise<Browser> {
   const sandbox = options.sandbox === true;
   try {
@@ -69,6 +78,15 @@ async function launchBrowser(options: ScanOptions): Promise<Browser> {
       ...(options.channel === undefined ? {} : { channel: options.channel }),
     });
   } catch (error) {
+    if (options.channel === undefined && isMissingBrowser(error)) {
+      // Playwright's own hint, "npx playwright install", installs the browser of whatever
+      // Playwright npx resolves, which under `npx privalint` need not be the one privalint uses.
+      throw new Error(
+        `Chromium for Playwright ${PLAYWRIGHT_VERSION} is not installed. Install it once with: ` +
+          `npx -y playwright@${PLAYWRIGHT_VERSION} install chromium`,
+        { cause: error },
+      );
+    }
     if (!sandbox) throw error;
     // Chromium's own message ("No usable sandbox!") does not say what to change.
     throw new Error(
@@ -305,7 +323,8 @@ export async function scan(target: string, options: ScanOptions = {}): Promise<S
     throwIfAborted(options.signal);
     // DNS lookups belong to native scans: an adapter owns the network, an offline fixture has none.
     if (!options.networkAdapter && (options.resolveCname !== undefined || !options.offline)) {
-      await findCnameCloaks(snapshots, siteUrl, options.resolveCname);
+      await findCnameCloaks(snapshots, siteUrl, options.resolveCname, options.signal);
+      throwIfAborted(options.signal);
     }
     // The consent manager seen on a host's first page is the one its other pages use.
     const cmpByHost = new Map<string, string>();
@@ -434,7 +453,8 @@ const COOKIE_POLICY =
 
 /**
  * Loads the page a link matching `pattern` on `from` leads to, on the same site, and returns
- * its text. One extra load that doesn't count as a crawled page, like the settings check.
+ * its text. One extra load that doesn't count as a crawled page, like the settings check. A PDF
+ * on the same site is read with pdf.js; one without readable text counts as not loaded.
  */
 async function readLinkedPage(
   browser: Browser,
@@ -446,10 +466,26 @@ async function readLinkedPage(
   // "Privacy settings" with href="#" may come before the policy link: try the first real target.
   const found = from.links
     .filter(linkMatches(pattern))
-    .map((link) => ({ link, url: crawlTarget(link.href, fromUrl) }))
+    .map((link) => ({
+      link,
+      url: crawlTarget(link.href, fromUrl) ?? pdfTarget(link.href, fromUrl),
+    }))
     .find(({ url }) => url !== undefined && url !== withoutHash(from.finalUrl));
   const target = found?.url;
   if (target === undefined) return { missing: 'no-link' };
+  const pdf = await readPdfDocument(browser, target, fromUrl, options);
+  if (pdf !== undefined) {
+    if (!pdf.read) return { missing: 'not-loaded' };
+    // A PDF has no links to follow; its text gets the same cap as a page's. Text cut off may hide
+    // what a rule looks for, so the page then counts as incomplete.
+    const text = pdf.text.slice(0, MAX_LINKED_TEXT);
+    const complete = pdf.complete && pdf.text.length <= MAX_LINKED_TEXT;
+    return {
+      page: { url: pdf.url, text, mailto: false, complete },
+      links: [],
+      label: found?.link.text ?? '',
+    };
+  }
   const page = await capturePage(browser, target, fromUrl, options, 'none', true);
   // A 404 or 500 page is no legal notice or policy, whatever it says. A link that leads to another
   // site is not this site's page either.
@@ -557,13 +593,16 @@ async function readPolicyAndCookies(
   const { page: text, links } = policy;
   const cookieLink = links.find(linkMatches(COOKIE_POLICY));
   if (cookieLink === undefined) return policy;
-  const pdf = await readPdfPolicy(browser, cookieLink.href, new URL(text.url), options);
+  const pdf = await readPdfDocument(browser, cookieLink.href, new URL(text.url), options);
   if (pdf !== undefined) {
     return {
       page: {
         ...text,
-        text: `${text.text}\n${pdf.text}`,
-        ...(pdf.read ? {} : { unread: [pdf.url] }),
+        text: `${text.text}\n${pdf.text.slice(0, MAX_LINKED_TEXT)}`,
+        // Cut off or unread, the cookie policy counts as not fully read.
+        ...(pdf.read && pdf.complete && pdf.text.length <= MAX_LINKED_TEXT
+          ? {}
+          : { unread: [pdf.url] }),
       },
       links,
       label: policy.label,
@@ -592,33 +631,45 @@ async function readPolicyAndCookies(
 }
 
 /**
- * A cookie policy published as a PDF on the same site, read with pdf.js. Undefined when the link
- * is no PDF (by its path), so the caller loads it as a page; `read: false` when the PDF couldn't
- * be downloaded or read, or is larger than 5 MB.
+ * A policy or legal notice published as a PDF on the same site, read with pdf.js. Undefined when
+ * the link is no PDF (by its path), so the caller loads it as a page; `read: false` when the PDF
+ * couldn't be downloaded or read, has no text (a scan), or is larger than 5 MB.
  */
-async function readPdfPolicy(
+async function readPdfDocument(
   browser: Browser,
   href: string,
   from: URL,
   options: ScanOptions,
-): Promise<{ url: string; text: string; read: boolean } | undefined> {
+): Promise<{ url: string; text: string; read: boolean; complete: boolean } | undefined> {
+  const url = pdfTarget(href, from);
+  if (url === undefined) return undefined;
+  const fetchBytes = options.networkAdapter
+    ? adapterFetchBytes(options.networkAdapter, MAX_PDF_BYTES)
+    : browserFetchBytes(browser, MAX_PDF_BYTES);
+  const bytes = await fetchBytes(url);
+  // pdf.js read nothing: no text layer (a scan), not a PDF, or pdf.js failed to load.
+  const pdf = bytes === undefined ? undefined : await readPdf(bytes);
+  return pdf === undefined
+    ? { url, text: '', read: false, complete: false }
+    : { url, text: pdf.text, read: true, complete: pdf.complete };
+}
+
+/** A PDF on the same site, by its path, without the fragment; undefined for anything else. */
+function pdfTarget(href: string, from: URL): string | undefined {
   let url: URL;
   try {
     url = new URL(href, from);
   } catch {
     return undefined;
   }
-  if (!/\.pdf$/i.test(url.pathname) || !isFirstParty(url.href, from)) return undefined;
+  if (!/^https?:$/.test(url.protocol) || !/\.pdf$/i.test(url.pathname)) return undefined;
+  if (!isFirstParty(url.href, from)) return undefined;
   url.hash = '';
-  const fetchBytes = options.networkAdapter
-    ? adapterFetchBytes(options.networkAdapter, MAX_PDF_BYTES)
-    : browserFetchBytes(browser, MAX_PDF_BYTES);
-  const bytes = await fetchBytes(url.href);
-  const text = bytes === undefined ? undefined : await pdfText(bytes);
-  return text === undefined
-    ? { url: url.href, text: '', read: false }
-    : { url: url.href, text, read: true };
+  return url.href;
 }
+
+/** Visible text of a linked page is cut to this length; a PDF read in its place too. */
+const MAX_LINKED_TEXT = 100_000;
 
 /** Loads the start page in a fresh context that sends Global Privacy Control, without clicking. */
 async function checkGpc(
@@ -692,6 +743,7 @@ function consentSummary(start: PageSnapshot | undefined): Pick<ScanResult, 'cons
     bannerControls: _bannerControls,
     bannerText: _bannerText,
     keyboard: _keyboard,
+    bannerUnread: _bannerUnread,
     settings,
     ...summary
   } = start.consent;

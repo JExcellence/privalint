@@ -17,11 +17,43 @@ export function formatHtml(result: ScanResult): string {
   const lang = result.lang;
   const counts = countBySeverity(result.findings);
   const labels: Record<Severity, string> = {
-    error: say(lang, { en: 'Error', de: 'Fehler', hu: 'Hiba' }),
-    warning: say(lang, { en: 'Warning', de: 'Warnung', hu: 'Figyelmeztetés' }),
-    info: say(lang, { en: 'Info', de: 'Hinweis', hu: 'Megjegyzés' }),
+    error: say(lang, {
+      en: 'Error',
+      de: 'Fehler',
+      hu: 'Hiba',
+      fr: 'Erreur',
+      it: 'Errore',
+      es: 'Error',
+      pl: 'Błąd',
+    }),
+    warning: say(lang, {
+      en: 'Warning',
+      de: 'Warnung',
+      hu: 'Figyelmeztetés',
+      fr: 'Avertissement',
+      it: 'Avviso',
+      es: 'Advertencia',
+      pl: 'Ostrzeżenie',
+    }),
+    info: say(lang, {
+      en: 'Info',
+      de: 'Hinweis',
+      hu: 'Megjegyzés',
+      fr: 'Info',
+      it: 'Info',
+      es: 'Info',
+      pl: 'Informacja',
+    }),
   };
-  const evidenceLabel = say(lang, { en: 'Evidence', de: 'Belege', hu: 'Bizonyítékok' });
+  const evidenceLabel = say(lang, {
+    en: 'Evidence',
+    de: 'Belege',
+    hu: 'Bizonyítékok',
+    fr: 'Preuves',
+    it: 'Prove',
+    es: 'Pruebas',
+    pl: 'Dowody',
+  });
   const body: string[] = [];
 
   body.push(
@@ -52,6 +84,10 @@ export function formatHtml(result: ScanResult): string {
       en: 'Observation details',
       de: 'Details der Beobachtung',
       hu: 'A megfigyelés részletei',
+      fr: "Détails de l'observation",
+      it: "Dettagli dell'osservazione",
+      es: 'Detalles de la observación',
+      pl: 'Szczegóły obserwacji',
     });
     body.push(
       `<details class="observations"><summary>${escape(summary)} (${observations.length})</summary><ul>`,

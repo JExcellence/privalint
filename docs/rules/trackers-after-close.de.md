@@ -12,14 +12,18 @@ das Schließen-Element des Banners und klickt es: ein sichtbares Bedienelement i
 dessen ganzer Text „×“, „✕“, „X“, „Close“, „Schließen“, „Bezár“, … ist oder dessen `aria-label`
 oder `title` das sagt. Danach lädt es die Seite neu und vergleicht wie beim Ablehnen-Pfad, was
 lädt. Jeder Tracker von privalints Liste, der dann lädt oder neue Cookies setzt, ist ein `error`
-(ein Tag-Manager allein eine `warning`).
+(Analyse mit `--region fr`, `it`, `nl` oder `uk` eine `warning` mit den Bedingungen der Ausnahme im
+Lösungsvorschlag; ein Tag-Manager allein eine `warning`, außer seine Anfragen melden Google eine Einwilligung; siehe
+[Google Consent Mode](pre-consent-trackers.de.md#google-consent-mode)). Eine eigene Subdomain, die per CNAME auf einen Tracker zeigt, zählt als dieser Tracker; siehe
+[Per CNAME getarnte Tracker](pre-consent-trackers.de.md#per-cname-getarnte-tracker).
 
-| Situation                               | Ergebnis                                                     |
-| --------------------------------------- | ------------------------------------------------------------ |
-| Schließen-Element gefunden und geklickt | geprüft; Befunde für geladene Tracker                        |
-| Banner ohne Schließen-Element           | geprüft, kein Befund: Schließen kann nicht missdeutet werden |
-| `--check-close` nicht angegeben         | ausgelassen (`close-check-disabled`), keine Lücke            |
-| Banner erschien nicht erneut            | nicht prüfbar (`banner-not-shown`)                           |
+| Situation                                           | Ergebnis                                                     |
+| --------------------------------------------------- | ------------------------------------------------------------ |
+| Schließen-Element gefunden und geklickt             | geprüft; Befunde für geladene Tracker                        |
+| Banner ohne Schließen-Element (Suche abgeschlossen) | geprüft, kein Befund: Schließen kann nicht missdeutet werden |
+| Suche, Klick oder Neuladen fehlgeschlagen           | nicht prüfbar (`browser-interaction-failed`), kein Bestanden |
+| `--check-close` nicht angegeben                     | ausgelassen (`close-check-disabled`), keine Lücke            |
+| Banner erschien nicht erneut                        | nicht prüfbar (`banner-not-shown`)                           |
 
 Der Bericht hält das Ergebnis in `consent.close` fest: Ergebnis, Grund, Beschriftung des
 Schließen-Elements und ob das Fenster nach dem Schließen vollständig beobachtet wurde.

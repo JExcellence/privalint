@@ -15,10 +15,11 @@ gleicht dann ab:
 
 Befunde werden nach Anbieter gruppiert, mit bis zu fünf Nachweisen pro Anbieter.
 
-| Kategorie                                                            | Schweregrad |
-| -------------------------------------------------------------------- | ----------- |
-| analytics, advertising, session-replay, social, marketing-automation | `error`     |
-| tag-manager (z. B. ein GTM-Container allein)                         | `warning`   |
+| Kategorie                                                            | Schweregrad                                                                                    |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| analytics, advertising, session-replay, social, marketing-automation | `error`                                                                                        |
+| tag-manager (z. B. ein GTM-Container allein)                         | `warning`                                                                                      |
+| analytics mit `--region fr`, `it`, `nl` oder `uk`                    | `warning`, mit den Bedingungen der Ausnahme im Lösungsvorschlag ([Regionen](../regions.de.md)) |
 
 Ein Tag-Manager-Container ist nur eine Warnung: Schon sein Laden überträgt die IP-Adresse an
 einen Dritten, ob er aber ohne Einwilligung Tags auslöst, hängt von seiner Konfiguration ab.
@@ -32,12 +33,12 @@ wirken wie eigene, deshalb werden sie zusätzlich an Pfad und Parametern auf jed
 Jede Signatur verlangt das Parameterformat des Anbieters, ein beliebiger `/collect`-Endpunkt
 passt also nicht:
 
-| Anbieter           | Pfad und Parameter                                  |
-| ------------------ | --------------------------------------------------- |
-| Google Analytics   | `…/g/collect?v=2&tid=G-…`, `…/collect?v=1&tid=UA-…` |
-| Google Analytics   | `…/gtag/js?id=G-…` (auch `AW-`, `DC-`)              |
-| Google Tag Manager | `…/gtm.js?id=GTM-…`                                 |
-| Meta Pixel         | `…/tr?id=<numerische Pixel-ID>&ev=…`                |
+| Anbieter           | Pfad und Parameter                                                                                                                              |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google Analytics   | `…/g/collect?v=2&tid=G-…`, jeder Pfad mit `v=2&tid=G-…` und `cid`, `en` oder `_p` (von einem Custom Loader umbenannt), `…/collect?v=1&tid=UA-…` |
+| Google Analytics   | `…/gtag/js?id=G-…` (auch `AW-`, `DC-`)                                                                                                          |
+| Google Tag Manager | `…/gtm.js?id=GTM-…`                                                                                                                             |
+| Meta Pixel         | `…/tr?id=<numerische Pixel-ID>&ev=…`                                                                                                            |
 
 Der Beleg nennt dann den Host, über den die Anfragen liefen („über metrics.example.com
 weitergeleitet“). Auch ein serverseitiger Container braucht für das Weitergeleitete eine
@@ -49,12 +50,45 @@ Eine Subdomain wie `metrics.example.com` kann ein CNAME auf einen Tracker sein; 
 Cookies wirken dann wie eigene. In nativen Scans löst privalint die CNAME-Kette (bis zu fünf
 Schritte) jeder eigenen Subdomain außer dem gescannten Host auf, an die eine Anfrage ging, und meldet
 eine Kette, die eine Tracker-Domain erreicht, als diesen Tracker, mit der Kette als Beleg.
+Subdomains, die erst nach dem Ablehnen, nach dem Speichern abgewählter Einstellungen, nach dem
+Schließen des Banners oder mit Global Privacy Control Anfragen bekommen, werden ebenso aufgelöst;
+`trackers-after-reject`, `trackers-after-settings`, `trackers-after-close` und `gpc-signal`
+erkennen sie genauso. Ladevorgänge nach dem Zustimmen werden nicht geprüft: Dann dürfen Tracker
+laufen.
 
 Die Ziele stammen aus der Tracker-Liste und aus AdGuards MIT-lizenzierter
 [cname-trackers-Liste](https://github.com/AdguardTeam/cname-trackers) (Adobe Experience Cloud,
 Eulerian, Criteo, Keyade, AT Internet, Commanders Act, Oracle Eloqua, Wizaly, Ingenious
 Technologies, Pardot). Scans über einen Netzwerk-Adapter und Offline-Fixtures stellen keine
 DNS-Anfragen. Höchstens 20 Subdomains werden aufgelöst, jede Anfrage auf drei Sekunden begrenzt.
+
+### Google Consent Mode
+
+Google-Tags im Consent Mode senden den Einwilligungsstatus mit jeder Anfrage im Parameter `gcs`.
+privalint liest ihn aus jeder Tracker-Anfrage und stellt ihn an den Anfang der Belege:
+„Consent Mode: ad_storage abgelehnt, analytics_storage abgelehnt (gcs=G100)“.
+
+| Was die Anfragen tragen                        | Befund                                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------------------------ |
+| nur abgelehnte Zustände, etwa `G100`           | „sendet Google-Consent-Mode-Pings“, mit dem Hinweis, dass sie Google erreichen |
+| ein erlaubter Zustand (`G101`, `G110`, `G111`) | eigener Fehler: das Tag meldet Google eine Einwilligung vor jeder Auswahl      |
+| kein `gcs`                                     | der normale Befund                                                             |
+
+Die Prüfungen nach dem Ablehnen, nach dem Speichern der Einstellungen und nach dem Schließen lesen
+ihn genauso. Ein erlaubter Zustand nach dem Ablehnen wird als Einwilligung gemeldet, die der
+Besucher nie gegeben hat.
+
+Google dokumentiert, dass `gcs` `ad_storage` und `analytics_storage` überträgt
+([Consent mode HTTP parameters](https://developers.google.com/tag-platform/security/concepts/consent-mode)),
+aber nicht die Kodierung. Die Reihenfolge wurde am 2026-11-17 mit Googles gtag.js geprüft:
+Standardwerte abgelehnt/abgelehnt, abgelehnt/erlaubt, erlaubt/abgelehnt und erlaubt/erlaubt für
+ad_storage/analytics_storage sendeten `G100`, `G101`, `G110` und `G111`. Der Parameter `gcd`, der
+auch Standardwerte von Aktualisierungen unterscheidet, wird nicht gelesen: Google dokumentiert
+seine Buchstaben nicht, und Tabellen Dritter widersprechen sich.
+
+Manche Websites erlauben außerhalb der EU standardmäßig (`region` im Default-Befehl). Ein Scan von
+einer Adresse außerhalb der EU, etwa einem GitHub-Runner, kann dann `G111` sehen, das ein Besucher
+in der EU nicht bekäme.
 
 ## Warum
 

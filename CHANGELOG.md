@@ -6,6 +6,146 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+## 0.11.0 - 2026-11-18
+
+Upgrade notes:
+
+- Reports get schema 1.6.0. It only adds the region values `fr`, `it`, `es`, `nl`, `pl` and `uk`
+  and the report languages `fr`, `it`, `es` and `pl`; a 1.5.0 validator rejects reports that use
+  them.
+- Scans can find more than before with the same options: trackers behind a first-party CNAME
+  after a consent choice, Google Consent Mode pings that report consent as granted, legal pages
+  published as PDF, consent buttons in more languages and more tracker hosts.
+- A page read that failed now counts as a gap, so a rule that depends on it is partial instead of
+  clean.
+- The French, Italian, Spanish and Polish texts and the new region citations have not yet been
+  reviewed by native speakers or lawyers in those countries.
+
+### Added
+
+- Report text in French (`--lang fr`, [#135](https://github.com/jexcellence/privalint/issues/135)):
+  every finding, fix and the text, Markdown, HTML and capture reports. Report schema 1.6.0 also
+  accepts `fr` as `lang`, with no-break spaces before ":", ";", "!", "?" and inside
+  guillemets. Not yet reviewed by a native speaker
+- Report text in Italian (`--lang it`), Spanish (`--lang es`) and Polish (`--lang pl`)
+  ([#135](https://github.com/jexcellence/privalint/issues/135)), with the Polish count forms
+  ("2 błędy", "5 błędów"). Report schema 1.6.0 also accepts `it`, `es` and `pl` as `lang`. Not
+  yet reviewed by native speakers
+- The consent check reads first-layer, settings and save buttons in Polish and more French, Italian,
+  Spanish and Dutch wording ("Odrzuć wszystkie", "Continua senza accettare", "Aceptar selección",
+  "Keuze opslaan"), and the links that reopen the settings in those languages
+  ([#57](https://github.com/jexcellence/privalint/issues/57)). "Accept all" in any of them still
+  never counts as saving the selection
+- Trackers from vendor documentation ([#71](https://github.com/jexcellence/privalint/issues/71)):
+  the Reddit Pixel script (`www.redditstatic.com/ads/`) and `ads.reddit.com`, and Microsoft Xandr
+  conversion and segment pixels (`ib.adnxs.com` and `secure.adnxs.com`, `/px` and `/seg`). The
+  Amazon Ads tag, ProvenExpert and the Google Ads `/ccm/collect` path stay off the list: their
+  vendors' pages still name no host or path
+- Documented the check of the Usercentrics shadow-root and CookieConsent v3 selectors
+  ([#55](https://github.com/jexcellence/privalint/issues/55)) in
+  [docs/consent-managers.md](docs/consent-managers.md): accept, deny and save match on a live
+  Usercentrics banner, the CookieConsent `data-role` values match its source
+- Region profiles for France (`--region fr`) and the United Kingdom (`--region uk`), with each
+  rule's legal basis as lawyers there cite it; sources in [docs/regions.md](docs/regions.md)
+  ([#134](https://github.com/jexcellence/privalint/issues/134)). In both, analytics before consent
+  or after closing the banner is a warning with the conditions of the exemption in the fix (CNIL
+  audience measurement; PECR Sch. A1 para. 5, in force since 05.02.2026); trackers after "reject"
+  stay errors. With `fr`, `legal-notice-content` notes a missing host or publication director
+  (LCEN). With `uk`, `impressum-link` and `withdrawal-button` drop one level and `third-country-providers` treats the UK and the EEA as adequate. Reports get schema
+  1.6.0, which only adds the region values
+- Region profiles for Italy (`it`), Spain (`es`), the Netherlands (`nl`) and Poland (`pl`)
+  ([#134](https://github.com/jexcellence/privalint/issues/134)). Analytics before consent is a
+  warning with the conditions in the fix in Italy (Garante, 10.06.2021) and the Netherlands
+  (Art. 11.7a lid 3 Tw); Spain and Poland have no such exemption. In Italy an "X" that closes the
+  banner counts as refusal for `reject-option` when `--check-close` used it. `impressum-link`
+  drops one level in Italy, the Netherlands and Poland, `withdrawal-button` in Spain and Poland,
+  where it is not yet transposed. `legal-notice-content` notes a missing partita IVA (`it`), NIF
+  (`es`) or KRS, NIP and share capital (`pl`), and recognises S.r.l., S.p.A., S.L., S.A., B.V.,
+  N.V. and sp. z o.o. with the registers REA, Registro Imprese, Registro Mercantil, KvK and KRS.
+  `withdrawal-button` accepts "overeenkomst ontbinden" and "odstąp od umowy"
+- Rules get `selectedRules` in their context, the IDs of the rules the scan runs, so a rule can
+  leave a case to another one; `reject-option` in Italy relies on `trackers-after-close` only when
+  that rule runs
+- A legal notice or privacy policy published as a PDF on the same site is read with pdf.js, as a
+  linked cookie policy already was. A PDF without a text layer counts as not loaded, so the rules
+  that need it are not evaluable instead of reporting missing details
+- GA4 hits through a server-side tagging server whose custom loader renames the collect path are
+  recognised by their parameters (`v=2`, a `G-` measurement ID and `cid`, `en` or `_p`) on any path
+- `legal-notice-content` recognises the legal forms PLC, LLP, SAS, SASU, EURL and SNC, the
+  registers RCS and SIREN/SIRET, and French street addresses such as "12 bis, rue de la Paix"
+- `privalint mcp` runs privalint as an MCP server over stdio, with the tools `scan_site` and
+  `list_rules`, up to 20 pages per call and three at a time, for Claude Desktop, Cursor and other MCP clients. A scan sends progress
+  notifications and stops when the client cancels it. A missing Chromium is reported with the
+  command that installs it
+- A Claude Code plugin in this repository (`/plugin install privalint --marketplace
+  JExcellence/privalint`): the MCP server plus a `privacy-scan` skill that reports the findings
+  and finds their cause in the user's code
+- `impressum-link` accepts "Anbieterangaben" as a legal notice link
+- Google Consent Mode: the tracker checks read the `gcs` parameter of each tracker request and put
+  the consent state first in the evidence ("Consent Mode: ad_storage denied, analytics_storage
+  denied (gcs=G100)"). A granted state before any choice, after rejecting, after saving
+  switched-off settings or after closing the banner gets its own message: the tag tells Google
+  that consent was granted. Denied pings are named as such, with a note that they still reach
+  Google. The order of the two digits was checked with Google's gtag.js
+  ([#117](https://github.com/jexcellence/privalint/issues/117))
+
+### Fixed
+
+- When a known consent manager's script loaded but no banner appeared, privalint said the site
+  had no consent banner. Some consent managers hide the banner from automated browsers (seen with
+  Usercentrics on kemmler.de), so `consent-banner-missing` and the report's consent line now name
+  the consent manager, say it may hide the banner from automated browsers and ask for a check in
+  a normal browser. `consent.cmp` carries its name
+- Size and contrast ratios and adapter timings were written with a decimal point in German and
+  Hungarian reports; they now use a decimal comma there and in French, and large numbers are
+  grouped as each language writes them ("125.000" in German)
+- A page label quoted in a French report that has its own guillemets is no longer quoted twice;
+  its guillemets become the inner quotes “ ”. A stray straight quote from the page no longer
+  switches off the French no-break spaces for the rest of the line
+- `legal-notice-content` took words such as "Software", "Foto" or "Entwicklung" in the provider's
+  own name ("Muster Software GmbH") for a mention of another company and skipped its legal form.
+  Such words now count only as a label: after a separator, before a colon or next to "by", "von",
+  "durch", "par" or "bei". "Gestaltung", "Konzeption", "réalisation", "création", "website" and
+  "built" are recognised as labels too, as are Hungarian words such as "Tárhelyszolgáltató"
+- A privacy policy whose linked cookie policy could not be read counted as fully read: a finding
+  of `privacy-policy-content`, `privacy-policy-vendors` or `legal-notice-content` is now partial,
+  and a missing controller contact drops to `info` and names the unread link, as missing vendors
+  already did
+- A PDF or gzip file that a network adapter returned as a binary string was re-encoded as UTF-8
+  and could not be read; it is now copied byte by byte
+- `withdrawal-button` did not accept "Renoncer au contrat ici", the label French law prescribes
+- "Continuer sans accepter" split by a non-breaking space or a line break was not recognised as
+  a reject button
+- `tracking-cookie-lifetime` said the CNIL recommends 13 months for tracking cookies; the
+  13 months are for audience measurement without consent and serve as a benchmark
+- Trackers behind a first-party CNAME, such as `metrics.your-site.de`, were only recognised
+  before consent. Subdomains that load after rejecting, saving switched-off settings, closing the
+  banner or with Global Privacy Control are now resolved too, and `trackers-after-reject`,
+  `trackers-after-settings`, `trackers-after-close`, `gpc-signal` and `consent-banner-missing`
+  report them as the tracker behind them
+- With `npx privalint`, a missing Chromium stopped the scan with Playwright's hint
+  `npx playwright install`, which installs the browser of whatever Playwright npx resolves. The
+  scan now names the build privalint needs: `npx -y playwright@<version> install chromium`
+- `privalint ftp://example.com` scanned a host called `ftp`; targets that start with another
+  scheme are now refused
+- Links to the Impressum or the privacy policy written with soft hyphens or zero-width characters,
+  such as "Daten&amp;shy;schutz&amp;shy;erklärung", were not recognised, so `impressum-link`,
+  `privacy-policy-link` and `form-privacy-notice` reported them as missing
+- `form-privacy-notice` also reads the `aria-label` and `title` of links next to a form, as the
+  other link checks already did
+- A read of the page that failed counted as a page without the thing read: no forms, no
+  fingerprinting calls, no Web Storage keys, no http:// resources. The rules using it then
+  reported "checked, no finding". They now report the evaluation as partial (`incomplete-observation`),
+  which `--fail-on-incomplete` counts. The same holds for reads of the consent banner (links, text,
+  control looks, keyboard reach), the settings link searched after rejecting, and the storage read
+  around each consent choice, also when it hit its cap of 200 keys; a failed search for the
+  banner's close button, or a close button that disappeared before the click, is no longer taken
+  for a banner without one
+- Run with tsx or another esbuild setup that keeps function names, every page read that declared
+  a named function failed in the browser (`__name is not defined`), so forms and parts of the
+  consent check were silently empty. privalint now defines a no-op `__name` in the scanned page
+  when the page has none
+
 ## 0.10.1 - 2026-11-07
 
 Upgrade notes:

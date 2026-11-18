@@ -51,6 +51,21 @@ Am 27.10.2026 lief privalint mit einem Headless-Chromium aus Deutschland gegen d
 | Cookie-Script      | cookie-script.com     | erkannt, "Decline all" geklickt und neu geladen                           |
 | Usercentrics v3    | dkb.de                | erkannt, abgelehnt, Einstellungen geöffnet, 17 Schalter aus, gespeichert  |
 
+Am 18.11.2026 wurden die beiden noch offenen Selektorsätze geprüft
+([#55](https://github.com/jexcellence/privalint/issues/55)):
+
+- **Usercentrics mit Shadow-Root-Oberfläche** (`#usercentrics-root`, `data-testid`-Selektoren)
+  auf kemmler.de. Die Seite lädt Usercentrics, zeigte headless Chromium aber kein Banner, daher
+  meldete privalint keins. Ein separates Prüfskript, nicht privalint, öffnete die erste Ebene über
+  das dokumentierte `UC_UI.showFirstLayer()`: `uc-accept-all-button` („Alle akzeptieren“),
+  `uc-deny-all-button` („Alle ablehnen“) und `uc-save-button` („Auswahl speichern“) passen. Diese
+  Variante zeigt die Kategorien schon auf der ersten Ebene und hat keinen `uc-more-button`; der
+  Einstellungen-Selektor bleibt dort ungeprüft.
+- **CookieConsent v3**: keine öffentliche Seite zeigte es headless Chromium. Der Quelltext
+  (`src/core/modals/consentModal.js` und `preferencesModal.js` in orestbida/cookieconsent) setzt
+  `data-role` auf `all`, `necessary`, `show` und `save` an den Buttons in `#cc-main`, genau
+  das, wonach privalint sucht.
+
 Bei Osano stand der Ablehnen-Selektor zuvor auf `.osano-cm-deny-all`. osano.com liefert jedoch
 `.osano-cm-denyAll`; der Selektor ist korrigiert und durch ein Fixture abgesichert.
 
