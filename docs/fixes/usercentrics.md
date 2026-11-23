@@ -88,11 +88,11 @@ No visible way to reopen the settings after a choice.
 
 ## `banner-legal-links`
 
-A blocking banner links neither the privacy policy nor the legal notice. Admin Interface > Content
-> First Layer > "Imprint & Privacy Links"; with "Edit & Translate", set one URL per language. In
-> code, the properties are `imprintUrl` and `privacyPolicyUrl`.
-> [Imprint and privacy links on the banner](https://support.usercentrics.com/hc/en-us/articles/17101692077212-Can-links-to-an-imprint-and-or-privacy-policy-be-included-on-the-banner),
-> [Available properties](https://usercentrics.com/beta-docs/available-properties)
+A blocking banner links neither the privacy policy nor the legal notice. Admin Interface >
+Content > First Layer > "Imprint & Privacy Links"; with "Edit & Translate", set one URL per
+language. In code, the properties are `imprintUrl` and `privacyPolicyUrl`.
+[Imprint and privacy links on the banner](https://support.usercentrics.com/hc/en-us/articles/17101692077212-Can-links-to-an-imprint-and-or-privacy-policy-be-included-on-the-banner),
+[Available properties](https://usercentrics.com/beta-docs/available-properties)
 
 ## `banner-language`
 

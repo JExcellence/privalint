@@ -80,10 +80,10 @@ No visible way to reopen the settings after a choice.
 
 ## `banner-legal-links`
 
-A blocking banner links neither the privacy policy nor the legal notice. In the Manager, Settings
-> "Content" tab: select the banner text and add the links with the link icon of the toolbar, or in
-> the HTML editor (`</>`).
-> [Customizing the banner content](https://support.cookiebot.com/hc/en-us/articles/26380240216860-Customizing-the-content-in-the-cookie-consent-banner-via-the-Cookiebot-Manager)
+A blocking banner links neither the privacy policy nor the legal notice. In the Manager,
+Settings > "Content" tab: select the banner text and add the links with the link icon of the
+toolbar, or in the HTML editor (`</>`).
+[Customizing the banner content](https://support.cookiebot.com/hc/en-us/articles/26380240216860-Customizing-the-content-in-the-cookie-consent-banner-via-the-Cookiebot-Manager)
 
 ## `banner-language`
 
