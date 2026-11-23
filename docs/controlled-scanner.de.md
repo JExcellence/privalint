@@ -124,6 +124,7 @@ HTTP-Status bzw. betroffenes Limit.
 
 Anfragen aus fremden iframes, die Chromium in einem eigenen Prozess ausführt, und aus Workern laufen
 wie die eigenen Anfragen der Seite über den Adapter; `test/controlled-scan.test.ts` prüft beides.
+
 - `failed` (alter Sammelwert): `requestfailed` plus bei Erfassungsende noch offene Anfragen, jede genau einmal.
   Nach Abschluss gilt `requests = finished + failed`.
 - `blocked`: Teilmenge von `failed`, explizit durch die Sicherheits-Policy abgelehnt.

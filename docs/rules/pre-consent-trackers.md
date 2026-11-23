@@ -163,7 +163,6 @@ some of these tools on their own subdomain (CNAME); privalint can't recognise th
 | Comscore                                  | `scorecardresearch.com`                                                                             | [Comscore support](https://direct-support.comscore.com/hc/en-us/articles/360002578333)                                       |
 | Facebook SDK                              | `connect.facebook.net/<locale>/sdk.js` (category social, apart from the Meta Pixel)                 | [Facebook JavaScript SDK quickstart](https://developers.facebook.com/docs/javascript/quickstart)                             |
 
-
 ## Sources for the hosts added on 2026-11-06
 
 Read on 2026-11-06. Hosts the vendor doesn't name itself stay off the list: the Reddit script path,
