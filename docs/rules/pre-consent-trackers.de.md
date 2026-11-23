@@ -169,7 +169,6 @@ sie nicht.
 | Comscore                                  | `scorecardresearch.com`                                                                             | [Comscore support](https://direct-support.comscore.com/hc/en-us/articles/360002578333)                                       |
 | Facebook SDK                              | `connect.facebook.net/<locale>/sdk.js` (Kategorie Social, getrennt vom Meta Pixel)                  | [Facebook JavaScript SDK quickstart](https://developers.facebook.com/docs/javascript/quickstart)                             |
 
-
 ## Quellen für die am 06.11.2026 ergänzten Hosts
 
 Gelesen am 06.11.2026. Hosts, die der Anbieter nicht selbst nennt, bleiben draußen: der Skriptpfad
