@@ -6,6 +6,22 @@ All notable changes are listed here. The format follows
 
 ## Unreleased
 
+Upgrade notes:
+
+- privalint now needs Node.js 22.13 or newer. Node 20 reached its end of life in April 2026, and
+  pdf.js 6 does not read PDFs on it. The GitHub Action stops with a clear message on an older
+  runner Node; add `actions/setup-node` with Node 22 or 24 before it.
+
+### Changed
+
+- `pdfjs-dist` 6 reads PDF legal pages and cookie policies. It never evaluates code from the file,
+  so the former eval switch is gone.
+- Biome 2.6.7, Playwright 1.65.1 and tldts 7.5.3.
+
+### Fixed
+
+- Two fix guides (Cookiebot, Usercentrics) showed a menu path as a quote.
+
 ## 0.11.0 - 2026-11-18
 
 Upgrade notes:

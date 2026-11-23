@@ -16,9 +16,10 @@ export function isPdf(bytes: Uint8Array): boolean {
 
 /**
  * The text of a PDF, page by page, or undefined when it can't be read (not a PDF, encrypted,
- * broken, no text layer). Uses pdf.js without evaluating code from the file and without loading
- * fonts: only the text is needed. `complete: false` when the text was cut at 60 pages or 500,000
- * characters, so a rule doesn't take a missing part for a missing detail.
+ * broken, no text layer). Uses pdf.js without loading fonts: only the text is needed. pdf.js 6
+ * never evaluates code from the file, so there is no eval switch left to turn off. `complete:
+ * false` when the text was cut at 60 pages or 500,000 characters, so a rule doesn't take a missing
+ * part for a missing detail.
  */
 export async function readPdf(
   bytes: Uint8Array,
@@ -34,7 +35,6 @@ export async function readPdf(
     task = pdfjs.getDocument({
       // pdf.js takes ownership of the buffer; give it a copy.
       data: new Uint8Array(bytes),
-      isEvalSupported: false,
       disableFontFace: true,
       useSystemFonts: false,
       verbosity: pdfjs.VerbosityLevel.ERRORS,
