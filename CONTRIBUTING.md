@@ -16,7 +16,7 @@ with every site people point it at.
 
 ## Setup
 
-You need Node.js 20.12 or newer.
+You need Node.js 22.13 or newer.
 
 ```bash
 git clone https://github.com/jexcellence/privalint.git
@@ -127,8 +127,7 @@ Guidelines for findings:
 ## Pull requests
 
 - Keep each PR focused on one change.
-- `npm run lint`, `npm run typecheck` and `npm test` must pass. CI runs them on Node 20, 22
-  and 24.
+- `npm run lint`, `npm run typecheck` and `npm test` must pass. CI runs them on Node 22 and 24.
 - Write commit messages in the imperative ("Add Hotjar cookies"), with a short body explaining
   why if it isn't obvious.
 - For user-facing changes, add a line under "Unreleased" in [CHANGELOG.md](CHANGELOG.md).

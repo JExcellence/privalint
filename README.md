@@ -205,7 +205,7 @@ Inputs left empty are not passed to privalint, so `privalint.config.json` in you
 
 Outputs: `exit-code`, and `sarif-file` when a report was written.
 
-The action uses the runner's Node.js (20.12 or newer) and leaves your job's Node version alone.
+The action uses the runner's Node.js (22.13 or newer) and leaves your job's Node version alone.
 On self-hosted runners without it, add `actions/setup-node` before this step.
 
 > [!NOTE]
